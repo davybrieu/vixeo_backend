@@ -16,5 +16,16 @@ it('generates an OpenAPI document covering the v1 routes', function () {
         '/v1/profiles',
         '/v1/profiles/{profile}',
         '/v1/profiles/{profile}/verify-pin',
+        '/v1/catalog/config',
+        '/v1/catalog/home',
+        '/v1/catalog/genres',
+        '/v1/catalog/search',
+        '/v1/catalog/search/{type}',
+        '/v1/catalog/{type}/lists/{list}',
+        '/v1/catalog/{type}/discover',
+        '/v1/catalog/movie/{id}',
+        '/v1/catalog/tv/{id}',
+        '/v1/catalog/tv/{id}/season/{season}',
+        '/v1/catalog/person/{id}',
     ]);
 });

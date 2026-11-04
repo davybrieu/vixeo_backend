@@ -74,6 +74,7 @@ it('returns the authenticated user', function () {
 it('requires authentication', function () {
     $this->getJson('/api/v1/me')->assertUnauthorized();
     $this->getJson('/api/v1/profiles')->assertUnauthorized();
+    $this->getJson('/api/v1/catalog/home')->assertUnauthorized();
 });
 
 it('revokes the current token on logout', function () {

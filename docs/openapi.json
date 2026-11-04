@@ -166,6 +166,843 @@
                 }
             }
         },
+        "/v1/catalog/config": {
+            "get": {
+                "operationId": "v1.catalog.config",
+                "description": "Image base URL and sizes (URL = `image_base_url` + size + `*_path`), and the TMDb\nattribution that the app must display (e.g. in \"\u00c0 propos\").",
+                "summary": "Catalog configuration",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "image_base_url": {
+                                            "type": "string"
+                                        },
+                                        "poster_sizes": {
+                                            "type": "array",
+                                            "prefixItems": [
+                                                {
+                                                    "type": "string",
+                                                    "const": "w92"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w154"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w185"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w342"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w500"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w780"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "original"
+                                                }
+                                            ],
+                                            "minItems": 7,
+                                            "maxItems": 7
+                                        },
+                                        "backdrop_sizes": {
+                                            "type": "array",
+                                            "prefixItems": [
+                                                {
+                                                    "type": "string",
+                                                    "const": "w300"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w780"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w1280"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "original"
+                                                }
+                                            ],
+                                            "minItems": 4,
+                                            "maxItems": 4
+                                        },
+                                        "profile_sizes": {
+                                            "type": "array",
+                                            "prefixItems": [
+                                                {
+                                                    "type": "string",
+                                                    "const": "w45"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w185"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "h632"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "original"
+                                                }
+                                            ],
+                                            "minItems": 4,
+                                            "maxItems": 4
+                                        },
+                                        "still_sizes": {
+                                            "type": "array",
+                                            "prefixItems": [
+                                                {
+                                                    "type": "string",
+                                                    "const": "w92"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w185"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "w300"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "const": "original"
+                                                }
+                                            ],
+                                            "minItems": 4,
+                                            "maxItems": 4
+                                        },
+                                        "attribution": {
+                                            "type": "string",
+                                            "const": "This product uses the TMDB API but is not endorsed or certified by TMDB."
+                                        },
+                                        "attribution_url": {
+                                            "type": "string",
+                                            "const": "https://www.themoviedb.org"
+                                        }
+                                    },
+                                    "required": [
+                                        "image_base_url",
+                                        "poster_sizes",
+                                        "backdrop_sizes",
+                                        "profile_sizes",
+                                        "still_sizes",
+                                        "attribution",
+                                        "attribution_url"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/home": {
+            "get": {
+                "operationId": "v1.catalog.home",
+                "description": "Featured carousel (titles with a backdrop) and themed rows.",
+                "summary": "Home",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Only movies or only TV shows. Omit for a mixed home.",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "featured": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SectionResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "featured",
+                                        "sections"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/genres": {
+            "get": {
+                "operationId": "v1.catalog.genres",
+                "summary": "Genres",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "movie": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GenreResource"
+                                            }
+                                        },
+                                        "tv": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GenreResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "movie",
+                                        "tv"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/search": {
+            "get": {
+                "operationId": "v1.catalog.search",
+                "description": "First page of movies, TV shows and people, grouped. Use the per-type search for more.",
+                "summary": "Search (all types)",
+                "tags": [
+                    "Catalogue",
+                    "CatalogSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "movies": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MediaItemResource"
+                                                    }
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "total_results"
+                                            ]
+                                        },
+                                        "shows": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MediaItemResource"
+                                                    }
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "total_results"
+                                            ]
+                                        },
+                                        "people": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/PersonItemResource"
+                                                    }
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "movies",
+                                        "shows",
+                                        "people"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/search/{type}": {
+            "get": {
+                "operationId": "v1.catalog.search.type",
+                "description": "Items are movies/TV shows (`MediaItemResource`) or people (`PersonItemResource`).",
+                "summary": "Search one type (paginated)",
+                "tags": [
+                    "Catalogue",
+                    "CatalogSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/SearchType"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/PersonItemResource"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MediaItemResource"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/{type}/lists/{list}": {
+            "get": {
+                "operationId": "v1.catalog.list",
+                "description": "`now_playing` and `upcoming` exist for movies only, `on_the_air` and `airing_today`\nfor TV shows only.",
+                "summary": "List (\"Voir tout\" of a home row)",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "list",
+                        "in": "path",
+                        "required": true,
+                        "description": "The list ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/CatalogList"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (1 to 500).",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/{type}/discover": {
+            "get": {
+                "operationId": "v1.catalog.discover",
+                "summary": "Discover by genre",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/DiscoverSort"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/movie/{id}": {
+            "get": {
+                "operationId": "v1.catalog.movie",
+                "description": "Details, cast, trailer, age rating and recommendations.",
+                "summary": "Movie",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MovieResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MovieResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}": {
+            "get": {
+                "operationId": "v1.catalog.show",
+                "description": "Details, seasons, cast, trailer, age rating and recommendations.",
+                "summary": "TV show",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ShowResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ShowResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}/season/{season}": {
+            "get": {
+                "operationId": "v1.catalog.season",
+                "summary": "Season with its episodes",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SeasonResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SeasonResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/person/{id}": {
+            "get": {
+                "operationId": "v1.catalog.person",
+                "description": "Biography and filmography.",
+                "summary": "Person",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PersonResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PersonResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/profiles": {
             "get": {
                 "operationId": "v1.profiles.index",
@@ -451,6 +1288,178 @@
             }
         },
         "schemas": {
+            "CastResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Person id: GET /catalog/person/{id} for the filmography."
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "character": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "character",
+                    "profile_path",
+                    "profile_url"
+                ],
+                "title": "CastResource"
+            },
+            "CatalogList": {
+                "type": "string",
+                "description": "Curated TMDb lists, used as home rows and \"see all\" pages.\n",
+                "enum": [
+                    "trending",
+                    "popular",
+                    "top_rated",
+                    "now_playing",
+                    "upcoming",
+                    "on_the_air",
+                    "airing_today"
+                ],
+                "title": "CatalogList"
+            },
+            "CrewResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "profile_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "profile_path",
+                    "profile_url"
+                ],
+                "title": "CrewResource"
+            },
+            "DiscoverSort": {
+                "type": "string",
+                "enum": [
+                    "popularity",
+                    "rating",
+                    "recent"
+                ],
+                "title": "DiscoverSort"
+            },
+            "EpisodeResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "season_number": {
+                        "type": "integer"
+                    },
+                    "episode_number": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "overview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "air_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "runtime": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Duration in minutes."
+                    },
+                    "vote_average": {
+                        "type": "number"
+                    },
+                    "still_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "still_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Episode image, w300."
+                    }
+                },
+                "required": [
+                    "id",
+                    "season_number",
+                    "episode_number",
+                    "name",
+                    "overview",
+                    "air_date",
+                    "runtime",
+                    "vote_average",
+                    "still_path",
+                    "still_url"
+                ],
+                "title": "EpisodeResource"
+            },
+            "GenreResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "title": "GenreResource"
+            },
             "LoginRequest": {
                 "type": "object",
                 "properties": {
@@ -473,6 +1482,401 @@
                     "device_name"
                 ],
                 "title": "LoginRequest"
+            },
+            "MediaItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "TMDb id."
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/MediaType"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "original_title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "overview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Release date (movie) or first air date (TV show), YYYY-MM-DD."
+                    },
+                    "year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "vote_average": {
+                        "type": "number",
+                        "description": "Average rating out of 10."
+                    },
+                    "genre_ids": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "poster_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Poster, w342. Build other sizes with `poster_path` (see /catalog/config)."
+                    },
+                    "backdrop_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Backdrop, w1280."
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "title",
+                    "original_title",
+                    "overview",
+                    "date",
+                    "year",
+                    "vote_average",
+                    "genre_ids",
+                    "poster_path",
+                    "poster_url",
+                    "backdrop_path",
+                    "backdrop_url"
+                ],
+                "title": "MediaItemResource"
+            },
+            "MediaType": {
+                "type": "string",
+                "enum": [
+                    "movie",
+                    "tv"
+                ],
+                "title": "MediaType"
+            },
+            "MovieResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/MediaType"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "original_title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "original_language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "overview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "release_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "runtime": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Duration in minutes."
+                    },
+                    "status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\"Released\", \"Post Production\"\u2026"
+                    },
+                    "genres": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GenreResource"
+                        }
+                    },
+                    "vote_average": {
+                        "type": "number"
+                    },
+                    "vote_count": {
+                        "type": "integer"
+                    },
+                    "certification": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Raw certification, French if available, else American (\"12\", \"PG-13\")."
+                    },
+                    "age_rating": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Minimum age derived from the certification (0 = all audiences). Null if unknown."
+                    },
+                    "imdb_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "backdrop_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "trailer": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/VideoResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "directors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CrewResource"
+                        }
+                    },
+                    "cast": {
+                        "type": "array",
+                        "description": "Main cast (20 max), in billing order.",
+                        "items": {
+                            "$ref": "#/components/schemas/CastResource"
+                        }
+                    },
+                    "recommended": {
+                        "type": "array",
+                        "description": "\"Vous pourriez aussi aimer\".",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaItemResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "title",
+                    "original_title",
+                    "original_language",
+                    "tagline",
+                    "overview",
+                    "release_date",
+                    "year",
+                    "runtime",
+                    "status",
+                    "genres",
+                    "vote_average",
+                    "vote_count",
+                    "certification",
+                    "age_rating",
+                    "imdb_id",
+                    "poster_path",
+                    "poster_url",
+                    "backdrop_path",
+                    "backdrop_url",
+                    "trailer",
+                    "directors",
+                    "cast",
+                    "recommended"
+                ],
+                "title": "MovieResource"
+            },
+            "PersonItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "known_for_department": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\"Acting\", \"Directing\"\u2026"
+                    },
+                    "profile_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "known_for_department",
+                    "profile_path",
+                    "profile_url"
+                ],
+                "title": "PersonItemResource"
+            },
+            "PersonResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "biography": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "birthday": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "deathday": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "place_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "known_for_department": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "known_for": {
+                        "type": "array",
+                        "description": "10 best-known titles.",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaItemResource"
+                        }
+                    },
+                    "filmography": {
+                        "type": "array",
+                        "description": "Titles as cast member, most recent first (100 max).",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaItemResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "biography",
+                    "birthday",
+                    "deathday",
+                    "place_of_birth",
+                    "known_for_department",
+                    "profile_path",
+                    "profile_url",
+                    "known_for",
+                    "filmography"
+                ],
+                "title": "PersonResource"
             },
             "ProfileRequest": {
                 "type": "object",
@@ -603,6 +2007,382 @@
                 ],
                 "title": "RegisterRequest"
             },
+            "SearchType": {
+                "type": "string",
+                "enum": [
+                    "movie",
+                    "tv",
+                    "person"
+                ],
+                "title": "SearchType"
+            },
+            "SeasonResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "show_id": {
+                        "type": "integer"
+                    },
+                    "season_number": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "overview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "air_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "episodes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EpisodeResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "show_id",
+                    "season_number",
+                    "name",
+                    "overview",
+                    "air_date",
+                    "poster_path",
+                    "poster_url",
+                    "episodes"
+                ],
+                "title": "SeasonResource"
+            },
+            "SeasonSummaryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "season_number": {
+                        "type": "integer",
+                        "description": "0 = specials."
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "overview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "air_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "episode_count": {
+                        "type": "integer"
+                    },
+                    "poster_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "season_number",
+                    "name",
+                    "overview",
+                    "air_date",
+                    "episode_count",
+                    "poster_path",
+                    "poster_url"
+                ],
+                "title": "SeasonSummaryResource"
+            },
+            "SectionResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Display title, in French."
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/MediaType"
+                    },
+                    "list": {
+                        "$ref": "#/components/schemas/CatalogList"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaItemResource"
+                        }
+                    }
+                },
+                "required": [
+                    "key",
+                    "title",
+                    "type",
+                    "list",
+                    "items"
+                ],
+                "title": "SectionResource"
+            },
+            "ShowResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/MediaType"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "original_title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "original_language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "overview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "first_air_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_air_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\"Returning Series\", \"Ended\", \"Canceled\"\u2026"
+                    },
+                    "in_production": {
+                        "type": "boolean"
+                    },
+                    "number_of_seasons": {
+                        "type": "integer"
+                    },
+                    "number_of_episodes": {
+                        "type": "integer"
+                    },
+                    "episode_runtime": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Typical episode duration in minutes."
+                    },
+                    "genres": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GenreResource"
+                        }
+                    },
+                    "vote_average": {
+                        "type": "number"
+                    },
+                    "vote_count": {
+                        "type": "integer"
+                    },
+                    "certification": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Raw certification, French if available, else American (\"12\", \"TV-MA\")."
+                    },
+                    "age_rating": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Minimum age derived from the certification (0 = all audiences). Null if unknown."
+                    },
+                    "imdb_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tvdb_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "poster_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "backdrop_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "trailer": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/VideoResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "creators": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CrewResource"
+                        }
+                    },
+                    "cast": {
+                        "type": "array",
+                        "description": "Main cast over all seasons (20 max).",
+                        "items": {
+                            "$ref": "#/components/schemas/CastResource"
+                        }
+                    },
+                    "seasons": {
+                        "type": "array",
+                        "description": "Episodes: GET /catalog/tv/{id}/season/{season_number}.",
+                        "items": {
+                            "$ref": "#/components/schemas/SeasonSummaryResource"
+                        }
+                    },
+                    "next_episode": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/EpisodeResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "recommended": {
+                        "type": "array",
+                        "description": "\"Vous pourriez aussi aimer\".",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaItemResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "title",
+                    "original_title",
+                    "original_language",
+                    "tagline",
+                    "overview",
+                    "first_air_date",
+                    "last_air_date",
+                    "year",
+                    "status",
+                    "in_production",
+                    "number_of_seasons",
+                    "number_of_episodes",
+                    "episode_runtime",
+                    "genres",
+                    "vote_average",
+                    "vote_count",
+                    "certification",
+                    "age_rating",
+                    "imdb_id",
+                    "tvdb_id",
+                    "poster_path",
+                    "poster_url",
+                    "backdrop_path",
+                    "backdrop_url",
+                    "trailer",
+                    "creators",
+                    "cast",
+                    "seasons",
+                    "next_episode",
+                    "recommended"
+                ],
+                "title": "ShowResource"
+            },
             "UserResource": {
                 "type": "object",
                 "properties": {
@@ -646,6 +2426,43 @@
                     "pin"
                 ],
                 "title": "VerifyPinRequest"
+            },
+            "VideoResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "site": {
+                        "type": "string",
+                        "const": "YouTube"
+                    },
+                    "key": {
+                        "type": "string",
+                        "description": "YouTube video id."
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "ISO 639-1 language code (\"fr\", \"en\")."
+                    }
+                },
+                "required": [
+                    "name",
+                    "site",
+                    "key",
+                    "url",
+                    "language"
+                ],
+                "title": "VideoResource"
             }
         },
         "responses": {

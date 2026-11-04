@@ -195,6 +195,11 @@ return [
         'max_age_rating' => 'âge maximum',
         'pin' => 'code PIN',
         'position' => 'position',
+        'query' => 'recherche',
+        'page' => 'page',
+        'genre' => 'genre',
+        'sort' => 'tri',
+        'type' => 'type',
     ],
 
 ];

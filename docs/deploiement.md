@@ -54,7 +54,15 @@ SESSION_DRIVER=redis
 
 # Domaines du Flutter web (prod + staging), séparés par des virgules
 CORS_ALLOWED_ORIGINS=https://<domaine>,https://staging.<domaine>
+
+# TMDb : « API Read Access Token » (https://www.themoviedb.org/settings/api)
+TMDB_READ_ACCESS_TOKEN=...
 ```
+
+Sans jeton TMDb valide, les routes `/api/v1/catalog/*` répondent 503 et l'erreur est
+journalisée (« TMDb is not configured » ou « TMDb rejected our credentials »).
+Les réponses TMDb sont mises en cache dans Redis (1 h pour les listes et la recherche,
+24 h pour les fiches, 7 jours pour les genres).
 
 ## Après le premier déploiement
 

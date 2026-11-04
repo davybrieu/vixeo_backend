@@ -7,5 +7,16 @@
     "Server Error.": "Erreur interne du serveur.",
     "Incorrect PIN.": "Code PIN incorrect.",
     "An account can have at most :max profiles.": "Un compte ne peut pas avoir plus de :max profils.",
-    "The last profile of an account cannot be deleted.": "Le dernier profil d'un compte ne peut pas être supprimé."
+    "The last profile of an account cannot be deleted.": "Le dernier profil d'un compte ne peut pas être supprimé.",
+    "The metadata service is temporarily unavailable.": "Le service de métadonnées est momentanément indisponible. Réessayez dans quelques instants.",
+    "Trending movies": "Films tendance",
+    "Trending TV shows": "Séries tendance",
+    "Popular movies": "Films populaires",
+    "Popular TV shows": "Séries populaires",
+    "Top rated movies": "Films les mieux notés",
+    "Top rated TV shows": "Séries les mieux notées",
+    "Now playing in theaters": "Actuellement au cinéma",
+    "Upcoming movies": "Prochainement au cinéma",
+    "Currently airing": "En cours de diffusion",
+    "Airing today": "Diffusées aujourd'hui"
 }
