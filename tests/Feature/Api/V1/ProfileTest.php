@@ -66,7 +66,11 @@ it('limits the number of profiles per account', function () {
 it('updates a profile and can remove its PIN', function () {
     $profile = Profile::factory()->for($this->user)->withPin()->create();
 
-    $this->patchJson("/api/v1/profiles/{$profile->id}", ['name' => 'Renamed', 'pin' => null])
+    // Removing a PIN requires knowing it.
+    $this->patchJson("/api/v1/profiles/{$profile->id}", ['pin' => null])
+        ->assertUnprocessable()->assertJsonValidationErrors('current_pin');
+
+    $this->patchJson("/api/v1/profiles/{$profile->id}", ['name' => 'Renamed', 'pin' => null, 'current_pin' => '1234'])
         ->assertOk()
         ->assertJsonPath('data.name', 'Renamed')
         ->assertJsonPath('data.has_pin', false);

@@ -4,9 +4,11 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
+use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
+use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +25,15 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
 
+        // Wrong parental PINs are also limited by App\Services\ParentalControl (5 per 5 min).
+        Route::prefix('parental-control')->name('parental-control.')->middleware('throttle:parental')->group(function () {
+            Route::get('/', [ParentalControlController::class, 'show'])->name('show');
+            Route::put('pin', [ParentalControlController::class, 'update'])->name('pin.update');
+            // POST, not DELETE: the PIN / password must travel in the body, never in the URL.
+            Route::post('disable', [ParentalControlController::class, 'destroy'])->name('disable');
+            Route::post('verify', [ParentalControlController::class, 'verify'])->name('verify');
+        });
+
         Route::apiResource('profiles', ProfileController::class);
         Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
             ->middleware('throttle:pin')
@@ -38,7 +49,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
         });
 
         // Catalog (TMDb metadata, cached).
-        Route::prefix('catalog')->name('catalog.')->middleware('throttle:catalog')->group(function () {
+        Route::prefix('catalog')->name('catalog.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
             Route::get('config', [CatalogController::class, 'config'])->name('config');
             Route::get('home', [CatalogController::class, 'home'])->name('home');
             Route::get('genres', [CatalogController::class, 'genres'])->name('genres');

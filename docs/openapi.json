@@ -335,6 +335,14 @@
                         "schema": {
                             "$ref": "#/components/schemas/MediaType"
                         }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -421,7 +429,7 @@
         "/v1/catalog/search": {
             "get": {
                 "operationId": "v1.catalog.search",
-                "description": "First page of movies, TV shows and people, grouped. Use the per-type search for more.",
+                "description": "First page of movies, TV shows and people, grouped. Use the per-type search for more.\nMovies and TV shows respect the active profile's age limit.",
                 "summary": "Search (all types)",
                 "tags": [
                     "Catalogue",
@@ -444,6 +452,14 @@
                         "schema": {
                             "type": "string",
                             "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
                         }
                     }
                 ],
@@ -564,6 +580,14 @@
                             "type": "string",
                             "maxLength": 100
                         }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -667,6 +691,14 @@
                             "minimum": 1,
                             "maximum": 500
                         }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -764,6 +796,14 @@
                         "schema": {
                             "$ref": "#/components/schemas/DiscoverSort"
                         }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -823,7 +863,7 @@
         "/v1/catalog/movie/{id}": {
             "get": {
                 "operationId": "v1.catalog.movie",
-                "description": "Details, cast, trailer, age rating and recommendations.",
+                "description": "Details, cast, trailer, age rating and recommendations.\n403 if the active profile may not see it.",
                 "summary": "Movie",
                 "tags": [
                     "Catalogue",
@@ -834,6 +874,14 @@
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
                         "schema": {
                             "type": "integer"
                         }
@@ -867,7 +915,7 @@
         "/v1/catalog/tv/{id}": {
             "get": {
                 "operationId": "v1.catalog.show",
-                "description": "Details, seasons, cast, trailer, age rating and recommendations.",
+                "description": "Details, seasons, cast, trailer, age rating and recommendations.\n403 if the active profile may not see it.",
                 "summary": "TV show",
                 "tags": [
                     "Catalogue",
@@ -878,6 +926,14 @@
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
                         "schema": {
                             "type": "integer"
                         }
@@ -911,6 +967,7 @@
         "/v1/catalog/tv/{id}/season/{season}": {
             "get": {
                 "operationId": "v1.catalog.season",
+                "description": "403 if the active profile may not see the TV show.",
                 "summary": "Season with its episodes",
                 "tags": [
                     "Catalogue",
@@ -929,6 +986,14 @@
                         "name": "season",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
                         "schema": {
                             "type": "integer"
                         }
@@ -962,7 +1027,7 @@
         "/v1/catalog/person/{id}": {
             "get": {
                 "operationId": "v1.catalog.person",
-                "description": "Biography and filmography.",
+                "description": "Biography and filmography (filtered by the active profile's age limit).",
                 "summary": "Person",
                 "tags": [
                     "Catalogue",
@@ -973,6 +1038,14 @@
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
                         "schema": {
                             "type": "integer"
                         }
@@ -999,6 +1072,155 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/parental-control": {
+            "get": {
+                "operationId": "v1.parental-control.show",
+                "summary": "Parental control status",
+                "tags": [
+                    "Contr\u00f4le parental",
+                    "ParentalControl"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean",
+                                            "description": "True when a parental PIN is set."
+                                        }
+                                    },
+                                    "required": [
+                                        "enabled"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/parental-control/pin": {
+            "put": {
+                "operationId": "v1.parental-control.pin.update",
+                "description": "Turns parental control on. Changing it requires `current_pin` or `password`.",
+                "summary": "Set or change the parental PIN",
+                "tags": [
+                    "Contr\u00f4le parental",
+                    "ParentalControl"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ParentalPinRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/parental-control/disable": {
+            "post": {
+                "operationId": "v1.parental-control.disable",
+                "description": "Turns parental control off. Requires `current_pin` or `password`.",
+                "summary": "Turn parental control off",
+                "tags": [
+                    "Contr\u00f4le parental",
+                    "ParentalControl"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ParentalPinRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/parental-control/verify": {
+            "post": {
+                "operationId": "v1.parental-control.verify",
+                "description": "204 if correct, 422 if not, 429 after 5 wrong attempts (5 minutes).\nUsed by the app to unlock a screen (leave a kid profile, open a locked folder\u2026).",
+                "summary": "Check the parental PIN",
+                "tags": [
+                    "Contr\u00f4le parental",
+                    "ParentalControl"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyParentalPinRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -1040,7 +1262,7 @@
             },
             "post": {
                 "operationId": "v1.profiles.store",
-                "description": "An account can have at most 5 profiles.",
+                "description": "An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.",
                 "summary": "Create a profile",
                 "tags": [
                     "Profils",
@@ -1137,6 +1359,7 @@
             },
             "put": {
                 "operationId": "v1.profiles.update",
+                "description": "Changing restrictions (`is_kid`, `max_age_rating`, `allow_unrated`, `locked_sources`) requires\n`parental_pin` when parental control is on. Changing or removing the profile PIN requires\n`current_pin` (or `parental_pin`).",
                 "summary": "Update a profile",
                 "tags": [
                     "Profils",
@@ -1197,7 +1420,7 @@
             },
             "delete": {
                 "operationId": "v1.profiles.destroy",
-                "description": "The last profile of an account cannot be deleted.",
+                "description": "The last profile of an account cannot be deleted. Requires the parental PIN (header\n`X-Parental-Pin`) when parental control is on.",
                 "summary": "Delete a profile",
                 "tags": [
                     "Profils",
@@ -1211,6 +1434,14 @@
                         "description": "The profile ID",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Parental-Pin",
+                        "in": "header",
+                        "description": "Parental PIN, required when parental control is on.",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -1226,6 +1457,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -2466,6 +2700,33 @@
                 ],
                 "title": "MovieResource"
             },
+            "ParentalPinRequest": {
+                "type": "object",
+                "description": "Set or change (PUT /pin) or remove (POST /disable) the parental PIN. Once a PIN exists, the current\nPIN or the account password is needed (password = \"code oubli\u00e9\").",
+                "properties": {
+                    "current_pin": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Current parental PIN. Required when one is set, unless `password` is given."
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Account password, if the parental PIN was forgotten."
+                    },
+                    "pin": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "pin"
+                ],
+                "title": "ParentalPinRequest"
+            },
             "PersonItemResource": {
                 "type": "object",
                 "properties": {
@@ -2752,7 +3013,8 @@
                         "maxLength": 100
                     },
                     "is_kid": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Kid profile. Without `max_age_rating`, its age limit is 10."
                     },
                     "max_age_rating": {
                         "type": [
@@ -2762,6 +3024,23 @@
                         "description": "Maximum age rating allowed for this profile (e.g. 12, 16). Null = no limit.",
                         "minimum": 0,
                         "maximum": 21
+                    },
+                    "allow_unrated": {
+                        "type": "boolean",
+                        "description": "With an age limit, also show titles whose age rating is unknown. Default false."
+                    },
+                    "locked_sources": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "description": "Sources or folders hidden on this profile, e.g. \"iptv:abc\" or \"iptv:abc#Sport\" (100 max).",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 191
+                        },
+                        "maxItems": 100,
+                        "uniqueItems": true
                     },
                     "pin": {
                         "type": [
@@ -2774,6 +3053,20 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 255
+                    },
+                    "parental_pin": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Parental PIN: required (when parental control is on) to create a profile or change its restrictions."
+                    },
+                    "current_pin": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Current PIN of the profile: required to change or remove it, unless `parental_pin` is given."
                     }
                 },
                 "title": "ProfileRequest"
@@ -2802,6 +3095,23 @@
                             "null"
                         ]
                     },
+                    "effective_max_age_rating": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Age limit actually applied (kid profile without `max_age_rating`: 10). Null = no limit."
+                    },
+                    "allow_unrated": {
+                        "type": "boolean"
+                    },
+                    "locked_sources": {
+                        "type": "array",
+                        "description": "Sources / folders the app must hide on this profile.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "has_pin": {
                         "type": "boolean"
                     },
@@ -2829,6 +3139,9 @@
                     "avatar",
                     "is_kid",
                     "max_age_rating",
+                    "effective_max_age_rating",
+                    "allow_unrated",
+                    "locked_sources",
                     "has_pin",
                     "position",
                     "created_at",
@@ -3404,6 +3717,10 @@
                     "email_verified": {
                         "type": "boolean"
                     },
+                    "parental_control": {
+                        "type": "boolean",
+                        "description": "A parental PIN is set (see /parental-control)."
+                    },
                     "created_at": {
                         "type": [
                             "string",
@@ -3417,9 +3734,22 @@
                     "name",
                     "email",
                     "email_verified",
+                    "parental_control",
                     "created_at"
                 ],
                 "title": "UserResource"
+            },
+            "VerifyParentalPinRequest": {
+                "type": "object",
+                "properties": {
+                    "pin": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "pin"
+                ],
+                "title": "VerifyParentalPinRequest"
             },
             "VerifyPinRequest": {
                 "type": "object",

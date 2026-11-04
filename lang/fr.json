@@ -19,5 +19,8 @@
     "Upcoming movies": "Prochainement au cinéma",
     "Currently airing": "En cours de diffusion",
     "Airing today": "Diffusées aujourd'hui",
-    "The :attribute must not contain credentials.": "Le champ :attribute ne doit pas contenir d'identifiants (clé API, jeton…)."
+    "The :attribute must not contain credentials.": "Le champ :attribute ne doit pas contenir d'identifiants (clé API, jeton…).",
+    "The parental PIN is required.": "Le code PIN parental est obligatoire.",
+    "Incorrect parental PIN.": "Code PIN parental incorrect.",
+    "This content is not available on this profile.": "Ce contenu n'est pas disponible sur ce profil."
 }

@@ -5,7 +5,9 @@ namespace App\Services\Tmdb;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache as CacheFactory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -46,6 +48,58 @@ class TmdbClient
     }
 
     /**
+     * Several paths at once (cache first, missing ones fetched concurrently, no retry).
+     * A path that fails or does not exist maps to null.
+     *
+     * @param  list<string>  $paths
+     * @return array<string, array<string, mixed>|null>
+     */
+    public function getMany(array $paths, string $ttl = 'details', int $concurrency = 10): array
+    {
+        $query = ['language' => config('services.tmdb.language')];
+        $keys = [];
+        $results = [];
+
+        foreach (array_unique($paths) as $path) {
+            $keys[$path] = 'tmdb:'.sha1($path.'?'.http_build_query($query));
+            $results[$path] = $this->cache->get($keys[$path]);
+        }
+
+        $missing = array_keys(array_filter($results, fn ($value) => $value === null));
+
+        if ($missing === []) {
+            return $results;
+        }
+
+        $this->ensureConfigured();
+
+        try {
+            $responses = Http::pool(fn (Pool $pool) => array_map(
+                fn (string $path) => $this->configure($pool->as($path))->get(ltrim($path, '/'), $this->withApiKey($query)),
+                $missing,
+            ), $concurrency);
+        } catch (ConnectionException) {
+            $responses = [];
+        }
+
+        foreach ($missing as $path) {
+            $response = $responses[$path] ?? null;
+
+            if ($response instanceof Response && $response->successful()) {
+                $results[$path] = $response->json() ?? [];
+                $this->cache->put($keys[$path], $results[$path], (int) config("services.tmdb.ttl.{$ttl}", 3600));
+            } else {
+                Log::warning('TMDb batch request failed', [
+                    'path' => $path,
+                    'status' => $response instanceof Response ? $response->status() : null,
+                ]);
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * @param  array<string, scalar>  $query
      * @return array<string, mixed>
      */
@@ -80,22 +134,32 @@ class TmdbClient
 
     private function request(): PendingRequest
     {
+        $this->ensureConfigured();
+
+        return $this->configure(Http::createPendingRequest())
+            ->retry([200, 600], when: fn (Throwable $e) => $e instanceof ConnectionException
+                || ($e instanceof RequestException && ($e->response->serverError() || $e->response->tooManyRequests())),
+                throw: false);
+    }
+
+    private function configure(PendingRequest $request): PendingRequest
+    {
         $token = config('services.tmdb.token');
 
-        if (! $token && ! config('services.tmdb.api_key')) {
+        return $request->baseUrl(rtrim(config('services.tmdb.base_url'), '/'))
+            ->acceptJson()
+            ->connectTimeout(5)
+            ->timeout(10)
+            ->when($token, fn (PendingRequest $request) => $request->withToken($token));
+    }
+
+    private function ensureConfigured(): void
+    {
+        if (! config('services.tmdb.token') && ! config('services.tmdb.api_key')) {
             Log::error('TMDb is not configured: set TMDB_READ_ACCESS_TOKEN or TMDB_API_KEY.');
 
             throw new TmdbUnavailableException;
         }
-
-        return Http::baseUrl(rtrim(config('services.tmdb.base_url'), '/'))
-            ->acceptJson()
-            ->connectTimeout(5)
-            ->timeout(10)
-            ->when($token, fn (PendingRequest $request) => $request->withToken($token))
-            ->retry([200, 600], when: fn (Throwable $e) => $e instanceof ConnectionException
-                || ($e instanceof RequestException && ($e->response->serverError() || $e->response->tooManyRequests())),
-                throw: false);
     }
 
     /**

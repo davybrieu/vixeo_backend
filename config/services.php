@@ -46,6 +46,8 @@ return [
             'details' => 86400,
             'search' => 3600,
             'genres' => 604800,
+            // Age ratings (certifications) of list items, fetched in batches.
+            'ratings' => 604800,
         ],
     ],
 

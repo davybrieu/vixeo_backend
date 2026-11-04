@@ -29,8 +29,21 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | POST | `/api/v1/auth/logout` | Révoquer le jeton courant |
 | GET | `/api/v1/me` | Utilisateur connecté |
 | GET / POST | `/api/v1/profiles` | Lister / créer des profils (5 max) |
-| GET / PATCH / DELETE | `/api/v1/profiles/{id}` | Lire / modifier / supprimer un profil |
+| GET / PATCH / DELETE | `/api/v1/profiles/{id}` | Lire / modifier / supprimer un profil (PIN parental si activé) |
 | POST | `/api/v1/profiles/{id}/verify-pin` | Vérifier le code PIN d'un profil |
+
+### Contrôle parental
+
+PIN parental du compte, profils enfants / âge maximum, sources verrouillées : voir
+[`docs/controle-parental.md`](docs/controle-parental.md). Le catalogue applique la limite d'âge
+du profil envoyé dans l'en-tête `X-Profile-Id`.
+
+| Méthode | Route | Description |
+| - | - | - |
+| GET | `/api/v1/parental-control` | Contrôle parental activé ou non |
+| PUT | `/api/v1/parental-control/pin` | Définir ou changer le PIN parental |
+| POST | `/api/v1/parental-control/disable` | Désactiver le contrôle parental |
+| POST | `/api/v1/parental-control/verify` | Vérifier le PIN parental |
 
 ### Synchronisation par profil
 

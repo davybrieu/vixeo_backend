@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\SearchType;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\SearchRequest;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\PersonItemResource;
+use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TmdbCatalog;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,16 +18,25 @@ use Illuminate\Http\JsonResponse;
  */
 class CatalogSearchController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog) {}
+    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate) {}
 
     /**
      * Search (all types).
      *
      * First page of movies, TV shows and people, grouped. Use the per-type search for more.
+     * Movies and TV shows respect the active profile's age limit.
      */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function search(SearchRequest $request): JsonResponse
     {
         $results = $this->catalog->search($request->searchQuery());
+
+        $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
+            'movies' => $results['movies']['results'],
+            'shows' => $results['shows']['results'],
+        ]);
+        $results['movies']['results'] = $filtered['movies'];
+        $results['shows']['results'] = $filtered['shows'];
 
         return response()->json([
             'movies' => [
@@ -47,9 +59,11 @@ class CatalogSearchController extends Controller
      *
      * Items are movies/TV shows (`MediaItemResource`) or people (`PersonItemResource`).
      */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function searchType(SearchRequest $request, SearchType $type): JsonResponse
     {
         $page = $this->catalog->searchType($type, $request->searchQuery(), $request->page());
+        $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
 
         return response()->json([
             'data' => $type === SearchType::Person

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\DeleteProfileRequest;
 use App\Http\Requests\Api\V1\ProfileRequest;
 use App\Http\Requests\Api\V1\VerifyPinRequest;
 use App\Http\Resources\V1\ProfileResource;
 use App\Models\Profile;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -30,13 +32,13 @@ class ProfileController extends Controller
     /**
      * Create a profile.
      *
-     * An account can have at most 5 profiles.
+     * An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.
      */
     public function store(ProfileRequest $request): JsonResponse
     {
         Gate::authorize('create', Profile::class);
 
-        $profile = $request->user()->profiles()->create($request->validated());
+        $profile = $request->user()->profiles()->create($request->profileData());
 
         return (new ProfileResource($profile))
             ->response()
@@ -55,12 +57,16 @@ class ProfileController extends Controller
 
     /**
      * Update a profile.
+     *
+     * Changing restrictions (`is_kid`, `max_age_rating`, `allow_unrated`, `locked_sources`) requires
+     * `parental_pin` when parental control is on. Changing or removing the profile PIN requires
+     * `current_pin` (or `parental_pin`).
      */
     public function update(ProfileRequest $request, Profile $profile): ProfileResource
     {
         Gate::authorize('update', $profile);
 
-        $profile->update($request->validated());
+        $profile->update($request->profileData());
 
         return new ProfileResource($profile);
     }
@@ -68,9 +74,11 @@ class ProfileController extends Controller
     /**
      * Delete a profile.
      *
-     * The last profile of an account cannot be deleted.
+     * The last profile of an account cannot be deleted. Requires the parental PIN (header
+     * `X-Parental-Pin`) when parental control is on.
      */
-    public function destroy(Profile $profile): Response
+    #[HeaderParameter('X-Parental-Pin', 'Parental PIN, required when parental control is on.', type: 'string')]
+    public function destroy(DeleteProfileRequest $request, Profile $profile): Response
     {
         Gate::authorize('delete', $profile);
 

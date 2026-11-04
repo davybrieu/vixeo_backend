@@ -72,6 +72,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (favori / progression /
   vu), le plus récent gagne ; chaque écriture prend `++profiles.sync_revision` sous verrou.
+- **Contrôle parental** (doc : `docs/controle-parental.md`) : PIN parental du compte
+  (`App\Services\ParentalControl`, 5 essais / 5 min), exigé pour créer / supprimer un profil et
+  changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de
+  l'en-tête `X-Profile-Id` (`ResolveProfile`, `AgeGate`) : toute nouvelle route du catalogue qui
+  renvoie des titres doit passer par `AgeGate`.
+- **Jamais de secret dans une URL** (PIN, mot de passe, jeton) : corps de requête ou en-tête.
+  Pas de champ secret sur un DELETE (Scramble le documenterait en paramètre d'URL) ; un test
+  de `tests/Feature/OpenApiTest.php` le vérifie.
 - Sécurité : jamais de mot de passe de service tiers stocké en clair, PIN et secrets hachés,
   ne jamais désactiver la vérification TLS (voir `docs/CONTEXT.md` §6).
 
@@ -92,10 +100,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
   saison / personne, recherche groupée et par type), mis en cache, synchro par profil
-  (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur).
-- Pas encore fait : filtrage du catalogue selon l'âge maximum du profil (le champ `age_rating`
-  est déjà renvoyé sur les fiches), complément en anglais quand le résumé français manque.
+  (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
+  contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées).
+- Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
+  temporaire d'un titre avec le PIN parental.
 - Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique
   des recherches, flux favoris et « dernier flux qui a fonctionné ».
 - Prochaines étapes (feuille de route §10) : sources IPTV de l'utilisateur, configuration
-  distante (chaînes FAST), contrôle parental.
+  distante (chaînes FAST).

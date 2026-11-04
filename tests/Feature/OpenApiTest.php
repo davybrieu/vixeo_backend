@@ -16,6 +16,10 @@ it('generates an OpenAPI document covering the v1 routes', function () {
         '/v1/profiles',
         '/v1/profiles/{profile}',
         '/v1/profiles/{profile}/verify-pin',
+        '/v1/parental-control',
+        '/v1/parental-control/pin',
+        '/v1/parental-control/disable',
+        '/v1/parental-control/verify',
         '/v1/profiles/{profile}/sync',
         '/v1/profiles/{profile}/continue-watching',
         '/v1/profiles/{profile}/favorites',
@@ -32,4 +36,24 @@ it('generates an OpenAPI document covering the v1 routes', function () {
         '/v1/catalog/tv/{id}/season/{season}',
         '/v1/catalog/person/{id}',
     ]);
+});
+
+it('never documents secrets as query parameters (they would end up in server logs)', function () {
+    $path = tempnam(sys_get_temp_dir(), 'openapi');
+    $this->artisan('scramble:export', ['--path' => $path])->assertSuccessful();
+    $spec = json_decode(file_get_contents($path), true);
+    unlink($path);
+
+    $leaks = [];
+    foreach ($spec['paths'] as $url => $operations) {
+        foreach ($operations as $method => $operation) {
+            foreach ($operation['parameters'] ?? [] as $parameter) {
+                if ($parameter['in'] === 'query' && preg_match('/pin|password|token|secret/i', $parameter['name'])) {
+                    $leaks[] = strtoupper($method)." {$url} ?{$parameter['name']}";
+                }
+            }
+        }
+    }
+
+    expect($leaks)->toBe([]);
 });

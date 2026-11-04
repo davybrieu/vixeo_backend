@@ -28,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
             $request->user()?->id.'|'.$request->route()?->originalParameter('profile'),
         ));
 
+        // Also slows down account password guesses ("code parental oublié").
+        RateLimiter::for('parental', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
+
         // Catalog screens fire several requests at once (home, details, seasons…).
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
 

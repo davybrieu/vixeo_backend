@@ -16,6 +16,8 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'email_verified' => $this->email_verified_at !== null,
+            /** A parental PIN is set (see /parental-control). */
+            'parental_control' => $this->hasParentalControl(),
             'created_at' => $this->created_at,
         ];
     }
