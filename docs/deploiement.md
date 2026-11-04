@@ -72,6 +72,10 @@ MAIL_FROM_NAME=Vixeo
 
 # Durée de vie des jetons, en minutes (180 jours par défaut ; voir docs/compte.md)
 SANCTUM_EXPIRATION=259200
+
+# Mises à jour des applis (docs/mise-a-jour.md) : où envoyer les utilisateurs
+ANDROID_UPDATE_URL=https://play.google.com/store/apps/details?id=app.vixeo.vixeo
+IOS_UPDATE_URL=https://<domaine>/telecharger
 ```
 
 Sans service d'envoi configuré, « Mot de passe oublié » et l'export des données ne marchent

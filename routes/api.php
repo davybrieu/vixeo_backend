@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AppUpdateController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
@@ -29,6 +30,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('password/forgot', [PasswordResetController::class, 'forgot'])->name('password.forgot');
         Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.reset');
     });
+    // Installed Android / iOS apps ask whether to update (docs/mise-a-jour.md).
+    Route::get('app/update', [AppUpdateController::class, 'check'])
+        ->middleware('throttle:app-update')
+        ->name('app.update');
     Route::post('auth/device/token', [DeviceLoginController::class, 'poll'])
         ->middleware('throttle:device-poll')
         ->name('auth.device.poll');

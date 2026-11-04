@@ -86,6 +86,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`POST /me/delete` avec mot de passe) et export des données par e-mail
   (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
   lui (clé étrangère `cascadeOnDelete`) et ajoutée à l'export.
+- **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : table `app_releases` (plateforme,
+  version, build, obligatoire, notes, date), remplie par `php artisan vixeo:release` une fois la
+  version disponible dans son store. `GET /app/update` (sans connexion) compare les **builds** et
+  répond `up_to_date` / `update_available` / `update_required`. L'installation reste faite par le
+  système (Play Store ; distribution web d'Apple pour iOS, dont le serveur reste à construire).
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
@@ -123,7 +128,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
   avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
   par QR code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
-  et export des données (RGPD).
+  et export des données (RGPD), vérification des mises à jour des applis (`app_releases`).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.
 - Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique

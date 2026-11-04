@@ -51,6 +51,15 @@ return [
         ],
     ],
 
+    /*
+    | Where installed apps send people to update (docs/mise-a-jour.md): the Play Store page, or the
+    | download page of the website for iOS (EU web distribution).
+    */
+    'app_updates' => [
+        'android_url' => env('ANDROID_UPDATE_URL', 'https://play.google.com/store/apps/details?id=app.vixeo.vixeo'),
+        'ios_url' => env('IOS_UPDATE_URL', rtrim((string) env('WEB_URL', 'http://localhost:8080'), '/').'/telecharger'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

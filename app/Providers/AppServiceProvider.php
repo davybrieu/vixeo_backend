@@ -36,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
         // Also slows down account password guesses ("code parental oublié").
         RateLimiter::for('parental', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
 
+        // Apps check at launch and when they come back to the foreground.
+        RateLimiter::for('app-update', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
+
         // Account deletion asks the password: slow down guesses.
         RateLimiter::for('account', fn (Request $request) => Limit::perMinute(5)->by($request->user()?->id ?: $request->ip()));
         // Each export sends an e-mail with all the account's data.

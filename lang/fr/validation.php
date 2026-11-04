@@ -198,6 +198,8 @@ return [
         'poster_format' => 'format des affiches',
         'user_code' => 'code',
         'code' => 'code',
+        'platform' => 'plateforme',
+        'build' => 'numéro de build',
         'device_code' => 'code de l\'appareil',
         'allow_unrated' => 'contenus sans classification',
         'locked_sources' => 'sources verrouillées',

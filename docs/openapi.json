@@ -16,6 +16,115 @@
         }
     ],
     "paths": {
+        "/v1/app/update": {
+            "get": {
+                "operationId": "v1.app.update",
+                "description": "Called by the app at launch and when it comes back to the foreground, before any sign-in.\n`update_required`: the app blocks until the update is installed; `update_available`: it\nsuggests it once.",
+                "summary": "Check for an update",
+                "tags": [
+                    "Application",
+                    "AppUpdate"
+                ],
+                "parameters": [
+                    {
+                        "name": "platform",
+                        "in": "query",
+                        "required": true,
+                        "description": "Platform of the installed app (`android` also covers Android TV).",
+                        "schema": {
+                            "$ref": "#/components/schemas/AppPlatform"
+                        }
+                    },
+                    {
+                        "name": "build",
+                        "in": "query",
+                        "required": true,
+                        "description": "Build number of the installed app (`CFBundleVersion` on iOS, `versionCode` on Android).",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "$ref": "#/components/schemas/AppUpdateStatus"
+                                        },
+                                        "current_build": {
+                                            "type": "integer"
+                                        },
+                                        "latest": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "description": "Newest published release, or null if none yet.",
+                                            "properties": {
+                                                "version": {
+                                                    "type": "string"
+                                                },
+                                                "build": {
+                                                    "type": "integer"
+                                                },
+                                                "notes": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "What's new, in French (may be null)."
+                                                },
+                                                "published_at": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "version",
+                                                "build",
+                                                "notes",
+                                                "published_at"
+                                            ]
+                                        },
+                                        "minimum_build": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "description": "Installs older than this build must update (null: none required)."
+                                        },
+                                        "update_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Page where the update is installed (Play Store, website\u2026)."
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "current_build",
+                                        "latest",
+                                        "minimum_build",
+                                        "update_url"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/register": {
             "post": {
                 "operationId": "v1.auth.register",
@@ -2735,6 +2844,25 @@
             }
         },
         "schemas": {
+            "AppPlatform": {
+                "type": "string",
+                "description": "Platforms whose installed apps check for updates (Android covers phones and Android TV).\n",
+                "enum": [
+                    "ios",
+                    "android"
+                ],
+                "title": "AppPlatform"
+            },
+            "AppUpdateStatus": {
+                "type": "string",
+                "description": "What an installed app should do about updates.\n| |\n|---|\n| `up_to_date` <br/> Latest version installed. |\n| `update_available` <br/> A newer version exists: suggest it. |\n| `update_required` <br/> The installed version is older than a required release: block until updated. |",
+                "enum": [
+                    "up_to_date",
+                    "update_available",
+                    "update_required"
+                ],
+                "title": "AppUpdateStatus"
+            },
             "AvatarLicenseResource": {
                 "type": "object",
                 "properties": {

@@ -32,6 +32,7 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | GET / DELETE | `/api/v1/me/devices` · `/me/devices/{id}` | Appareils connectés, en déconnecter un (jetons valables 180 jours) |
 | POST | `/api/v1/me/export` | Recevoir ses données par e-mail (JSON) |
 | POST | `/api/v1/me/delete` | Supprimer le compte et toutes ses données (mot de passe) |
+| GET | `/api/v1/app/update` | L'appli Android / iOS est-elle à jour ? (voir [`docs/mise-a-jour.md`](docs/mise-a-jour.md)) |
 | POST | `/api/v1/auth/device` · `/auth/device/token` | Connexion d'une TV par QR code (voir [`docs/connexion-tv.md`](docs/connexion-tv.md)) |
 | POST | `/api/v1/auth/device/lookup` · `/auth/device/approve` | Valider le code d'une TV depuis un appareil connecté |
 | GET / POST | `/api/v1/profiles` | Lister / créer des profils (5 max) |
