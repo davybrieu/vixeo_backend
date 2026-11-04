@@ -32,6 +32,19 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | GET / PATCH / DELETE | `/api/v1/profiles/{id}` | Lire / modifier / supprimer un profil |
 | POST | `/api/v1/profiles/{id}/verify-pin` | Vérifier le code PIN d'un profil |
 
+### Synchronisation par profil
+
+Favoris, progression et contenus vus, entre les appareils du compte : voir
+[`docs/synchronisation.md`](docs/synchronisation.md).
+
+| Méthode | Route | Description |
+| - | - | - |
+| GET | `/api/v1/profiles/{id}/sync?cursor=` | Recevoir les changements depuis `cursor` |
+| POST | `/api/v1/profiles/{id}/sync` | Envoyer des changements (500 max) |
+| GET | `/api/v1/profiles/{id}/continue-watching` | Continuer à regarder |
+| GET | `/api/v1/profiles/{id}/favorites` | Favoris (filtres, tris, paginés) |
+| GET | `/api/v1/profiles/{id}/history` | Historique des contenus vus |
+
 ### Catalogue (métadonnées TMDb, mises en cache)
 
 | Méthode | Route | Description |

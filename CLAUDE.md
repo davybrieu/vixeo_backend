@@ -68,6 +68,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     (`(int)`, `(string)`, helpers typés) pour que Scramble produise un schéma typé.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
+- **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
+  un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
+  dans `ProfileSync` (révision et dates de changement). Fusion par groupe (favori / progression /
+  vu), le plus récent gagne ; chaque écriture prend `++profiles.sync_revision` sous verrou.
 - Sécurité : jamais de mot de passe de service tiers stocké en clair, PIN et secrets hachés,
   ne jamais désactiver la vérification TLS (voir `docs/CONTEXT.md` §6).
 
@@ -87,8 +91,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
   (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
-  saison / personne, recherche groupée et par type), mis en cache.
+  saison / personne, recherche groupée et par type), mis en cache, synchro par profil
+  (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur).
 - Pas encore fait : filtrage du catalogue selon l'âge maximum du profil (le champ `age_rating`
   est déjà renvoyé sur les fiches), complément en anglais quand le résumé français manque.
-- Prochaines étapes (feuille de route §10) : synchro favoris / historique / reprise par profil,
-  sources IPTV de l'utilisateur, configuration distante (chaînes FAST).
+- Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique
+  des recherches, flux favoris et « dernier flux qui a fonctionné ».
+- Prochaines étapes (feuille de route §10) : sources IPTV de l'utilisateur, configuration
+  distante (chaînes FAST), contrôle parental.

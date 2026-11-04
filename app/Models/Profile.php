@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Hash;
  * positions will be attached to a profile, not to the account.
  */
 #[Fillable(['name', 'avatar', 'is_kid', 'max_age_rating', 'pin', 'position'])]
-#[Hidden(['pin'])]
+#[Hidden(['pin', 'sync_revision'])]
 class Profile extends Model
 {
     /** @use HasFactory<ProfileFactory> */
@@ -31,6 +32,7 @@ class Profile extends Model
             'max_age_rating' => 'integer',
             'pin' => 'hashed',
             'position' => 'integer',
+            'sync_revision' => 'integer',
         ];
     }
 
@@ -38,6 +40,12 @@ class Profile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return HasMany<ProfileItem, $this> */
+    public function items(): HasMany
+    {
+        return $this->hasMany(ProfileItem::class);
     }
 
     public function hasPin(): bool

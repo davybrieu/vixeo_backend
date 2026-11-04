@@ -31,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         // Catalog screens fire several requests at once (home, details, seasons…).
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
 
+        // Players save progress regularly; pulls are paginated.
+        RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+
         Scramble::configure()
             ->routes(fn ($route) => str_starts_with($route->uri, 'api/v1'))
             ->withDocumentTransformers(function (OpenApi $openApi) {

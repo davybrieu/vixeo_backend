@@ -18,5 +18,6 @@
     "Now playing in theaters": "Actuellement au cinéma",
     "Upcoming movies": "Prochainement au cinéma",
     "Currently airing": "En cours de diffusion",
-    "Airing today": "Diffusées aujourd'hui"
+    "Airing today": "Diffusées aujourd'hui",
+    "The :attribute must not contain credentials.": "Le champ :attribute ne doit pas contenir d'identifiants (clé API, jeton…)."
 }

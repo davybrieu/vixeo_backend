@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfileLibraryController;
+use App\Http\Controllers\Api\V1\ProfileSyncController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,6 +27,15 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
             ->middleware('throttle:pin')
             ->name('profiles.verify-pin');
+
+        // Per-profile sync (favorites, progress, watched): see docs/synchronisation.md.
+        Route::prefix('profiles/{profile}')->name('profiles.')->middleware('throttle:sync')->group(function () {
+            Route::get('sync', [ProfileSyncController::class, 'pull'])->name('sync.pull');
+            Route::post('sync', [ProfileSyncController::class, 'push'])->name('sync.push');
+            Route::get('continue-watching', [ProfileLibraryController::class, 'continueWatching'])->name('continue-watching');
+            Route::get('favorites', [ProfileLibraryController::class, 'favorites'])->name('favorites');
+            Route::get('history', [ProfileLibraryController::class, 'history'])->name('history');
+        });
 
         // Catalog (TMDb metadata, cached).
         Route::prefix('catalog')->name('catalog.')->middleware('throttle:catalog')->group(function () {

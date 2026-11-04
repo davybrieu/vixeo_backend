@@ -1278,6 +1278,690 @@
                     }
                 }
             }
+        },
+        "/v1/profiles/{profile}/sync": {
+            "get": {
+                "operationId": "v1.profiles.sync.pull",
+                "description": "Items changed since `cursor`, oldest change first. Store the returned `cursor` and\ncall again while `has_more` is true.",
+                "summary": "Pull changes",
+                "tags": [
+                    "Synchronisation",
+                    "ProfileSync"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "`cursor` returned by the previous pull. 0 (default) = full download.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Max items per call (default 500, max 1000). Repeat while `has_more` is true.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProfileItemResource"
+                                            }
+                                        },
+                                        "cursor": {
+                                            "type": "integer",
+                                            "description": "Pass it as `cursor` on the next pull."
+                                        },
+                                        "has_more": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "cursor",
+                                        "has_more"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.profiles.sync.push",
+                "description": "For each group (favorite, progress, watched) the most recent change (`at`) wins.\nReturns the merged state of the pushed items. Then pull to get the other devices' changes.",
+                "summary": "Push changes",
+                "tags": [
+                    "Synchronisation",
+                    "ProfileSync"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SyncPushRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProfileItemResource"
+                                            }
+                                        },
+                                        "revision": {
+                                            "type": "integer",
+                                            "description": "Latest revision of the profile."
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "revision"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/continue-watching": {
+            "get": {
+                "operationId": "v1.profiles.continue-watching",
+                "description": "Started and not finished, most recent first.",
+                "summary": "Continue watching",
+                "tags": [
+                    "Synchronisation",
+                    "ProfileLibrary"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/ItemType"
+                        }
+                    },
+                    {
+                        "name": "watched",
+                        "in": "query",
+                        "description": "Favorites only: true = watched only, false = not watched only.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Favorites only. Defaults to `recent`.\n| |\n|---|\n| `recent` <br/> Most recently added first. |\n| `title` <br/> A \u2192 Z. |\n| `year` <br/> Most recent year first. |",
+                        "schema": {
+                            "$ref": "#/components/schemas/LibrarySort"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Default 50, max 100.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ProfileItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProfileItemResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/favorites": {
+            "get": {
+                "operationId": "v1.profiles.favorites",
+                "summary": "Favorites",
+                "tags": [
+                    "Synchronisation",
+                    "ProfileLibrary"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/ItemType"
+                        }
+                    },
+                    {
+                        "name": "watched",
+                        "in": "query",
+                        "description": "Favorites only: true = watched only, false = not watched only.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Favorites only. Defaults to `recent`.\n| |\n|---|\n| `recent` <br/> Most recently added first. |\n| `title` <br/> A \u2192 Z. |\n| `year` <br/> Most recent year first. |",
+                        "schema": {
+                            "$ref": "#/components/schemas/LibrarySort"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Default 50, max 100.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ProfileItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProfileItemResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/history": {
+            "get": {
+                "operationId": "v1.profiles.history",
+                "description": "Watched items, most recent first.",
+                "summary": "Watch history",
+                "tags": [
+                    "Synchronisation",
+                    "ProfileLibrary"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/ItemType"
+                        }
+                    },
+                    {
+                        "name": "watched",
+                        "in": "query",
+                        "description": "Favorites only: true = watched only, false = not watched only.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Favorites only. Defaults to `recent`.\n| |\n|---|\n| `recent` <br/> Most recently added first. |\n| `title` <br/> A \u2192 Z. |\n| `year` <br/> Most recent year first. |",
+                        "schema": {
+                            "$ref": "#/components/schemas/LibrarySort"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Default 50, max 100.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ProfileItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProfileItemResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1459,6 +2143,29 @@
                     "name"
                 ],
                 "title": "GenreResource"
+            },
+            "ItemType": {
+                "type": "string",
+                "description": "Kind of content a profile item points to (any source: TMDb, Jellyfin, IPTV, radio\u2026).\n| |\n|---|\n| `movie` <br/>  |\n| `tv` <br/> A whole TV show (e.g. favorite series). |\n| `episode` <br/>  |\n| `channel` <br/> Live TV channel. |\n| `radio` <br/>  |\n| `video` <br/> Any other video (local file, replay\u2026). |",
+                "enum": [
+                    "movie",
+                    "tv",
+                    "episode",
+                    "channel",
+                    "radio",
+                    "video"
+                ],
+                "title": "ItemType"
+            },
+            "LibrarySort": {
+                "type": "string",
+                "description": "| |\n|---|\n| `recent` <br/> Most recently added first. |\n| `title` <br/> A \u2192 Z. |\n| `year` <br/> Most recent year first. |",
+                "enum": [
+                    "recent",
+                    "title",
+                    "year"
+                ],
+                "title": "LibrarySort"
             },
             "LoginRequest": {
                 "type": "object",
@@ -1877,6 +2584,157 @@
                     "filmography"
                 ],
                 "title": "PersonResource"
+            },
+            "ProfileItemResource": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string"
+                    },
+                    "item_id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ItemType"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "parent_item_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "season_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "episode_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_favorite": {
+                        "type": "boolean"
+                    },
+                    "favorited_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "favorite_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "position_ms": {
+                        "type": "integer",
+                        "description": "Resume position in milliseconds."
+                    },
+                    "duration_ms": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Between 0 and 1, null if the duration is unknown (progress bar)."
+                    },
+                    "last_engaged_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "Non-null = in \"Continuer \u00e0 regarder\"."
+                    },
+                    "progress_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "is_watched": {
+                        "type": "boolean"
+                    },
+                    "watched_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "watched_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "source",
+                    "item_id",
+                    "type",
+                    "title",
+                    "year",
+                    "poster_url",
+                    "backdrop_url",
+                    "parent_item_id",
+                    "season_number",
+                    "episode_number",
+                    "is_favorite",
+                    "favorited_at",
+                    "favorite_changed_at",
+                    "position_ms",
+                    "duration_ms",
+                    "progress",
+                    "last_engaged_at",
+                    "progress_changed_at",
+                    "is_watched",
+                    "watched_at",
+                    "watched_changed_at",
+                    "updated_at"
+                ],
+                "title": "ProfileItemResource"
             },
             "ProfileRequest": {
                 "type": "object",
@@ -2382,6 +3240,154 @@
                     "recommended"
                 ],
                 "title": "ShowResource"
+            },
+            "SyncPushRequest": {
+                "type": "object",
+                "properties": {
+                    "changes": {
+                        "type": "array",
+                        "description": "Changes made on the device since its last push (500 max, applied in order).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "source": {
+                                    "type": "string",
+                                    "description": "Source chosen by the app: \"tmdb\", \"jellyfin:<serverId>\", \"iptv:<listId>\", \"radio\"\u2026",
+                                    "pattern": "^[A-Za-z0-9._:\\-]+$",
+                                    "maxLength": 100
+                                },
+                                "item_id": {
+                                    "type": "string",
+                                    "description": "Item id inside the source, e.g. \"movie:550\", \"episode:1399:1:3\".",
+                                    "maxLength": 191
+                                },
+                                "type": {
+                                    "$ref": "#/components/schemas/ItemType"
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "description": "Display title (for an episode: the episode name).",
+                                    "maxLength": 300
+                                },
+                                "year": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 1800,
+                                    "maximum": 2200
+                                },
+                                "poster_url": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "format": "uri",
+                                    "description": "Must not contain credentials (api_key, token\u2026).",
+                                    "maxLength": 2048
+                                },
+                                "backdrop_url": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "format": "uri",
+                                    "maxLength": 2048
+                                },
+                                "parent_item_id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "For an episode: item_id of its TV show.",
+                                    "maxLength": 191
+                                },
+                                "season_number": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                },
+                                "episode_number": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                },
+                                "favorite": {
+                                    "type": "object",
+                                    "description": "Favorite added or removed. At least one of favorite, progress, watched is required.",
+                                    "properties": {
+                                        "value": {
+                                            "type": "boolean"
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "When the change happened on the device (ISO 8601)."
+                                        }
+                                    }
+                                },
+                                "progress": {
+                                    "type": "object",
+                                    "description": "Playback progress.",
+                                    "properties": {
+                                        "position_ms": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 1000000000
+                                        },
+                                        "duration_ms": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "minimum": 0,
+                                            "maximum": 1000000000
+                                        },
+                                        "continue_watching": {
+                                            "type": "boolean",
+                                            "description": "false = removed from \"Continuer \u00e0 regarder\" (the position is kept for resuming)."
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    }
+                                },
+                                "watched": {
+                                    "type": "object",
+                                    "description": "Marked as watched or not watched.",
+                                    "properties": {
+                                        "value": {
+                                            "type": "boolean"
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "source",
+                                "item_id",
+                                "type",
+                                "title"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 500
+                    }
+                },
+                "required": [
+                    "changes"
+                ],
+                "title": "SyncPushRequest"
             },
             "UserResource": {
                 "type": "object",
