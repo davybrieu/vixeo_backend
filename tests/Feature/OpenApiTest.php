@@ -1,0 +1,20 @@
+<?php
+
+it('generates an OpenAPI document covering the v1 routes', function () {
+    $path = tempnam(sys_get_temp_dir(), 'openapi');
+
+    $this->artisan('scramble:export', ['--path' => $path, '--fail-on-unknown' => true])->assertSuccessful();
+
+    $spec = json_decode(file_get_contents($path), true);
+    unlink($path);
+
+    expect($spec['paths'])->toHaveKeys([
+        '/v1/auth/register',
+        '/v1/auth/login',
+        '/v1/auth/logout',
+        '/v1/me',
+        '/v1/profiles',
+        '/v1/profiles/{profile}',
+        '/v1/profiles/{profile}/verify-pin',
+    ]);
+});
