@@ -3,8 +3,8 @@
 Une mise à jour passe par deux niveaux :
 
 1. **L'installation de la nouvelle version**, toujours faite par le système. L'appli ne télécharge
-   jamais de code elle-même : Apple l'interdit (règle 2.5.2), Google aussi pour une appli du Play
-   Store.
+   jamais de code qu'elle exécuterait elle-même : Apple l'interdit (règle 2.5.2), et une
+   mise à jour Android passe toujours par l'installateur du système.
 2. **La vérification dans l'appli** (cette API) : l'appli demande si elle est à jour, propose la
    nouvelle version, ou bloque si la version installée n'est plus acceptée.
 
@@ -12,7 +12,7 @@ Une mise à jour passe par deux niveaux :
 
 | Plateforme | Comment la nouvelle version arrive | Lien envoyé par l'API |
 |---|---|---|
-| Android, Android TV | Play Store : mise à jour automatique, ou bouton « Mettre à jour » de la fiche | `ANDROID_UPDATE_URL` (fiche Play Store par défaut) |
+| Android, Android TV | **Pas de Play Store** (décision du développeur) : nouvel APK, signé avec la même clé de release, téléchargé depuis le site `vixeo_web` et installé par Android | `ANDROID_UPDATE_URL` : `https://<site>/installer#android` (à renseigner : la valeur par défaut, une fiche Play Store, ne s'applique pas) |
 | iOS (distribution web UE) | Chaque version est notarisée par Apple, qui fournit un paquet de distribution, à héberger sur le site. L'iPhone interroge le site au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`), ou quand on le lui demande, et installe la différence. | `IOS_UPDATE_URL` (`<WEB_URL>/telecharger` par défaut) |
 
 Côté iOS, le serveur de distribution **reste à construire**. Il n'est possible qu'une fois la
@@ -58,8 +58,9 @@ une date future reste invisible jusqu'à cette date.
 
 1. Dans `vixeo_frontend`, augmenter `version:` dans `pubspec.yaml`. Le numéro de build (après le
    `+`) doit toujours augmenter.
-2. Compiler, puis publier sur le Play Store, ou passer la notarisation et héberger le paquet pour
-   iOS.
+2. Compiler l'APK signé avec la clé de release et le publier sur le site `vixeo_web`
+   (`VIXEO_ANDROID_APK_URL`, avec son empreinte SHA-256) ; pour iOS (plus tard), passer la
+   notarisation et héberger le paquet.
 3. **Quand la version est réellement disponible**, la déclarer dans l'API (onglet Commands de
    Forge, ou en SSH) :
 

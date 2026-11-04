@@ -10,6 +10,17 @@ feuille de route (§10).
 
 **Écarté par le développeur** (ne pas proposer) : import IPTV / M3U / Xtream, radio, replays.
 
+**Distribution Android** (décision du développeur, ne plus poser la question) : **pas de Play
+Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est distribuée en
+**APK signé** depuis le site `vixeo_web` (page `/installer`). Conséquences :
+- chaque version est signée avec la **même clé de release** (keystore hors du dépôt, dans les
+  secrets) : sinon Android refuse d'installer la mise à jour par-dessus l'ancienne version ;
+- les mises à jour passent par la vérification intégrée à l'appli (`GET /app/update`), pas par
+  un store ;
+- vérification des développeurs Android par Google : obligatoire hors Play Store dans 4 pays
+  depuis le 30/09/2026, prévue partout en 2027 : enregistrer le développeur dans l'Android
+  Developer Console avant.
+
 ## Langue
 
 - Échanges, descriptions de PR, documentation et messages destinés à l'utilisateur : **français**.
@@ -90,7 +101,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   version, build, obligatoire, notes, date), remplie par `php artisan vixeo:release` une fois la
   version disponible dans son store. `GET /app/update` (sans connexion) compare les **builds** et
   répond `up_to_date` / `update_available` / `update_required`. L'installation reste faite par le
-  système (Play Store ; distribution web d'Apple pour iOS, dont le serveur reste à construire).
+  système (Android : APK depuis le site `vixeo_web`, pas de Play Store ; iOS : distribution web
+  d'Apple, dont le serveur reste à construire).
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.

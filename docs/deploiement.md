@@ -74,7 +74,8 @@ MAIL_FROM_NAME=Vixeo
 SANCTUM_EXPIRATION=259200
 
 # Mises à jour des applis (docs/mise-a-jour.md) : où envoyer les utilisateurs
-ANDROID_UPDATE_URL=https://play.google.com/store/apps/details?id=app.vixeo.vixeo
+# Pas de Play Store : la page d'installation de l'APK sur le site vixeo_web
+ANDROID_UPDATE_URL=https://<site>/installer#android
 IOS_UPDATE_URL=https://<domaine>/telecharger
 ```
 
