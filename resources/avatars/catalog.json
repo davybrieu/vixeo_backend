@@ -1,0 +1,141 @@
+{
+  "_comment": "Profile avatars, grouped by license. Each avatar is either a 12x12 pixel-art grid ('pixels' rows + 'palette', '.' = transparent) or an 'image_url' (square image the project has the rights to use). Ids are stored on profiles: never rename or remove one that is in use.",
+  "licenses": [
+    {
+      "id": "vixeo-quest",
+      "name": "Vixeo Quest",
+      "avatars": [
+        {
+          "id": "quest-knight",
+          "name": "Chevalier",
+          "background": "#1E2A3A",
+          "palette": {"R": "#E5484D", "S": "#B8C2CC", "D": "#4A5560", "Y": "#F2C94C", "B": "#2F5DA8"},
+          "pixels": ["......RR....", ".....RR.....", "...SSSSSS...", "..SSSSSSSS..", "..SDDDDDDS..", "..SD.YY.DS..", "..SDDDDDDS..", "..SSSSSSSS..", "...SSSSSS...", "..BBBBBBBB..", ".BBBBYYBBBB.", ".BBBBBBBBBB."]
+        },
+        {
+          "id": "quest-wizard",
+          "name": "Magicien",
+          "background": "#221A33",
+          "palette": {"P": "#7B4BC4", "Y": "#F2C94C", "K": "#F0C29A", "E": "#2B1B12", "W": "#EDEDED"},
+          "pixels": [".....PP.....", "....PPPP....", "....PYPP....", "...PPPPPP...", "..PPPPPPPP..", ".PPPPPPPPPP.", "...KKKKKK...", "...KEKKEK...", "...KKKKKK...", "...WWWWWW...", "....WWWW....", ".....WW....."]
+        },
+        {
+          "id": "quest-ranger",
+          "name": "Rôdeuse",
+          "background": "#16261C",
+          "palette": {"G": "#2EA043", "K": "#F0C29A", "E": "#2B1B12", "M": "#C2410C", "L": "#1E6B34", "B": "#7A4A1E"},
+          "pixels": ["....GGGG....", "...GGGGGG...", "..GGGGGGGG..", "..GKKKKKKG..", ".KGKEKKEKGK.", "..GKKKKKKG..", "..GKKMMKKG..", "...GGGGGG...", "..LLLLLLLL..", ".LLLLBBLLLL.", ".LLLLLLLLLL.", "..LL....LL.."]
+        },
+        {
+          "id": "quest-dragon",
+          "name": "Dragon",
+          "background": "#13241D",
+          "palette": {"O": "#F0E6D2", "R": "#22A06B", "Y": "#FFD43B", "K": "#111111", "D": "#145A3C", "W": "#FFFFFF", "G": "#1C7A52"},
+          "pixels": [".O........O.", ".OO......OO.", "..RRRRRRRR..", ".RRRRRRRRRR.", ".RYKRRRRYKR.", ".RRRRRRRRRR.", ".RRRDRRDRRR.", ".RRRRRRRRRR.", ".RWRWRWRWRR.", "..RRRRRRRR..", "...GGGGGG...", "...GGGGGG..."]
+        }
+      ]
+    },
+    {
+      "id": "vixeo-galaxy",
+      "name": "Vixeo Galaxy",
+      "avatars": [
+        {
+          "id": "galaxy-astronaut",
+          "name": "Astronaute",
+          "background": "#141C2E",
+          "palette": {"W": "#E9EDF2", "V": "#1F3A5F", "L": "#6FA8DC", "O": "#F97316"},
+          "pixels": ["...WWWWWW...", "..WWWWWWWW..", ".WWVVVVVVWW.", ".WVVVVVVVVW.", ".WVVLVVVVVW.", ".WVVVVVVVVW.", ".WWVVVVVVWW.", "..WWWWWWWW..", ".WWWWOOWWWW.", "WWWWWWWWWWWW", "WW.WWWWWW.WW", "...WW..WW..."]
+        },
+        {
+          "id": "galaxy-alien",
+          "name": "Extraterrestre",
+          "background": "#1A1F33",
+          "palette": {"G": "#7EE081", "A": "#7EE081", "K": "#101810", "M": "#2E6B33"},
+          "pixels": ["..A......A..", "...A....A...", "...GGGGGG...", "..GGGGGGGG..", ".GGKKGGKKGG.", ".GGKKGGKKGG.", ".GGGGGGGGGG.", "..GGGMMGGG..", "...GGGGGG...", "....GGGG....", "...GG..GG...", "..GG....GG.."]
+        },
+        {
+          "id": "galaxy-robot",
+          "name": "Robot",
+          "background": "#1B2129",
+          "palette": {"Y": "#FACC15", "S": "#9AA5B1", "D": "#2B3440", "C": "#22D3EE", "M": "#64748B", "R": "#EF4444"},
+          "pixels": [".....YY.....", ".....SS.....", "..SSSSSSSS..", "..SDDDDDDS..", "..SDCDDCDS..", "..SDDDDDDS..", "..SDMMMMDS..", "..SSSSSSSS..", "...SSSSSS...", ".SSSSRRSSSS.", ".S.SSSSSS.S.", "...SS..SS..."]
+        },
+        {
+          "id": "galaxy-saucer",
+          "name": "Soucoupe",
+          "background": "#1D1730",
+          "palette": {"C": "#67E8F9", "L": "#ECFEFF", "S": "#A78BFA", "D": "#6D28D9", "Y": "#FDE047"},
+          "pixels": ["............", "....CCCC....", "...CCLLCC...", "...CCCCCC...", ".SSSSSSSSSS.", "SSYSSYSSYSSS", ".SSSSSSSSSS.", "..DD....DD..", "....Y..Y....", "...Y....Y...", "..Y......Y..", "............"]
+        }
+      ]
+    },
+    {
+      "id": "vixeo-monsters",
+      "name": "Vixeo Monsters",
+      "avatars": [
+        {
+          "id": "monsters-slime",
+          "name": "Gelée",
+          "background": "#1C2614",
+          "palette": {"G": "#A3E635", "L": "#ECFCCB", "K": "#1A2E05", "M": "#4D7C0F"},
+          "pixels": ["............", "............", ".....GG.....", "....GGGG....", "...GGLGGG...", "..GGLGGGGG..", ".GGGKGGKGGG.", ".GGGKGGKGGG.", "GGGGGGGGGGGG", "GGGGGMMGGGGG", "GGGGGGGGGGGG", ".GGGGGGGGGG."]
+        },
+        {
+          "id": "monsters-ghost",
+          "name": "Fantôme",
+          "background": "#1A1D26",
+          "palette": {"W": "#F1F5F9", "K": "#1E293B", "P": "#FDA4AF"},
+          "pixels": ["....WWWW....", "..WWWWWWWW..", ".WWWWWWWWWW.", ".WWKKWWKKWW.", ".WWKKWWKKWW.", ".WWWWWWWWWW.", ".WWWWPPWWWW.", ".WWWWWWWWWW.", ".WWWWWWWWWW.", ".WWWWWWWWWW.", ".WW.WW.WW.W.", ".W...W...W.."]
+        },
+        {
+          "id": "monsters-cyclops",
+          "name": "Cyclope",
+          "background": "#2A1B12",
+          "palette": {"O": "#F97316", "W": "#FFFFFF", "K": "#111827", "T": "#FFF7ED"},
+          "pixels": ["............", "...OOOOOO...", "..OOOOOOOO..", ".OOOWWWWOOO.", ".OOWWKKWWOO.", ".OOOWWWWOOO.", ".OOOOOOOOOO.", ".OOTOTTOTOO.", ".OOOOOOOOOO.", "..OOOOOOOO..", "..OO....OO..", ".OOO....OOO."]
+        },
+        {
+          "id": "monsters-bat",
+          "name": "Chauve-souris",
+          "background": "#1C1426",
+          "palette": {"P": "#7E3AF2", "R": "#F43F5E", "W": "#FFFFFF"},
+          "pixels": ["............", "....P..P....", "....PPPP....", "P..PRPPRP..P", "PP.PPPPPP.PP", "PPPPPWWPPPPP", "PPPPPPPPPPPP", ".PPP.PP.PPP.", "..P..PP..P..", ".....PP.....", "............", "............"]
+        }
+      ]
+    },
+    {
+      "id": "vixeo-arcade",
+      "name": "Vixeo Arcade",
+      "avatars": [
+        {
+          "id": "arcade-ninja",
+          "name": "Ninja",
+          "background": "#2A1416",
+          "palette": {"K": "#1F2937", "R": "#DC2626", "S": "#F5D0A9", "E": "#111827"},
+          "pixels": ["...KKKKKK...", "..KKKKKKKK..", ".RRRRRRRRRRR", ".KKKKKKKKKKR", ".KSSSSSSSSKR", ".KSESSSSESK.", ".KSSSSSSSSK.", ".KKKKKKKKKK.", "..KKKKKKKK..", ".KKKKRRKKKK.", ".KKKKKKKKKK.", "..KK....KK.."]
+        },
+        {
+          "id": "arcade-racer",
+          "name": "Pilote",
+          "background": "#1A1C22",
+          "palette": {"Y": "#FACC15", "B": "#111827", "L": "#60A5FA", "R": "#EF4444", "K": "#374151"},
+          "pixels": ["............", "...YYYYYY...", "..YYYYYYYY..", ".YYYYYYYYYY.", ".YYBBBBBBYY.", ".YBBBLBBBBY.", ".YBBBBBBBBY.", ".YYYYYYYYYY.", ".YYRRYYRRYY.", "..YYYYYYYY..", "...KKKKKK...", "...KKKKKK..."]
+        },
+        {
+          "id": "arcade-cat",
+          "name": "Chat",
+          "background": "#2A2112",
+          "palette": {"K": "#F59E0B", "G": "#14532D", "P": "#FB7185", "W": "#FDE68A"},
+          "pixels": [".K........K.", ".KK......KK.", ".KKK....KKK.", ".KKKKKKKKKK.", ".KKGKKKKGKK.", ".KKGKKKKGKK.", ".KKKKPPKKKK.", "WKKKKKKKKKKW", ".KKKKKKKKKK.", "WKKKKKKKKKKW", "..KKKKKKKK..", "...KKKKKK..."]
+        },
+        {
+          "id": "arcade-frog",
+          "name": "Grenouille",
+          "background": "#12241A",
+          "palette": {"G": "#22C55E", "W": "#FFFFFF", "K": "#052E16", "R": "#BE123C", "L": "#15803D"},
+          "pixels": ["............", "..WW....WW..", ".WKKW..WKKW.", ".WKKWGGWKKW.", ".GWWGGGGWWG.", "GGGGGGGGGGGG", "GGGGGGGGGGGG", "GRRRRRRRRRRG", "GGGGGGGGGGGG", ".GGGGGGGGGG.", ".LL.LLLL.LL.", "............"]
+        }
+      ]
+    }
+  ]
+}

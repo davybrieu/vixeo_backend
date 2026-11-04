@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PosterFormat;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Hash;
  * A viewer profile ("Qui regarde ?"). Favorites, history and resume
  * positions will be attached to a profile, not to the account.
  */
-#[Fillable(['name', 'avatar', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position'])]
+#[Fillable(['name', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position'])]
 #[Hidden(['pin', 'sync_revision'])]
 class Profile extends Model
 {
@@ -33,6 +34,7 @@ class Profile extends Model
 
     protected $attributes = [
         'allow_unrated' => false,
+        'poster_format' => 'portrait',
     ];
 
     protected function casts(): array
@@ -41,6 +43,7 @@ class Profile extends Model
             'is_kid' => 'boolean',
             'max_age_rating' => 'integer',
             'allow_unrated' => 'boolean',
+            'poster_format' => PosterFormat::class,
             'locked_sources' => 'array',
             'pin' => 'hashed',
             'position' => 'integer',

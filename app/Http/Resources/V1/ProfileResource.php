@@ -14,7 +14,9 @@ class ProfileResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            /** Avatar id (GET /avatars), null = initial letter. */
             'avatar' => $this->avatar,
+            'poster_format' => $this->poster_format,
             'is_kid' => $this->is_kid,
             'max_age_rating' => $this->max_age_rating,
             /** Age limit actually applied (kid profile without `max_age_rating`: 10). Null = no limit. */

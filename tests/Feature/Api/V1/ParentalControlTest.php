@@ -100,7 +100,7 @@ describe('with parental control on', function () {
         $this->kid->update(['locked_sources' => ['jellyfin:a', 'jellyfin:b#Films']]);
 
         $this->patchJson("/api/v1/profiles/{$this->kid->id}", [
-            'name' => 'Léa B.', 'avatar' => 'fox', 'position' => 2,
+            'name' => 'Léa B.', 'avatar' => 'arcade-cat', 'position' => 2,
             // Same values as stored: not a change.
             'is_kid' => true, 'max_age_rating' => 10, 'locked_sources' => ['jellyfin:b#Films', 'jellyfin:a'],
         ])->assertOk()->assertJsonPath('data.name', 'Léa B.');

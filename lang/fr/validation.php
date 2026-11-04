@@ -195,6 +195,7 @@ return [
         'max_age_rating' => 'âge maximum',
         'pin' => 'code PIN',
         'position' => 'position',
+        'poster_format' => 'format des affiches',
         'allow_unrated' => 'contenus sans classification',
         'locked_sources' => 'sources verrouillées',
         'locked_sources.*' => 'source verrouillée',

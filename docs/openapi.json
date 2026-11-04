@@ -1225,6 +1225,43 @@
                 }
             }
         },
+        "/v1/avatars": {
+            "get": {
+                "operationId": "v1.avatars",
+                "description": "Avatars a profile can use, grouped by license, sorted by name.",
+                "summary": "Avatars",
+                "tags": [
+                    "Profils",
+                    "Avatar"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `AvatarLicenseResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AvatarLicenseResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/profiles": {
             "get": {
                 "operationId": "v1.profiles.index",
@@ -2206,6 +2243,75 @@
             }
         },
         "schemas": {
+            "AvatarLicenseResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "avatars": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvatarResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "avatars"
+                ],
+                "title": "AvatarLicenseResource"
+            },
+            "AvatarResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Value to store in the profile's `avatar`."
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "background": {
+                        "type": "string",
+                        "description": "Tile background color (#RRGGBB)."
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Square image, when the avatar is a picture."
+                    },
+                    "pixels": {
+                        "type": "array",
+                        "description": "Pixel-art rows, top to bottom; each character is a palette key, \".\" is transparent.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "palette": {
+                        "type": "object",
+                        "description": "Palette: character \u2192 color (#RRGGBB).",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "background",
+                    "image_url",
+                    "pixels",
+                    "palette"
+                ],
+                "title": "AvatarResource"
+            },
             "CastResource": {
                 "type": "object",
                 "properties": {
@@ -2467,7 +2573,9 @@
                     },
                     "genre_ids": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "type": "integer"
+                        }
                     },
                     "poster_path": {
                         "type": [
@@ -2845,6 +2953,15 @@
                 ],
                 "title": "PersonResource"
             },
+            "PosterFormat": {
+                "type": "string",
+                "description": "How a profile wants catalog titles drawn in rows and grids.\n| |\n|---|\n| `portrait` <br/> Vertical poster (2:3). Default. |\n| `landscape` <br/> Horizontal image (16:9). |",
+                "enum": [
+                    "portrait",
+                    "landscape"
+                ],
+                "title": "PosterFormat"
+            },
             "ProfileItemResource": {
                 "type": "object",
                 "properties": {
@@ -3008,8 +3125,30 @@
                             "string",
                             "null"
                         ],
-                        "description": "Avatar identifier chosen in the app's built-in avatar set.",
-                        "maxLength": 100
+                        "description": "Avatar id from GET /avatars. Null = initial letter.",
+                        "enum": [
+                            "arcade-cat",
+                            "arcade-frog",
+                            "arcade-ninja",
+                            "arcade-racer",
+                            "galaxy-astronaut",
+                            "galaxy-alien",
+                            "galaxy-robot",
+                            "galaxy-saucer",
+                            "monsters-bat",
+                            "monsters-cyclops",
+                            "monsters-ghost",
+                            "monsters-slime",
+                            "quest-knight",
+                            "quest-dragon",
+                            "quest-wizard",
+                            "quest-ranger",
+                            null
+                        ]
+                    },
+                    "poster_format": {
+                        "description": "How titles are drawn in rows and grids. Default `portrait`.\n\n| |\n|---|\n| `portrait` <br/> Vertical poster (2:3). Default. |\n| `landscape` <br/> Horizontal image (16:9). |",
+                        "$ref": "#/components/schemas/PosterFormat"
                     },
                     "is_kid": {
                         "type": "boolean",
@@ -3083,7 +3222,11 @@
                         "type": [
                             "string",
                             "null"
-                        ]
+                        ],
+                        "description": "Avatar id (GET /avatars), null = initial letter."
+                    },
+                    "poster_format": {
+                        "$ref": "#/components/schemas/PosterFormat"
                     },
                     "is_kid": {
                         "type": "boolean"
@@ -3136,6 +3279,7 @@
                     "id",
                     "name",
                     "avatar",
+                    "poster_format",
                     "is_kid",
                     "max_age_rating",
                     "effective_max_age_rating",

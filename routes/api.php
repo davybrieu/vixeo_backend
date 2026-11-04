@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
@@ -34,6 +35,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('verify', [ParentalControlController::class, 'verify'])->name('verify');
         });
 
+        Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
         Route::apiResource('profiles', ProfileController::class);
         Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
             ->middleware('throttle:pin')

@@ -79,9 +79,9 @@ it('updates a profile and can remove its PIN', function () {
 it('keeps the name when updating other fields', function () {
     $profile = Profile::factory()->for($this->user)->create(['name' => 'Davy']);
 
-    $this->patchJson("/api/v1/profiles/{$profile->id}", ['name' => 'Davy', 'avatar' => 'fox'])
+    $this->patchJson("/api/v1/profiles/{$profile->id}", ['name' => 'Davy', 'avatar' => 'arcade-cat'])
         ->assertOk()
-        ->assertJsonPath('data.avatar', 'fox');
+        ->assertJsonPath('data.avatar', 'arcade-cat');
 });
 
 it('forbids access to another account profile', function () {

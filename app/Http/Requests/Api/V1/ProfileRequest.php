@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Enums\PosterFormat;
 use App\Models\Profile;
+use App\Services\AvatarCatalog;
 use App\Services\ParentalControl;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,8 +25,10 @@ class ProfileRequest extends FormRequest
                     ->where('user_id', $this->user()->id)
                     ->ignore($profile?->id),
             ],
-            /** Avatar identifier chosen in the app's built-in avatar set. */
-            'avatar' => ['sometimes', 'nullable', 'string', 'max:100'],
+            /** Avatar id from GET /avatars. Null = initial letter. */
+            'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
+            /** How titles are drawn in rows and grids. Default `portrait`. */
+            'poster_format' => ['sometimes', Rule::enum(PosterFormat::class)],
             /** Kid profile. Without `max_age_rating`, its age limit is 10. */
             'is_kid' => ['sometimes', 'boolean'],
             /** Maximum age rating allowed for this profile (e.g. 12, 16). Null = no limit. */

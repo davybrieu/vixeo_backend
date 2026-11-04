@@ -35,6 +35,7 @@ class MediaItemResource extends JsonResource
             'year' => F::year($date),
             /** Average rating out of 10. */
             'vote_average' => F::float($r, 'vote_average'),
+            /** @var list<int> */
             'genre_ids' => F::ints($r, 'genre_ids'),
             'poster_path' => $poster,
             /** Poster, w342. Build other sizes with `poster_path` (see /catalog/config). */

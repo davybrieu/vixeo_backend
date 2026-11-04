@@ -67,13 +67,20 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   - `TmdbCatalog` : ce qu'on demande à TMDb ; pose `media_type` sur chaque élément.
   - Les ressources `app/Http/Resources/V1/Catalog` transforment le JSON de TMDb (chaînes vides
     → `null`, URL d'images, âge minimum, bande-annonce…) via `TmdbFormat`. Caster chaque valeur
-    (`(int)`, `(string)`, helpers typés) pour que Scramble produise un schéma typé.
+    (`(int)`, `(string)`, helpers typés) pour que Scramble produise un schéma typé ; pour une liste
+    ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
+    des helpers statiques).
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (favori / progression /
   vu), le plus récent gagne ; chaque écriture prend `++profiles.sync_revision` sous verrou.
+- **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
+  triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
+  stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
+  Les avatars fournis sont des créations originales « Vixeo » : n'ajouter des images de vraies
+  licences de jeux vidéo qu'avec les droits d'utilisation.
 - **Contrôle parental** (doc : `docs/controle-parental.md`) : PIN parental du compte
   (`App\Services\ParentalControl`, 5 essais / 5 min), exigé pour créer / supprimer un profil et
   changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de
@@ -103,7 +110,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
   saison / personne, recherche groupée et par type), mis en cache, synchro par profil
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
-  contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées).
+  contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
+  avatars de profil par licence, format des affiches par profil (`poster_format`).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.
 - Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique

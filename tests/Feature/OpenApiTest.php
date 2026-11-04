@@ -16,6 +16,7 @@ it('generates an OpenAPI document covering the v1 routes', function () {
         '/v1/profiles',
         '/v1/profiles/{profile}',
         '/v1/profiles/{profile}/verify-pin',
+        '/v1/avatars',
         '/v1/parental-control',
         '/v1/parental-control/pin',
         '/v1/parental-control/disable',

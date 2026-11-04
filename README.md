@@ -31,6 +31,7 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | GET / POST | `/api/v1/profiles` | Lister / créer des profils (5 max) |
 | GET / PATCH / DELETE | `/api/v1/profiles/{id}` | Lire / modifier / supprimer un profil (PIN parental si activé) |
 | POST | `/api/v1/profiles/{id}/verify-pin` | Vérifier le code PIN d'un profil |
+| GET | `/api/v1/avatars` | Avatars de profil, regroupés par licence |
 
 ### Contrôle parental
 
