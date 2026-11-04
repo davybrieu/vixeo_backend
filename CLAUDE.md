@@ -17,7 +17,8 @@ feuille de route (§10).
 
 - Laravel 13, PHP 8.3+, Sanctum (jetons Bearer), Scramble (OpenAPI), Pest 4, Pint.
 - PostgreSQL en production, Redis pour cache et files d'attente.
-- Les tests tournent sur SQLite en mémoire (`phpunit.xml`) ; la CI les relance sur PostgreSQL.
+- Les tests tournent sur SQLite en mémoire (`phpunit.xml`) ; les relancer aussi sur PostgreSQL
+  avant un push qui touche aux migrations ou aux requêtes.
 
 ## Commandes
 
@@ -27,7 +28,7 @@ cp .env.example .env && php artisan key:generate
 php artisan migrate
 
 ./vendor/bin/pest                 # tests (SQLite en mémoire)
-./vendor/bin/pint                 # formatage (CI : pint --test)
+./vendor/bin/pint                 # formatage (vérification : pint --test)
 composer openapi                  # régénère docs/openapi.json (échoue si un type est inconnu)
 php artisan serve                 # http://localhost:8000, doc interactive sur /docs/api (env local)
 ```
@@ -46,13 +47,16 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   autorisations via des Policies (`Gate::authorize`).
 - **Contrat** : `docs/openapi.json` est la source de vérité du client Dart (généré, jamais
   recopié à la main). Après toute modification d'une route, d'une requête ou d'une ressource,
-  lancer `composer openapi` et committer le fichier ; la CI vérifie qu'il est à jour.
+  lancer `composer openapi` et committer le fichier.
   Les docblocks des contrôleurs et des règles de validation alimentent la doc.
 - Chaque fonctionnalité a ses tests Pest dans `tests/Feature/Api/V1`.
 - Sécurité : jamais de mot de passe de service tiers stocké en clair, PIN et secrets hachés,
   ne jamais désactiver la vérification TLS (voir `docs/CONTEXT.md` §6).
 
 ## Branches et déploiement
+
+- Ce dépôt est **uniquement l'API** : pas de front, pas d'assets, et **pas de workflow
+  GitHub Actions** (décision du développeur). Lancer Pint et Pest localement avant chaque push.
 
 - Pour l'instant, le travail se fait **directement sur `main`** (demande du développeur).
 - `main` est déployée automatiquement par Laravel Forge (Push to deploy) :

@@ -1,7 +1,8 @@
 # Déploiement (Laravel Forge)
 
 L'API est déployée par **Laravel Forge** depuis la branche `main` (Push to deploy).
-La CI GitHub Actions (`.github/workflows/ci.yml`) lance les tests sur chaque push et PR.
+Ce dépôt n'utilise pas GitHub Actions : lancer `./vendor/bin/pint --test` et
+`./vendor/bin/pest` avant chaque push sur `main`, puisque chaque push part en production.
 
 ## Site Forge
 
@@ -10,10 +11,6 @@ La CI GitHub Actions (`.github/workflows/ci.yml`) lance les tests sur chaque pus
 - Dépôt `davybrieu/vixeo_backend`, branche `main`
 - **Push to deploy** et **Zero-downtime deployments** activés
 - Base PostgreSQL et Redis créés sur le serveur
-
-Pour ne déployer que si la CI est verte, désactiver « Push to deploy » et déclencher le
-déploiement depuis GitHub Actions via l'URL de déploiement Forge (secret GitHub
-`FORGE_DEPLOY_URL`). À mettre en place si besoin.
 
 ## Script de déploiement
 
