@@ -14,8 +14,8 @@ Un item est identifié par **`source` + `item_id`**, choisis par l'appli :
 | Série TMDb | `tmdb` | `tv:1399` | `tv` |
 | Épisode TMDb | `tmdb` | `episode:1399:1:3` (série:saison:épisode) | `episode` |
 | Élément Jellyfin | `jellyfin:<serverId>` | id Jellyfin | `movie`, `episode`… |
-| Chaîne IPTV | `iptv:<listId>` | id de la chaîne (tvg-id, sinon nom) | `channel` |
-| Radio | `radio` | uuid Radio Browser | `radio` |
+| Chaîne FAST | `fast:<fournisseur>` (ex. `fast:pluto`) | id de la chaîne chez le fournisseur | `channel` |
+| Vidéo locale | `local:<appareil>` | chemin ou id du fichier | `video` |
 
 `source` : lettres, chiffres, `.`, `_`, `:`, `-` (100 caractères max). `item_id` : 191 max.
 Pour un épisode, renseigner aussi `parent_item_id` (ex. `tv:1399`), `season_number` et

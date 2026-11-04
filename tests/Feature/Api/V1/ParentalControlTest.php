@@ -93,16 +93,16 @@ describe('with parental control on', function () {
         'raise the age limit' => [['max_age_rating' => 18]],
         'remove the age limit' => [['max_age_rating' => null]],
         'allow unrated titles' => [['allow_unrated' => true]],
-        'change locked sources' => [['locked_sources' => ['iptv:abc']]],
+        'change locked sources' => [['locked_sources' => ['jellyfin:abc']]],
     ]);
 
     it('does not require it for harmless changes', function () {
-        $this->kid->update(['locked_sources' => ['iptv:a', 'iptv:b#Sport']]);
+        $this->kid->update(['locked_sources' => ['jellyfin:a', 'jellyfin:b#Films']]);
 
         $this->patchJson("/api/v1/profiles/{$this->kid->id}", [
             'name' => 'Léa B.', 'avatar' => 'fox', 'position' => 2,
             // Same values as stored: not a change.
-            'is_kid' => true, 'max_age_rating' => 10, 'locked_sources' => ['iptv:b#Sport', 'iptv:a'],
+            'is_kid' => true, 'max_age_rating' => 10, 'locked_sources' => ['jellyfin:b#Films', 'jellyfin:a'],
         ])->assertOk()->assertJsonPath('data.name', 'Léa B.');
     });
 
@@ -141,6 +141,6 @@ it('exposes the restrictions on profiles', function () {
 });
 
 it('validates locked sources', function () {
-    $this->patchJson("/api/v1/profiles/{$this->kid->id}", ['locked_sources' => ['iptv:a', 'iptv:a']])
+    $this->patchJson("/api/v1/profiles/{$this->kid->id}", ['locked_sources' => ['jellyfin:a', 'jellyfin:a']])
         ->assertJsonValidationErrors('locked_sources.1');
 });

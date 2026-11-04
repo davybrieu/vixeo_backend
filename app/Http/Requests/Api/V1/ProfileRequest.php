@@ -31,7 +31,7 @@ class ProfileRequest extends FormRequest
             'max_age_rating' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:21'],
             /** With an age limit, also show titles whose age rating is unknown. Default false. */
             'allow_unrated' => ['sometimes', 'boolean'],
-            /** Sources or folders hidden on this profile, e.g. "iptv:abc" or "iptv:abc#Sport" (100 max). */
+            /** Sources or folders hidden on this profile, e.g. "jellyfin:abc" or "jellyfin:abc#Films" (100 max). */
             'locked_sources' => ['sometimes', 'nullable', 'array', 'list', 'max:100'],
             'locked_sources.*' => ['string', 'max:191', 'distinct'],
             /** 4-digit PIN protecting the profile. Send null to remove it. */

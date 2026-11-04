@@ -8,6 +8,8 @@ Android TV, iOS). L'appli cliente est dans le dépôt
 périmètre légal (§3, ce qui est hors périmètre ne doit pas être implémenté), sécurité (§6),
 feuille de route (§10).
 
+**Écarté par le développeur** (ne pas proposer) : import IPTV / M3U / Xtream, radio, replays.
+
 ## Langue
 
 - Échanges, descriptions de PR, documentation et messages destinés à l'utilisateur : **français**.
@@ -106,5 +108,5 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   temporaire d'un titre avec le PIN parental.
 - Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique
   des recherches, flux favoris et « dernier flux qui a fonctionné ».
-- Prochaines étapes (feuille de route §10) : sources IPTV de l'utilisateur, configuration
-  distante (chaînes FAST).
+- Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
+  configuration distante (chaînes FAST).

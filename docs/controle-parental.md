@@ -77,9 +77,10 @@ accéder aux réglages.
 `locked_sources` est une liste (100 max) de chaînes choisies par l'appli, avec la même
 convention que la synchro (`source` de `docs/synchronisation.md`) :
 
-- `iptv:<listId>` : toute une liste IPTV ;
-- `iptv:<listId>#<groupe>` : un dossier (groupe M3U) de cette liste ;
-- `jellyfin:<serverId>`, `jellyfin:<serverId>#<bibliothèque>`, `radio`…
+- `jellyfin:<serverId>` : tout un serveur Jellyfin (idem `plex:`, `emby:`) ;
+- `jellyfin:<serverId>#<bibliothèque>` : une bibliothèque (dossier) de ce serveur ;
+- `fast:<fournisseur>`, `fast:<fournisseur>#<catégorie>` : chaînes gratuites ;
+- `local` : vidéos de l'appareil.
 
 Ces sources vivent dans l'appli : **c'est l'appli qui les masque** (écrans, recherche globale,
 « Continuer à regarder », favoris) et qui demande le PIN parental (`verify`) pour les ouvrir.

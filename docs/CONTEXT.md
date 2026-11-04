@@ -37,7 +37,7 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
 
 ### Fonctionnalités visées (reprises de l'UX d'ONYX, avec des sources légales)
 
-- Écran des **sources** organisé en onglets (ex. Films/Séries, TV en direct, Radio).
+- Écran des **sources** organisé en onglets (ex. Films/Séries, TV en direct).
 - **Accueil** par source : grand carrousel mis en avant + rangées thématiques,
   avec **« Continuer à regarder »** en tête (barre de progression, reprise exacte).
 - **Fiches** film / série : note, année, durée, genres, synopsis, distribution
@@ -50,10 +50,8 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
   sous-titres, vitesse 0,5×–2×, verrouillage, Picture-in-Picture, Chromecast,
   ouverture dans un lecteur externe (VLC, MX Player) avec reprise de position,
   « passer l'intro », épisode suivant.
-- **TV en direct / IPTV** : listes **M3U / Xtream fournies par l'utilisateur**,
-  chaînes gratuites officielles (FAST), dossiers favoris, guide des programmes (EPG) si dispo.
-- **Radio** : stations via leurs flux publics, recherche, favoris, lecture en arrière-plan
-  avec notification.
+- **TV en direct** : chaînes gratuites officielles (FAST), dossiers favoris,
+  guide des programmes (EPG) si dispo.
 - **Profils** (« Qui regarde ? ») : favoris, historique, reprise et téléchargements séparés.
 - **Favoris** avec filtres (films, séries, épisodes, vus…) et tris (récent, A→Z, année…).
 - **Appui long** partout = menu contextuel (favori, marquer vu, vu jusqu'ici,
@@ -70,15 +68,18 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
 
 ### Sources de contenu autorisées
 
-- Listes **IPTV / M3U / Xtream** que l'utilisateur possède et saisit lui-même.
 - Chaînes **FAST** gratuites et officielles (Pluto TV, Samsung TV Plus, Plex, etc.),
   via leurs flux publics, **en respectant leurs conditions d'utilisation**.
 - **Serveurs média personnels** de l'utilisateur : Jellyfin, Plex, Emby (via leurs API).
-- **Radios** : flux publics des stations (ex. annuaire Radio Browser).
 - **Métadonnées** : TMDb (clé API, attribution « This product uses the TMDB API… » obligatoire).
 - **Sous-titres** : OpenSubtitles, SubDL (clé API fournie par l'utilisateur).
-- **Replays officiels** uniquement via des API ou intégrations autorisées.
 - Vidéos locales de l'appareil.
+
+### Écarté par décision du développeur (ne pas proposer ni implémenter)
+
+- Import de listes **IPTV / M3U / Xtream**.
+- **Radio**.
+- **Replays**.
 
 ### Hors périmètre (ne pas implémenter, ne pas aider à implémenter)
 
@@ -123,7 +124,7 @@ Pistes de paquets — **à valider** (vérifier maintenance et compatibilité we
 - Spec **OpenAPI générée automatiquement** (paquet Scramble) → source de vérité du contrat ;
   le client Dart est généré à partir d'elle.
 - Rôles de l'API : comptes et profils, synchronisation (favoris, historique, réglages,
-  sources IPTV de l'utilisateur), cache des métadonnées TMDb, configuration distante
+  serveurs média de l'utilisateur), cache des métadonnées TMDb, configuration distante
   (listes de chaînes FAST, catégories) modifiable sans republier l'appli.
 - Pour la version web : un **proxy de flux** côté serveur sera nécessaire pour les flux
   qui exigent des en-têtes (Referer, User-Agent) ou n'ont pas de CORS
@@ -150,14 +151,14 @@ Ces patterns sont réutilisables avec des sources légales.
 
 ### 5.1 Abstraction « Source »
 
-Chaque source (une liste IPTV, un serveur Jellyfin, un catalogue FAST, les radios…)
+Chaque source (un serveur Jellyfin / Plex / Emby, un catalogue FAST, les vidéos locales…)
 implémente la même interface. Équivalent Dart suggéré :
 
 ```dart
 abstract class MediaSource {
   String get id;
   String get name;
-  SourceGroup get group;          // ex. filmsSeries, live, radio
+  SourceGroup get group;          // ex. filmsSeries, live
   SourceCapabilities get caps;    // films, séries, direct, mobileOnly, etc.
 
   Future<List<HomeSection>> home();
@@ -425,11 +426,10 @@ Forge ne crée pas d'URL par PR. Options :
 2. **Catalogue** : intégration TMDb (via l'API pour le cache), accueil, fiches, recherche.
 3. **Lecteur** : lecture de flux (HLS/DASH/MP4), sous-titres, bascule automatique,
    reprise et « Continuer à regarder ».
-4. **TV en direct** : import M3U / Xtream de l'utilisateur, chaînes FAST officielles,
-   favoris, EPG.
+4. **TV en direct** : chaînes FAST officielles, favoris, EPG.
 5. **Comptes et synchro** : favoris, historique et réglages synchronisés via l'API,
    contrôle parental.
-6. **Finitions** : polish TV, Chromecast, radio, mode léger, PiP, lecteur externe.
+6. **Finitions** : polish TV, Chromecast, mode léger, PiP, lecteur externe.
 7. **Publication** : builds Android / iOS, fiches stores.
 
 ---
