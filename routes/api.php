@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
+use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
@@ -23,6 +25,9 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->name('login');
         // TV sign-in with a QR code (docs/connexion-tv.md).
         Route::post('device', [DeviceLoginController::class, 'start'])->name('device.start');
+        // "Mot de passe oublié" (docs/compte.md).
+        Route::post('password/forgot', [PasswordResetController::class, 'forgot'])->name('password.forgot');
+        Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.reset');
     });
     Route::post('auth/device/token', [DeviceLoginController::class, 'poll'])
         ->middleware('throttle:device-poll')
@@ -35,6 +40,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('approve', [DeviceLoginController::class, 'approve'])->name('approve');
         });
         Route::get('me', [AuthController::class, 'me'])->name('me');
+        // Account data and devices (docs/compte.md).
+        Route::prefix('me')->name('me.')->group(function () {
+            Route::post('delete', [AccountController::class, 'destroy'])->middleware('throttle:account')->name('delete');
+            Route::post('export', [AccountController::class, 'export'])->middleware('throttle:account-export')->name('export');
+            Route::get('devices', [AccountController::class, 'devices'])->name('devices');
+            Route::delete('devices/{device}', [AccountController::class, 'revokeDevice'])->whereNumber('device')->name('devices.revoke');
+        });
 
         // Wrong parental PINs are also limited by App\Services\ParentalControl (5 per 5 min).
         Route::prefix('parental-control')->name('parental-control.')->middleware('throttle:parental')->group(function () {

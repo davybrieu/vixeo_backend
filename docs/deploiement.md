@@ -59,7 +59,24 @@ CORS_ALLOWED_ORIGINS=https://<domaine>,https://staging.<domaine>
 
 # TMDb : « API Read Access Token » (https://www.themoviedb.org/settings/api)
 TMDB_READ_ACCESS_TOKEN=...
+
+# E-mails (code « mot de passe oublié », export des données) : un service d'envoi
+# (Postmark, Amazon SES, Mailgun, Brevo…). Identifiants dans Forge uniquement.
+MAIL_MAILER=smtp
+MAIL_HOST=...
+MAIL_PORT=587
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
+MAIL_FROM_ADDRESS=no-reply@<domaine>
+MAIL_FROM_NAME=Vixeo
+
+# Durée de vie des jetons, en minutes (180 jours par défaut ; voir docs/compte.md)
+SANCTUM_EXPIRATION=259200
 ```
+
+Sans service d'envoi configuré, « Mot de passe oublié » et l'export des données ne marchent
+pas : l'adresse d'envoi doit être vérifiée auprès du service (SPF, DKIM) pour ne pas finir en
+indésirables.
 
 Sans jeton TMDb valide, les routes `/api/v1/catalog/*` répondent 503 et l'erreur est
 journalisée (« TMDb is not configured » ou « TMDb rejected our credentials »).
@@ -69,7 +86,10 @@ Les réponses TMDb sont mises en cache dans Redis (1 h pour les listes et la rec
 ## Après le premier déploiement
 
 - Worker de file d'attente (onglet Queue) : connexion `redis`.
-- Planificateur (onglet Scheduler) : `php artisan schedule:run` chaque minute.
+- Planificateur (onglet Scheduler) : `php artisan schedule:run` chaque minute. Il supprime
+  chaque jour les codes TV et les jetons expirés.
+- HTTPS : certificat (Let's Encrypt) et redirection HTTP → HTTPS activés sur le site Forge ;
+  ajouter l'en-tête `Strict-Transport-Security` dans la configuration Nginx du site.
 - Vérifier `https://api.<domaine>/up` (healthcheck Laravel).
 - La doc interactive `/docs/api` n'est accessible qu'en environnement `local` ;
   la spec publiée est `docs/openapi.json` dans le dépôt.

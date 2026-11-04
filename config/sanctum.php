@@ -50,7 +50,9 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Vixeo: a device signs in again after 180 days (docs/compte.md). Expired tokens are
+    // deleted daily (routes/console.php).
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24 * 180),
 
     /*
     |--------------------------------------------------------------------------

@@ -188,6 +188,108 @@
                 "security": []
             }
         },
+        "/v1/auth/password/forgot": {
+            "post": {
+                "operationId": "v1.auth.password.forgot",
+                "description": "E-mails a 6-digit code, valid 15 minutes, if an account uses this address. The answer is the\nsame whether or not the address has an account.",
+                "summary": "Send a password reset code",
+                "tags": [
+                    "Authentification",
+                    "PasswordReset"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForgotPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "If an account uses this address, a code has been sent to it."
+                                        },
+                                        "expires_in_minutes": {
+                                            "type": "integer",
+                                            "description": "Minutes before the code expires.",
+                                            "const": 15
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "expires_in_minutes"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/password/reset": {
+            "post": {
+                "operationId": "v1.auth.password.reset",
+                "description": "Signs out every device of the account, then returns a token for this one, like `login`.\n5 wrong codes invalidate the code.",
+                "summary": "Choose a new password with the code",
+                "tags": [
+                    "Authentification",
+                    "PasswordReset"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string",
+                                            "description": "Bearer token to send in the `Authorization` header."
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "user"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/device/token": {
             "post": {
                 "operationId": "v1.auth.device.poll",
@@ -1327,6 +1429,138 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/me/delete": {
+            "post": {
+                "operationId": "v1.me.delete",
+                "description": "Deletes the account, its profiles, their list, progress and history, and signs out every\ndevice. Cannot be undone. The password is sent in the body (POST, not DELETE: never a\nsecret in a URL).",
+                "summary": "Delete the account",
+                "tags": [
+                    "Compte",
+                    "Account"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteAccountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/me/export": {
+            "post": {
+                "operationId": "v1.me.export",
+                "description": "Sends a JSON file with the account, profiles, list, progress and devices to the account's\naddress (GDPR right of access and portability). Limited to 3 per hour.",
+                "summary": "E-mail a copy of the account's data",
+                "tags": [
+                    "Compte",
+                    "Account"
+                ],
+                "responses": {
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/me/devices": {
+            "get": {
+                "operationId": "v1.me.devices",
+                "description": "One entry per API token, most recently used first.",
+                "summary": "List the signed-in devices",
+                "tags": [
+                    "Compte",
+                    "Account"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `DeviceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DeviceResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/me/devices/{device}": {
+            "delete": {
+                "operationId": "v1.me.devices.revoke",
+                "description": "Revokes one of the account's tokens (a TV, a phone\u2026). To sign out the current device, use\n`auth/logout`.",
+                "summary": "Sign out a device",
+                "tags": [
+                    "Compte",
+                    "Account"
+                ],
+                "parameters": [
+                    {
+                        "name": "device",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -2652,6 +2886,19 @@
                 ],
                 "title": "CrewResource"
             },
+            "DeleteAccountRequest": {
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "string",
+                        "description": "The account password, to confirm."
+                    }
+                },
+                "required": [
+                    "password"
+                ],
+                "title": "DeleteAccountRequest"
+            },
             "DeviceCodeRequest": {
                 "type": "object",
                 "properties": {
@@ -2679,6 +2926,53 @@
                     "device_code"
                 ],
                 "title": "DevicePollRequest"
+            },
+            "DeviceResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Device name given at sign-in, e.g. \"Vixeo TV\" or \"iPhone\"."
+                    },
+                    "current": {
+                        "type": "boolean",
+                        "description": "The device making this request."
+                    },
+                    "signed_in_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "last_used_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "expires_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "After this date the device has to sign in again."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "current",
+                    "signed_in_at",
+                    "last_used_at",
+                    "expires_at"
+                ],
+                "title": "DeviceResource"
             },
             "DeviceStartRequest": {
                 "type": "object",
@@ -2767,6 +3061,20 @@
                     "still_url"
                 ],
                 "title": "EpisodeResource"
+            },
+            "ForgotPasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "ForgotPasswordRequest"
             },
             "GenreResource": {
                 "type": "object",
@@ -3620,6 +3928,35 @@
                     "device_name"
                 ],
                 "title": "RegisterRequest"
+            },
+            "ResetPasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "The 6-digit code received by e-mail."
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "device_name": {
+                        "type": "string",
+                        "description": "Free label identifying the device, e.g. \"Pixel 8\" or \"Salon TV\".",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "email",
+                    "code",
+                    "password",
+                    "device_name"
+                ],
+                "title": "ResetPasswordRequest"
             },
             "SearchType": {
                 "type": "string",

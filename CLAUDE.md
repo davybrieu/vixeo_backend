@@ -79,6 +79,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Connexion TV par QR code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; la page de validation
   est `<WEB_URL>/tv` (appli web).
+- **Compte** (doc : `docs/compte.md`) : « mot de passe oublié » par code à 6 chiffres envoyé par
+  e-mail (`App\Services\PasswordResets` : haché, 15 min, usage unique, 5 essais ; la réponse ne
+  révèle pas si l'adresse a un compte ; la réinitialisation déconnecte tous les appareils),
+  appareils connectés (jetons Sanctum de 180 jours, `SANCTUM_EXPIRATION`), suppression du compte
+  (`POST /me/delete` avec mot de passe) et export des données par e-mail
+  (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
+  lui (clé étrangère `cascadeOnDelete`) et ajoutée à l'export.
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
@@ -115,7 +122,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
   avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
-  par QR code.
+  par QR code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
+  et export des données (RGPD).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.
 - Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique

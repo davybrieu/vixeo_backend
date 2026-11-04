@@ -197,6 +197,7 @@ return [
         'position' => 'position',
         'poster_format' => 'format des affiches',
         'user_code' => 'code',
+        'code' => 'code',
         'device_code' => 'code de l\'appareil',
         'allow_unrated' => 'contenus sans classification',
         'locked_sources' => 'sources verrouillées',

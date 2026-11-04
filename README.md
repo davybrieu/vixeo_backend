@@ -28,6 +28,10 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | POST | `/api/v1/auth/login` | Se connecter, renvoie un jeton |
 | POST | `/api/v1/auth/logout` | Révoquer le jeton courant |
 | GET | `/api/v1/me` | Utilisateur connecté |
+| POST | `/api/v1/auth/password/forgot` · `/auth/password/reset` | Mot de passe oublié : code par e-mail, puis nouveau mot de passe (voir [`docs/compte.md`](docs/compte.md)) |
+| GET / DELETE | `/api/v1/me/devices` · `/me/devices/{id}` | Appareils connectés, en déconnecter un (jetons valables 180 jours) |
+| POST | `/api/v1/me/export` | Recevoir ses données par e-mail (JSON) |
+| POST | `/api/v1/me/delete` | Supprimer le compte et toutes ses données (mot de passe) |
 | POST | `/api/v1/auth/device` · `/auth/device/token` | Connexion d'une TV par QR code (voir [`docs/connexion-tv.md`](docs/connexion-tv.md)) |
 | POST | `/api/v1/auth/device/lookup` · `/auth/device/approve` | Valider le code d'une TV depuis un appareil connecté |
 | GET / POST | `/api/v1/profiles` | Lister / créer des profils (5 max) |
