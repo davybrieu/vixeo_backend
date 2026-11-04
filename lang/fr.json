@@ -1,0 +1,11 @@
+{
+    "Unauthenticated.": "Non authentifié.",
+    "This action is unauthorized.": "Action non autorisée.",
+    "Not Found.": "Ressource introuvable.",
+    "Method Not Allowed.": "Méthode non autorisée.",
+    "Too Many Attempts. Please try again in :seconds seconds.": "Trop de tentatives. Réessayez dans :seconds secondes.",
+    "Server Error.": "Erreur interne du serveur.",
+    "Incorrect PIN.": "Code PIN incorrect.",
+    "An account can have at most :max profiles.": "Un compte ne peut pas avoir plus de :max profils.",
+    "The last profile of an account cannot be deleted.": "Le dernier profil d'un compte ne peut pas être supprimé."
+}

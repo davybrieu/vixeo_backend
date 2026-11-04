@@ -90,7 +90,7 @@ class ProfileController extends Controller
 
         if (! $profile->checkPin($request->validated('pin'))) {
             throw ValidationException::withMessages([
-                'pin' => ['Code PIN incorrect.'],
+                'pin' => [__('Incorrect PIN.')],
             ]);
         }
 

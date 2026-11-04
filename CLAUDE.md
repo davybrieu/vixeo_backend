@@ -50,6 +50,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   lancer `composer openapi` et committer le fichier.
   Les docblocks des contrôleurs et des règles de validation alimentent la doc.
 - Chaque fonctionnalité a ses tests Pest dans `tests/Feature/Api/V1`.
+- **Messages d'erreur en français** (locale `fr` par défaut) :
+  - validation : `lang/fr/validation.php` ; ajouter le nom français de chaque nouveau champ
+    dans `attributes` ;
+  - messages propres à l'appli : écrire la clé en anglais avec `__('...')` et ajouter la
+    traduction dans `lang/fr.json` ;
+  - erreurs HTTP du framework (401, 403, 404, 405, 429, 500) : traduites dans
+    `bootstrap/app.php` ; les 404 ne révèlent jamais le nom des modèles.
 - Sécurité : jamais de mot de passe de service tiers stocké en clair, PIN et secrets hachés,
   ne jamais désactiver la vérification TLS (voir `docs/CONTEXT.md` §6).
 
@@ -67,7 +74,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 ## État actuel
 
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
-  (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum).
+  (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
+  messages d'erreur en français.
 - Prochaines étapes (feuille de route §10) : catalogue TMDb mis en cache, synchro
   favoris / historique / reprise par profil, sources IPTV de l'utilisateur, configuration
   distante (chaînes FAST).
