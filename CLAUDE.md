@@ -76,6 +76,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (favori / progression /
   vu), le plus récent gagne ; chaque écriture prend `++profiles.sync_revision` sous verrou.
+- **Connexion TV par QR code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
+  `device_code` secret haché, `user_code` court, 10 min, usage unique ; la page de validation
+  est `<WEB_URL>/tv` (appli web).
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
@@ -111,7 +114,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   saison / personne, recherche groupée et par type), mis en cache, synchro par profil
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
-  avatars de profil par licence, format des affiches par profil (`poster_format`).
+  avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
+  par QR code.
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.
 - Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique

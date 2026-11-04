@@ -115,6 +115,176 @@
                 "security": []
             }
         },
+        "/v1/auth/device": {
+            "post": {
+                "operationId": "v1.auth.device.start",
+                "description": "Returns the code to show (and to put in the QR code: `verification_url_complete`) and\nthe secret `device_code` the TV polls with every `interval` seconds.",
+                "summary": "Start a TV sign-in",
+                "tags": [
+                    "Authentification",
+                    "DeviceLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceStartRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "device_code": {
+                                            "type": "string",
+                                            "description": "Secret, for POST /auth/device/token only."
+                                        },
+                                        "user_code": {
+                                            "type": "string",
+                                            "description": "Code to show on the TV, e.g. \"K7F-29Q\"."
+                                        },
+                                        "verification_url": {
+                                            "type": "string",
+                                            "description": "Page where the person types the code."
+                                        },
+                                        "verification_url_complete": {
+                                            "type": "string",
+                                            "description": "Same page with the code filled in: put it in the QR code."
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "description": "Seconds before the code expires.",
+                                            "const": 600
+                                        },
+                                        "interval": {
+                                            "type": "integer",
+                                            "description": "Seconds between two polls.",
+                                            "const": 5
+                                        }
+                                    },
+                                    "required": [
+                                        "device_code",
+                                        "user_code",
+                                        "verification_url",
+                                        "verification_url_complete",
+                                        "expires_in",
+                                        "interval"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/device/token": {
+            "post": {
+                "operationId": "v1.auth.device.poll",
+                "description": "202 `{\"status\":\"pending\"}` until the code is approved, then 200 with the token (once).\n410 when the code expired or was already used: start again.",
+                "summary": "Poll a TV sign-in",
+                "tags": [
+                    "Authentification",
+                    "DeviceLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DevicePollRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "410": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "expired"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "This code is invalid or has expired."
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "pending"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "approved"
+                                        },
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "token",
+                                        "user"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/logout": {
             "post": {
                 "operationId": "v1.auth.logout",
@@ -129,6 +299,94 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/device/lookup": {
+            "post": {
+                "operationId": "v1.auth.device.lookup",
+                "description": "Called by the signed-in phone before approving, to show which device asks.",
+                "summary": "Look up a TV code",
+                "tags": [
+                    "Authentification",
+                    "DeviceLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceCodeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user_code": {
+                                            "type": "string"
+                                        },
+                                        "device_name": {
+                                            "type": "string"
+                                        },
+                                        "expires_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "required": [
+                                        "user_code",
+                                        "device_name",
+                                        "expires_at"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/device/approve": {
+            "post": {
+                "operationId": "v1.auth.device.approve",
+                "description": "The TV is then signed in to the account of the person approving.",
+                "summary": "Approve a TV code",
+                "tags": [
+                    "Authentification",
+                    "DeviceLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceCodeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -2393,6 +2651,48 @@
                     "profile_url"
                 ],
                 "title": "CrewResource"
+            },
+            "DeviceCodeRequest": {
+                "type": "object",
+                "properties": {
+                    "user_code": {
+                        "type": "string",
+                        "description": "Code shown on the TV (\"K7F-29Q\"; dash and case don't matter).",
+                        "maxLength": 20
+                    }
+                },
+                "required": [
+                    "user_code"
+                ],
+                "title": "DeviceCodeRequest"
+            },
+            "DevicePollRequest": {
+                "type": "object",
+                "properties": {
+                    "device_code": {
+                        "type": "string",
+                        "description": "`device_code` returned by POST /auth/device. Secret: keep it on the TV.",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "device_code"
+                ],
+                "title": "DevicePollRequest"
+            },
+            "DeviceStartRequest": {
+                "type": "object",
+                "properties": {
+                    "device_name": {
+                        "type": "string",
+                        "description": "Shown on the phone before approving, and used as the token name (\"Vixeo TV\").",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "device_name"
+                ],
+                "title": "DeviceStartRequest"
             },
             "DiscoverSort": {
                 "type": "string",

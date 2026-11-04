@@ -17,6 +17,10 @@ it('generates an OpenAPI document covering the v1 routes', function () {
         '/v1/profiles/{profile}',
         '/v1/profiles/{profile}/verify-pin',
         '/v1/avatars',
+        '/v1/auth/device',
+        '/v1/auth/device/token',
+        '/v1/auth/device/lookup',
+        '/v1/auth/device/approve',
         '/v1/parental-control',
         '/v1/parental-control/pin',
         '/v1/parental-control/disable',
@@ -49,7 +53,7 @@ it('never documents secrets as query parameters (they would end up in server log
     foreach ($spec['paths'] as $url => $operations) {
         foreach ($operations as $method => $operation) {
             foreach ($operation['parameters'] ?? [] as $parameter) {
-                if ($parameter['in'] === 'query' && preg_match('/pin|password|token|secret/i', $parameter['name'])) {
+                if ($parameter['in'] === 'query' && preg_match('/pin|password|token|secret|code/i', $parameter['name'])) {
                     $leaks[] = strtoupper($method)." {$url} ?{$parameter['name']}";
                 }
             }

@@ -22,5 +22,6 @@
     "The :attribute must not contain credentials.": "Le champ :attribute ne doit pas contenir d'identifiants (clé API, jeton…).",
     "The parental PIN is required.": "Le code PIN parental est obligatoire.",
     "Incorrect parental PIN.": "Code PIN parental incorrect.",
-    "This content is not available on this profile.": "Ce contenu n'est pas disponible sur ce profil."
+    "This content is not available on this profile.": "Ce contenu n'est pas disponible sur ce profil.",
+    "This code is invalid or has expired.": "Ce code est invalide ou a expiré. Affichez un nouveau code sur la TV."
 }

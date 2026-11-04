@@ -28,6 +28,8 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | POST | `/api/v1/auth/login` | Se connecter, renvoie un jeton |
 | POST | `/api/v1/auth/logout` | Révoquer le jeton courant |
 | GET | `/api/v1/me` | Utilisateur connecté |
+| POST | `/api/v1/auth/device` · `/auth/device/token` | Connexion d'une TV par QR code (voir [`docs/connexion-tv.md`](docs/connexion-tv.md)) |
+| POST | `/api/v1/auth/device/lookup` · `/auth/device/approve` | Valider le code d'une TV depuis un appareil connecté |
 | GET / POST | `/api/v1/profiles` | Lister / créer des profils (5 max) |
 | GET / PATCH / DELETE | `/api/v1/profiles/{id}` | Lire / modifier / supprimer un profil (PIN parental si activé) |
 | POST | `/api/v1/profiles/{id}/verify-pin` | Vérifier le code PIN d'un profil |

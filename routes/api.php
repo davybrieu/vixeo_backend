@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
+use App\Http\Controllers\Api\V1\DeviceLoginController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
@@ -20,10 +21,19 @@ Route::prefix('v1')->name('v1.')->group(function () {
     Route::prefix('auth')->name('auth.')->middleware('throttle:auth')->group(function () {
         Route::post('register', [AuthController::class, 'register'])->name('register');
         Route::post('login', [AuthController::class, 'login'])->name('login');
+        // TV sign-in with a QR code (docs/connexion-tv.md).
+        Route::post('device', [DeviceLoginController::class, 'start'])->name('device.start');
     });
+    Route::post('auth/device/token', [DeviceLoginController::class, 'poll'])
+        ->middleware('throttle:device-poll')
+        ->name('auth.device.poll');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+        Route::prefix('auth/device')->name('auth.device.')->middleware('throttle:device-approve')->group(function () {
+            Route::post('lookup', [DeviceLoginController::class, 'lookup'])->name('lookup');
+            Route::post('approve', [DeviceLoginController::class, 'approve'])->name('approve');
+        });
         Route::get('me', [AuthController::class, 'me'])->name('me');
 
         // Wrong parental PINs are also limited by App\Services\ParentalControl (5 per 5 min).

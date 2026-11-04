@@ -39,6 +39,8 @@ APP_NAME=Vixeo
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://api.<domaine>
+# Appli web : sa page /tv valide la connexion d'une TV par QR code
+WEB_URL=https://<domaine>
 APP_LOCALE=fr
 
 DB_CONNECTION=pgsql
