@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\CatalogList;
-use App\Enums\DiscoverSort;
 use App\Enums\MediaType;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
@@ -111,17 +110,14 @@ class CatalogController extends Controller
     }
 
     /**
-     * Discover by genre.
+     * Discover (search page without text).
+     *
+     * Movies or TV shows by genre, years and minimum rating, in the chosen order.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function discover(DiscoverRequest $request, MediaType $type): JsonResponse
     {
-        $page = $this->catalog->discover(
-            $type,
-            $request->has('genre') ? $request->integer('genre') : null,
-            $request->enum('sort', DiscoverSort::class) ?? DiscoverSort::Popularity,
-            $request->page(),
-        );
+        $page = $this->catalog->discover($type, $request->titleFilters(), $request->sort(), $request->page());
         $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
 
         return response()->json([

@@ -914,7 +914,7 @@
         "/v1/catalog/search": {
             "get": {
                 "operationId": "v1.catalog.search",
-                "description": "First page of movies, TV shows and people, grouped. Use the per-type search for more.\nMovies and TV shows respect the active profile's age limit.",
+                "description": "First page of movies, TV shows and people, grouped. Use the per-type search for more.\nMovies and TV shows respect the active profile's age limit.\n\nWith a filter (genre, years, rating) or another order than relevance, movies and TV shows\nare the matching titles among the first 60 results of each, sorted; people are only\nreturned without a filter.",
                 "summary": "Search (all types)",
                 "tags": [
                     "Catalogue",
@@ -937,6 +937,48 @@
                         "schema": {
                             "type": "string",
                             "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "year_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "year_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "min_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/SearchSort"
                         }
                     },
                     {
@@ -1032,7 +1074,7 @@
         "/v1/catalog/search/{type}": {
             "get": {
                 "operationId": "v1.catalog.search.type",
-                "description": "Items are movies/TV shows (`MediaItemResource`) or people (`PersonItemResource`).",
+                "description": "Items are movies/TV shows (`MediaItemResource`) or people (`PersonItemResource`).\n\nMovies and TV shows with a filter (genre, years, rating) or another order than relevance:\nthe matching titles among the first 60 results, sorted, in a single page. Filters and order\ndon't apply to people.",
                 "summary": "Search one type (paginated)",
                 "tags": [
                     "Catalogue",
@@ -1064,6 +1106,48 @@
                         "schema": {
                             "type": "string",
                             "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "year_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "year_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "min_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/SearchSort"
                         }
                     },
                     {
@@ -1243,7 +1327,8 @@
         "/v1/catalog/{type}/discover": {
             "get": {
                 "operationId": "v1.catalog.discover",
-                "summary": "Discover by genre",
+                "description": "Movies or TV shows by genre, years and minimum rating, in the chosen order.",
+                "summary": "Discover (search page without text)",
                 "tags": [
                     "Catalogue",
                     "Catalog"
@@ -1273,6 +1358,33 @@
                         "schema": {
                             "type": "integer",
                             "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "year_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "year_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "min_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
                         }
                     },
                     {
@@ -3137,7 +3249,8 @@
                 "enum": [
                     "popularity",
                     "rating",
-                    "recent"
+                    "recent",
+                    "oldest"
                 ],
                 "title": "DiscoverSort"
             },
@@ -4101,6 +4214,18 @@
                     "device_name"
                 ],
                 "title": "ResetPasswordRequest"
+            },
+            "SearchSort": {
+                "type": "string",
+                "description": "Order of text search results (TMDb only gives them by relevance: the API sorts them).\n| |\n|---|\n| `relevance` <br/> TMDb order for the typed text. |\n| `popularity` <br/>  |\n| `rating` <br/>  |\n| `recent` <br/>  |\n| `oldest` <br/>  |",
+                "enum": [
+                    "relevance",
+                    "popularity",
+                    "rating",
+                    "recent",
+                    "oldest"
+                ],
+                "title": "SearchSort"
             },
             "SearchType": {
                 "type": "string",

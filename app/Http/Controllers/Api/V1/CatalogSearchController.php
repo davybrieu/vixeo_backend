@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\SearchSort;
 use App\Enums\SearchType;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
@@ -25,11 +26,15 @@ class CatalogSearchController extends Controller
      *
      * First page of movies, TV shows and people, grouped. Use the per-type search for more.
      * Movies and TV shows respect the active profile's age limit.
+     *
+     * With a filter (genre, years, rating) or another order than relevance, movies and TV shows
+     * are the matching titles among the first 60 results of each, sorted; people are only
+     * returned without a filter.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function search(SearchRequest $request): JsonResponse
     {
-        $results = $this->catalog->search($request->searchQuery());
+        $results = $this->catalog->search($request->searchQuery(), $request->titleFilters(), $request->sort());
 
         $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
             'movies' => $results['movies']['results'],
@@ -41,15 +46,15 @@ class CatalogSearchController extends Controller
         return response()->json([
             'movies' => [
                 'data' => MediaItemResource::collection($results['movies']['results']),
-                'total_results' => $results['movies']['total_results'],
+                'total_results' => (int) $results['movies']['total_results'],
             ],
             'shows' => [
                 'data' => MediaItemResource::collection($results['shows']['results']),
-                'total_results' => $results['shows']['total_results'],
+                'total_results' => (int) $results['shows']['total_results'],
             ],
             'people' => [
                 'data' => PersonItemResource::collection($results['people']['results']),
-                'total_results' => $results['people']['total_results'],
+                'total_results' => (int) $results['people']['total_results'],
             ],
         ]);
     }
@@ -58,11 +63,19 @@ class CatalogSearchController extends Controller
      * Search one type (paginated).
      *
      * Items are movies/TV shows (`MediaItemResource`) or people (`PersonItemResource`).
+     *
+     * Movies and TV shows with a filter (genre, years, rating) or another order than relevance:
+     * the matching titles among the first 60 results, sorted, in a single page. Filters and order
+     * don't apply to people.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function searchType(SearchRequest $request, SearchType $type): JsonResponse
     {
-        $page = $this->catalog->searchType($type, $request->searchQuery(), $request->page());
+        $filters = $request->titleFilters();
+        $sort = $request->sort();
+        $page = $type !== SearchType::Person && (! $filters->isEmpty() || $sort !== SearchSort::Relevance)
+            ? $this->catalog->searchTitles($type, $request->searchQuery(), $filters, $sort)
+            : $this->catalog->searchType($type, $request->searchQuery(), $request->page());
         $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
 
         return response()->json([
@@ -70,9 +83,9 @@ class CatalogSearchController extends Controller
                 ? PersonItemResource::collection($page['results'])
                 : MediaItemResource::collection($page['results']),
             'meta' => [
-                'page' => $page['page'],
-                'total_pages' => $page['total_pages'],
-                'total_results' => $page['total_results'],
+                'page' => (int) $page['page'],
+                'total_pages' => (int) $page['total_pages'],
+                'total_results' => (int) $page['total_results'],
             ],
         ]);
     }

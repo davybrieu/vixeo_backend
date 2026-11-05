@@ -81,6 +81,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     (`(int)`, `(string)`, helpers typés) pour que Scramble produise un schéma typé ; pour une liste
     ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
     des helpers statiques).
+  - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to`,
+    `min_rating` ; requêtes : trait `Concerns\FiltersTitles`) : envoyés à TMDb pour
+    `/{type}/discover` (« Explorer », tris `DiscoverSort`). La recherche par texte de TMDb n'a ni
+    filtres ni tri : avec un filtre ou un tri autre que `relevance` (`SearchSort`), l'API lit les
+    `SEARCH_DEPTH` (3) premières pages, filtre, trie et renvoie une seule page. Une recherche
+    filtrée ne renvoie pas de personnes ; une note minimale exige `TitleFilters::MIN_VOTES` votes.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
@@ -135,7 +141,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
   (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
-  saison / personne, recherche groupée et par type), mis en cache, synchro par profil
+  saison / personne, recherche groupée et par type, filtres et tri), mis en cache, synchro par profil
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
   avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
