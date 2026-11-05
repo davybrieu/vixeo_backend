@@ -1954,6 +1954,286 @@
                 }
             }
         },
+        "/v1/catalog/movie/{id}/segments": {
+            "get": {
+                "operationId": "v1.catalog.movie.segments",
+                "description": "From TheIntroDB. The profile's `skip_*` settings tell whether the player skips them by\nitself or shows a \"Passer\" button.",
+                "summary": "Moments to skip in a movie",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SkipSegmentsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SkipSegmentsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/segments": {
+            "get": {
+                "operationId": "v1.catalog.episode.segments",
+                "summary": "Moments to skip in a TV episode",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SkipSegmentsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SkipSegmentsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/movie/{id}/subtitles": {
+            "get": {
+                "operationId": "v1.catalog.movie.subtitles",
+                "description": "From OpenSubtitles, preferred language first, then the most downloaded (30 max).",
+                "summary": "Subtitles of a movie",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "languages",
+                        "in": "query",
+                        "description": "Comma-separated languages, preferred first (\"fr,en\"). Default: the profile's subtitle language, else French.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `SubtitleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubtitleResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/subtitles": {
+            "get": {
+                "operationId": "v1.catalog.episode.subtitles",
+                "summary": "Subtitles of a TV episode",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "languages",
+                        "in": "query",
+                        "description": "Comma-separated languages, preferred first (\"fr,en\"). Default: the profile's subtitle language, else French.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `SubtitleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubtitleResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/subtitles/{file}": {
+            "get": {
+                "operationId": "v1.catalog.subtitles.file",
+                "description": "The text of a subtitle found with the subtitle search, as `text/vtt` (UTF-8). Each file is\nfetched from OpenSubtitles once, then served from our cache.",
+                "summary": "Subtitle file (WebVTT)",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "file",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/vtt; charset=utf-8": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "private, max-age=86400"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/avatars": {
             "get": {
                 "operationId": "v1.avatars",
@@ -2275,6 +2555,201 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/searches": {
+            "get": {
+                "operationId": "v1.profiles.searches.index",
+                "description": "The 20 most recent, newest first.",
+                "summary": "Recent searches",
+                "tags": [
+                    "Recherches r\u00e9centes",
+                    "ProfileSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ProfileSearchResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProfileSearchResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.profiles.searches.store",
+                "description": "Moves it to the top if it is already there (whatever the case). A search typed just before\nthat it extends (\"orbi\" then \"orbite\", within 2 minutes) is replaced. Keeps the 20 most recent.",
+                "summary": "Add a search",
+                "tags": [
+                    "Recherches r\u00e9centes",
+                    "ProfileSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProfileSearchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ProfileSearchResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileSearchResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/searches/clear": {
+            "post": {
+                "operationId": "v1.profiles.searches.clear",
+                "summary": "Clear the recent searches",
+                "tags": [
+                    "Recherches r\u00e9centes",
+                    "ProfileSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/searches/{search}": {
+            "delete": {
+                "operationId": "v1.profiles.searches.destroy",
+                "summary": "Remove a search",
+                "tags": [
+                    "Recherches r\u00e9centes",
+                    "ProfileSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "path",
+                        "required": true,
+                        "description": "The search ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4126,6 +4601,74 @@
                         "minimum": 0,
                         "maximum": 255
                     },
+                    "audio_language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Preferred audio language (ISO 639-1, e.g. \"fr\"). Null = original version.",
+                        "enum": [
+                            "fr",
+                            "en",
+                            "es",
+                            "de",
+                            "it",
+                            "pt",
+                            "nl",
+                            "ar",
+                            "ja",
+                            "ko",
+                            "zh",
+                            "ru",
+                            "pl",
+                            "tr",
+                            "hi",
+                            null
+                        ]
+                    },
+                    "subtitle_language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Preferred subtitles (\"fr\", \"en\", \"pt-BR\"\u2026). Null = no subtitles.",
+                        "enum": [
+                            "fr",
+                            "en",
+                            "es",
+                            "de",
+                            "it",
+                            "pt-PT",
+                            "pt-BR",
+                            "nl",
+                            "ar",
+                            "ja",
+                            "ko",
+                            "zh-CN",
+                            "zh-TW",
+                            "ru",
+                            "pl",
+                            "tr",
+                            "hi",
+                            null
+                        ]
+                    },
+                    "skip_intro": {
+                        "type": "boolean",
+                        "description": "The player skips the opening credits by itself (else it shows a \"Passer\" button)."
+                    },
+                    "skip_recap": {
+                        "type": "boolean",
+                        "description": "The player skips the recap (\"Pr\u00e9c\u00e9demment\u2026\") by itself."
+                    },
+                    "skip_credits": {
+                        "type": "boolean",
+                        "description": "The player skips the end credits by itself (goes to the next episode)."
+                    },
+                    "skip_preview": {
+                        "type": "boolean",
+                        "description": "The player skips the preview of the next episode by itself."
+                    },
                     "parental_pin": {
                         "type": [
                             "string",
@@ -4191,6 +4734,33 @@
                     "has_pin": {
                         "type": "boolean"
                     },
+                    "audio_language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Preferred audio language, null = original version."
+                    },
+                    "subtitle_language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Preferred subtitles, null = none."
+                    },
+                    "skip_intro": {
+                        "type": "boolean",
+                        "description": "Segments the player skips by itself (TheIntroDB timestamps, see GET \u2026/segments)."
+                    },
+                    "skip_recap": {
+                        "type": "boolean"
+                    },
+                    "skip_credits": {
+                        "type": "boolean"
+                    },
+                    "skip_preview": {
+                        "type": "boolean"
+                    },
                     "position": {
                         "type": "integer"
                     },
@@ -4220,11 +4790,57 @@
                     "allow_unrated",
                     "locked_sources",
                     "has_pin",
+                    "audio_language",
+                    "subtitle_language",
+                    "skip_intro",
+                    "skip_recap",
+                    "skip_credits",
+                    "skip_preview",
                     "position",
                     "created_at",
                     "updated_at"
                 ],
                 "title": "ProfileResource"
+            },
+            "ProfileSearchRequest": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The searched text (2 to 100 characters).",
+                        "minLength": 2,
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "query"
+                ],
+                "title": "ProfileSearchRequest"
+            },
+            "ProfileSearchResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "query": {
+                        "type": "string"
+                    },
+                    "searched_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "Last time it was searched, on any device of the profile."
+                    }
+                },
+                "required": [
+                    "id",
+                    "query",
+                    "searched_at"
+                ],
+                "title": "ProfileSearchResource"
             },
             "RegisterRequest": {
                 "type": "object",
@@ -4709,6 +5325,157 @@
                     "recommended"
                 ],
                 "title": "ShowResource"
+            },
+            "SkipSegmentsResource": {
+                "type": "object",
+                "properties": {
+                    "intro": {
+                        "type": "array",
+                        "description": "Opening credits (\"g\u00e9n\u00e9rique de d\u00e9but\").",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "start_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "end_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "start_ms",
+                                "end_ms"
+                            ]
+                        }
+                    },
+                    "recap": {
+                        "type": "array",
+                        "description": "Recap of the previous episodes (\"Pr\u00e9c\u00e9demment\u2026\").",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "start_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "end_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "start_ms",
+                                "end_ms"
+                            ]
+                        }
+                    },
+                    "credits": {
+                        "type": "array",
+                        "description": "End credits (\"g\u00e9n\u00e9rique de fin\").",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "start_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "end_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "start_ms",
+                                "end_ms"
+                            ]
+                        }
+                    },
+                    "preview": {
+                        "type": "array",
+                        "description": "Preview of the next episode.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "start_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "end_ms": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "start_ms",
+                                "end_ms"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "intro",
+                    "recap",
+                    "credits",
+                    "preview"
+                ],
+                "title": "SkipSegmentsResource"
+            },
+            "SubtitleResource": {
+                "type": "object",
+                "properties": {
+                    "file_id": {
+                        "type": "integer"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "\"fr\", \"en\", \"pt-BR\"\u2026"
+                    },
+                    "release": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Release the timing was made for (e.g. \"Dune.Part.Two.2024.1080p.WEB\"), if known."
+                    },
+                    "hearing_impaired": {
+                        "type": "boolean",
+                        "description": "Subtitles for the deaf and hard of hearing (sounds described)."
+                    },
+                    "ai_translated": {
+                        "type": "boolean",
+                        "description": "Translated by a machine or an AI rather than by a person."
+                    },
+                    "downloads": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "file_id",
+                    "language",
+                    "release",
+                    "hearing_impaired",
+                    "ai_translated",
+                    "downloads"
+                ],
+                "title": "SubtitleResource"
             },
             "SyncPushRequest": {
                 "type": "object",

@@ -6,6 +6,7 @@ use App\Enums\PosterFormat;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\ParentalControl;
+use App\Support\Languages;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -41,6 +42,18 @@ class ProfileRequest extends FormRequest
             /** 4-digit PIN protecting the profile. Send null to remove it. */
             'pin' => ['sometimes', 'nullable', 'string', 'digits:4'],
             'position' => ['sometimes', 'integer', 'min:0', 'max:255'],
+            /** Preferred audio language (ISO 639-1, e.g. "fr"). Null = original version. */
+            'audio_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::AUDIO)],
+            /** Preferred subtitles ("fr", "en", "pt-BR"…). Null = no subtitles. */
+            'subtitle_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::SUBTITLES)],
+            /** The player skips the opening credits by itself (else it shows a "Passer" button). */
+            'skip_intro' => ['sometimes', 'boolean'],
+            /** The player skips the recap ("Précédemment…") by itself. */
+            'skip_recap' => ['sometimes', 'boolean'],
+            /** The player skips the end credits by itself (goes to the next episode). */
+            'skip_credits' => ['sometimes', 'boolean'],
+            /** The player skips the preview of the next episode by itself. */
+            'skip_preview' => ['sometimes', 'boolean'],
             /** Parental PIN: required (when parental control is on) to create a profile or change its restrictions. */
             'parental_pin' => ['sometimes', 'nullable', 'string', 'digits:4'],
             /** Current PIN of the profile: required to change or remove it, unless `parental_pin` is given. */

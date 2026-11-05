@@ -48,7 +48,8 @@ de secret dans une URL.
 ## Exporter ses données
 
 `POST /api/v1/me/export` envoie à l'adresse du compte un e-mail avec un fichier
-`vixeo-donnees.json` (`App\Services\AccountExport`).
+`vixeo-donnees.json` (`App\Services\AccountExport`) : compte, profils (réglages de lecture et
+recherches récentes compris), bibliothèque, appareils.
 - Contenu : le compte, les profils (sans les hachés de PIN), leur liste et leur progression, les
   appareils connectés.
 - Au plus 3 exports par heure.

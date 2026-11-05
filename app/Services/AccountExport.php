@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Profile;
 use App\Models\ProfileItem;
+use App\Models\ProfileSearch;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -25,13 +26,23 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with('items')->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'searches'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
                 'max_age_rating' => $p->max_age_rating,
                 'allow_unrated' => $p->allow_unrated,
                 'poster_format' => $p->poster_format->value,
+                'audio_language' => $p->audio_language,
+                'subtitle_language' => $p->subtitle_language,
+                'skip_intro' => $p->skip_intro,
+                'skip_recap' => $p->skip_recap,
+                'skip_credits' => $p->skip_credits,
+                'skip_preview' => $p->skip_preview,
+                'recent_searches' => $p->searches->sortByDesc('updated_at')->map(fn (ProfileSearch $s) => [
+                    'query' => $s->query,
+                    'searched_at' => $s->updated_at?->toIso8601String(),
+                ])->values()->all(),
                 'has_pin' => $p->pin !== null,
                 'created_at' => $p->created_at?->toIso8601String(),
                 'library' => $p->items->map(fn (ProfileItem $i) => [

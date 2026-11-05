@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\Hash;
  * A viewer profile ("Qui regarde ?"). Favorites, history and resume
  * positions will be attached to a profile, not to the account.
  */
-#[Fillable(['name', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position'])]
+#[Fillable([
+    'name', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
+    'audio_language', 'subtitle_language', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
+])]
 #[Hidden(['pin', 'sync_revision'])]
 class Profile extends Model
 {
@@ -32,9 +35,16 @@ class Profile extends Model
     /** Fields guarded by the parental PIN once parental control is on. */
     public const RESTRICTION_FIELDS = ['is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources'];
 
+    /** Playback settings: segments the player skips by itself (else it shows "Passer"). */
+    public const SKIP_FIELDS = ['skip_intro', 'skip_recap', 'skip_credits', 'skip_preview'];
+
     protected $attributes = [
         'allow_unrated' => false,
         'poster_format' => 'portrait',
+        'skip_intro' => false,
+        'skip_recap' => false,
+        'skip_credits' => false,
+        'skip_preview' => false,
     ];
 
     protected function casts(): array
@@ -48,6 +58,10 @@ class Profile extends Model
             'pin' => 'hashed',
             'position' => 'integer',
             'sync_revision' => 'integer',
+            'skip_intro' => 'boolean',
+            'skip_recap' => 'boolean',
+            'skip_credits' => 'boolean',
+            'skip_preview' => 'boolean',
         ];
     }
 
@@ -61,6 +75,12 @@ class Profile extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ProfileItem::class);
+    }
+
+    /** @return HasMany<ProfileSearch, $this> */
+    public function searches(): HasMany
+    {
+        return $this->hasMany(ProfileSearch::class);
     }
 
     /** Age limit that applies to this profile, null = no limit. */

@@ -96,6 +96,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     en un lot (`getMany`, cache `images` d'une semaine, partagé) ; les autres listes n'en ont pas.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
+- **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`
+  (`App\Support\Languages`) et `skip_intro` / `skip_recap` / `skip_credits` / `skip_preview` ;
+  recherches récentes synchronisées (`profile_searches`, 20 par profil, une recherche qui en
+  prolonge une récente la remplace). Moments à passer : TheIntroDB (`Playback\SkipSegments`, cache
+  24 h). Sous-titres : OpenSubtitles avec la clé Vixeo commune (`Playback\OpenSubtitles`), fichiers
+  servis en WebVTT depuis notre cache (quota quotidien d'OpenSubtitles). Les applis ne parlent
+  jamais à ces services.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (favori / progression /
@@ -156,7 +163,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   et export des données (RGPD), vérification des mises à jour des applis (`app_releases`).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.
-- Pas encore synchronisés : réglages du profil (langue audio / sous-titres préférée), historique
-  des recherches, flux favoris et « dernier flux qui a fonctionné ».
+- Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
+  (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
+- Pas encore synchronisés : flux favoris et « dernier flux qui a fonctionné ».
 - Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
   configuration distante (chaînes FAST).

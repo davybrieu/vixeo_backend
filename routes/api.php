@@ -10,8 +10,10 @@ use App\Http\Controllers\Api\V1\CatalogTitleController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
+use App\Http\Controllers\Api\V1\PlaybackController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
+use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +77,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('continue-watching', [ProfileLibraryController::class, 'continueWatching'])->name('continue-watching');
             Route::get('favorites', [ProfileLibraryController::class, 'favorites'])->name('favorites');
             Route::get('history', [ProfileLibraryController::class, 'history'])->name('history');
+
+            // Recent searches, the same on all the profile's devices (docs/lecture.md).
+            Route::get('searches', [ProfileSearchController::class, 'index'])->name('searches.index');
+            Route::post('searches', [ProfileSearchController::class, 'store'])->name('searches.store');
+            Route::post('searches/clear', [ProfileSearchController::class, 'clear'])->name('searches.clear');
+            Route::delete('searches/{search}', [ProfileSearchController::class, 'destroy'])
+                ->scopeBindings()->whereNumber('search')->name('searches.destroy');
         });
 
         // Catalog (TMDb metadata, cached).
@@ -91,6 +100,18 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('tv/{id}/season/{season}', [CatalogTitleController::class, 'season'])
                 ->whereNumber(['id', 'season'])->name('season');
             Route::get('person/{id}', [CatalogTitleController::class, 'person'])->whereNumber('id')->name('person');
+
+            // Player: moments to skip (TheIntroDB) and subtitles (OpenSubtitles), docs/lecture.md.
+            Route::get('movie/{id}/segments', [PlaybackController::class, 'movieSegments'])
+                ->whereNumber('id')->name('movie.segments');
+            Route::get('tv/{id}/season/{season}/episode/{episode}/segments', [PlaybackController::class, 'episodeSegments'])
+                ->whereNumber(['id', 'season', 'episode'])->name('episode.segments');
+            Route::get('movie/{id}/subtitles', [PlaybackController::class, 'movieSubtitles'])
+                ->whereNumber('id')->name('movie.subtitles');
+            Route::get('tv/{id}/season/{season}/episode/{episode}/subtitles', [PlaybackController::class, 'episodeSubtitles'])
+                ->whereNumber(['id', 'season', 'episode'])->name('episode.subtitles');
+            Route::get('subtitles/{file}', [PlaybackController::class, 'subtitleFile'])
+                ->whereNumber('file')->middleware('throttle:subtitles')->name('subtitles.file');
         });
     });
 });

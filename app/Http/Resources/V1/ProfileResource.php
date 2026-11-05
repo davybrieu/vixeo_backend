@@ -25,6 +25,15 @@ class ProfileResource extends JsonResource
             /** Sources / folders the app must hide on this profile. */
             'locked_sources' => $this->lockedSources(),
             'has_pin' => $this->hasPin(),
+            /** Preferred audio language, null = original version. */
+            'audio_language' => $this->audio_language,
+            /** Preferred subtitles, null = none. */
+            'subtitle_language' => $this->subtitle_language,
+            /** Segments the player skips by itself (TheIntroDB timestamps, see GET …/segments). */
+            'skip_intro' => (bool) $this->skip_intro,
+            'skip_recap' => (bool) $this->skip_recap,
+            'skip_credits' => (bool) $this->skip_credits,
+            'skip_preview' => (bool) $this->skip_preview,
             'position' => $this->position,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

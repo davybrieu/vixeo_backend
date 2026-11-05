@@ -54,6 +54,28 @@ return [
     ],
 
     /*
+    | Subtitles (docs/lecture.md): Vixeo's own OpenSubtitles.com consumer API key, and optionally
+    | its account (higher daily download quota). Files are cached, so each is downloaded once.
+    */
+    'opensubtitles' => [
+        'api_key' => env('OPENSUBTITLES_API_KEY'),
+        'username' => env('OPENSUBTITLES_USERNAME'),
+        'password' => env('OPENSUBTITLES_PASSWORD'),
+        'base_url' => env('OPENSUBTITLES_BASE_URL', 'https://api.opensubtitles.com/api/v1'),
+        // OpenSubtitles asks for the app name and version.
+        'user_agent' => env('OPENSUBTITLES_USER_AGENT', 'Vixeo v1.0'),
+    ],
+
+    /*
+    | Moments to skip (opening / end credits, recap, preview): TheIntroDB. Works without a key
+    | (5 000 lookups a day); a key raises it to 100 000.
+    */
+    'theintrodb' => [
+        'api_key' => env('THEINTRODB_API_KEY'),
+        'base_url' => env('THEINTRODB_BASE_URL', 'https://api.theintrodb.org/v4'),
+    ],
+
+    /*
     | Where installed apps send people to update (docs/mise-a-jour.md). No Play Store: Android
     | updates come from the install page of the site (the app also downloads the APK itself).
     */

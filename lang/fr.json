@@ -37,5 +37,9 @@
     "Your data has been sent to :email.": "Vos données ont été envoyées à :email.",
     "Your Vixeo data": "Vos données Vixeo",
     "You will find attached everything Vixeo stores about your account: profiles, list, progress and connected devices.": "Vous trouverez en pièce jointe tout ce que Vixeo conserve sur votre compte : profils, liste, progression et appareils connectés.",
-    "If you didn't ask for it, change your password and sign out the devices you don't know.": "Si vous n’êtes pas à l’origine de cette demande, changez votre mot de passe et déconnectez les appareils que vous ne connaissez pas."
+    "If you didn't ask for it, change your password and sign out the devices you don't know.": "Si vous n’êtes pas à l’origine de cette demande, changez votre mot de passe et déconnectez les appareils que vous ne connaissez pas.",
+    "The skip service is temporarily unavailable.": "Le service des génériques est momentanément indisponible.",
+    "The subtitle service is temporarily unavailable.": "Le service de sous-titres est momentanément indisponible. Réessayez dans quelques instants.",
+    "Subtitles are not available for now.": "Les sous-titres ne sont pas disponibles pour le moment.",
+    "The daily subtitle download limit has been reached. Try again tomorrow.": "La limite quotidienne de sous-titres est atteinte. Réessayez demain."
 }
