@@ -48,6 +48,8 @@ return [
             'genres' => 604800,
             // Age ratings (certifications) of list items, fetched in batches.
             'ratings' => 604800,
+            // Title logos of the home rows (TitleLogos), fetched in batches.
+            'images' => 604800,
         ],
     ],
 

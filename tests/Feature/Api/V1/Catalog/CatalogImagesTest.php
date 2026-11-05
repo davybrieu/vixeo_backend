@@ -82,3 +82,62 @@ it('reads pages without images', function () {
         ->assertJsonPath('data.logo_url', null)
         ->assertJsonPath('data.textless_backdrop_url', null);
 });
+
+/** A typed home: every movie list answers with the same two titles. */
+function fakeMovieHome(array $imagesById): void
+{
+    $fakes = [];
+    foreach ($imagesById as $id => $images) {
+        $fakes["api.themoviedb.org/3/movie/{$id}/images*"] = $images === null
+            ? Http::response(['status_message' => 'Error'], 500)
+            : Http::response($images);
+    }
+    Http::fake($fakes + [
+        'api.themoviedb.org/3/trending/movie/week*' => Http::response(Tmdb::page([Tmdb::movie(1), Tmdb::movie(2)])),
+        'api.themoviedb.org/3/movie/*' => Http::response(Tmdb::page([Tmdb::movie(1), Tmdb::movie(2)])),
+    ]);
+}
+
+it('gives the title logo of each home item, fetched once per title and cached', function () {
+    fakeMovieHome([
+        1 => ['logos' => [image('/one.png', 'fr', 5.0, 4.0)], 'backdrops' => []],
+        2 => ['logos' => [], 'backdrops' => []],
+    ]);
+
+    $home = $this->getJson('/api/v1/catalog/home?type=movie')->assertOk();
+
+    expect($home->json('featured.0.logo_url'))->toBe('https://image.tmdb.org/t/p/w500/one.png')
+        ->and($home->json('featured.0.logo_aspect_ratio'))->toEqual(4.0)
+        // No logo on TMDb: the app writes the title.
+        ->and($home->json('featured.1.logo_url'))->toBeNull()
+        ->and($home->json('sections.0.items.0.logo_url'))->toBe('https://image.tmdb.org/t/p/w500/one.png');
+
+    $imageRequests = fn () => collect(Http::recorded())->filter(fn ($pair) => str_contains($pair[0]->url(), '/images'));
+    // The same title in several rows: asked once, with the logo languages.
+    expect($imageRequests())->toHaveCount(2)
+        ->and($imageRequests()->every(fn ($pair) => $pair[0]['include_image_language'] === 'fr,en,null'))->toBeTrue();
+
+    // Cached: the next home asks nothing more for the logos.
+    $this->getJson('/api/v1/catalog/home?type=movie')->assertOk();
+    expect($imageRequests())->toHaveCount(2);
+});
+
+it('keeps the home when a logo lookup fails', function () {
+    fakeMovieHome([1 => null, 2 => ['logos' => [image('/two.png', 'en')], 'backdrops' => []]]);
+
+    $this->getJson('/api/v1/catalog/home?type=movie')
+        ->assertOk()
+        ->assertJsonPath('featured.0.logo_url', null)
+        ->assertJsonPath('featured.1.logo_url', 'https://image.tmdb.org/t/p/w500/two.png');
+});
+
+it('gives no logo in search results (the title page has it)', function () {
+    Http::fake([
+        'api.themoviedb.org/3/search/*' => Http::response(Tmdb::page([Tmdb::movie(1)])),
+    ]);
+
+    $this->getJson('/api/v1/catalog/search?query=fight')
+        ->assertOk()
+        ->assertJsonPath('movies.data.0.logo_url', null);
+    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/images'));
+});

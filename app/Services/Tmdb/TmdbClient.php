@@ -52,11 +52,13 @@ class TmdbClient
      * A path that fails or does not exist maps to null.
      *
      * @param  list<string>  $paths
+     * @param  array<string, string>  $query  Extra parameters, the same for every path.
      * @return array<string, array<string, mixed>|null>
      */
-    public function getMany(array $paths, string $ttl = 'details', int $concurrency = 10): array
+    public function getMany(array $paths, string $ttl = 'details', int $concurrency = 10, array $query = []): array
     {
-        $query = ['language' => config('services.tmdb.language')];
+        $query = ['language' => config('services.tmdb.language')] + $query;
+        ksort($query);
         $keys = [];
         $results = [];
 

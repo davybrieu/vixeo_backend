@@ -91,7 +91,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     `TmdbFormat::logo` choisit le logo du titre (français, puis anglais, puis sans langue ; pas de
     SVG) → `logo_url` + `logo_aspect_ratio` ; `TmdbFormat::textlessBackdrop` une image de fond sans
     texte → `textless_backdrop_url`. Null quand TMDb n'en a pas (l'appli écrit le titre / prend
-    `backdrop_url`).
+    `backdrop_url`). Accueil : `TitleLogos` ajoute le logo (`logo_url`) à chaque titre des rangées,
+    en un lot (`getMany`, cache `images` d'une semaine, partagé) ; les autres listes n'en ont pas.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :

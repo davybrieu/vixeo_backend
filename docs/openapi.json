@@ -806,7 +806,7 @@
         "/v1/catalog/home": {
             "get": {
                 "operationId": "v1.catalog.home",
-                "description": "Featured carousel (titles with a backdrop) and themed rows.",
+                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`), unlike other lists.",
                 "summary": "Home",
                 "tags": [
                     "Catalogue",
@@ -3467,6 +3467,20 @@
                             "null"
                         ],
                         "description": "Backdrop, w1280."
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Title logo (transparent PNG, w500). Home rows only: null elsewhere (the title page has it) or when TMDb has none."
+                    },
+                    "logo_aspect_ratio": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Logo width / height."
                     }
                 },
                 "required": [
@@ -3482,7 +3496,9 @@
                     "poster_path",
                     "poster_url",
                     "backdrop_path",
-                    "backdrop_url"
+                    "backdrop_url",
+                    "logo_url",
+                    "logo_aspect_ratio"
                 ],
                 "title": "MediaItemResource"
             },

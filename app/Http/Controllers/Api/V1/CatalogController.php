@@ -13,6 +13,7 @@ use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
 use App\Services\Tmdb\AgeGate;
+use App\Services\Tmdb\TitleLogos;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,7 @@ use Illuminate\Http\JsonResponse;
  */
 class CatalogController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate) {}
+    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleLogos $logos) {}
 
     /**
      * Catalog configuration.
@@ -49,16 +50,18 @@ class CatalogController extends Controller
      * Home.
      *
      * Featured carousel (titles with a backdrop) and themed rows.
+     *
+     * Items carry their title logo (`logo_url`), unlike other lists.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function home(CatalogHomeRequest $request): JsonResponse
     {
         $home = $this->catalog->home($request->enum('type', MediaType::class));
 
-        $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = $this->logos->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
             'featured' => $home['featured'],
             ...array_map(fn (array $section) => $section['items'], $home['sections']),
-        ]);
+        ]));
 
         $home['featured'] = $filtered['featured'];
         foreach ($home['sections'] as $index => $section) {
