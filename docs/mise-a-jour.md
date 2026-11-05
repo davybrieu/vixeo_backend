@@ -12,7 +12,7 @@ Une mise à jour passe par deux niveaux :
 
 | Plateforme | Comment la nouvelle version arrive | Lien envoyé par l'API |
 |---|---|---|
-| Android, Android TV | **Pas de Play Store** (décision du développeur) : nouvel APK, signé avec la même clé de release, téléchargé depuis le site `vixeo_web` et installé par Android | `ANDROID_UPDATE_URL` : `https://<site>/installer#android` (à renseigner : la valeur par défaut, une fiche Play Store, ne s'applique pas) |
+| Android, Android TV | **Pas de Play Store** (décision du développeur) : l'appli télécharge elle-même le nouvel APK (`latest.download_url`), vérifie son empreinte SHA-256, puis lance l'installateur d'Android, qui demande une confirmation. L'APK doit être signé avec la même clé de release. | `ANDROID_UPDATE_URL` (`<SITE_URL>/installer#android` par défaut), en secours |
 | iOS (distribution web UE) | Chaque version est notarisée par Apple, qui fournit un paquet de distribution, à héberger sur le site. L'iPhone interroge le site au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`), ou quand on le lui demande, et installe la différence. | `IOS_UPDATE_URL` (`<WEB_URL>/telecharger` par défaut) |
 
 Côté iOS, le serveur de distribution **reste à construire**. Il n'est possible qu'une fois la
@@ -38,9 +38,13 @@ Sans connexion. Limite : 30 appels par minute et par adresse IP.
 {
   "status": "update_available",
   "current_build": 12,
-  "latest": { "version": "1.1.0", "build": 14, "notes": "…", "published_at": "…" },
+  "latest": {
+    "version": "1.1.0", "build": 14, "notes": "…", "published_at": "…",
+    "download_url": "https://vixeo.app/telechargements/vixeo-1.1.0.apk",
+    "sha256": "3f5a…"
+  },
   "minimum_build": 10,
-  "update_url": "https://play.google.com/store/apps/details?id=app.vixeo.vixeo"
+  "update_url": "https://vixeo.app/installer#android"
 }
 ```
 
@@ -65,10 +69,18 @@ une date future reste invisible jusqu'à cette date.
    Forge, ou en SSH) :
 
 ```bash
-php artisan vixeo:release android 1.1.0 14 --notes="Page acteur et connexion TV par QR code."
+php artisan vixeo:release android 1.1.0 14 \
+    --apk=https://vixeo.app/telechargements/vixeo-1.1.0.apk \
+    --sha256=$(sha256sum vixeo-1.1.0.apk | cut -d' ' -f1) \
+    --notes="Page acteur et connexion TV par QR code."
 php artisan vixeo:release ios 1.1.0 14 --required --at="2026-11-10 08:00"
 php artisan vixeo:releases           # liste (ou : vixeo:releases ios)
 ```
+
+- `--apk` (adresse `https://`) et `--sha256` vont ensemble, pour Android seulement. Sans eux,
+  l'appli Android envoie seulement vers la page d'installation du site.
+- Le site `vixeo_web` lit aussi cette dernière version : son bouton « Télécharger l'APK » pointe
+  vers le même fichier.
 
 - Relancer la commande avec la même plateforme et le même build corrige la version (notes,
   obligatoire, date).

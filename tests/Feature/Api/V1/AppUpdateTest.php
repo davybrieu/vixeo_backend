@@ -22,7 +22,7 @@ it('says up to date without any release', function () {
         ->assertJsonPath('status', 'up_to_date')
         ->assertJsonPath('latest', null)
         ->assertJsonPath('minimum_build', null)
-        ->assertJsonPath('update_url', 'https://play.google.com/store/apps/details?id=app.vixeo.vixeo');
+        ->assertJsonPath('update_url', 'http://localhost:8100/installer#android');
 });
 
 it('suggests a newer release', function () {
@@ -102,6 +102,40 @@ it('publishes, corrects and lists releases with artisan', function () {
         ->and($release->notes)->toBeNull();
 
     $this->artisan('vixeo:releases')->expectsOutputToContain('1.1.0')->assertSuccessful();
+});
+
+it('gives the APK to download and its checksum (no Play Store)', function () {
+    $sha = str_repeat('ab', 32);
+    $this->artisan('vixeo:release', [
+        'platform' => 'android', 'version' => '1.2.0', 'build' => 14,
+        '--apk' => 'https://vixeo.app/telechargements/vixeo-1.2.0.apk', '--sha256' => strtoupper($sha),
+    ])->assertSuccessful();
+
+    checkUpdate('android', 3)
+        ->assertJsonPath('status', 'update_available')
+        ->assertJsonPath('latest.download_url', 'https://vixeo.app/telechargements/vixeo-1.2.0.apk')
+        ->assertJsonPath('latest.sha256', $sha);
+
+    release('android', '1.3.0', 15);
+    checkUpdate('android', 3)->assertJsonPath('latest.download_url', null)->assertJsonPath('latest.sha256', null);
+});
+
+it('checks the APK options', function (array $options) {
+    $this->artisan('vixeo:release', ['platform' => 'android', 'version' => '1.2.0', 'build' => 14, ...$options])->assertFailed();
+
+    expect(AppRelease::count())->toBe(0);
+})->with([
+    'APK without checksum' => [['--apk' => 'https://vixeo.app/vixeo.apk']],
+    'checksum without APK' => [['--sha256' => str_repeat('a', 64)]],
+    'bad checksum' => [['--apk' => 'https://vixeo.app/vixeo.apk', '--sha256' => 'abc']],
+    'not https' => [['--apk' => 'ftp://vixeo.app/vixeo.apk', '--sha256' => str_repeat('a', 64)]],
+]);
+
+it('keeps APK options for Android only', function () {
+    $this->artisan('vixeo:release', [
+        'platform' => 'ios', 'version' => '1.0.0', 'build' => 1,
+        '--apk' => 'https://vixeo.app/vixeo.apk', '--sha256' => str_repeat('a', 64),
+    ])->assertFailed();
 });
 
 it('refuses bad artisan input', function () {

@@ -39,11 +39,15 @@ class AppUpdateController extends Controller
                 'build' => (int) $latest->build,
                 /** What's new, in French (may be null). */
                 'notes' => $latest->notes === null ? null : (string) $latest->notes,
+                /** Android: the APK to download and install (https), or null. */
+                'download_url' => $latest->download_url === null ? null : (string) $latest->download_url,
+                /** SHA-256 of the APK, to check before installing (null without APK). */
+                'sha256' => $latest->sha256 === null ? null : (string) $latest->sha256,
                 'published_at' => $latest->published_at->toIso8601String(),
             ],
             /** Installs older than this build must update (null: none required). */
             'minimum_build' => $result['minimum_build'],
-            /** Page where the update is installed (Play Store, website…). */
+            /** Page where the update is installed: the site's install page (no Play Store). */
             'update_url' => $result['update_url'],
         ]);
     }

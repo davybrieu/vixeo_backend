@@ -16,9 +16,11 @@ use Illuminate\Support\Carbon;
  * @property int $build
  * @property bool $required
  * @property ?string $notes
+ * @property ?string $download_url APK (Android): the app downloads and installs it
+ * @property ?string $sha256 SHA-256 of the APK, checked by the app before installing
  * @property Carbon $published_at
  */
-#[Fillable(['platform', 'version', 'build', 'required', 'notes', 'published_at'])]
+#[Fillable(['platform', 'version', 'build', 'required', 'notes', 'download_url', 'sha256', 'published_at'])]
 class AppRelease extends Model
 {
     protected function casts(): array

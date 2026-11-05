@@ -81,6 +81,20 @@
                                                     ],
                                                     "description": "What's new, in French (may be null)."
                                                 },
+                                                "download_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Android: the APK to download and install (https), or null."
+                                                },
+                                                "sha256": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "SHA-256 of the APK, to check before installing (null without APK)."
+                                                },
                                                 "published_at": {
                                                     "type": "string"
                                                 }
@@ -89,6 +103,8 @@
                                                 "version",
                                                 "build",
                                                 "notes",
+                                                "download_url",
+                                                "sha256",
                                                 "published_at"
                                             ]
                                         },
@@ -104,7 +120,7 @@
                                                 "string",
                                                 "null"
                                             ],
-                                            "description": "Page where the update is installed (Play Store, website\u2026)."
+                                            "description": "Page where the update is installed: the site's install page (no Play Store)."
                                         }
                                     },
                                     "required": [

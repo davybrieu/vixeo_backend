@@ -8,9 +8,10 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
 /**
- * Declares a version of the app once it is live in its store (docs/mise-a-jour.md).
+ * Declares a version of the app once it can be downloaded (docs/mise-a-jour.md).
  *
- *     php artisan vixeo:release android 1.1.0 14 --notes="Nouveautés…"
+ *     php artisan vixeo:release android 1.1.0 14 --apk=https://vixeo.app/telechargements/vixeo-1.1.0.apk \
+ *         --sha256=… --notes="Nouveautés…"
  *     php artisan vixeo:release ios 1.1.0 14 --required --at="2026-11-10 08:00"
  *
  * Same platform and build again: updates that release (notes, required, date).
@@ -23,6 +24,8 @@ class PublishAppRelease extends Command
         {build : numéro de build (--build-number), toujours croissant}
         {--required : les versions plus anciennes doivent se mettre à jour}
         {--notes= : nouveautés, en français}
+        {--apk= : Android : adresse https de l’APK (l’appli le télécharge et l’installe)}
+        {--sha256= : Android : empreinte SHA-256 de l’APK (sha256sum), obligatoire avec --apk}
         {--at= : date de publication (par défaut : maintenant)}';
 
     protected $description = 'Publie une version de l’appli Android ou iOS (vérification des mises à jour)';
@@ -50,6 +53,32 @@ class PublishAppRelease extends Command
             return self::INVALID;
         }
 
+        $apk = $this->option('apk') ?: null;
+        $sha256 = $this->option('sha256') ? strtolower((string) $this->option('sha256')) : null;
+        if ($apk !== null || $sha256 !== null) {
+            if ($platform !== AppPlatform::Android) {
+                $this->error('--apk et --sha256 ne concernent que Android.');
+
+                return self::INVALID;
+            }
+            if ($apk === null || $sha256 === null) {
+                $this->error('--apk et --sha256 vont ensemble : l’appli vérifie le fichier avant de l’installer.');
+
+                return self::INVALID;
+            }
+            $secure = str_starts_with($apk, 'https://') || (app()->environment('local', 'testing') && str_starts_with($apk, 'http://'));
+            if (! filter_var($apk, FILTER_VALIDATE_URL) || ! $secure) {
+                $this->error('Adresse de l’APK invalide : une adresse https:// est obligatoire.');
+
+                return self::INVALID;
+            }
+            if (! preg_match('/^[0-9a-f]{64}$/', $sha256)) {
+                $this->error('Empreinte invalide : 64 caractères hexadécimaux (sha256sum vixeo.apk).');
+
+                return self::INVALID;
+            }
+        }
+
         try {
             $publishedAt = $this->option('at') ? Carbon::parse((string) $this->option('at')) : now();
         } catch (\Throwable) {
@@ -64,6 +93,8 @@ class PublishAppRelease extends Command
                 'version' => $version,
                 'required' => (bool) $this->option('required'),
                 'notes' => $this->option('notes') ?: null,
+                'download_url' => $apk,
+                'sha256' => $sha256,
                 'published_at' => $publishedAt,
             ],
         );

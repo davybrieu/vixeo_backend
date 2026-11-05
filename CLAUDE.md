@@ -98,8 +98,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
   lui (clé étrangère `cascadeOnDelete`) et ajoutée à l'export.
 - **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : table `app_releases` (plateforme,
-  version, build, obligatoire, notes, date), remplie par `php artisan vixeo:release` une fois la
-  version disponible dans son store. `GET /app/update` (sans connexion) compare les **builds** et
+  version, build, obligatoire, notes, date ; pour Android, adresse `https` de l'APK et son SHA-256),
+  remplie par `php artisan vixeo:release` une fois l'APK en ligne sur le site. `GET /app/update` (sans connexion) compare les **builds** et
   répond `up_to_date` / `update_available` / `update_required`. L'installation reste faite par le
   système (Android : APK depuis le site `vixeo_web`, pas de Play Store ; iOS : distribution web
   d'Apple, dont le serveur reste à construire).
