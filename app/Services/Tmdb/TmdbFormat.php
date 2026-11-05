@@ -72,6 +72,64 @@ final class TmdbFormat
         return $date !== null && preg_match('/^\d{4}/', $date) ? (int) substr($date, 0, 4) : null;
     }
 
+    /** Logo languages, in order of preference (null = no language). */
+    private const LOGO_LANGUAGES = ['fr', 'en', null];
+
+    /**
+     * Title logo of a movie / TV show page (`images` appended): French first, then English, then
+     * without language; the best rated of each. SVG files are left out (not every client draws
+     * them). Null when TMDb has none: the client writes the title.
+     *
+     * @param  array<string, mixed>  $title
+     * @return array{path: string, aspect_ratio: float}|null
+     */
+    public static function logo(array $title): ?array
+    {
+        $logos = array_filter(
+            self::array(self::array($title, 'images'), 'logos'),
+            fn ($logo) => is_array($logo)
+                && is_string($logo['file_path'] ?? null)
+                && ! str_ends_with(strtolower($logo['file_path']), '.svg')
+                && in_array($logo['iso_639_1'] ?? null, self::LOGO_LANGUAGES, true),
+        );
+        if ($logos === []) {
+            return null;
+        }
+
+        usort($logos, fn (array $a, array $b) => [
+            array_search($a['iso_639_1'] ?? null, self::LOGO_LANGUAGES, true),
+            -(float) ($a['vote_average'] ?? 0),
+        ] <=> [
+            array_search($b['iso_639_1'] ?? null, self::LOGO_LANGUAGES, true),
+            -(float) ($b['vote_average'] ?? 0),
+        ]);
+        $logo = $logos[0];
+        $ratio = (float) ($logo['aspect_ratio'] ?? 0);
+
+        return ['path' => (string) $logo['file_path'], 'aspect_ratio' => round($ratio > 0 ? $ratio : 3.0, 3)];
+    }
+
+    /**
+     * Best rated backdrop without text (`images` appended), to show under the logo. Null when TMDb
+     * has none: the main backdrop is used.
+     *
+     * @param  array<string, mixed>  $title
+     */
+    public static function textlessBackdrop(array $title): ?string
+    {
+        $best = null;
+        foreach (self::array(self::array($title, 'images'), 'backdrops') as $backdrop) {
+            if (! is_array($backdrop) || ($backdrop['iso_639_1'] ?? null) !== null || ! is_string($backdrop['file_path'] ?? null)) {
+                continue;
+            }
+            if ($best === null || (float) ($backdrop['vote_average'] ?? 0) > (float) ($best['vote_average'] ?? 0)) {
+                $best = $backdrop;
+            }
+        }
+
+        return $best === null ? null : (string) $best['file_path'];
+    }
+
     /** Full image URL, e.g. size "w500" or "original". */
     public static function image(?string $path, string $size): ?string
     {

@@ -123,8 +123,10 @@ class TmdbCatalog
     public function movie(int $id): array
     {
         $movie = $this->tmdb->get("movie/{$id}", [
-            'append_to_response' => 'credits,videos,release_dates,recommendations,similar',
+            'append_to_response' => 'credits,videos,release_dates,recommendations,similar,images',
             'include_video_language' => 'fr,en,null',
+            // Title logos and textless backdrops (TmdbFormat::logo, textlessBackdrop).
+            'include_image_language' => 'fr,en,null',
         ]);
 
         return $this->withRecommendations($movie, 'movie');
@@ -134,8 +136,9 @@ class TmdbCatalog
     public function show(int $id): array
     {
         $show = $this->tmdb->get("tv/{$id}", [
-            'append_to_response' => 'aggregate_credits,videos,content_ratings,recommendations,similar,external_ids',
+            'append_to_response' => 'aggregate_credits,videos,content_ratings,recommendations,similar,external_ids,images',
             'include_video_language' => 'fr,en,null',
+            'include_image_language' => 'fr,en,null',
         ]);
 
         return $this->withRecommendations($show, 'tv');

@@ -87,6 +87,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     filtres ni tri : avec un filtre ou un tri autre que `relevance` (`SearchSort`), l'API lit les
     `SEARCH_DEPTH` (3) premières pages, filtre, trie et renvoie une seule page. Une recherche
     filtrée ne renvoie pas de personnes ; une note minimale exige `TitleFilters::MIN_VOTES` votes.
+  - Fiches film / série : `images` ajouté à l'appel TMDb (`include_image_language=fr,en,null`).
+    `TmdbFormat::logo` choisit le logo du titre (français, puis anglais, puis sans langue ; pas de
+    SVG) → `logo_url` + `logo_aspect_ratio` ; `TmdbFormat::textlessBackdrop` une image de fond sans
+    texte → `textless_backdrop_url`. Null quand TMDb n'en a pas (l'appli écrit le titre / prend
+    `backdrop_url`).
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :

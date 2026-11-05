@@ -27,6 +27,8 @@ class MovieResource extends JsonResource
         ));
         $poster = F::string($r, 'poster_path');
         $backdrop = F::string($r, 'backdrop_path');
+        $logo = F::logo($r);
+        $textless = F::textlessBackdrop($r);
 
         return [
             'id' => (int) $r['id'],
@@ -54,6 +56,14 @@ class MovieResource extends JsonResource
             'poster_url' => F::image($poster, 'w500'),
             'backdrop_path' => $backdrop,
             'backdrop_url' => F::image($backdrop, 'w1280'),
+            /** Title logo (transparent PNG, w500), French if available. Null: write the title. */
+            'logo_path' => $logo['path'] ?? null,
+            'logo_url' => F::image($logo['path'] ?? null, 'w500'),
+            /** Logo width / height, to size it before it loads. */
+            'logo_aspect_ratio' => isset($logo['aspect_ratio']) ? (float) $logo['aspect_ratio'] : null,
+            /** Backdrop without text (to show under the logo), w1280. Null: use `backdrop_url`. */
+            'textless_backdrop_path' => $textless,
+            'textless_backdrop_url' => F::image($textless, 'w1280'),
             'trailer' => $trailer !== null ? new VideoResource($trailer) : null,
             'directors' => CrewResource::collection($directors),
             /** Main cast (20 max), in billing order. */

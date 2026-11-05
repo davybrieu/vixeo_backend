@@ -3612,6 +3612,39 @@
                             "null"
                         ]
                     },
+                    "logo_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Title logo (transparent PNG, w500), French if available. Null: write the title."
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "logo_aspect_ratio": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Logo width / height, to size it before it loads."
+                    },
+                    "textless_backdrop_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Backdrop without text (to show under the logo), w1280. Null: use `backdrop_url`."
+                    },
+                    "textless_backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "trailer": {
                         "anyOf": [
                             {
@@ -3665,6 +3698,11 @@
                     "poster_url",
                     "backdrop_path",
                     "backdrop_url",
+                    "logo_path",
+                    "logo_url",
+                    "logo_aspect_ratio",
+                    "textless_backdrop_path",
+                    "textless_backdrop_url",
                     "trailer",
                     "directors",
                     "cast",
@@ -4519,6 +4557,39 @@
                             "null"
                         ]
                     },
+                    "logo_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Title logo (transparent PNG, w500), French if available. Null: write the title."
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "logo_aspect_ratio": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Logo width / height, to size it before it loads."
+                    },
+                    "textless_backdrop_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Backdrop without text (to show under the logo), w1280. Null: use `backdrop_url`."
+                    },
+                    "textless_backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "trailer": {
                         "anyOf": [
                             {
@@ -4594,6 +4665,11 @@
                     "poster_url",
                     "backdrop_path",
                     "backdrop_url",
+                    "logo_path",
+                    "logo_url",
+                    "logo_aspect_ratio",
+                    "textless_backdrop_path",
+                    "textless_backdrop_url",
                     "trailer",
                     "creators",
                     "cast",
