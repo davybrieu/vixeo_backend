@@ -117,13 +117,30 @@ final class TmdbFormat
      */
     public static function textlessBackdrop(array $title): ?string
     {
+        return self::textless($title, 'backdrops');
+    }
+
+    /**
+     * Best rated poster without text (`images` appended or fetched), to show under the logo
+     * (phone carousel). Null when TMDb has none: the main poster is used.
+     *
+     * @param  array<string, mixed>  $title
+     */
+    public static function textlessPoster(array $title): ?string
+    {
+        return self::textless($title, 'posters');
+    }
+
+    /** @param  array<string, mixed>  $title */
+    private static function textless(array $title, string $kind): ?string
+    {
         $best = null;
-        foreach (self::array(self::array($title, 'images'), 'backdrops') as $backdrop) {
-            if (! is_array($backdrop) || ($backdrop['iso_639_1'] ?? null) !== null || ! is_string($backdrop['file_path'] ?? null)) {
+        foreach (self::array(self::array($title, 'images'), $kind) as $image) {
+            if (! is_array($image) || ($image['iso_639_1'] ?? null) !== null || ! is_string($image['file_path'] ?? null)) {
                 continue;
             }
-            if ($best === null || (float) ($backdrop['vote_average'] ?? 0) > (float) ($best['vote_average'] ?? 0)) {
-                $best = $backdrop;
+            if ($best === null || (float) ($image['vote_average'] ?? 0) > (float) ($best['vote_average'] ?? 0)) {
+                $best = $image;
             }
         }
 

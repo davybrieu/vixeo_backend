@@ -23,6 +23,7 @@ class MediaItemResource extends JsonResource
         $poster = F::string($r, 'poster_path');
         $backdrop = F::string($r, 'backdrop_path');
         $logo = is_array($r['logo'] ?? null) ? $r['logo'] : null;
+        $textlessPoster = F::string($r, 'textless_poster');
 
         return [
             /** TMDb id. */
@@ -48,6 +49,9 @@ class MediaItemResource extends JsonResource
             'logo_url' => F::image(isset($logo['path']) ? (string) $logo['path'] : null, 'w500'),
             /** Logo width / height. */
             'logo_aspect_ratio' => isset($logo['aspect_ratio']) ? (float) $logo['aspect_ratio'] : null,
+            /** Poster without text (to show under the logo), w500. Home rows only; null: use `poster_url`. */
+            'textless_poster_path' => $textlessPoster,
+            'textless_poster_url' => F::image($textlessPoster, 'w500'),
         ];
     }
 }

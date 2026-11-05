@@ -806,7 +806,7 @@
         "/v1/catalog/home": {
             "get": {
                 "operationId": "v1.catalog.home",
-                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`), unlike other lists.",
+                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`) and a textless poster, unlike other lists.",
                 "summary": "Home",
                 "tags": [
                     "Catalogue",
@@ -3481,6 +3481,19 @@
                             "null"
                         ],
                         "description": "Logo width / height."
+                    },
+                    "textless_poster_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Poster without text (to show under the logo), w500. Home rows only; null: use `poster_url`."
+                    },
+                    "textless_poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -3498,7 +3511,9 @@
                     "backdrop_path",
                     "backdrop_url",
                     "logo_url",
-                    "logo_aspect_ratio"
+                    "logo_aspect_ratio",
+                    "textless_poster_path",
+                    "textless_poster_url"
                 ],
                 "title": "MediaItemResource"
             },

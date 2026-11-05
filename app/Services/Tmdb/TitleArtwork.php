@@ -3,16 +3,18 @@
 namespace App\Services\Tmdb;
 
 /**
- * Title logos of list items (home rows), so that the large-screen hero and the phone carousel
- * show the logo at once. Fetched in one batch per list and cached a week, shared by all accounts:
- * only titles new to the home cost a request. Elsewhere (search), the title page gives the logo.
+ * Title logo and textless poster of list items (home rows), so that the large-screen hero and the
+ * phone carousel show the logo at once, on a poster without the title printed on it. Fetched in
+ * one batch per list and cached a week, shared by all accounts: only titles new to the home cost a
+ * request. Elsewhere (search), the title page gives the logo.
  */
-class TitleLogos
+class TitleArtwork
 {
     public function __construct(private TmdbClient $tmdb) {}
 
     /**
-     * Sets `logo` (see TmdbFormat::logo, null when TMDb has none) on each movie / TV show.
+     * Sets `logo` (TmdbFormat::logo) and `textless_poster` (TmdbFormat::textlessPoster) on each
+     * movie / TV show, null when TMDb has none.
      *
      * @param  array<array-key, list<array<string, mixed>>>  $lists
      * @return array<array-key, list<array<string, mixed>>>
@@ -37,6 +39,7 @@ class TitleLogos
             $path = self::path($item);
             $response = $path === null ? null : ($images[$path] ?? null);
             $item['logo'] = is_array($response) ? TmdbFormat::logo(['images' => $response]) : null;
+            $item['textless_poster'] = is_array($response) ? TmdbFormat::textlessPoster(['images' => $response]) : null;
 
             return $item;
         }, $items), $lists);

@@ -100,8 +100,11 @@ function fakeMovieHome(array $imagesById): void
 
 it('gives the title logo of each home item, fetched once per title and cached', function () {
     fakeMovieHome([
-        1 => ['logos' => [image('/one.png', 'fr', 5.0, 4.0)], 'backdrops' => []],
-        2 => ['logos' => [], 'backdrops' => []],
+        1 => ['logos' => [image('/one.png', 'fr', 5.0, 4.0)], 'backdrops' => [], 'posters' => [
+            image('/poster-fr.jpg', 'fr', 9.0, 0.667),
+            image('/poster-clean.jpg', null, 5.2, 0.667),
+        ]],
+        2 => ['logos' => [], 'backdrops' => [], 'posters' => [image('/poster-en.jpg', 'en', 6.0, 0.667)]],
     ]);
 
     $home = $this->getJson('/api/v1/catalog/home?type=movie')->assertOk();
@@ -110,6 +113,10 @@ it('gives the title logo of each home item, fetched once per title and cached', 
         ->and($home->json('featured.0.logo_aspect_ratio'))->toEqual(4.0)
         // No logo on TMDb: the app writes the title.
         ->and($home->json('featured.1.logo_url'))->toBeNull()
+        // A poster without text for the phone carousel; none for the second title (only an English one).
+        ->and($home->json('featured.0.textless_poster_url'))->toBe('https://image.tmdb.org/t/p/w500/poster-clean.jpg')
+        ->and($home->json('featured.0.textless_poster_path'))->toBe('/poster-clean.jpg')
+        ->and($home->json('featured.1.textless_poster_url'))->toBeNull()
         ->and($home->json('sections.0.items.0.logo_url'))->toBe('https://image.tmdb.org/t/p/w500/one.png');
 
     $imageRequests = fn () => collect(Http::recorded())->filter(fn ($pair) => str_contains($pair[0]->url(), '/images'));
@@ -128,6 +135,7 @@ it('keeps the home when a logo lookup fails', function () {
     $this->getJson('/api/v1/catalog/home?type=movie')
         ->assertOk()
         ->assertJsonPath('featured.0.logo_url', null)
+        ->assertJsonPath('featured.0.textless_poster_url', null)
         ->assertJsonPath('featured.1.logo_url', 'https://image.tmdb.org/t/p/w500/two.png');
 });
 
@@ -138,6 +146,7 @@ it('gives no logo in search results (the title page has it)', function () {
 
     $this->getJson('/api/v1/catalog/search?query=fight')
         ->assertOk()
-        ->assertJsonPath('movies.data.0.logo_url', null);
+        ->assertJsonPath('movies.data.0.logo_url', null)
+        ->assertJsonPath('movies.data.0.textless_poster_url', null);
     Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/images'));
 });
