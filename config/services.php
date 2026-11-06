@@ -84,6 +84,14 @@ return [
         'ios_url' => env('IOS_UPDATE_URL', rtrim((string) env('SITE_URL', 'http://localhost:8100'), '/').'/telecharger'),
     ],
 
+    /*
+    | Node.js scraper worker (Playwright) that returns stream source URLs from FrenchStream, Wiflix, Frembed.
+    */
+    'scraper' => [
+        'base_url' => env('SCRAPER_URL', 'http://127.0.0.1:3100'),
+        'timeout' => (int) env('SCRAPER_TIMEOUT', 45),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
