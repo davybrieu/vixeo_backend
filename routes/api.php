@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
+use App\Http\Controllers\Api\V1\StreamController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
 
@@ -112,6 +113,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->whereNumber(['id', 'season', 'episode'])->name('episode.subtitles');
             Route::get('subtitles/{file}', [PlaybackController::class, 'subtitleFile'])
                 ->whereNumber('file')->middleware('throttle:subtitles')->name('subtitles.file');
+
+            // Stream sources (FrenchStream, Wiflix, Frembed via Node scraper).
+            Route::get('movie/{id}/sources', [StreamController::class, 'movieSources'])
+                ->whereNumber('id')->name('movie.sources');
+            Route::get('tv/{id}/season/{season}/episode/{episode}/sources', [StreamController::class, 'episodeSources'])
+                ->whereNumber(['id', 'season', 'episode'])->name('episode.sources');
         });
     });
 });
