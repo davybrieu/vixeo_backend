@@ -11,9 +11,8 @@ class AppUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /** Platform of the installed app (`android` also covers Android TV). */
             'platform' => ['required', Rule::enum(AppPlatform::class)],
-            /** Build number of the installed app (`CFBundleVersion` on iOS, `versionCode` on Android). */
+            'version' => ['required', 'string', 'regex:/^\d+\.\d+\.\d+$/', 'max:32'],
             'build' => ['required', 'integer', 'min:0', 'max:4294967295'],
         ];
     }

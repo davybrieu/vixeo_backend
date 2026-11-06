@@ -80,6 +80,7 @@ return [
     | updates come from the install page of the site (the app also downloads the APK itself).
     */
     'app_updates' => [
+        'github_repository' => env('APP_UPDATES_GITHUB_REPOSITORY', 'davybrieu/vixeo_frontend'),
         'android_url' => env('ANDROID_UPDATE_URL', rtrim((string) env('SITE_URL', 'http://localhost:8100'), '/').'/installer#android'),
         'ios_url' => env('IOS_UPDATE_URL', rtrim((string) env('SITE_URL', 'http://localhost:8100'), '/').'/telecharger'),
     ],
