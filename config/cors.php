@@ -1,5 +1,14 @@
 <?php
 
+$allowedOrigins = array_filter(array_map(
+    'trim',
+    explode(',', env('CORS_ALLOWED_ORIGINS', '*')),
+));
+
+// The browser app uses a separate origin from the API. Always keep it allowed,
+// even when production CORS_ALLOWED_ORIGINS is customized in the server .env.
+$allowedOrigins[] = 'https://app.vixeo.app';
+
 return [
 
     /*
@@ -19,7 +28,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', '*'))),
+    'allowed_origins' => array_values(array_unique($allowedOrigins)),
 
     'allowed_origins_patterns' => [],
 
