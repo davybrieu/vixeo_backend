@@ -12,7 +12,8 @@ class AppUpdateRequest extends FormRequest
     {
         return [
             'platform' => ['required', Rule::enum(AppPlatform::class)],
-            'version' => ['required', 'string', 'regex:/^\d+\.\d+\.\d+$/', 'max:32'],
+            // Optional for compatibility with already-installed older app builds.
+            'version' => ['sometimes', 'nullable', 'string', 'regex:/^\d+\.\d+\.\d+$/', 'max:32'],
             'build' => ['required', 'integer', 'min:0', 'max:4294967295'],
         ];
     }
