@@ -3,11 +3,24 @@
 namespace App\Services\Playback;
 
 use App\Services\Tmdb\TmdbClient;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class StreamSources
 {
+    /** Domaines supportés par les extracteurs du scraper Node. */
+    private const SUPPORTED_DOMAINS = [
+        'voe.sx', 'uqload.com', 'uqload.net', 'uqload.io', 'uqload.co',
+        'streamtape.com', 'streamtape.net', 'streamtape.to', 'streamtape.xyz',
+        'doodstream.com', 'dood.watch', 'dood.to', 'dood.so', 'dood.la', 'dood.li',
+        'dood.ws', 'dood.pm', 'dood.re', 'dood.yt', 'doods.pro',
+        'filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl',
+        'streamwish.to', 'streamwish.com', 'awish.pro', 'embedwish.com',
+        'kisswish.com', 'hlswish.com', 'swishsrv.com', 'playerwish.com',
+        'mixdrop.co', 'mixdrop.to', 'mixdrop.ch', 'mixdrop.bz', 'mixdrop.ag',
+    ];
+
     public function __construct(private TmdbClient $tmdb) {}
 
     public function movie(int $tmdbId): array
@@ -65,7 +78,72 @@ class StreamSources
         }
 
         $sources = $response->json('sources') ?? [];
+        $sources = is_array($sources) ? array_values($sources) : [];
 
-        return is_array($sources) ? array_values($sources) : [];
+        $this->logStreamRequest($payload, count($sources));
+        $this->logMissingExtractors($sources, $payload);
+
+        return $sources;
+    }
+
+    private function logStreamRequest(array $payload, int $sourceCount): void
+    {
+        $user = Auth::user();
+        $profile = request()->attributes->get('profile');
+
+        Log::channel('streams')->info('stream_request', [
+            'event' => 'stream_request',
+            'user_id' => $user?->id,
+            'user_email' => $user?->email,
+            'profile_id' => $profile?->id ?? null,
+            'type' => $payload['type'],
+            'tmdb_id' => $payload['tmdb_id'],
+            'title' => $payload['title'] ?? '',
+            'season' => $payload['season'] ?? null,
+            'episode' => $payload['episode'] ?? null,
+            'sources_count' => $sourceCount,
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+    }
+
+    private function logMissingExtractors(array $sources, array $payload): void
+    {
+        foreach ($sources as $source) {
+            $url = $source['url'] ?? '';
+            if ($url === '' || $this->hasExtractor($url)) {
+                continue;
+            }
+
+            Log::channel('streams')->info('missing_extractor', [
+                'event' => 'missing_extractor',
+                'url' => $url,
+                'provider' => $source['provider'] ?? '',
+                'name' => $source['name'] ?? '',
+                'type' => $payload['type'],
+                'tmdb_id' => $payload['tmdb_id'],
+                'title' => $payload['title'] ?? '',
+                'season' => $payload['season'] ?? null,
+                'episode' => $payload['episode'] ?? null,
+                'user_id' => Auth::id(),
+            ]);
+        }
+    }
+
+    private function hasExtractor(string $url): bool
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if (! $host) {
+            return false;
+        }
+        $host = strtolower(preg_replace('/^www\./', '', $host));
+
+        foreach (self::SUPPORTED_DOMAINS as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain) || str_contains($host, explode('.', $domain)[0])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
