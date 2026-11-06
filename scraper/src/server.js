@@ -2,6 +2,7 @@ const http = require('http');
 const { searchFrenchStream } = require('./providers/frenchstream');
 const { searchWiflix } = require('./providers/wiflix');
 const { searchFrembed } = require('./providers/frembed');
+const { extract } = require('./extractors');
 
 const PORT = process.env.SCRAPER_PORT || 3100;
 
@@ -13,6 +14,7 @@ async function handleSources(body) {
   const season = body.season || null;
   const episode = body.episode || null;
   const tmdb_id = body.tmdb_id || null;
+  const doExtract = body.extract === true;
 
   const jobs = [
     searchFrenchStream({ type, title, originalTitle, year, season, episode }).catch((e) => {
@@ -30,7 +32,20 @@ async function handleSources(body) {
   ];
 
   const results = await Promise.all(jobs);
-  return { sources: results.flat() };
+  let sources = results.flat();
+
+  if (doExtract) {
+    sources = await Promise.all(sources.map(async (s) => {
+      try {
+        const extracted = await extract(s.url);
+        return extracted ? { ...s, stream: extracted.url, streamType: extracted.type, extractor: extracted.extractor } : s;
+      } catch (e) {
+        return s;
+      }
+    }));
+  }
+
+  return { sources };
 }
 
 const server = http.createServer(async (req, res) => {
@@ -52,6 +67,22 @@ const server = http.createServer(async (req, res) => {
       console.error(e);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message, sources: [] }));
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/extract') {
+    let raw = '';
+    for await (const chunk of req) raw += chunk;
+    try {
+      const body = JSON.parse(raw || '{}');
+      const result = await extract(body.url);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result || { error: 'No extractor matched or extraction failed' }));
+    } catch (e) {
+      console.error(e);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
     }
     return;
   }
