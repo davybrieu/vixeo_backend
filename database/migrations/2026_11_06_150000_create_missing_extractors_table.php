@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('missing_extractors')) {
+            return;
+        }
+
         Schema::create('missing_extractors', function (Blueprint $table) {
             $table->id();
             $table->string('url', 2048);
