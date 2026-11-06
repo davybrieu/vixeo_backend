@@ -37,14 +37,6 @@ return [
             'replace_placeholders' => true,
         ],
 
-        'streams' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/streams.log'),
-            'level' => 'info',
-            'days' => 30,
-            'replace_placeholders' => true,
-        ],
-
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

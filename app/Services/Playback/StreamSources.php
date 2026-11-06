@@ -2,6 +2,7 @@
 
 namespace App\Services\Playback;
 
+use App\Models\MissingExtractor;
 use App\Services\Tmdb\TmdbClient;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -80,53 +81,49 @@ class StreamSources
         $sources = $response->json('sources') ?? [];
         $sources = is_array($sources) ? array_values($sources) : [];
 
-        $this->logStreamRequest($payload, count($sources));
-        $this->logMissingExtractors($sources, $payload);
+        $this->recordMissingExtractors($sources, $payload);
 
         return $sources;
     }
 
-    private function logStreamRequest(array $payload, int $sourceCount): void
+    private function recordMissingExtractors(array $sources, array $payload): void
     {
-        $user = Auth::user();
-        $profile = request()->attributes->get('profile');
+        $now = now();
+        $userId = Auth::id();
 
-        Log::channel('streams')->info('stream_request', [
-            'event' => 'stream_request',
-            'user_id' => $user?->id,
-            'user_email' => $user?->email,
-            'profile_id' => $profile?->id ?? null,
-            'type' => $payload['type'],
-            'tmdb_id' => $payload['tmdb_id'],
-            'title' => $payload['title'] ?? '',
-            'season' => $payload['season'] ?? null,
-            'episode' => $payload['episode'] ?? null,
-            'sources_count' => $sourceCount,
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ]);
-    }
-
-    private function logMissingExtractors(array $sources, array $payload): void
-    {
         foreach ($sources as $source) {
             $url = $source['url'] ?? '';
             if ($url === '' || $this->hasExtractor($url)) {
                 continue;
             }
 
-            Log::channel('streams')->info('missing_extractor', [
-                'event' => 'missing_extractor',
-                'url' => $url,
-                'provider' => $source['provider'] ?? '',
-                'name' => $source['name'] ?? '',
-                'type' => $payload['type'],
-                'tmdb_id' => $payload['tmdb_id'],
-                'title' => $payload['title'] ?? '',
-                'season' => $payload['season'] ?? null,
-                'episode' => $payload['episode'] ?? null,
-                'user_id' => Auth::id(),
-            ]);
+            $host = parse_url($url, PHP_URL_HOST) ?: '';
+
+            $existing = MissingExtractor::where('url', $url)->first();
+
+            if ($existing) {
+                $existing->increment('occurrences');
+                $existing->update([
+                    'last_seen_at' => $now,
+                    'user_id' => $userId ?? $existing->user_id,
+                ]);
+            } else {
+                MissingExtractor::create([
+                    'url' => $url,
+                    'host' => $host,
+                    'provider' => $source['provider'] ?? null,
+                    'name' => $source['name'] ?? null,
+                    'type' => $payload['type'] ?? null,
+                    'tmdb_id' => $payload['tmdb_id'] ?? null,
+                    'title' => $payload['title'] ?? null,
+                    'season' => $payload['season'] ?? null,
+                    'episode' => $payload['episode'] ?? null,
+                    'user_id' => $userId,
+                    'occurrences' => 1,
+                    'first_seen_at' => $now,
+                    'last_seen_at' => $now,
+                ]);
+            }
         }
     }
 
