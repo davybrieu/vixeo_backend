@@ -12,6 +12,7 @@ async function handleSources(body) {
   const year = body.year || null;
   const season = body.season || null;
   const episode = body.episode || null;
+  const tmdb_id = body.tmdb_id || null;
 
   const jobs = [
     searchFrenchStream({ type, title, originalTitle, year, season, episode }).catch((e) => {
@@ -22,7 +23,7 @@ async function handleSources(body) {
       console.error('Wiflix:', e.message);
       return [];
     }),
-    searchFrembed({ type, title, originalTitle, year, season, episode }).catch((e) => {
+    searchFrembed({ type, tmdb_id, season, episode }).catch((e) => {
       console.error('Frembed:', e.message);
       return [];
     }),
