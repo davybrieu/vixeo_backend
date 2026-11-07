@@ -11,6 +11,7 @@ Champs du profil (`GET/PATCH /api/v1/profiles/{id}`), les mêmes sur tous les ap
 |---|---|---|
 | `audio_language` | `fr`, `en`, `es`… (`App\Support\Languages::AUDIO`) | `null` = version originale |
 | `subtitle_language` | `fr`, `en`, `pt-BR`… (`Languages::SUBTITLES`) | `null` = pas de sous-titres |
+| `no_spoiler` | masque les images, titres et descriptions des épisodes jusqu'à leur sélection | `false` |
 | `skip_intro` | générique de début passé tout seul | `false` |
 | `skip_recap` | résumé « Précédemment… » passé tout seul | `false` |
 | `skip_credits` | générique de fin passé tout seul (épisode suivant) | `false` |
