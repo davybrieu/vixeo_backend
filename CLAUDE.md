@@ -8,8 +8,6 @@ Android TV, iOS). L'appli cliente est dans le dépôt
 périmètre légal (§3, ce qui est hors périmètre ne doit pas être implémenté), sécurité (§6),
 feuille de route (§10).
 
-**Écarté par le développeur** (ne pas proposer) : import IPTV / M3U / Xtream, radio, replays.
-
 **Distribution Android** (décision du développeur, ne plus poser la question) : **pas de Play
 Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est distribuée en
 **APK signé** depuis le site `vixeo_web` (page `/installer`). Conséquences :
