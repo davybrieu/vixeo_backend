@@ -93,6 +93,23 @@ return [
         'timeout' => (int) env('SCRAPER_TIMEOUT', 45),
     ],
 
+    /*
+    | Personal legal Xtream Codes panel (live TV). Credentials stay on the server only.
+    | XTREAM_BASE_URL example: http://panel.example.com:8080
+    */
+    'xtream' => [
+        'base_url' => rtrim((string) env('XTREAM_BASE_URL', ''), '/'),
+        'username' => env('XTREAM_USERNAME', ''),
+        'password' => env('XTREAM_PASSWORD', ''),
+        // Prefer HLS when the panel supports it.
+        'stream_format' => env('XTREAM_STREAM_FORMAT', 'm3u8'),
+        'timeout' => (int) env('XTREAM_TIMEOUT', 20),
+        'ttl' => [
+            'categories' => (int) env('XTREAM_TTL_CATEGORIES', 3600),
+            'channels' => (int) env('XTREAM_TTL_CHANNELS', 1800),
+        ],
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
