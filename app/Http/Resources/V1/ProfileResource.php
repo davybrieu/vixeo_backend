@@ -29,6 +29,8 @@ class ProfileResource extends JsonResource
             'audio_language' => $this->audio_language,
             /** Preferred subtitles, null = none. */
             'subtitle_language' => $this->subtitle_language,
+            /** Hide episode artwork, titles and descriptions until selected. */
+            'no_spoiler' => (bool) $this->no_spoiler,
             /** Segments the player skips by itself (TheIntroDB timestamps, see GET …/segments). */
             'skip_intro' => (bool) $this->skip_intro,
             'skip_recap' => (bool) $this->skip_recap,
