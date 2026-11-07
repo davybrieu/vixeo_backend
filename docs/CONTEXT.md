@@ -50,8 +50,8 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
   sous-titres, vitesse 0,5×–2×, verrouillage, Picture-in-Picture, Chromecast,
   ouverture dans un lecteur externe (VLC, MX Player) avec reprise de position,
   « passer l'intro », épisode suivant.
-- **TV en direct** : chaînes gratuites officielles (FAST), dossiers favoris,
-  guide des programmes (EPG) si dispo.
+- **TV en direct** : chaînes FAST, compte Xtream / IPTV personnel de l'utilisateur,
+  dossiers favoris, guide des programmes (EPG) si dispo.
 - **Profils** (« Qui regarde ? ») : favoris, historique, reprise et téléchargements séparés.
 - **Favoris** avec filtres (films, séries, épisodes, vus…) et tris (récent, A→Z, année…).
 - **Appui long** partout = menu contextuel (favori, marquer vu, vu jusqu'ici,
@@ -70,6 +70,8 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
 
 - Chaînes **FAST** gratuites et officielles (Pluto TV, Samsung TV Plus, Plex, etc.),
   via leurs flux publics, **en respectant leurs conditions d'utilisation**.
+- **Compte Xtream / IPTV personnel** de l'utilisateur (panel légal dont il a les droits),
+  proxifié par l'API (identifiants jamais exposés au client).
 - **Serveurs média personnels** de l'utilisateur : Jellyfin, Plex, Emby (via leurs API).
 - **Métadonnées** : TMDb (clé API, attribution « This product uses the TMDB API… » obligatoire).
 - **Sous-titres** : OpenSubtitles, avec la clé Vixeo (décision du développeur, 07/11/2026 :
@@ -77,18 +79,12 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
   `docs/lecture.md`). Moments à passer (génériques, résumé) : TheIntroDB.
 - Vidéos locales de l'appareil.
 
-### Écarté par décision du développeur (ne pas proposer ni implémenter)
-
-- Import de listes **IPTV / M3U / Xtream**.
-- **Radio**.
-- **Replays**.
-
 ### Hors périmètre (ne pas implémenter, ne pas aider à implémenter)
 
 - Scraping de sites de streaming sans droits sur les contenus.
 - « Extracteurs » qui récupèrent les liens vidéo directs chez des hébergeurs de fichiers.
 - Contournement des blocages (suivi automatique des domaines miroirs, DNS de contournement,
-  tunnels VPN dédiés), restreams de chaînes payantes ou de sport.
+  tunnels VPN dédiés) pour des contenus non autorisés.
 
 Note : l'App Store et le Play Store refusent les applis qui donnent accès à des contenus
 non autorisés ; hors App Store, la distribution iOS est très limitée.
@@ -407,61 +403,4 @@ Forge ne crée pas d'URL par PR. Options :
 ### 8.4 Applis mobiles
 
 - Android : **pas de Play Store** (décision du développeur). APK signé avec une clé de release
-  stable (hors du dépôt), distribué depuis le site `vixeo_web` ; mises à jour par la vérification
-  intégrée à l'appli. Vérification des développeurs Android (Google) obligatoire hors Play Store
-  dans 4 pays depuis le 30/09/2026, prévue partout en 2027.
-- iOS : exige macOS → runner macOS de GitHub Actions ; compte Apple Developer.
-
----
-
-## 9. Conventions
-
-- Dart : `flutter analyze` propre, `flutter test` pour les widgets et la logique.
-- Laravel : tests Pest ou PHPUnit, Resources JSON pour les réponses, Form Requests pour la validation.
-- Contrat API : spec OpenAPI (Scramble) → client Dart généré ; ne pas recopier les modèles à la main.
-- i18n Flutter avec fichiers ARB, français par défaut.
-- Branches de fonctionnalité + PR ; `main` = production.
-- Chaque PR : description en français, captures ou URL de prévisualisation pour l'UI.
-
----
-
-## 10. Feuille de route suggérée (MVP)
-
-1. **Socle** : projet Flutter (thème, navigation, focus TV, détection TV/mobile),
-   API Laravel (auth Sanctum, profils), CI/CD et déploiements Forge en place.
-2. **Catalogue** : intégration TMDb (via l'API pour le cache), accueil, fiches, recherche.
-3. **Lecteur** : lecture de flux (HLS/DASH/MP4), sous-titres, bascule automatique,
-   reprise et « Continuer à regarder ».
-4. **TV en direct** : chaînes FAST officielles, favoris, EPG.
-5. **Comptes et synchro** : favoris, historique et réglages synchronisés via l'API,
-   contrôle parental.
-6. **Finitions** : polish TV, Chromecast, mode léger, PiP, lecteur externe.
-7. **Publication** : builds Android / iOS, fiches stores.
-
----
-
-## 11. Annexe : analyse d'ONYX (référence)
-
-- Dépôt : https://github.com/warbix-prog/ONYX — ne contient **aucun code source**,
-  seulement un README et un guide PDF de 61 pages (v1.8.6). L'appli est distribuée en APK
-  via les Releases (variantes universelle, TV, x86).
-- APK v1.8.6 décompilé (jadx) : package `com.streamfr.app`, **Kotlin 2.2** (cible Java 17),
-  UI en XML Android (ViewBinding) + Leanback pour la TV, pas de Compose.
-- Base : **StreamFlix Reborn** (open source, Apache 2.0), lui-même suite de StreamFlix :
-  - https://github.com/stantanasi/streamflix (projet d'origine)
-  - https://github.com/streamflix-reborn2/streamflix (versions récentes de Reborn)
-- Bibliothèques principales : Media3 / ExoPlayer (+ FFmpeg et dav1d pour le décodage
-  logiciel), Cronet, OkHttp / Retrofit, Jsoup, Room, Leanback, Cast, ZXing (QR),
-  ML Kit Translate, TEN VAD (détection de voix), NanoHTTPD (serveur local),
-  Android for Cars (Android Auto).
-- Fonctionnement général : agrégateur. Chaque « source » lit un site tiers, chaque
-  « serveur » est un lien vers un hébergeur, puis un module dédié retrouve le flux
-  vidéo final avant la lecture. Le catalogue films / séries / animés et une partie
-  de la TV proviennent de sources sans droits → **hors périmètre** (voir §3).
-  Ce sont l'ergonomie et les patterns de robustesse (§5) qui sont repris.
-- Côté serveur, ONYX utilise un petit backend (Cloudflare Workers) pour : un interrupteur
-  à distance, le transfert entre appareils par code, des votes de notes et de langue.
-  Les listes de chaînes sont des fichiers JSON / M3U hébergés sur GitHub (mise à jour
-  sans nouvelle version).
-- Mises à jour : l'appli interroge l'API GitHub Releases, choisit l'APK selon le
-  processeur et lance l'installeur Android.
+  stable (hors du dépôt), distribué depuis le site `vixeo_web` ; mises à jour par la vérification intégrée.
