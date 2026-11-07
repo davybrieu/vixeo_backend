@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\StreamController;
+use App\Http\Controllers\Api\V1\TvController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
 
@@ -85,6 +86,15 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('searches/clear', [ProfileSearchController::class, 'clear'])->name('searches.clear');
             Route::delete('searches/{search}', [ProfileSearchController::class, 'destroy'])
                 ->scopeBindings()->whereNumber('search')->name('searches.destroy');
+        });
+
+        // Live TV (personal legal Xtream panel — credentials stay on the server).
+        Route::prefix('tv')->name('tv.')->middleware('throttle:catalog')->group(function () {
+            Route::get('categories', [TvController::class, 'categories'])->name('categories');
+            Route::get('channels', [TvController::class, 'channels'])->name('channels');
+            Route::get('channels/{id}/stream', [TvController::class, 'stream'])
+                ->where('id', '[0-9]+')
+                ->name('channels.stream');
         });
 
         // Catalog (TMDb metadata, cached).

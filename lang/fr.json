@@ -41,5 +41,9 @@
     "The skip service is temporarily unavailable.": "Le service des génériques est momentanément indisponible.",
     "The subtitle service is temporarily unavailable.": "Le service de sous-titres est momentanément indisponible. Réessayez dans quelques instants.",
     "Subtitles are not available for now.": "Les sous-titres ne sont pas disponibles pour le moment.",
-    "The daily subtitle download limit has been reached. Try again tomorrow.": "La limite quotidienne de sous-titres est atteinte. Réessayez demain."
+    "The daily subtitle download limit has been reached. Try again tomorrow.": "La limite quotidienne de sous-titres est atteinte. Réessayez demain.",
+    "Live TV is not configured.": "La TV en direct n'est pas configurée sur le serveur.",
+    "Channel not found.": "Chaîne introuvable.",
+    "Unable to reach the live TV server.": "Impossible de joindre le serveur de TV en direct.",
+    "Invalid response from the live TV server.": "Réponse invalide du serveur de TV en direct."
 }
