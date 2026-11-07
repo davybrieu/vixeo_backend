@@ -35,6 +35,7 @@ class AccountExport
                 'poster_format' => $p->poster_format->value,
                 'audio_language' => $p->audio_language,
                 'subtitle_language' => $p->subtitle_language,
+                'no_spoiler' => $p->no_spoiler,
                 'skip_intro' => $p->skip_intro,
                 'skip_recap' => $p->skip_recap,
                 'skip_credits' => $p->skip_credits,
