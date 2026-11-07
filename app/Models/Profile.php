@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Hash;
  */
 #[Fillable([
     'name', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
-    'audio_language', 'subtitle_language', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
+    'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
 ])]
 #[Hidden(['pin', 'sync_revision'])]
 class Profile extends Model
@@ -41,6 +41,7 @@ class Profile extends Model
     protected $attributes = [
         'allow_unrated' => false,
         'poster_format' => 'portrait',
+        'no_spoiler' => false,
         'skip_intro' => false,
         'skip_recap' => false,
         'skip_credits' => false,
@@ -58,6 +59,7 @@ class Profile extends Model
             'pin' => 'hashed',
             'position' => 'integer',
             'sync_revision' => 'integer',
+            'no_spoiler' => 'boolean',
             'skip_intro' => 'boolean',
             'skip_recap' => 'boolean',
             'skip_credits' => 'boolean',
