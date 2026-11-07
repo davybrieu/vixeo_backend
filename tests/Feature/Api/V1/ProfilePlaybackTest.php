@@ -18,6 +18,7 @@ it('gives the playback settings of a new profile: original version, no subtitles
         ->assertOk()
         ->assertJsonPath('data.audio_language', null)
         ->assertJsonPath('data.subtitle_language', null)
+        ->assertJsonPath('data.no_spoiler', false)
         ->assertJsonPath('data.skip_intro', false)
         ->assertJsonPath('data.skip_recap', false)
         ->assertJsonPath('data.skip_credits', false)
@@ -31,11 +32,13 @@ it('saves the playback settings, without the parental PIN', function () {
     $this->patchJson("/api/v1/profiles/{$kid->id}", [
         'audio_language' => 'fr',
         'subtitle_language' => 'pt-BR',
+        'no_spoiler' => true,
         'skip_intro' => true,
         'skip_credits' => true,
     ])->assertOk()
         ->assertJsonPath('data.audio_language', 'fr')
         ->assertJsonPath('data.subtitle_language', 'pt-BR')
+        ->assertJsonPath('data.no_spoiler', true)
         ->assertJsonPath('data.skip_intro', true)
         ->assertJsonPath('data.skip_recap', false)
         ->assertJsonPath('data.skip_credits', true);
@@ -132,6 +135,7 @@ it('deletes searches with the profile and exports them', function () {
     $export = app(AccountExport::class)->build($this->user->fresh());
     expect($export['profiles'][0]['recent_searches'][0]['query'])->toBe('Dune')
         ->and($export['profiles'][0]['subtitle_language'])->toBe('fr')
+        ->and($export['profiles'][0]['no_spoiler'])->toBeFalse()
         ->and($export['profiles'][0]['skip_intro'])->toBeTrue();
 
     $this->profile->delete();
