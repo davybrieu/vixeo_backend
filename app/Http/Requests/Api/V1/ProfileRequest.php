@@ -46,6 +46,8 @@ class ProfileRequest extends FormRequest
             'audio_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::AUDIO)],
             /** Preferred subtitles ("fr", "en", "pt-BR"…). Null = no subtitles. */
             'subtitle_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::SUBTITLES)],
+            /** Hide episode artwork, titles and descriptions until the episode is selected. */
+            'no_spoiler' => ['sometimes', 'boolean'],
             /** The player skips the opening credits by itself (else it shows a "Passer" button). */
             'skip_intro' => ['sometimes', 'boolean'],
             /** The player skips the recap ("Précédemment…") by itself. */
