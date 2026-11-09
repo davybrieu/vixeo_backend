@@ -84,14 +84,14 @@ jour à tous les appareils Android.
 
 ## Publier une version
 
-1. Dans `vixeo_frontend`, augmenter `version:` dans `pubspec.yaml`. Le numéro de build (après le
-   `+`) doit toujours augmenter.
+1. Si besoin, changer la version affichée dans `vixeo_frontend` (`version:` de `pubspec.yaml`).
+   Le numéro de build est donné par la CI : c'est le numéro de son run, qui augmente tout seul.
 2. Pousser sur `main` : la CI compile l'APK signé avec la clé de release et publie la release
-   `android-<build>`. Les applis la voient dans les 5 minutes, le site `vixeo_web` aussi (son
+   `android-<build>` (titre : « Vixeo Android v1.0.0 - build 160 »). Les applis la voient dans les 5 minutes, le site `vixeo_web` aussi (son
    bouton « Télécharger l'APK » pointe vers le même fichier).
 3. **Mise à jour obligatoire** (cas sérieux seulement : faille de sécurité, ancienne version
    incompatible avec l'API) : sur GitHub, *Releases* → la release → *Edit*, ajouter
-   `[obligatoire]` au titre, enregistrer. Le retirer rend la mise à jour facultative à nouveau.
+   `[obligatoire]` au titre (« Vixeo Android v1.0.0 - build 160 [obligatoire] »), enregistrer. Le retirer rend la mise à jour facultative à nouveau.
 4. **Retirer une version** : la supprimer sur GitHub, ou la passer en pré-version ; la précédente
    redevient la dernière.
 
