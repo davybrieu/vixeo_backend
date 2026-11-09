@@ -17,9 +17,17 @@ class ResolvedStreamResource extends JsonResource
         return [
             /** Playable stream URL (HLS `.m3u8` or progressive `.mp4`). */
             'stream' => (string) $this->resource['stream'],
-            /** "m3u8" or "mp4". */
+            /**
+             * "m3u8" or "mp4".
+             *
+             * @var string|null
+             */
             'stream_type' => $this->resource['stream_type'],
-            /** Extractor that resolved the link ("voe", "streamtape"…), null for the generic one. */
+            /**
+             * Extractor that resolved the link ("voe", "streamtape"…), null for the generic one.
+             *
+             * @var string|null
+             */
             'extractor' => $this->resource['extractor'],
             /**
              * HTTP headers the player must send when fetching the stream (Referer, Origin…).

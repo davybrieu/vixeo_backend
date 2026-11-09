@@ -251,6 +251,15 @@ return [
         'changes.*.watched' => 'vu',
         'changes.*.watched.value' => 'vu',
         'changes.*.watched.at' => 'date de visionnage',
+        'source' => 'source',
+        'item_id' => 'identifiant du contenu',
+        'stream_id' => 'identifiant du flux',
+        'stream_url' => 'adresse du flux',
+        'stream_type' => 'type de flux',
+        'extractor' => 'extracteur',
+        'quality' => 'qualité',
+        'language' => 'langue',
+        'favorite' => 'favori',
     ],
 
 ];

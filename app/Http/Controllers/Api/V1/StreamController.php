@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ResolveStreamRequest;
+use App\Http\Requests\Api\V1\StreamSourcesRequest;
 use App\Http\Resources\V1\Playback\ResolvedStreamResource;
 use App\Http\Resources\V1\Playback\StreamSourceResource;
 use App\Services\Playback\StreamSources;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class StreamController extends Controller
@@ -23,17 +23,17 @@ class StreamController extends Controller
         return response()->json(['data' => $this->sources->providers()]);
     }
 
-    public function movieSources(Request $request, int $id): AnonymousResourceCollection
+    public function movieSources(StreamSourcesRequest $request, int $id): AnonymousResourceCollection
     {
         return StreamSourceResource::collection(
-            $this->sources->movie($id, $request->boolean('extract'), $request->query('provider'))
+            $this->sources->movie($id, $request->extract(), $request->provider())
         );
     }
 
-    public function episodeSources(Request $request, int $id, int $season, int $episode): AnonymousResourceCollection
+    public function episodeSources(StreamSourcesRequest $request, int $id, int $season, int $episode): AnonymousResourceCollection
     {
         return StreamSourceResource::collection(
-            $this->sources->episode($id, $season, $episode, $request->boolean('extract'), $request->query('provider'))
+            $this->sources->episode($id, $season, $episode, $request->extract(), $request->provider())
         );
     }
 
