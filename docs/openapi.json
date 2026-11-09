@@ -2077,8 +2077,8 @@
         "/v1/profiles/{profile}/tmdb/ratings": {
             "get": {
                 "operationId": "v1.profiles.tmdb.ratings.index",
-                "description": "Movies, TV shows or episodes, the most recently rated first, 20 per page. Filtered by the\nprofile's age limit.",
-                "summary": "My ratings",
+                "description": "Every type, or one, the most recently rated first, with the comments. Filtered by the\nprofile's age limit. Ratings given on themoviedb.org show up within 10 minutes.",
+                "summary": "My ratings (\"Mes avis\")",
                 "tags": [
                     "Compte TMDb",
                     "TmdbRating"
@@ -2096,8 +2096,7 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "required": true,
-                        "description": "Movies, TV shows or episodes.",
+                        "description": "Movies, TV shows or episodes; every type when left out.",
                         "schema": {
                             "$ref": "#/components/schemas/RatedType"
                         }
@@ -2105,7 +2104,17 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Page number (1 to 500), 20 ratings per page.",
+                        "description": "Page number.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1000
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Ratings per page (1 to 500, 20 by default).",
                         "schema": {
                             "type": "integer",
                             "minimum": 1,
@@ -2133,11 +2142,10 @@
                                                 "page": {
                                                     "type": "integer"
                                                 },
-                                                "total_pages": {
-                                                    "type": "integer"
-                                                },
+                                                "total_pages": {},
                                                 "total_results": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "minimum": 0
                                                 }
                                             },
                                             "required": [
@@ -2173,7 +2181,7 @@
         "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}": {
             "get": {
                 "operationId": "v1.profiles.tmdb.ratings.season",
-                "description": "Only the rated episodes.",
+                "description": "Only the rated episodes, with their comments.",
                 "summary": "My ratings of a season's episodes",
                 "tags": [
                     "Compte TMDb",
@@ -2241,7 +2249,7 @@
         "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}/episode/{episode}": {
             "put": {
                 "operationId": "v1.profiles.tmdb.ratings.episode.rate",
-                "description": "Creates or updates the rating on TMDb.",
+                "description": "Creates or updates the rating on TMDb; the comment is kept by Vixeo.",
                 "summary": "Rate an episode",
                 "tags": [
                     "Compte TMDb",
@@ -2305,10 +2313,17 @@
                                             "properties": {
                                                 "value": {
                                                     "type": "number"
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
-                                                "value"
+                                                "value",
+                                                "comment"
                                             ]
                                         }
                                     },
@@ -2318,9 +2333,6 @@
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -2335,6 +2347,7 @@
             },
             "delete": {
                 "operationId": "v1.profiles.tmdb.ratings.episode.unrate",
+                "description": "Its comment is removed too.",
                 "summary": "Remove an episode rating",
                 "tags": [
                     "Compte TMDb",
@@ -2379,9 +2392,6 @@
                     "204": {
                         "description": "No content"
                     },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
@@ -2394,7 +2404,7 @@
         "/v1/profiles/{profile}/tmdb/ratings/{type}/{id}": {
             "get": {
                 "operationId": "v1.profiles.tmdb.ratings.show",
-                "description": "`value` is null when not rated.",
+                "description": "`value` is null when not rated; `comment` is the profile's comment.",
                 "summary": "My rating of a movie or TV show",
                 "tags": [
                     "Compte TMDb",
@@ -2445,10 +2455,17 @@
                                                         "null"
                                                     ],
                                                     "description": "0.5 to 10, null when not rated."
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
-                                                "value"
+                                                "value",
+                                                "comment"
                                             ]
                                         }
                                     },
@@ -2472,7 +2489,7 @@
             },
             "put": {
                 "operationId": "v1.profiles.tmdb.ratings.rate",
-                "description": "Creates or updates the rating on TMDb.",
+                "description": "Creates or updates the rating on TMDb; the comment is kept by Vixeo.",
                 "summary": "Rate a movie or TV show",
                 "tags": [
                     "Compte TMDb",
@@ -2529,10 +2546,17 @@
                                             "properties": {
                                                 "value": {
                                                     "type": "number"
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
-                                                "value"
+                                                "value",
+                                                "comment"
                                             ]
                                         }
                                     },
@@ -2542,9 +2566,6 @@
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -2559,6 +2580,7 @@
             },
             "delete": {
                 "operationId": "v1.profiles.tmdb.ratings.unrate",
+                "description": "Its comment is removed too.",
                 "summary": "Remove a movie or TV show rating",
                 "tags": [
                     "Compte TMDb",
@@ -2595,9 +2617,6 @@
                 "responses": {
                     "204": {
                         "description": "No content"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -5980,6 +5999,14 @@
                         "description": "Rating from 0.5 to 10, by half points (TMDb scale).",
                         "minimum": 0.5,
                         "maximum": 10
+                    },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Optional comment, kept by Vixeo only (TMDb's API takes no written review). Null or empty removes it; left out, it is kept.",
+                        "maxLength": 2000
                     }
                 },
                 "required": [
@@ -6057,6 +6084,17 @@
                         "type": "number",
                         "description": "The profile's rating, 0.5 to 10."
                     },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The profile's comment, kept by Vixeo only (null without one)."
+                    },
+                    "rated_at": {
+                        "type": "string",
+                        "description": "When it was rated (first seen by Vixeo for a rating given on themoviedb.org), ISO 8601."
+                    },
                     "vote_average": {
                         "type": "number",
                         "description": "TMDb average rating, out of 10."
@@ -6075,6 +6113,8 @@
                     "backdrop_url",
                     "still_url",
                     "value",
+                    "comment",
+                    "rated_at",
                     "vote_average"
                 ],
                 "title": "RatedItemResource"

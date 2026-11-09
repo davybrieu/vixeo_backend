@@ -9,7 +9,8 @@ Chaque profil peut être lié à un compte [TMDb](https://www.themoviedb.org). U
 - Le **même compte TMDb** peut être lié à plusieurs profils, y compris de comptes Vixeo différents
   (pas d'index unique sur `account_id`). Chaque liaison a **sa propre session** TMDb.
 - L'API de TMDb ne permet que des **notes** (de 0,5 à 10, par demi-points). Les avis écrits ne
-  peuvent pas être publiés par l'API.
+  peuvent pas être publiés par l'API : un **commentaire** facultatif accompagne la note, mais il
+  est gardé par **Vixeo seulement** (table `tmdb_ratings`), jamais envoyé à TMDb.
 
 ## Liaison
 
@@ -42,22 +43,35 @@ d'autorisation de TMDb :
 4. `DELETE /api/v1/profiles/{profile}/tmdb` → 204 : la liaison est supprimée et sa session est
    fermée sur TMDb (`DELETE /3/authentication/session`). Les notes restent sur TMDb.
 
-## Notes
+## Notes et commentaires (« Mes avis »)
 
 | Méthode | Route (`/api/v1/profiles/{profile}/tmdb/…`) | Rôle |
 | --- | --- | --- |
-| GET | `ratings?type=movie\|tv\|episode&page=1` | « Mes notes » : 20 par page, la plus récente d'abord |
-| GET | `ratings/{movie\|tv}/{id}` | note du profil pour un film / une série (`value` : `null` si aucune) |
-| GET | `ratings/tv/{id}/season/{season}` | notes des épisodes d'une saison (seulement ceux notés) |
-| PUT | `ratings/{movie\|tv}/{id}` | noter ou modifier (`value` : 0,5 à 10, multiple de 0,5) |
-| DELETE | `ratings/{movie\|tv}/{id}` | supprimer la note |
+| GET | `ratings?type=movie\|tv\|episode&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, le plus récent d'abord, avec les commentaires (`per_page` jusqu'à 500) |
+| GET | `ratings/{movie\|tv}/{id}` | note et commentaire du profil pour un film / une série (`value` : `null` si aucune) |
+| GET | `ratings/tv/{id}/season/{season}` | notes et commentaires des épisodes d'une saison (seulement ceux notés) |
+| PUT | `ratings/{movie\|tv}/{id}` | noter ou modifier (`value` : 0,5 à 10, multiple de 0,5 ; `comment` facultatif, 2000 caractères) |
+| DELETE | `ratings/{movie\|tv}/{id}` | supprimer la note et son commentaire |
 | PUT / DELETE | `ratings/tv/{id}/season/{season}/episode/{episode}` | idem pour un épisode |
 
+- **Copie locale** (`App\Services\TmdbRatings`, table `tmdb_ratings`, une ligne par profil, compte
+  TMDb et titre) : note, commentaire, date de la note, titre, affiche, image de l'épisode. Elle
+  permet le commentaire, « Tout » trié par date et la recherche dans « Mes avis ».
+  - Une note donnée dans Vixeo est copiée tout de suite (`rated_at` = maintenant ; titre et images
+    lus sur TMDb, en cache).
+  - La liste relit les trois listes de TMDb (`/account/{id}/rated/…`, 50 pages au plus par type)
+    au plus toutes les 10 minutes (`STALE_AFTER`) : les notes données sur themoviedb.org
+    apparaissent (TMDb ne donne pas leur date : elles gardent l'ordre de TMDb), celles qui y ont
+    été supprimées disparaissent avec leur commentaire. TMDb injoignable : la copie est affichée
+    telle quelle.
+  - La note d'une fiche est lue en direct sur TMDb (`account_states`) ; si TMDb dit « pas de
+    note » alors que la copie en a une, la copie et son commentaire sont supprimés.
+- `comment` absent du PUT : le commentaire est gardé ; `null` ou vide : il est supprimé.
 - La liste filtre selon l'âge maximum du profil (`AgeGate`) ; pour un épisode, c'est sa série qui
-  compte. Chaque élément donne le titre du film ou de la série (pour un épisode, la série vient de
-  `GET /3/tv/{id}`, en cache), l'affiche, la date, la saison et l'épisode, et `value`.
+  compte.
 - Supprimer une note qui n'existe pas répond 204.
-- Rien n'est mis en cache : une note donnée sur themoviedb.org apparaît tout de suite.
+- Délier le compte supprime la copie et les commentaires ; lier un autre compte TMDb supprime la
+  copie de l'ancien.
 
 ## Erreurs
 
@@ -80,4 +94,6 @@ d'autorisation de TMDb :
 - Supprimer le profil ou le compte Vixeo supprime la liaison (`cascadeOnDelete`). La session reste
   alors valable chez TMDb jusqu'à ce que la personne la retire sur themoviedb.org, mais plus
   personne ne la connaît.
-- Export des données (`AccountExport`) : identifiant et nom du compte TMDb, date de liaison.
+- Export des données (`AccountExport`) : identifiant et nom du compte TMDb, date de liaison, et
+  la copie des notes avec les commentaires. Supprimer le profil ou le compte supprime la copie
+  (`cascadeOnDelete`).

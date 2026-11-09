@@ -110,7 +110,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   plusieurs profils, de comptes Vixeo différents ; session TMDb **chiffrée**, jamais envoyée aux
   applis). Notes de films, séries et épisodes (0,5 à 10) lues et écrites **sur TMDb**
   (`Tmdb\TmdbAccount`, sans cache) : TMDb est la source, donc elles sont synchronisées partout.
-  L'API de TMDb n'accepte pas d'avis écrits. Session refusée par TMDb → liaison supprimée, 409.
+  L'API de TMDb n'accepte pas d'avis écrits : le commentaire facultatif est gardé par Vixeo
+  (`tmdb_ratings`, copie des notes par profil tenue par `App\Services\TmdbRatings` : copiée tout de
+  suite quand on note dans Vixeo, relue sur TMDb au plus toutes les 10 min, supprimée en déliant).
+  Session refusée par TMDb → liaison supprimée, 409.
   `TmdbClient::send` : appels sans cache pour un compte, ne journalise que le chemin.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
@@ -174,7 +177,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   temporaire d'un titre avec le PIN parental.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
-- Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb.
+- Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb,
+  commentaires gardés par Vixeo.
 - Pas encore synchronisés : flux favoris et « dernier flux qui a fonctionné ».
 - Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
   configuration distante (chaînes FAST).

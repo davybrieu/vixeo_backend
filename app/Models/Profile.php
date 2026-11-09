@@ -92,6 +92,12 @@ class Profile extends Model
         return $this->hasOne(TmdbLink::class);
     }
 
+    /** Copy of the linked TMDb account's ratings, with comments. @return HasMany<TmdbRating, $this> */
+    public function tmdbRatings(): HasMany
+    {
+        return $this->hasMany(TmdbRating::class);
+    }
+
     /** Age limit that applies to this profile, null = no limit. */
     public function maxAge(): ?int
     {

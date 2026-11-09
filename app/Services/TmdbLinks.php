@@ -21,7 +21,7 @@ class TmdbLinks
     /** Once linked, late polls (another device, a retry) still get the link. */
     private const LINKED = 'linked';
 
-    public function __construct(private TmdbAccount $tmdb) {}
+    public function __construct(private TmdbAccount $tmdb, private TmdbRatings $ratings) {}
 
     /**
      * Starts a link: the page where the person approves Vixeo on TMDb.
@@ -54,7 +54,7 @@ class TmdbLinks
         return is_array($result) ? $result : ['status' => 'pending'];
     }
 
-    /** Removes the link and ends its TMDb session. */
+    /** Removes the link, ends its TMDb session and forgets the ratings' copy (comments included). */
     public function unlink(Profile $profile): void
     {
         Cache::forget(self::key($profile));
@@ -63,6 +63,8 @@ class TmdbLinks
             $this->tmdb->deleteSession($link->session_id);
             $link->delete();
         }
+        // The copy of the ratings and the comments: Vixeo keeps nothing of an unlinked account.
+        $this->ratings->forget($profile);
     }
 
     /** @return array{status: 'linked', link: TmdbLink}|array{status: 'pending'|'expired'} */
@@ -102,6 +104,9 @@ class TmdbLinks
             'session_id' => $session,
             'linked_at' => now(),
         ]);
+
+        // Another TMDb account: the copy of the previous one's ratings goes.
+        $this->ratings->forget($profile, keepAccountId: $link->account_id);
 
         // Linked again (another TMDb account…): the old session is no longer used.
         if ($previousSession !== null && $previousSession !== $session) {

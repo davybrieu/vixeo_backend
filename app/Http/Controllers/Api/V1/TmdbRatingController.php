@@ -10,52 +10,58 @@ use App\Http\Requests\Api\V1\RateRequest;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\Profile;
 use App\Models\TmdbLink;
+use App\Models\TmdbRating;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\RatingTarget;
 use App\Services\Tmdb\TmdbAccount;
-use App\Services\Tmdb\TmdbClient;
 use App\Services\Tmdb\TmdbLinkRevoked;
+use App\Services\TmdbRatings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Ratings of the profile's TMDb account (docs/compte-tmdb.md): they live on TMDb, so they are the
- * same on every device, every profile linked to that account and themoviedb.org. 409 when no
- * TMDb account is linked (or TMDb no longer accepts it: link it again).
+ * Ratings of the profile's TMDb account and the profile's comments (docs/compte-tmdb.md). The
+ * ratings live on TMDb, so they are the same on every device, every profile linked to that account
+ * and themoviedb.org; the comments are kept by Vixeo (TMDb's API takes no written review). 409 when
+ * no TMDb account is linked (or TMDb no longer accepts it: link it again).
  *
  * @tags Compte TMDb
  */
 class TmdbRatingController extends Controller
 {
-    public function __construct(private TmdbAccount $tmdb, private TmdbClient $catalog, private AgeGate $ageGate) {}
+    public function __construct(private TmdbAccount $tmdb, private TmdbRatings $ratings, private AgeGate $ageGate) {}
 
     /**
-     * My ratings.
+     * My ratings ("Mes avis").
      *
-     * Movies, TV shows or episodes, the most recently rated first, 20 per page. Filtered by the
-     * profile's age limit.
+     * Every type, or one, the most recently rated first, with the comments. Filtered by the
+     * profile's age limit. Ratings given on themoviedb.org show up within 10 minutes.
      */
     public function index(RatedListRequest $request, Profile $profile): JsonResponse
     {
         Gate::authorize('view', $profile);
         $type = $request->type();
-        $page = $this->tmdb->rated($this->link($profile), $type, $request->page());
+        $rows = $this->ratings->all($profile, $this->link($profile))
+            ->when($type !== null, fn ($rows) => $rows->where('type', $type))
+            ->values();
 
-        $items = match ($type) {
-            RatedType::Episode => $this->episodes($profile, $page['results']),
-            default => array_map(
-                fn (array $item) => ['type' => $type, 'item' => $item, 'show' => null],
-                $this->ageGate->filter($profile, array_map(fn (array $item) => ['media_type' => $type->value] + $item, $page['results'])),
-            ),
-        };
+        // The age limit of the TV show applies to its episodes.
+        $allowed = collect($this->ageGate->filter($profile, $rows->map(fn (TmdbRating $r) => [
+            'media_type' => $r->type === RatedType::Movie ? 'movie' : 'tv',
+            'id' => $r->tmdb_id,
+            'row' => $r,
+        ])->all()))->pluck('row');
+
+        $perPage = $request->perPage();
+        $total = $allowed->count();
 
         return response()->json([
-            'data' => RatedItemResource::collection($items),
+            'data' => RatedItemResource::collection($allowed->forPage($request->page(), $perPage)->values()),
             'meta' => [
-                'page' => $page['page'],
-                'total_pages' => $page['total_pages'],
-                'total_results' => $page['total_results'],
+                'page' => $request->page(),
+                'total_pages' => max(1, (int) ceil($total / $perPage)),
+                'total_results' => $total,
             ],
         ]);
     }
@@ -63,33 +69,46 @@ class TmdbRatingController extends Controller
     /**
      * My rating of a movie or TV show.
      *
-     * `value` is null when not rated.
+     * `value` is null when not rated; `comment` is the profile's comment.
      */
     public function show(Profile $profile, MediaType $type, int $id): JsonResponse
     {
         Gate::authorize('view', $profile);
+        $link = $this->link($profile);
+        $target = RatingTarget::title($type, $id);
+        $value = $this->tmdb->rating($link, $target);
+        $row = $this->ratings->find($profile, $link, $target);
+        if ($value === null && $row !== null) {
+            // Removed on TMDb: the comment goes with it.
+            $this->ratings->removed($profile, $link, $target);
+            $row = null;
+        }
 
         return response()->json(['data' => [
             /** 0.5 to 10, null when not rated. */
-            'value' => $this->tmdb->rating($this->link($profile), RatingTarget::title($type, $id)),
+            'value' => $value,
+            'comment' => $row?->comment === null ? null : (string) $row->comment,
         ]]);
     }
 
     /**
      * My ratings of a season's episodes.
      *
-     * Only the rated episodes.
+     * Only the rated episodes, with their comments.
      */
     public function season(Profile $profile, int $id, int $season): JsonResponse
     {
         Gate::authorize('view', $profile);
-        $ratings = $this->tmdb->seasonRatings($this->link($profile), $id, $season);
+        $link = $this->link($profile);
+        $ratings = $this->tmdb->seasonRatings($link, $id, $season);
+        $rows = $this->ratings->season($profile, $link, $id, $season);
 
         return response()->json([
             'data' => array_map(fn (int $episode, float $value) => [
                 'episode_number' => $episode,
                 /** 0.5 to 10. */
                 'value' => $value,
+                'comment' => $rows->get($episode)?->comment === null ? null : (string) $rows->get($episode)->comment,
             ], array_keys($ratings), array_values($ratings)),
         ]);
     }
@@ -97,47 +116,62 @@ class TmdbRatingController extends Controller
     /**
      * Rate a movie or TV show.
      *
-     * Creates or updates the rating on TMDb.
+     * Creates or updates the rating on TMDb; the comment is kept by Vixeo.
      */
     public function rate(RateRequest $request, Profile $profile, MediaType $type, int $id): JsonResponse
     {
-        Gate::authorize('update', $profile);
-        $this->tmdb->rate($this->link($profile), RatingTarget::title($type, $id), $request->value());
-
-        return response()->json(['data' => ['value' => $request->value()]]);
+        return $this->save($request, $profile, RatingTarget::title($type, $id));
     }
 
     /**
      * Remove a movie or TV show rating.
+     *
+     * Its comment is removed too.
      */
     public function unrate(Profile $profile, MediaType $type, int $id): Response
     {
-        Gate::authorize('update', $profile);
-        $this->tmdb->unrate($this->link($profile), RatingTarget::title($type, $id));
-
-        return response()->noContent();
+        return $this->remove($profile, RatingTarget::title($type, $id));
     }
 
     /**
      * Rate an episode.
      *
-     * Creates or updates the rating on TMDb.
+     * Creates or updates the rating on TMDb; the comment is kept by Vixeo.
      */
     public function rateEpisode(RateRequest $request, Profile $profile, int $id, int $season, int $episode): JsonResponse
     {
-        Gate::authorize('update', $profile);
-        $this->tmdb->rate($this->link($profile), RatingTarget::episode($id, $season, $episode), $request->value());
-
-        return response()->json(['data' => ['value' => $request->value()]]);
+        return $this->save($request, $profile, RatingTarget::episode($id, $season, $episode));
     }
 
     /**
      * Remove an episode rating.
+     *
+     * Its comment is removed too.
      */
     public function unrateEpisode(Profile $profile, int $id, int $season, int $episode): Response
     {
+        return $this->remove($profile, RatingTarget::episode($id, $season, $episode));
+    }
+
+    private function save(RateRequest $request, Profile $profile, RatingTarget $target): JsonResponse
+    {
         Gate::authorize('update', $profile);
-        $this->tmdb->unrate($this->link($profile), RatingTarget::episode($id, $season, $episode));
+        $link = $this->link($profile);
+        $this->tmdb->rate($link, $target, $request->value());
+        $row = $this->ratings->saved($profile, $link, $target, $request->value(), $request->hasComment(), $request->comment());
+
+        return response()->json(['data' => [
+            'value' => (float) $row->value,
+            'comment' => $row->comment === null ? null : (string) $row->comment,
+        ]]);
+    }
+
+    private function remove(Profile $profile, RatingTarget $target): Response
+    {
+        Gate::authorize('update', $profile);
+        $link = $this->link($profile);
+        $this->tmdb->unrate($link, $target);
+        $this->ratings->removed($profile, $link, $target);
 
         return response()->noContent();
     }
@@ -145,31 +179,5 @@ class TmdbRatingController extends Controller
     private function link(Profile $profile): TmdbLink
     {
         return $profile->tmdbLink ?? throw TmdbLinkRevoked::notLinked();
-    }
-
-    /**
-     * Rated episodes with their TV show (title, poster), without the shows the profile may not see.
-     *
-     * @param  list<array<string, mixed>>  $episodes
-     * @return list<array{type: RatedType, item: array<string, mixed>, show: array<string, mixed>|null}>
-     */
-    private function episodes(Profile $profile, array $episodes): array
-    {
-        $showIds = array_values(array_unique(array_map(fn (array $e) => (int) ($e['show_id'] ?? 0), $episodes)));
-        $allowed = array_map(
-            fn (array $show) => (int) $show['id'],
-            $this->ageGate->filter($profile, array_map(fn (int $id) => ['media_type' => 'tv', 'id' => $id], $showIds)),
-        );
-        $shows = $this->catalog->getMany(array_map(fn (int $id) => "tv/{$id}", $allowed));
-
-        $items = [];
-        foreach ($episodes as $episode) {
-            $showId = (int) ($episode['show_id'] ?? 0);
-            if (in_array($showId, $allowed, true)) {
-                $items[] = ['type' => RatedType::Episode, 'item' => $episode, 'show' => $shows["tv/{$showId}"] ?? null];
-            }
-        }
-
-        return $items;
     }
 }

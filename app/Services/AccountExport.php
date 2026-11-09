@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\ProfileSearch;
+use App\Models\TmdbRating;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -26,7 +27,7 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbLink'])->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbLink', 'tmdbRatings'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
@@ -50,6 +51,16 @@ class AccountExport
                     'username' => $p->tmdbLink->username,
                     'linked_at' => $p->tmdbLink->linked_at?->toIso8601String(),
                 ],
+                // Copy of the TMDb ratings, with the comments written in Vixeo.
+                'tmdb_ratings' => $p->tmdbRatings->sortByDesc('rated_at')->map(fn (TmdbRating $r) => [
+                    'title' => $r->title,
+                    'type' => $r->type->value,
+                    'season_number' => $r->season_number,
+                    'episode_number' => $r->episode_number,
+                    'value' => $r->value,
+                    'comment' => $r->comment,
+                    'rated_at' => $r->rated_at?->toIso8601String(),
+                ])->values()->all(),
                 'has_pin' => $p->pin !== null,
                 'created_at' => $p->created_at?->toIso8601String(),
                 'library' => $p->items->map(fn (ProfileItem $i) => [

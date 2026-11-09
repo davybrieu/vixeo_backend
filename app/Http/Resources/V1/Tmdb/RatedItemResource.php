@@ -3,60 +3,48 @@
 namespace App\Http\Resources\V1\Tmdb;
 
 use App\Enums\RatedType;
+use App\Models\TmdbRating;
 use App\Services\Tmdb\TmdbFormat as F;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A rating of the profile's TMDb account ("Mes notes").
+ * A rating of the profile's TMDb account, with its comment ("Mes avis").
  *
- * @property array{type: RatedType, item: array<string, mixed>, show: array<string, mixed>|null} $resource
+ * @mixin TmdbRating
  */
 class RatedItemResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $type = $this->type();
-        $item = $this->resource['item'];
-        // Episodes: the TV show gives the title and the poster.
-        $title = $type === RatedType::Episode ? ($this->resource['show'] ?? []) : $item;
-        $poster = F::string($title, 'poster_path');
-        $backdrop = F::string($title, 'backdrop_path');
-        $still = $type === RatedType::Episode ? F::string($item, 'still_path') : null;
-        $date = F::string($item, match ($type) {
-            RatedType::Movie => 'release_date',
-            RatedType::Tv => 'first_air_date',
-            RatedType::Episode => 'air_date',
-        });
+        $episode = $this->type === RatedType::Episode;
 
         return [
-            'type' => $type,
+            'type' => $this->type,
             /** TMDb id of the movie or TV show (the page to open), also for an episode. */
-            'id' => (int) ($type === RatedType::Episode ? ($item['show_id'] ?? 0) : ($item['id'] ?? 0)),
+            'id' => (int) $this->tmdb_id,
             /** Movie or TV show title. */
-            'title' => (string) F::string($title, $type === RatedType::Movie ? 'title' : 'name'),
+            'title' => (string) $this->title,
             /** Release, first air or episode air date, YYYY-MM-DD. */
-            'date' => $date,
-            'year' => F::year($date),
-            'season_number' => $type === RatedType::Episode ? (int) ($item['season_number'] ?? 0) : null,
-            'episode_number' => $type === RatedType::Episode ? (int) ($item['episode_number'] ?? 0) : null,
-            'episode_name' => $type === RatedType::Episode ? F::string($item, 'name') : null,
+            'date' => $this->date === null ? null : (string) $this->date,
+            'year' => F::year($this->date === null ? null : (string) $this->date),
+            'season_number' => $episode ? (int) $this->season_number : null,
+            'episode_number' => $episode ? (int) $this->episode_number : null,
+            'episode_name' => $this->episode_name === null ? null : (string) $this->episode_name,
             /** Poster of the movie or TV show, w342. */
-            'poster_url' => F::image($poster, 'w342'),
+            'poster_url' => F::image($this->poster_path === null ? null : (string) $this->poster_path, 'w342'),
             /** Backdrop, w1280. */
-            'backdrop_url' => F::image($backdrop, 'w1280'),
+            'backdrop_url' => F::image($this->backdrop_path === null ? null : (string) $this->backdrop_path, 'w1280'),
             /** Episode image, w300. */
-            'still_url' => F::image($still, 'w300'),
+            'still_url' => F::image($this->still_path === null ? null : (string) $this->still_path, 'w300'),
             /** The profile's rating, 0.5 to 10. */
-            'value' => F::float($item, 'rating'),
+            'value' => (float) $this->value,
+            /** The profile's comment, kept by Vixeo only (null without one). */
+            'comment' => $this->comment === null ? null : (string) $this->comment,
+            /** When it was rated (first seen by Vixeo for a rating given on themoviedb.org), ISO 8601. */
+            'rated_at' => (string) $this->rated_at->toIso8601String(),
             /** TMDb average rating, out of 10. */
-            'vote_average' => F::float($item, 'vote_average'),
+            'vote_average' => (float) $this->vote_average,
         ];
-    }
-
-    /** Movie, TV show or episode. */
-    private function type(): RatedType
-    {
-        return $this->resource['type'];
     }
 }
