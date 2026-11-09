@@ -64,30 +64,12 @@ d'ONYX (voir annexe), avec **une seule base de code** pour :
 
 ---
 
-## 3. Périmètre et limites (important)
+## 3. API
 
-### Sources de contenu autorisées
-
-- Chaînes **FAST** gratuites et officielles (Pluto TV, Samsung TV Plus, Plex, etc.),
-  via leurs flux publics, **en respectant leurs conditions d'utilisation**.
-- **Compte Xtream / IPTV personnel** de l'utilisateur (panel légal dont il a les droits),
-  proxifié par l'API (identifiants jamais exposés au client).
-- **Serveurs média personnels** de l'utilisateur : Jellyfin, Plex, Emby (via leurs API).
 - **Métadonnées** : TMDb (clé API, attribution « This product uses the TMDB API… » obligatoire).
 - **Sous-titres** : OpenSubtitles, avec la clé Vixeo (décision du développeur, 07/11/2026 :
   l'API interroge OpenSubtitles pour les applis et garde les fichiers en cache, voir
   `docs/lecture.md`). Moments à passer (génériques, résumé) : TheIntroDB.
-- Vidéos locales de l'appareil.
-
-### Hors périmètre (ne pas implémenter, ne pas aider à implémenter)
-
-- Scraping de sites de streaming sans droits sur les contenus.
-- « Extracteurs » qui récupèrent les liens vidéo directs chez des hébergeurs de fichiers.
-- Contournement des blocages (suivi automatique des domaines miroirs, DNS de contournement,
-  tunnels VPN dédiés) pour des contenus non autorisés.
-
-Note : l'App Store et le Play Store refusent les applis qui donnent accès à des contenus
-non autorisés ; hors App Store, la distribution iOS est très limitée.
 
 ---
 
