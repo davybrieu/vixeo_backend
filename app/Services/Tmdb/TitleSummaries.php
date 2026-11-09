@@ -2,6 +2,8 @@
 
 namespace App\Services\Tmdb;
 
+use App\Enums\MediaType;
+
 /**
  * What the large-screen hero and the phone carousel show of a title, given with the list items
  * (home, search) so that everything appears at once, without a request per card: title logo,
@@ -36,12 +38,7 @@ class TitleSummaries
             }
         }
 
-        $details = [];
-        foreach ($paths as $type => $typePaths) {
-            if ($typePaths !== []) {
-                $details += $this->tmdb->getMany(array_keys($typePaths), 'details', 20, self::QUERY[$type]);
-            }
-        }
+        $details = $this->fetch($paths);
         if ($details === []) {
             return $lists;
         }
@@ -64,6 +61,61 @@ class TitleSummaries
     public function add(array $items): array
     {
         return $this->addMany([$items])[0];
+    }
+
+    /**
+     * Titles by type and id, as list items with their logo and summary (Ma liste, Continuer à
+     * regarder), in the order asked. Titles TMDb doesn't know are left out.
+     *
+     * @param  list<array{MediaType, int}>  $titles
+     * @return list<array<string, mixed>>
+     */
+    public function titles(array $titles): array
+    {
+        $paths = ['movie' => [], 'tv' => []];
+        foreach ($titles as [$type, $id]) {
+            $paths[$type->value]["{$type->value}/{$id}"] = true;
+        }
+        $details = $this->fetch($paths);
+
+        $items = [];
+        foreach ($titles as [$type, $id]) {
+            $title = $details["{$type->value}/{$id}"] ?? null;
+            if (! is_array($title) || ! isset($title['id'])) {
+                continue;
+            }
+            // TMDb pages give `genres`; lists give `genre_ids`.
+            $items[] = [...$title, ...[
+                'media_type' => $type->value,
+                'genre_ids' => array_values(array_filter(array_map(
+                    fn (mixed $genre) => is_array($genre) ? TmdbFormat::int($genre, 'id') : null,
+                    TmdbFormat::array($title, 'genres'),
+                ))),
+                'logo' => TmdbFormat::logo($title),
+                'textless_poster' => TmdbFormat::textlessPoster($title),
+                'summary' => self::summary($title),
+            ]];
+        }
+
+        return $items;
+    }
+
+    /**
+     * TMDb details (with images and certifications) of each path, null when TMDb fails.
+     *
+     * @param  array{movie: array<string, true>, tv: array<string, true>}  $paths
+     * @return array<string, array<string, mixed>|null>
+     */
+    private function fetch(array $paths): array
+    {
+        $details = [];
+        foreach ($paths as $type => $typePaths) {
+            if ($typePaths !== []) {
+                $details += $this->tmdb->getMany(array_keys($typePaths), 'details', 20, self::QUERY[$type]);
+            }
+        }
+
+        return $details;
     }
 
     /**

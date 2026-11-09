@@ -94,7 +94,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     carrousel du téléphone) et `summary` (durée ou nombre de saisons, genres, âge conseillé), pour
     que la grande image et le carrousel affichent tout d'un coup ; un appel TMDb par titre (fiche
     avec `images` et classifications), en un lot (`getMany`, cache d'un jour, partagé). Les autres
-    listes n'en ont pas (`summary` à null).
+    listes n'en ont pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
+    plus, `TitleSummaries::titles`, même cache) donne plusieurs titres d'un coup avec ces champs :
+    « Ma liste » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`

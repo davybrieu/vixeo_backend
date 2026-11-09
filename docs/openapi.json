@@ -933,6 +933,67 @@
                 }
             }
         },
+        "/v1/catalog/titles": {
+            "get": {
+                "operationId": "v1.catalog.titles",
+                "description": "Movies and TV shows by id (Ma liste, Continuer \u00e0 regarder), with their logo, length, genres\nand age rating, in the order asked: one request instead of one per title. Respects the\nactive profile's age limit; titles TMDb doesn't know are left out.",
+                "summary": "Several titles at once",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "description": "Titles, comma-separated: `movie:550,tv:1399` (100 at most).",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^(movie|tv):\\d{1,9}(,(movie|tv):\\d{1,9}){0,99}$",
+                            "maxLength": 2000
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/search": {
             "get": {
                 "operationId": "v1.catalog.search",

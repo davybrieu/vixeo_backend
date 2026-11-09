@@ -125,6 +125,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('config', [CatalogController::class, 'config'])->name('config');
             Route::get('home', [CatalogController::class, 'home'])->name('home');
             Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
+            Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
             Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
             Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
             Route::get('{type}/lists/{list}', [CatalogController::class, 'list'])->name('list');

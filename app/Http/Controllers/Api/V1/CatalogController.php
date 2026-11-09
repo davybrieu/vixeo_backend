@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\CatalogHomeRequest;
 use App\Http\Requests\Api\V1\CatalogPageRequest;
+use App\Http\Requests\Api\V1\CatalogTitlesRequest;
 use App\Http\Requests\Api\V1\DiscoverRequest;
 use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
@@ -73,6 +74,21 @@ class CatalogController extends Controller
             'featured' => MediaItemResource::collection($home['featured']),
             'sections' => SectionResource::collection($home['sections']),
         ]);
+    }
+
+    /**
+     * Several titles at once.
+     *
+     * Movies and TV shows by id (Ma liste, Continuer à regarder), with their logo, length, genres
+     * and age rating, in the order asked: one request instead of one per title. Respects the
+     * active profile's age limit; titles TMDb doesn't know are left out.
+     */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
+    public function titles(CatalogTitlesRequest $request): JsonResponse
+    {
+        $titles = $this->ageGate->filter(ResolveProfile::profile($request), $this->summaries->titles($request->titles()));
+
+        return response()->json(['data' => MediaItemResource::collection($titles)]);
     }
 
     /**

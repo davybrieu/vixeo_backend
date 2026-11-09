@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Collection;
@@ -188,4 +189,48 @@ it('gives no summary in other lists (the title page has it)', function () {
         ->assertJsonPath('data.0.logo_url', null)
         ->assertJsonPath('data.0.summary', null);
     expect(detailRequests())->toBeEmpty();
+});
+
+it('gives several titles at once with their logo and summary, in the order asked', function () {
+    Http::fake([
+        'api.themoviedb.org/3/movie/550?*' => Http::response(array_merge(Tmdb::movieDetails(), [
+            'images' => ['logos' => [image('/fc.png', 'fr', 5.0, 3.0)], 'backdrops' => [], 'posters' => []],
+        ])),
+        'api.themoviedb.org/3/tv/1399?*' => Http::response(Tmdb::showDetails()),
+        'api.themoviedb.org/3/movie/9?*' => Http::response(['status_code' => 34], 404),
+    ]);
+
+    $this->getJson('/api/v1/catalog/titles?ids=tv:1399,movie:550,movie:9,movie:550')->assertOk()
+        // Unknown title left out, duplicates once.
+        ->assertJsonPath('data.*.id', [1399, 550])
+        ->assertJsonPath('data.0.type', 'tv')
+        ->assertJsonPath('data.0.summary.number_of_seasons', 8)
+        ->assertJsonPath('data.1.title', 'Fight Club')
+        ->assertJsonPath('data.1.logo_url', 'https://image.tmdb.org/t/p/w500/fc.png')
+        ->assertJsonPath('data.1.summary.runtime', 139)
+        ->assertJsonPath('data.1.genre_ids', [18])
+        ->assertJsonPath('data.1.year', 1999);
+
+    // Cached with the home and search lists: asked again, nothing more is sent.
+    $sent = count(Http::recorded());
+    $this->getJson('/api/v1/catalog/titles?ids=movie:550')->assertOk();
+    expect(Http::recorded())->toHaveCount($sent);
+
+    $this->getJson('/api/v1/catalog/titles?ids=person:1')->assertUnprocessable();
+    $this->getJson('/api/v1/catalog/titles?ids='.implode(',', array_map(fn ($i) => "movie:{$i}", range(1, 101))))->assertUnprocessable();
+});
+
+it('keeps only the titles a kid profile may see', function () {
+    $user = User::factory()->create();
+    $kid = Profile::factory()->for($user)->kid(12)->create();
+    Sanctum::actingAs($user);
+    Http::fake([
+        'api.themoviedb.org/3/movie/550?*' => Http::response(Tmdb::movieDetails()),
+        'api.themoviedb.org/3/movie/550/release_dates*' => Http::response(Tmdb::movieDetails()['release_dates']),
+        'api.themoviedb.org/3/tv/1399?*' => Http::response(Tmdb::showDetails()),
+        'api.themoviedb.org/3/tv/1399/content_ratings*' => Http::response(['results' => [['iso_3166_1' => 'FR', 'rating' => '10']]]),
+    ]);
+
+    $this->getJson('/api/v1/catalog/titles?ids=movie:550,tv:1399', ['X-Profile-Id' => $kid->id])->assertOk()
+        ->assertJsonPath('data.*.id', [1399]);
 });
