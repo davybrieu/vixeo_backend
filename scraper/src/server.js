@@ -38,7 +38,15 @@ async function handleSources(body) {
     sources = await Promise.all(sources.map(async (s) => {
       try {
         const extracted = await extract(s.url);
-        return extracted ? { ...s, stream: extracted.url, streamType: extracted.type, extractor: extracted.extractor } : s;
+        if (!extracted) return s;
+        return {
+          ...s,
+          stream: extracted.url,
+          streamType: extracted.type,
+          extractor: extracted.extractor,
+          ...(extracted.headers ? { headers: extracted.headers } : {}),
+          ...(extracted.subtitles && extracted.subtitles.length ? { subtitles: extracted.subtitles } : {}),
+        };
       } catch (e) {
         return s;
       }

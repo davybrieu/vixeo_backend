@@ -1,47 +1,205 @@
+// Extractor registry, ported from the ONYX extractor list: each entry maps a
+// set of host names to a function that turns a player URL into a stream.
 const { extractVoe } = require('./voe');
+const { extractStreamWish } = require('./streamwish');
+const { extractFilemoon } = require('./filemoon');
+const { extractVidHide } = require('./vidhide');
+const { extractStreamruby } = require('./streamruby');
+const { extractSupervideo } = require('./supervideo');
+const { extractVidara } = require('./vidara');
+const { extractVidsonic } = require('./vidsonic');
+const { extractRpmvid } = require('./rpmvid');
+const { extractVidzy } = require('./vidzy');
 const { extractUqload } = require('./uqload');
 const { extractStreamtape } = require('./streamtape');
-const { extractDood } = require('./dood');
-const { extractFilemoon } = require('./filemoon');
-const { extractStreamWish } = require('./streamwish');
 const { extractMixDrop } = require('./mixdrop');
+const { extractDood } = require('./dood');
+const { extractNetu } = require('./netu');
+const { extractVidoza } = require('./vidoza');
+const { extractSendvid } = require('./sendvid');
 const { extractGeneric } = require('./generic');
 
 const extractors = [
-  { name: 'voe', domains: ['voe.sx', 'voe-unblock', 'jilliandescribecompany.com', 'mikaylaarealike.com', 'christopheruntilpoint.com', 'walterprettytheir.com', 'crystaltreatmenteast.com', 'lauradaydo.com', 'lancewhosedifficult.com', 'dianaavoidthey.com', 'jefferycontrolmodel.com', 'richardquestionbuilding.com', 'jessicayeahcatch.com', 'juliewomanwish.com', 'rebeccapracticeloss.com', 'johnbeyondnation.com', 'jamesbornmain.com'], fn: extractVoe },
-  { name: 'uqload', domains: ['uqload.com', 'uqload.net', 'uqload.io', 'uqload.co'], fn: extractUqload },
-  { name: 'streamtape', domains: ['streamtape.com', 'streamtape.net', 'streamtape.to', 'streamtape.xyz'], fn: extractStreamtape },
-  { name: 'dood', domains: ['doodstream.com', 'dood.watch', 'dood.to', 'dood.so', 'dood.la', 'dood.li', 'dood.ws', 'dood.pm', 'dood.re', 'dood.yt', 'doods.pro'], fn: extractDood },
-  { name: 'filemoon', domains: ['filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl'], fn: extractFilemoon },
-  { name: 'streamwish', domains: ['streamwish.to', 'streamwish.com', 'awish.pro', 'embedwish.com', 'kisswish.com', 'hlswish.com', 'swishsrv.com', 'playerwish.com'], fn: extractStreamWish },
-  { name: 'mixdrop', domains: ['mixdrop.co', 'mixdrop.to', 'mixdrop.ch', 'mixdrop.bz', 'mixdrop.ag'], fn: extractMixDrop },
+  {
+    name: 'voe',
+    fn: extractVoe,
+    domains: [
+      'voe.sx', 'jessicachoosemake.com', 'jamesbornmain.com', 'jilliandescribecompany.com',
+      'mikaylaarealike.com', 'christopheruntilpoint.com', 'walterprettytheir.com',
+      'crystaltreatmenteast.com', 'lauradaydo.com', 'lancewhosedifficult.com',
+      'dianaavoidthey.com', 'jefferycontrolmodel.com', 'sandratableother.com',
+      'marissasharecareer.com', 'ralphysuccessfull.org', 'charlestoughrace.com',
+      'timmaybealready.com', 'maryspecialwatch.com', 'rebeccacostthousand.com',
+      'bryantenunder.com',
+    ],
+  },
+  {
+    name: 'streamwish',
+    fn: extractStreamWish,
+    domains: [
+      'streamwish.com', 'streamwish.to', 'streamwish.site', 'streamwish.fun', 'embedwish.com',
+      'awish.pro', 'awish.top', 'dwish.pro', 'kisswish.com', 'hlswish.com', 'swishsrv.com',
+      'playerwish.com', 'swiftplayers.com', 'uqloads.xyz', 'wishembed.pro', 'strmwis.xyz',
+      'vidmoviesb.xyz', 'cilootv.store', 'tuktukcinema.store', 'doodporn.xyz', 'volvovideo.top',
+      'wishfast.top', 'sfastwish.com', 'playembed.online', 'flaswish.com', 'obeywish.com',
+      'cdnwish.com', 'javsw.me', 'cinemathek.online', 'mohahhda.site', 'ma2d.store',
+      'dancima.shop', 'swhoi.com', 'jodwish.com', 'swdyu.com', 'strwish.com', 'asnwish.com',
+      'wishonly.site', 'katomen.store', 'iplayerhls.com', 'hlsflast.com', 'ghbrisk.com',
+      'cybervynx.com', 'dhcplay.com', 'gradehgplus.com', 'ultpreplayer.com', 'hglink.to',
+      'haxloppd.com', 'hgcloud.to', 'vidwish.live', 'hgplaycdn.com', 'hanerix.com',
+    ],
+  },
+  {
+    name: 'filemoon',
+    fn: extractFilemoon,
+    domains: [
+      'filemoon.org', 'filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl',
+      'bysejikuar.com', '1day1movie.website', 'moflix-stream.link', 'bysezoxexe.com',
+      'bysebuho.com', 'bysezejataos.com', 'bysekoze.com', 'bysesayeveum.com', 'lukefirst.lol',
+      'weneverbeenfree.com', 'gn1r5n.org', 'mfw09.org', 'kaydendown.lol',
+    ],
+  },
+  {
+    name: 'vidhide',
+    fn: extractVidHide,
+    domains: [
+      'dhtpre.com', 'peytonepre.com', 'vidhideplus.com', 'dingtezuni.com', 'minochinos.com',
+      'moflix-stream.click', 'filelions.to', 'filelions.com', 'streamhide.to', 'streamhide.com',
+      'morencius.com', 'mivalyo.com', 'dinisglows.com',
+    ],
+  },
+  {
+    name: 'streamruby',
+    fn: extractStreamruby,
+    domains: [
+      'streamruby.com', 'stmruby.com', 'rubystm.com', 'rubyvid.com', 'moflix-stream.fans',
+    ],
+  },
+  {
+    name: 'supervideo',
+    fn: extractSupervideo,
+    domains: ['supervideo.cc', 'supervideo.tv'],
+  },
+  {
+    name: 'vidara',
+    fn: extractVidara,
+    domains: [
+      'vidara.to', 'viewdara.com', 'vidara.so', 'ano.cx', 'bufsao.com', 'vidaraa.cc',
+      'vidaraa.com', 'vidvara.site', 'vidar.cc', 'gaqghe.com', 'ykfrtza.com', 'h308sa.com',
+    ],
+  },
+  {
+    name: 'vidsonic',
+    fn: extractVidsonic,
+    domains: ['vidsonic.net'],
+  },
+  {
+    name: 'rpmvid',
+    fn: extractRpmvid,
+    domains: [
+      'rpmvid.com', 'cubeembed.rpmvid.com', 'bummi.upns.xyz', 'loadm.cam', 'anibum.playerp2p.online',
+      'pelisplus.upns.pro', 'pelisplus.rpmstream.live', 'pelisplus.strp2p.com', 'flemmix.upns.pro',
+      'moflix.rpmplay.xyz', 'moflix.upns.xyz', 'flix2day.xyz', 'primevid.click',
+      'totocoutouno.rpmlive.online', 'dismoiceline.uns.bio', 'doremifasol.ezplayer.me',
+      'marcus.p2pstream.vip', 'animeav1.uns.bio', 'serix.upns.live', 'barbapapa.p2pstream.online',
+      'coflix.upn.one', 'flemmix.farm', 'flemmix.rpmlive.online', 'flemmix.upns.xyz',
+      'flemmix.rpmstream.live', 'flemmix.strp2p.com', 'flemmix.ezplayer.me', 'flemmix.uns.bio',
+      'flemmix.upns.live', 'flemmix.upn.one', 'flemmix.p2pstream.vip', 'flemmix.prof',
+    ],
+  },
+  {
+    name: 'vidzy',
+    fn: extractVidzy,
+    domains: ['vidzy.org', 'vidzy.live', 'vidzy.cc', 'vidzy.to'],
+  },
+  {
+    name: 'uqload',
+    fn: extractUqload,
+    domains: ['uqload.is', 'uqload.cx', 'uqload.co', 'uqload.net', 'uqload.bz', 'uqload.io', 'uqload.com', 'uqload.ws', 'uqload.vc', 'uqload.to'],
+  },
+  {
+    name: 'streamtape',
+    fn: extractStreamtape,
+    domains: ['streamtape.com', 'streamtape.net', 'streamtape.to', 'streamtape.xyz', 'streamta.site', 'strtape.cloud', 'stape.fun', 'shavetape.cash', 'advtpe.com', 'watchadsontape.com'],
+  },
+  {
+    name: 'mixdrop',
+    fn: extractMixDrop,
+    domains: ['mixdrop.co', 'mixdrop.bz', 'mixdrop.ag', 'mixdrop.ch', 'mixdrop.to', 'mixdrop.cv', 'mxdrop.to', 'mixdrop.club', 'm1xdrop.net', 'mixdrop.is', 'mixdrop.gl', 'mixdrop.sx', 'mxdrop.sx', 'mixdrop.ps', 'miixdrop.net', 'miiixdrop.net', 'mxdrop.top', 'mxdrop.click', 'mixdrop.si'],
+  },
+  {
+    name: 'dood',
+    fn: extractDood,
+    domains: ['dood.la', 'dood.li', 'dood.so', 'dood.to', 'dood.watch', 'dood.yt', 'dood.re', 'dood.wf', 'dood.ws', 'dood.pm', 'doodstream.com', 'doodstream.me', 'doods.pro', 'dsvplay.com', 'myvidplay.com', 'playmogo.com', 'do7go.com', 'd000d.com', 'doply.net', 'ds2video.com', 'vvide0.com', 'vide0.net'],
+  },
+  {
+    name: 'netu',
+    fn: extractNetu,
+    domains: ['waaw1.tv', 'netu.tv', 'hqq.tv', 'waaw.tv', 'hqcloud.to', 'wsaw.to', 'netu.ac', 'hqq.ac', 'waaw.ac', 'waaw.to', 'younetu.org'],
+  },
+  {
+    name: 'vidoza',
+    fn: extractVidoza,
+    domains: ['vidoza.net', 'videzz.net'],
+  },
+  {
+    name: 'sendvid',
+    fn: extractSendvid,
+    domains: ['sendvid.com'],
+  },
 ];
 
+function domainMatches(host, domain) {
+  return host === domain || host.endsWith(`.${domain}`);
+}
+
 function findExtractor(url) {
-  const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-  for (const ext of extractors) {
-    if (ext.domains.some(d => host === d || host.endsWith('.' + d) || host.includes(d.split('.')[0]))) {
-      return ext;
-    }
-  }
-  return null;
-}
-
-async function extract(url) {
-  if (!url || !url.startsWith('http')) return null;
-  const ext = findExtractor(url);
+  let host;
   try {
-    if (ext) {
-      const result = await ext.fn(url);
-      if (result) return { extractor: ext.name, ...result };
-    }
-    // fallback generic
-    const generic = await extractGeneric(url);
-    if (generic) return { extractor: 'generic', ...generic };
+    host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
   } catch (e) {
-    console.error('Extract error', url, e.message);
+    return null;
+  }
+  for (const extractor of extractors) {
+    if (extractor.domains.some((domain) => domainMatches(host, domain))) {
+      return extractor;
+    }
+  }
+  // Rpmvid mirrors rotate on many hosts: match the flemmix.* / *.upns.* roots.
+  if (/flemmix\.|\.upns\.|\.rpmlive\.|\.rpmstream\.|\.p2pstream\.|\.ezplayer\./.test(host)) {
+    return extractors.find((e) => e.name === 'rpmvid');
   }
   return null;
 }
 
-module.exports = { extract, findExtractor, extractors: extractors.map(e => e.name) };
+// Extracts a stream from a player URL. Returns { url, type, headers, subtitles,
+// extractor } or null.
+async function extract(url) {
+  if (!url || !/^https?:/i.test(url)) return null;
+
+  const found = findExtractor(url);
+  if (found) {
+    try {
+      const result = await found.fn(url);
+      if (result && result.url) return { extractor: found.name, ...result };
+    } catch (e) {
+      console.error(`Extractor ${found.name} failed for ${url}:`, e.message);
+    }
+  }
+
+  try {
+    const generic = await extractGeneric(url);
+    if (generic && generic.url) return { extractor: 'generic', ...generic };
+  } catch (e) {
+    console.error('Generic extractor failed:', e.message);
+  }
+
+  return null;
+}
+
+module.exports = {
+  extract,
+  findExtractor,
+  extractorNames: extractors.map((e) => e.name),
+  supportedDomains: extractors.flatMap((e) => e.domains),
+};
