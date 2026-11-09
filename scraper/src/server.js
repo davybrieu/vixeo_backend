@@ -6,6 +6,24 @@ const { extract } = require('./extractors');
 
 const PORT = process.env.SCRAPER_PORT || 3100;
 
+// The providers the app can show. Each runs on its own so the UI can report a
+// per-provider state (loading, failed, links found) instead of one global wait.
+const PROVIDERS = [
+  { id: 'frenchstream', name: 'FrenchStream', run: searchFrenchStream },
+  { id: 'wiflix', name: 'Wiflix', run: searchWiflix },
+  { id: 'frembed', name: 'Frembed', run: searchFrembed },
+];
+
+async function runProvider(provider, payload) {
+  try {
+    const sources = await provider.run(payload);
+    return { id: provider.id, name: provider.name, status: 'ok', count: sources.length, sources };
+  } catch (e) {
+    console.error(`${provider.name}:`, e.message);
+    return { id: provider.id, name: provider.name, status: 'error', error: e.message, count: 0, sources: [] };
+  }
+}
+
 async function handleSources(body) {
   const type = body.type === 'tv' ? 'tv' : 'movie';
   const title = body.title || '';
@@ -16,23 +34,14 @@ async function handleSources(body) {
   const tmdb_id = body.tmdb_id || null;
   const doExtract = body.extract === true;
 
-  const jobs = [
-    searchFrenchStream({ type, title, originalTitle, year, season, episode }).catch((e) => {
-      console.error('FrenchStream:', e.message);
-      return [];
-    }),
-    searchWiflix({ type, title, originalTitle, year, season, episode }).catch((e) => {
-      console.error('Wiflix:', e.message);
-      return [];
-    }),
-    searchFrembed({ type, tmdb_id, season, episode }).catch((e) => {
-      console.error('Frembed:', e.message);
-      return [];
-    }),
-  ];
+  const selected = body.provider
+    ? PROVIDERS.filter((p) => p.id === body.provider)
+    : PROVIDERS;
 
-  const results = await Promise.all(jobs);
-  let sources = results.flat();
+  const payload = { type, title, originalTitle, year, season, episode, tmdb_id };
+  const results = await Promise.all(selected.map((provider) => runProvider(provider, payload)));
+
+  let sources = results.flatMap((r) => r.sources);
 
   if (doExtract) {
     sources = await Promise.all(sources.map(async (s) => {
@@ -53,7 +62,10 @@ async function handleSources(body) {
     }));
   }
 
-  return { sources };
+  return {
+    sources,
+    providers: results.map(({ id, name, status, error, count }) => ({ id, name, status, error: error || null, count })),
+  };
 }
 
 const server = http.createServer(async (req, res) => {

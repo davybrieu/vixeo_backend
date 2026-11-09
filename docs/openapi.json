@@ -3637,6 +3637,39 @@
                 }
             }
         },
+        "/v1/catalog/sources/providers": {
+            "get": {
+                "operationId": "v1.catalog.sources.providers",
+                "summary": "Providers the sources panel shows, so the app can list them before any search runs",
+                "tags": [
+                    "Stream"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/movie/{id}/sources": {
             "get": {
                 "operationId": "v1.catalog.movie.sources",
@@ -3658,6 +3691,13 @@
                         "schema": {
                             "type": "boolean",
                             "default": false
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -3726,6 +3766,13 @@
                         "schema": {
                             "type": "boolean",
                             "default": false
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
