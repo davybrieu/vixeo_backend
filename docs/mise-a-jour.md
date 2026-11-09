@@ -5,7 +5,7 @@ Une mise à jour passe par deux niveaux :
 1. **L'installation de la nouvelle version**, toujours faite par le système. L'appli ne télécharge
    jamais de code qu'elle exécuterait elle-même : Apple l'interdit (règle 2.5.2), et une
    mise à jour Android passe toujours par l'installateur du système.
-2. **La vérification dans l'appli** (cette API) : l'appli demande si elle est à jour, propose la
+2. **La vérification dans l'appli** (cette API) : l'appli demande si elle est à jour, signale la
    nouvelle version, ou bloque si la version installée n'est plus acceptée.
 
 ## 1. Installation par le système
@@ -50,7 +50,9 @@ Sans connexion. Limite : 30 appels par minute et par adresse IP.
 
 - `up_to_date` : rien à faire. C'est aussi la réponse quand la version installée est plus récente
   que la dernière publiée (bêta, version en cours de vérification).
-- `update_available` : l'appli propose la mise à jour une fois par lancement.
+- `update_available` : l'appli affiche en haut de ses pages la barre « Une nouvelle mise à jour est
+  disponible », avec un bouton « Télécharger » (Android : APK téléchargé et vérifié dans l'appli,
+  puis installateur d'Android ; sinon, page d'installation du site).
 - `update_required` : la version installée est plus ancienne qu'une version publiée **obligatoire**.
   L'appli affiche « Mise à jour nécessaire » et reste bloquée tant que la mise à jour n'est pas
   installée.
