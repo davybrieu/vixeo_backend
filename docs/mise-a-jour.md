@@ -58,6 +58,25 @@ Sans connexion. Limite : 30 appels par minute et par adresse IP.
 Seuls les **numéros de build** sont comparés, jamais les noms de version. Une version publiée avec
 une date future reste invisible jusqu'à cette date.
 
+## Versions Android publiées sur GitHub (CI)
+
+La CI de `vixeo_frontend` publie chaque APK signé comme *release* GitHub du dépôt
+`APP_UPDATES_GITHUB_REPOSITORY` (par défaut `davybrieu/vixeo_frontend`), avec le tag
+`android-<build>`, l'APK et son fichier `.apk.sha256`. L'API lit ces releases
+(`App\Services\GitHubReleases`, sans jeton, donc dépôt public ; cache 5 minutes) :
+
+- seules les releases publiées (ni brouillon, ni pré-version) avec un tag `android-<n>` comptent ;
+- la plus récente est comparée à la table `app_releases` : le build le plus élevé gagne ;
+- `--required` reste dans la table (`php artisan vixeo:release`) : une release GitHub n'oblige
+  jamais à mettre à jour ;
+- si GitHub ne répond pas (panne, limite de 60 requêtes par heure sans jeton), l'API utilise la
+  table seule ;
+- `APP_UPDATES_GITHUB_REPOSITORY=` (vide) désactive cette source ; les tests ne contactent jamais
+  GitHub (`phpunit.xml`).
+
+Attention : avec une release à chaque commit sur `main`, chaque commit est proposé comme mise à
+jour à tous les appareils Android.
+
 ## Publier une version
 
 1. Dans `vixeo_frontend`, augmenter `version:` dans `pubspec.yaml`. Le numéro de build (après le

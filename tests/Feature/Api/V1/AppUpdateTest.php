@@ -2,6 +2,7 @@
 
 use App\Enums\AppPlatform;
 use App\Models\AppRelease;
+use Illuminate\Support\Facades\Http;
 
 function release(string $platform, string $version, int $build, bool $required = false, ?string $notes = null, $at = null): AppRelease
 {
@@ -144,4 +145,70 @@ it('refuses bad artisan input', function () {
     $this->artisan('vixeo:release', ['platform' => 'ios', 'version' => '1.0.0', 'build' => 0])->assertFailed();
 
     expect(AppRelease::count())->toBe(0);
+});
+
+// ─── GitHub releases (APK published by the CI) ───
+
+function githubRelease(int $build, array $extra = []): array
+{
+    return array_merge([
+        'tag_name' => "android-{$build}",
+        'name' => "Vixeo v1.{$build}.0 (build {$build})",
+        'draft' => false,
+        'prerelease' => false,
+        'body' => "Nouveautés du build {$build}",
+        'published_at' => '2026-11-08T10:00:00Z',
+        'assets' => [
+            ['name' => 'vixeo.apk', 'browser_download_url' => "https://github.com/davybrieu/vixeo_frontend/releases/download/android-{$build}/vixeo.apk"],
+            ['name' => 'vixeo.apk.sha256', 'browser_download_url' => "https://github.com/davybrieu/vixeo_frontend/releases/download/android-{$build}/vixeo.apk.sha256"],
+        ],
+    ], $extra);
+}
+
+it('offers the newest Android release published on GitHub, with its APK and checksum', function () {
+    config(['services.app_updates.github_repository' => 'davybrieu/vixeo_frontend']);
+    Http::preventStrayRequests();
+    Http::fake([
+        'api.github.com/repos/davybrieu/vixeo_frontend/releases*' => Http::response([
+            githubRelease(12),
+            githubRelease(15, ['draft' => true]),
+            githubRelease(14, ['prerelease' => true]),
+            githubRelease(13),
+            ['tag_name' => 'web-99', 'draft' => false, 'prerelease' => false],
+        ]),
+        'github.com/davybrieu/vixeo_frontend/releases/download/android-13/vixeo.apk.sha256' => Http::response(str_repeat('ab', 32).'  vixeo.apk'),
+    ]);
+    release('android', '1.0.0', 5);
+
+    checkUpdate('android', 10)
+        ->assertOk()
+        ->assertJsonPath('status', 'update_available')
+        ->assertJsonPath('latest.build', 13)
+        ->assertJsonPath('latest.version', '1.13.0')
+        ->assertJsonPath('latest.notes', 'Nouveautés du build 13')
+        ->assertJsonPath('latest.download_url', 'https://github.com/davybrieu/vixeo_frontend/releases/download/android-13/vixeo.apk')
+        ->assertJsonPath('latest.sha256', str_repeat('ab', 32));
+
+    // Cached: GitHub is asked once (list + checksum).
+    checkUpdate('android', 13)->assertJsonPath('status', 'up_to_date');
+    Http::assertSentCount(2);
+});
+
+it('keeps the release table when it is newer, or when GitHub fails', function () {
+    config(['services.app_updates.github_repository' => 'davybrieu/vixeo_frontend']);
+    Http::preventStrayRequests();
+    Http::fake(['api.github.com/*' => Http::response(['message' => 'API rate limit exceeded'], 403)]);
+    release('android', '2.0.0', 40, required: true);
+
+    checkUpdate('android', 1)
+        ->assertJsonPath('status', 'update_required')
+        ->assertJsonPath('latest.build', 40);
+});
+
+it('does not ask GitHub for iOS', function () {
+    config(['services.app_updates.github_repository' => 'davybrieu/vixeo_frontend']);
+    Http::preventStrayRequests();
+
+    checkUpdate('ios', 1)->assertJsonPath('status', 'up_to_date');
+    Http::assertNothingSent();
 });

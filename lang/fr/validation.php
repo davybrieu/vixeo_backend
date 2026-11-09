@@ -219,6 +219,7 @@ return [
         'skip_recap' => 'passer le résumé',
         'skip_credits' => 'passer le générique de fin',
         'skip_preview' => 'passer l\'aperçu',
+        'no_spoiler' => 'mode sans spoiler',
         'languages' => 'langues',
         'type' => 'type',
         'cursor' => 'curseur',

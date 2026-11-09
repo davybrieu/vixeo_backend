@@ -5,9 +5,9 @@ $allowedOrigins = array_filter(array_map(
     explode(',', env('CORS_ALLOWED_ORIGINS', '*')),
 ));
 
-// The browser app uses a separate origin from the API. Always keep it allowed,
-// even when production CORS_ALLOWED_ORIGINS is customized in the server .env.
-$allowedOrigins[] = 'https://app.vixeo.app';
+// The browser app (WEB_URL, also the address of the TV QR codes) uses another origin than the
+// API: always allowed, even when CORS_ALLOWED_ORIGINS is customized in the server .env.
+$allowedOrigins[] = rtrim((string) env('WEB_URL', 'https://app.vixeo.app'), '/');
 
 return [
 
