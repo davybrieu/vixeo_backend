@@ -166,7 +166,7 @@
         "/v1/auth/register": {
             "post": {
                 "operationId": "v1.auth.register",
-                "description": "Also creates a first profile named after the user and returns an API token.",
+                "description": "Also creates a first profile named after the user (with an avatar of the catalog, at random)\nand returns an API token.",
                 "summary": "Create an account",
                 "tags": [
                     "Authentification",
@@ -3191,7 +3191,7 @@
             },
             "post": {
                 "operationId": "v1.profiles.store",
-                "description": "An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.",
+                "description": "An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.\nWithout `avatar`, the profile gets one of the catalog at random.",
                 "summary": "Create a profile",
                 "tags": [
                     "Profils",

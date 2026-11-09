@@ -140,6 +140,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
+  Un nouveau profil (y compris le premier, créé à l'inscription) reçoit un avatar du catalogue au
+  hasard s'il n'en choisit pas (`AvatarCatalog::randomId`).
   Les avatars fournis sont des créations originales « Vixeo » : n'ajouter des images de vraies
   licences de jeux vidéo qu'avec les droits d'utilisation.
 - **Contrôle parental** (doc : `docs/controle-parental.md`) : PIN parental du compte

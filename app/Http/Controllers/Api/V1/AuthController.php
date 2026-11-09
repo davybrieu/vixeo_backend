@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Resources\V1\UserResource;
 use App\Models\User;
+use App\Services\AvatarCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,15 +23,17 @@ class AuthController extends Controller
     /**
      * Create an account.
      *
-     * Also creates a first profile named after the user and returns an API token.
+     * Also creates a first profile named after the user (with an avatar of the catalog, at random)
+     * and returns an API token.
      *
      * @unauthenticated
      */
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request, AvatarCatalog $avatars): JsonResponse
     {
-        $user = DB::transaction(function () use ($request) {
+        $user = DB::transaction(function () use ($request, $avatars) {
             $user = User::create($request->safe()->only(['name', 'email', 'password']));
-            $user->profiles()->create(['name' => $user->name]);
+            // The first profile gets an avatar of the catalog, at random.
+            $user->profiles()->create(['name' => $user->name, 'avatar' => $avatars->randomId()]);
 
             return $user;
         });

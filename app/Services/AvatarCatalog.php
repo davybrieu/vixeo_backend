@@ -49,4 +49,12 @@ class AvatarCatalog
 
         return $ids;
     }
+
+    /** An avatar of the catalog, at random: the default of a new profile (null if the catalog is empty). */
+    public function randomId(): ?string
+    {
+        $ids = $this->ids();
+
+        return $ids === [] ? null : $ids[array_rand($ids)];
+    }
 }

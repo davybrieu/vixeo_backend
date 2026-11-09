@@ -8,6 +8,7 @@ use App\Http\Requests\Api\V1\ProfileRequest;
 use App\Http\Requests\Api\V1\VerifyPinRequest;
 use App\Http\Resources\V1\ProfileResource;
 use App\Models\Profile;
+use App\Services\AvatarCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,12 +34,16 @@ class ProfileController extends Controller
      * Create a profile.
      *
      * An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.
+     * Without `avatar`, the profile gets one of the catalog at random.
      */
-    public function store(ProfileRequest $request): JsonResponse
+    public function store(ProfileRequest $request, AvatarCatalog $avatars): JsonResponse
     {
         Gate::authorize('create', Profile::class);
 
-        $profile = $request->user()->profiles()->create($request->profileData());
+        $data = $request->profileData();
+        // No avatar chosen: one of the catalog, at random.
+        $data['avatar'] ??= $avatars->randomId();
+        $profile = $request->user()->profiles()->create($data);
 
         return (new ProfileResource($profile))
             ->response()

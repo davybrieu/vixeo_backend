@@ -93,3 +93,34 @@ it('does not need the parental PIN to change avatar or poster format', function 
     $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['avatar' => 'arcade-cat', 'poster_format' => 'landscape'])
         ->assertOk();
 });
+
+it('gives a new profile an avatar of the catalog at random, unless one is chosen', function () {
+    $ids = app(AvatarCatalog::class)->ids();
+
+    $avatar = $this->postJson('/api/v1/profiles', ['name' => 'Léa'])->assertCreated()->json('data.avatar');
+    expect($ids)->toContain($avatar);
+
+    $this->postJson('/api/v1/profiles', ['name' => 'Tom', 'avatar' => null])->assertCreated()
+        ->assertJsonPath('data.avatar', fn ($a) => in_array($a, $ids, true));
+    $this->postJson('/api/v1/profiles', ['name' => 'Zoé', 'avatar' => 'arcade-cat'])->assertCreated()
+        ->assertJsonPath('data.avatar', 'arcade-cat');
+
+    // Not always the same one.
+    $picked = collect(range(1, 40))->map(fn () => app(AvatarCatalog::class)->randomId())->unique();
+    expect($picked->count())->toBeGreaterThan(1);
+});
+
+it('gives the first profile of a new account an avatar of the catalog', function () {
+    app('auth')->forgetGuards();
+
+    $this->postJson('/api/v1/auth/register', [
+        'name' => 'Davy',
+        'email' => 'nouveau@exemple.fr',
+        'password' => 'secret-password',
+        'password_confirmation' => 'secret-password',
+        'device_name' => 'Test',
+    ])->assertCreated();
+
+    $profile = User::where('email', 'nouveau@exemple.fr')->first()->profiles()->first();
+    expect(app(AvatarCatalog::class)->ids())->toContain($profile->avatar);
+});
