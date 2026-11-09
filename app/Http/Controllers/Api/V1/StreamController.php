@@ -15,17 +15,25 @@ class StreamController extends Controller
 {
     public function __construct(private StreamSources $sources) {}
 
+    /**
+     * Providers the sources panel shows, so the app can list them before any search runs.
+     */
+    public function providers(): JsonResponse
+    {
+        return response()->json(['data' => $this->sources->providers()]);
+    }
+
     public function movieSources(Request $request, int $id): AnonymousResourceCollection
     {
         return StreamSourceResource::collection(
-            $this->sources->movie($id, $request->boolean('extract'))
+            $this->sources->movie($id, $request->boolean('extract'), $request->query('provider'))
         );
     }
 
     public function episodeSources(Request $request, int $id, int $season, int $episode): AnonymousResourceCollection
     {
         return StreamSourceResource::collection(
-            $this->sources->episode($id, $season, $episode, $request->boolean('extract'))
+            $this->sources->episode($id, $season, $episode, $request->boolean('extract'), $request->query('provider'))
         );
     }
 

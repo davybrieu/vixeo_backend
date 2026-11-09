@@ -93,6 +93,14 @@ return [
     'scraper' => [
         'base_url' => env('SCRAPER_URL', 'http://127.0.0.1:3100'),
         'timeout' => (int) env('SCRAPER_TIMEOUT', 45),
+
+        // Providers the app shows in the sources panel, in display order. Each is queried
+        // on its own so the panel can report a per-provider state (loading, failed, links).
+        'providers' => [
+            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
+            ['id' => 'wiflix', 'name' => 'Wiflix'],
+            ['id' => 'frembed', 'name' => 'Frembed'],
+        ],
     ],
 
     /*

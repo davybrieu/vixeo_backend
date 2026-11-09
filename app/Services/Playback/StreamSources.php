@@ -93,7 +93,22 @@ class StreamSources
 
     public function __construct(private TmdbClient $tmdb) {}
 
-    public function movie(int $tmdbId, bool $extract = false): array
+    /**
+     * Providers the sources panel offers, in display order.
+     *
+     * @return list<array{id: string, name: string}>
+     */
+    public function providers(): array
+    {
+        $providers = config('services.scraper.providers', []);
+
+        return array_values(array_map(fn (array $p) => [
+            'id' => (string) $p['id'],
+            'name' => (string) $p['name'],
+        ], is_array($providers) ? $providers : []));
+    }
+
+    public function movie(int $tmdbId, bool $extract = false, ?string $provider = null): array
     {
         $meta = $this->tmdb->get("movie/{$tmdbId}");
 
@@ -104,10 +119,11 @@ class StreamSources
             'original_title' => $meta['original_title'] ?? ($meta['title'] ?? ''),
             'year' => isset($meta['release_date']) ? (int) substr($meta['release_date'], 0, 4) : null,
             'extract' => $extract,
+            'provider' => $provider,
         ]);
     }
 
-    public function episode(int $tmdbId, int $season, int $episode, bool $extract = false): array
+    public function episode(int $tmdbId, int $season, int $episode, bool $extract = false, ?string $provider = null): array
     {
         $meta = $this->tmdb->get("tv/{$tmdbId}");
 
@@ -120,6 +136,7 @@ class StreamSources
             'season' => $season,
             'episode' => $episode,
             'extract' => $extract,
+            'provider' => $provider,
         ]);
     }
 
@@ -200,6 +217,18 @@ class StreamSources
 
         $sources = $response->json('sources') ?? [];
         $sources = is_array($sources) ? array_values($sources) : [];
+
+        // A single provider was asked for: its failure is the caller's failure, so the
+        // panel can tell "provider down" from "provider has no link for this title".
+        $provider = $payload['provider'] ?? null;
+        if ($provider !== null) {
+            $status = collect($response->json('providers') ?? [])->firstWhere('id', $provider);
+            if (is_array($status) && ($status['status'] ?? null) === 'error') {
+                Log::warning('Provider failed', ['provider' => $provider, 'error' => $status['error'] ?? null]);
+
+                throw new PlaybackServiceUnavailable('Ce fournisseur est momentanément indisponible.');
+            }
+        }
 
         $this->recordMissingExtractors($sources, $payload);
 
