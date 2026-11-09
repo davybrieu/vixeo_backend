@@ -149,6 +149,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->whereNumber('file')->middleware('throttle:subtitles')->name('subtitles.file');
 
             // Stream sources (FrenchStream, Wiflix, Frembed via Node scraper).
+            Route::get('sources/providers', [StreamController::class, 'providers'])->name('sources.providers');
             Route::get('movie/{id}/sources', [StreamController::class, 'movieSources'])
                 ->whereNumber('id')->name('movie.sources');
             Route::get('tv/{id}/season/{season}/episode/{episode}/sources', [StreamController::class, 'episodeSources'])

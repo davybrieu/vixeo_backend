@@ -179,3 +179,58 @@ it('says the service is unavailable when the scraper fails to resolve', function
         ->assertStatus(503)
         ->assertExactJson(['message' => 'Le service de sources est temporairement indisponible.']);
 });
+
+it('lists the providers the panel shows', function () {
+    $this->getJson('/api/v1/catalog/sources/providers')
+        ->assertOk()
+        ->assertExactJson(['data' => [
+            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
+            ['id' => 'wiflix', 'name' => 'Wiflix'],
+            ['id' => 'frembed', 'name' => 'Frembed'],
+        ]]);
+});
+
+it('asks the scraper for a single provider', function () {
+    fakeSources([['provider' => 'wiflix', 'name' => 'Wiflix (VF)', 'url' => 'https://voe.sx/e/w']]);
+
+    $this->getJson('/api/v1/catalog/movie/550/sources?provider=wiflix')
+        ->assertOk()
+        ->assertJsonPath('data.0.url', 'https://voe.sx/e/w');
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/sources')
+        && $request['provider'] === 'wiflix');
+});
+
+it('reports a provider failure as a 503 so the panel can show it', function () {
+    Http::fake([
+        'api.themoviedb.org/3/movie/550*' => Http::response(Tmdb::movie()),
+        'scraper.test/sources' => Http::response([
+            'sources' => [],
+            'providers' => [
+                ['id' => 'wiflix', 'name' => 'Wiflix', 'status' => 'error', 'error' => 'Bot shield active.', 'count' => 0],
+            ],
+        ]),
+    ]);
+
+    $this->getJson('/api/v1/catalog/movie/550/sources?provider=wiflix')
+        ->assertStatus(503)
+        ->assertExactJson(['message' => 'Ce fournisseur est momentanément indisponible.']);
+});
+
+it('does not fail a multi-provider request when one provider is down', function () {
+    Http::fake([
+        'api.themoviedb.org/3/movie/550*' => Http::response(Tmdb::movie()),
+        'scraper.test/sources' => Http::response([
+            'sources' => [['provider' => 'frenchstream', 'name' => 'Vidzy (VF)', 'url' => 'https://voe.sx/e/ok']],
+            'providers' => [
+                ['id' => 'frenchstream', 'name' => 'FrenchStream', 'status' => 'ok', 'count' => 1],
+                ['id' => 'wiflix', 'name' => 'Wiflix', 'status' => 'error', 'error' => 'Bot shield active.', 'count' => 0],
+            ],
+        ]),
+    ]);
+
+    $this->getJson('/api/v1/catalog/movie/550/sources')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.url', 'https://voe.sx/e/ok');
+});
