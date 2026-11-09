@@ -3651,6 +3651,14 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "extract",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
                     }
                 ],
                 "responses": {
@@ -3710,6 +3718,14 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "extract",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
                         }
                     }
                 ],
@@ -6790,49 +6806,41 @@
                 "type": "object",
                 "properties": {
                     "provider": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
+                        "type": "string"
                     },
                     "name": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
+                        "type": "string"
                     },
                     "url": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
+                        "type": "string"
+                    },
+                    "stream": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Renseign\u00e9s seulement quand l'extraction est demand\u00e9e (`?extract=1`)\net que le lien du lecteur a pu \u00eatre r\u00e9solu en flux lisible."
+                    },
+                    "stream_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "extractor": {
+                        "type": [
+                            "string",
+                            "null"
                         ]
                     }
                 },
                 "required": [
                     "provider",
                     "name",
-                    "url"
+                    "url",
+                    "stream",
+                    "stream_type",
+                    "extractor"
                 ],
                 "title": "StreamSourceResource"
             },

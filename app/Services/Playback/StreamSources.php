@@ -10,21 +10,90 @@ use Illuminate\Support\Facades\Log;
 
 class StreamSources
 {
-    /** Domaines supportés par les extracteurs du scraper Node. */
+    /**
+     * Domaines supportés par les extracteurs du scraper Node.
+     * Portés depuis l'appli ONYX (com.streamflixreborn.streamflix.extractors).
+     */
     private const SUPPORTED_DOMAINS = [
-        'voe.sx', 'uqload.com', 'uqload.net', 'uqload.io', 'uqload.co',
-        'streamtape.com', 'streamtape.net', 'streamtape.to', 'streamtape.xyz',
-        'doodstream.com', 'dood.watch', 'dood.to', 'dood.so', 'dood.la', 'dood.li',
-        'dood.ws', 'dood.pm', 'dood.re', 'dood.yt', 'doods.pro',
-        'filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl',
-        'streamwish.to', 'streamwish.com', 'awish.pro', 'embedwish.com',
-        'kisswish.com', 'hlswish.com', 'swishsrv.com', 'playerwish.com',
-        'mixdrop.co', 'mixdrop.to', 'mixdrop.ch', 'mixdrop.bz', 'mixdrop.ag',
+        // VOE
+        'voe.sx', 'jessicachoosemake.com', 'jamesbornmain.com', 'jilliandescribecompany.com',
+        'mikaylaarealike.com', 'christopheruntilpoint.com', 'walterprettytheir.com',
+        'crystaltreatmenteast.com', 'lauradaydo.com', 'lancewhosedifficult.com',
+        'dianaavoidthey.com', 'jefferycontrolmodel.com', 'sandratableother.com',
+        'marissasharecareer.com', 'ralphysuccessfull.org', 'charlestoughrace.com',
+        'timmaybealready.com', 'maryspecialwatch.com', 'rebeccacostthousand.com',
+        'bryantenunder.com',
+        // Streamwish
+        'streamwish.com', 'streamwish.to', 'streamwish.site', 'streamwish.fun', 'embedwish.com',
+        'awish.pro', 'awish.top', 'dwish.pro', 'kisswish.com', 'hlswish.com', 'swishsrv.com',
+        'playerwish.com', 'swiftplayers.com', 'uqloads.xyz', 'wishembed.pro', 'strmwis.xyz',
+        'vidmoviesb.xyz', 'cilootv.store', 'tuktukcinema.store', 'doodporn.xyz', 'volvovideo.top',
+        'wishfast.top', 'sfastwish.com', 'playembed.online', 'flaswish.com', 'obeywish.com',
+        'cdnwish.com', 'javsw.me', 'cinemathek.online', 'mohahhda.site', 'ma2d.store',
+        'dancima.shop', 'swhoi.com', 'jodwish.com', 'swdyu.com', 'strwish.com', 'asnwish.com',
+        'wishonly.site', 'katomen.store', 'iplayerhls.com', 'hlsflast.com', 'ghbrisk.com',
+        'cybervynx.com', 'dhcplay.com', 'gradehgplus.com', 'ultpreplayer.com', 'hglink.to',
+        'haxloppd.com', 'hgcloud.to', 'vidwish.live', 'hgplaycdn.com', 'hanerix.com',
+        // Filemoon
+        'filemoon.org', 'filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl',
+        'bysejikuar.com', '1day1movie.website', 'moflix-stream.link', 'bysezoxexe.com',
+        'bysebuho.com', 'bysezejataos.com', 'bysekoze.com', 'bysesayeveum.com', 'lukefirst.lol',
+        'weneverbeenfree.com', 'gn1r5n.org', 'mfw09.org', 'kaydendown.lol',
+        // VidHide
+        'dhtpre.com', 'peytonepre.com', 'vidhideplus.com', 'dingtezuni.com', 'minochinos.com',
+        'moflix-stream.click', 'filelions.to', 'filelions.com', 'streamhide.to', 'streamhide.com',
+        'morencius.com', 'mivalyo.com', 'dinisglows.com',
+        // Streamruby
+        'streamruby.com', 'stmruby.com', 'rubystm.com', 'rubyvid.com', 'moflix-stream.fans',
+        // Supervideo
+        'supervideo.cc', 'supervideo.tv',
+        // Vidara
+        'vidara.to', 'viewdara.com', 'vidara.so', 'ano.cx', 'bufsao.com', 'vidaraa.cc',
+        'vidaraa.com', 'vidvara.site', 'vidar.cc', 'gaqghe.com', 'ykfrtza.com', 'h308sa.com',
+        // Vidsonic
+        'vidsonic.net',
+        // Rpmvid
+        'rpmvid.com', 'cubeembed.rpmvid.com', 'bummi.upns.xyz', 'loadm.cam', 'anibum.playerp2p.online',
+        'pelisplus.upns.pro', 'pelisplus.rpmstream.live', 'pelisplus.strp2p.com', 'flemmix.upns.pro',
+        'moflix.rpmplay.xyz', 'moflix.upns.xyz', 'flix2day.xyz', 'primevid.click',
+        'totocoutouno.rpmlive.online', 'dismoiceline.uns.bio', 'doremifasol.ezplayer.me',
+        'marcus.p2pstream.vip', 'animeav1.uns.bio', 'serix.upns.live', 'barbapapa.p2pstream.online',
+        'coflix.upn.one', 'flemmix.farm', 'flemmix.rpmlive.online', 'flemmix.upns.xyz',
+        'flemmix.rpmstream.live', 'flemmix.strp2p.com', 'flemmix.ezplayer.me', 'flemmix.uns.bio',
+        'flemmix.upns.live', 'flemmix.upn.one', 'flemmix.p2pstream.vip', 'flemmix.prof',
+        // Vidzy
+        'vidzy.org', 'vidzy.live', 'vidzy.cc', 'vidzy.to',
+        // Uqload
+        'uqload.is', 'uqload.cx', 'uqload.co', 'uqload.net', 'uqload.bz', 'uqload.io',
+        'uqload.com', 'uqload.ws', 'uqload.vc', 'uqload.to',
+        // Streamtape
+        'streamtape.com', 'streamtape.net', 'streamtape.to', 'streamtape.xyz', 'streamta.site',
+        'strtape.cloud', 'stape.fun', 'shavetape.cash', 'advtpe.com', 'watchadsontape.com',
+        // MixDrop
+        'mixdrop.co', 'mixdrop.bz', 'mixdrop.ag', 'mixdrop.ch', 'mixdrop.to', 'mixdrop.cv',
+        'mxdrop.to', 'mixdrop.club', 'm1xdrop.net', 'mixdrop.is', 'mixdrop.gl', 'mixdrop.sx',
+        'mxdrop.sx', 'mixdrop.ps', 'miixdrop.net', 'miiixdrop.net', 'mxdrop.top', 'mxdrop.click',
+        'mixdrop.si',
+        // DoodStream
+        'dood.la', 'dood.li', 'dood.so', 'dood.to', 'dood.watch', 'dood.yt', 'dood.re', 'dood.wf',
+        'dood.ws', 'dood.pm', 'doodstream.com', 'doodstream.me', 'doods.pro', 'dsvplay.com',
+        'myvidplay.com', 'playmogo.com', 'do7go.com', 'd000d.com', 'doply.net', 'ds2video.com',
+        'vvide0.com', 'vide0.net',
+        // Netu / HQQ
+        'waaw1.tv', 'netu.tv', 'hqq.tv', 'waaw.tv', 'hqcloud.to', 'wsaw.to', 'netu.ac', 'hqq.ac',
+        'waaw.ac', 'waaw.to', 'younetu.org',
+        // Vidoza
+        'vidoza.net', 'videzz.net',
+        // SendVid
+        'sendvid.com',
     ];
+
+    /** Racines des miroirs Rpmvid qui tournent souvent. */
+    private const SUPPORTED_HOST_PATTERNS = ['flemmix.', '.upns.', '.rpmlive.', '.rpmstream.', '.p2pstream.', '.ezplayer.'];
 
     public function __construct(private TmdbClient $tmdb) {}
 
-    public function movie(int $tmdbId): array
+    public function movie(int $tmdbId, bool $extract = false): array
     {
         $meta = $this->tmdb->get("movie/{$tmdbId}");
 
@@ -34,10 +103,11 @@ class StreamSources
             'title' => $meta['title'] ?? '',
             'original_title' => $meta['original_title'] ?? ($meta['title'] ?? ''),
             'year' => isset($meta['release_date']) ? (int) substr($meta['release_date'], 0, 4) : null,
+            'extract' => $extract,
         ]);
     }
 
-    public function episode(int $tmdbId, int $season, int $episode): array
+    public function episode(int $tmdbId, int $season, int $episode, bool $extract = false): array
     {
         $meta = $this->tmdb->get("tv/{$tmdbId}");
 
@@ -49,6 +119,7 @@ class StreamSources
             'year' => isset($meta['first_air_date']) ? (int) substr($meta['first_air_date'], 0, 4) : null,
             'season' => $season,
             'episode' => $episode,
+            'extract' => $extract,
         ]);
     }
 
@@ -136,7 +207,13 @@ class StreamSources
         $host = strtolower(preg_replace('/^www\./', '', $host));
 
         foreach (self::SUPPORTED_DOMAINS as $domain) {
-            if ($host === $domain || str_ends_with($host, '.'.$domain) || str_contains($host, explode('.', $domain)[0])) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        foreach (self::SUPPORTED_HOST_PATTERNS as $pattern) {
+            if (str_contains($host, $pattern)) {
                 return true;
             }
         }
