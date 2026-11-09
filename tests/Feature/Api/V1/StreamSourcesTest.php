@@ -120,3 +120,62 @@ it('says the service is unavailable when the scraper is down', function () {
         ->assertStatus(503)
         ->assertExactJson(['message' => 'Le service de sources est temporairement indisponible.']);
 });
+
+it('keeps only the links an extractor can resolve', function () {
+    fakeSources([
+        ['provider' => 'frembed', 'name' => 'Frembed (VF)', 'url' => 'https://voe.sx/e/known'],
+        ['provider' => 'newhost', 'name' => 'Nouveau', 'url' => 'https://unknown-host.tld/e/xyz'],
+    ]);
+
+    $this->getJson('/api/v1/catalog/movie/550/sources')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.url', 'https://voe.sx/e/known');
+});
+
+it('resolves a player link into a playable stream', function () {
+    Http::fake([
+        'scraper.test/extract' => Http::response([
+            'url' => 'https://delivery.voe.sx/hls/master.m3u8',
+            'type' => 'm3u8',
+            'extractor' => 'voe',
+            'headers' => ['Referer' => 'https://voe.sx/'],
+        ]),
+    ]);
+
+    $this->postJson('/api/v1/catalog/resolve', ['url' => 'https://voe.sx/e/abc'])
+        ->assertOk()
+        ->assertJsonPath('data.stream', 'https://delivery.voe.sx/hls/master.m3u8')
+        ->assertJsonPath('data.stream_type', 'm3u8')
+        ->assertJsonPath('data.extractor', 'voe')
+        ->assertJsonPath('data.headers.Referer', 'https://voe.sx/');
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/extract')
+        && $request['url'] === 'https://voe.sx/e/abc');
+});
+
+it('answers 502 when the link cannot be resolved', function () {
+    Http::fake([
+        'scraper.test/extract' => Http::response(['error' => 'No extractor matched or extraction failed']),
+    ]);
+
+    $this->postJson('/api/v1/catalog/resolve', ['url' => 'https://unknown-host.tld/e/xyz'])
+        ->assertStatus(502)
+        ->assertExactJson(['message' => 'Cette source n’est pas lisible.']);
+});
+
+it('rejects a resolve request without a valid url', function () {
+    Http::preventStrayRequests();
+
+    $this->postJson('/api/v1/catalog/resolve', ['url' => 'not-a-url'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('url');
+});
+
+it('says the service is unavailable when the scraper fails to resolve', function () {
+    Http::fake(['scraper.test/extract' => Http::response('Boom', 500)]);
+
+    $this->postJson('/api/v1/catalog/resolve', ['url' => 'https://voe.sx/e/abc'])
+        ->assertStatus(503)
+        ->assertExactJson(['message' => 'Le service de sources est temporairement indisponible.']);
+});

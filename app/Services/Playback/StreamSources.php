@@ -123,9 +123,58 @@ class StreamSources
         ]);
     }
 
+    /**
+     * Resolves a player page URL into a playable stream (m3u8 / mp4) through the scraper's
+     * extractors. Returns null when no extractor knows the host or extraction fails.
+     *
+     * @return array{stream: string, stream_type: string|null, extractor: string|null, headers: array<string, string>, subtitles: list<mixed>}|null
+     */
+    public function resolve(string $url): ?array
+    {
+        $base = $this->scraperBase();
+        if ($base === '') {
+            Log::warning('STREAM scraper not configured (SCRAPER_URL)');
+
+            return null;
+        }
+
+        try {
+            $response = Http::baseUrl($base)
+                ->acceptJson()
+                ->timeout((int) config('services.scraper.timeout', 45))
+                ->post('extract', ['url' => $url]);
+        } catch (\Throwable $e) {
+            Log::warning('Scraper unreachable', ['error' => $e->getMessage()]);
+
+            throw new PlaybackServiceUnavailable('Le service de sources est temporairement indisponible.', $e);
+        }
+
+        if ($response->failed()) {
+            Log::warning('Scraper failed', ['status' => $response->status()]);
+
+            throw new PlaybackServiceUnavailable('Le service de sources est temporairement indisponible.');
+        }
+
+        $stream = $response->json('url');
+        if (! is_string($stream) || $stream === '') {
+            return null;
+        }
+
+        $headers = $response->json('headers');
+        $subtitles = $response->json('subtitles');
+
+        return [
+            'stream' => $stream,
+            'stream_type' => $response->json('type') ?: null,
+            'extractor' => $response->json('extractor') ?: null,
+            'headers' => is_array($headers) ? $headers : [],
+            'subtitles' => is_array($subtitles) ? array_values($subtitles) : [],
+        ];
+    }
+
     private function fetch(array $payload): array
     {
-        $base = rtrim((string) config('services.scraper.base_url'), '/');
+        $base = $this->scraperBase();
         if ($base === '') {
             Log::warning('STREAM scraper not configured (SCRAPER_URL)');
 
@@ -154,7 +203,17 @@ class StreamSources
 
         $this->recordMissingExtractors($sources, $payload);
 
-        return $sources;
+        // Only hand the app links we can actually resolve into a stream: a link
+        // with no extractor would leave the player with nothing to play.
+        return array_values(array_filter(
+            $sources,
+            fn (array $source) => $this->hasExtractor((string) ($source['url'] ?? '')),
+        ));
+    }
+
+    private function scraperBase(): string
+    {
+        return rtrim((string) config('services.scraper.base_url'), '/');
     }
 
     private function recordMissingExtractors(array $sources, array $payload): void
