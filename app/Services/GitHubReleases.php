@@ -2,8 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\AppPlatform;
-use App\Models\AppRelease;
+use App\Support\AppRelease;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -12,33 +11,44 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Android releases published on GitHub (repository `services.app_updates.github_repository`):
- * the CI publishes each signed APK as a release tagged `android-<build>`, with the APK and its
- * `.apk.sha256` as assets (docs/mise-a-jour.md). Read without a token (public repository), cached
- * 5 minutes. Any failure gives null: the update check then uses the `app_releases` table.
+ * Android releases published on GitHub (repository `services.app_updates.github_repository`), the
+ * only source of the update check (docs/mise-a-jour.md): the CI publishes each signed APK as a
+ * release tagged `android-<build>`, with the APK and its `.apk.sha256` as assets. A release whose
+ * title contains « [obligatoire] » forces older installs to update. Read without a token (public
+ * repository), cached 5 minutes. Any failure gives no release: the apps are then up to date, never
+ * blocked.
  */
 class GitHubReleases
 {
-    private const CACHE_KEY = 'app-updates:github:android';
+    private const CACHE_KEY = 'app-updates:github:android:v2';
 
     private const TTL = 300;
 
-    public function latestAndroid(): ?AppRelease
+    /** In the title of a GitHub release: every install older than its build must update. */
+    public const REQUIRED_MARK = '[obligatoire]';
+
+    /**
+     * The newest Android release, and the build every install must reach (null: none required).
+     *
+     * @return array{latest: ?AppRelease, minimum_build: ?int}
+     */
+    public function android(): array
     {
         $repository = (string) config('services.app_updates.github_repository');
-        if ($repository === '') {
-            return null;
-        }
+        $found = $repository === ''
+            ? null
+            : Cache::remember(self::CACHE_KEY, self::TTL, fn () => $this->fetch($repository) ?? false);
 
-        $release = Cache::remember(self::CACHE_KEY, self::TTL, fn () => $this->fetch($repository) ?? false);
-
-        return is_array($release) ? $this->toRelease($release) : null;
+        return is_array($found)
+            ? ['latest' => $this->toRelease($found['latest']), 'minimum_build' => $found['minimum_build']]
+            : ['latest' => null, 'minimum_build' => null];
     }
 
     /**
-     * Newest published (not draft, not pre-release) `android-<build>` release, with its checksum.
+     * Published (not draft, not pre-release) `android-<build>` releases: the newest one with its
+     * checksum, and the highest build marked « [obligatoire] ».
      *
-     * @return array<string, mixed>|null
+     * @return array{latest: array<string, mixed>, minimum_build: ?int}|null
      */
     private function fetch(string $repository): ?array
     {
@@ -56,20 +66,20 @@ class GitHubReleases
             return null;
         }
 
-        $release = collect($response->json())
+        $releases = collect($response->json())
             ->filter(fn ($item) => is_array($item)
                 && ! ($item['draft'] ?? true)
                 && ! ($item['prerelease'] ?? true)
                 && self::buildOf($item) !== null)
-            ->sortByDesc(fn (array $item) => self::buildOf($item))
-            ->first();
-        if ($release === null) {
+            ->sortByDesc(fn (array $item) => self::buildOf($item));
+        $latest = $releases->first();
+        if ($latest === null) {
             return null;
         }
+        $latest['sha256'] = $this->checksum(collect($latest['assets'] ?? []));
+        $minimum = $releases->filter(fn (array $item) => self::isRequired($item))->map(fn (array $item) => self::buildOf($item))->max();
 
-        $release['sha256'] = $this->checksum(collect($release['assets'] ?? []));
-
-        return $release;
+        return ['latest' => $latest, 'minimum_build' => $minimum === null ? null : (int) $minimum];
     }
 
     /** SHA-256 from the `.apk.sha256` asset, or null (the app then sends people to the site). */
@@ -101,22 +111,27 @@ class GitHubReleases
         $url = is_array($apk) ? ($apk['browser_download_url'] ?? null) : null;
         $notes = trim((string) ($release['body'] ?? ''));
 
-        return new AppRelease([
-            'platform' => AppPlatform::Android,
-            'version' => $version[1] ?? '0.0.0',
-            'build' => (int) self::buildOf($release),
-            'required' => false,
-            'notes' => $notes === '' ? null : $notes,
+        return new AppRelease(
+            version: $version[1] ?? '0.0.0',
+            build: (int) self::buildOf($release),
+            required: self::isRequired($release),
+            notes: $notes === '' ? null : $notes,
             // The app only installs over https, with a checksum.
-            'download_url' => is_string($url) && str_starts_with($url, 'https://') ? $url : null,
-            'sha256' => is_string($release['sha256'] ?? null) ? $release['sha256'] : null,
-            'published_at' => Carbon::parse($release['published_at'] ?? $release['created_at'] ?? now()),
-        ]);
+            downloadUrl: is_string($url) && str_starts_with($url, 'https://') ? $url : null,
+            sha256: is_string($release['sha256'] ?? null) ? $release['sha256'] : null,
+            publishedAt: Carbon::parse($release['published_at'] ?? $release['created_at'] ?? now()),
+        );
     }
 
     /** @param  array<string, mixed>  $release */
     private static function buildOf(array $release): ?int
     {
         return preg_match('/^android-(\d+)$/', (string) ($release['tag_name'] ?? ''), $match) ? (int) $match[1] : null;
+    }
+
+    /** @param  array<string, mixed>  $release */
+    private static function isRequired(array $release): bool
+    {
+        return str_contains(mb_strtolower((string) ($release['name'] ?? '')), self::REQUIRED_MARK);
     }
 }

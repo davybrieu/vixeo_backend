@@ -86,7 +86,7 @@
                                                 "object",
                                                 "null"
                                             ],
-                                            "description": "Newest published release, or null if none yet.",
+                                            "description": "Newest Android release published on GitHub, or null if none yet (always null on iOS).",
                                             "properties": {
                                                 "version": {
                                                     "type": "string"
@@ -134,7 +134,7 @@
                                                 "integer",
                                                 "null"
                                             ],
-                                            "description": "Installs older than this build must update (null: none required)."
+                                            "description": "Installs older than this build must update: a GitHub release marked \u00ab [obligatoire] \u00bb (null: none)."
                                         },
                                         "update_url": {
                                             "type": [

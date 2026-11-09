@@ -131,12 +131,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`POST /me/delete` avec mot de passe) et export des données par e-mail
   (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
   lui (clé étrangère `cascadeOnDelete`) et ajoutée à l'export.
-- **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : table `app_releases` (plateforme,
-  version, build, obligatoire, notes, date ; pour Android, adresse `https` de l'APK et son SHA-256),
-  remplie par `php artisan vixeo:release` une fois l'APK en ligne sur le site. `GET /app/update` (sans connexion) compare les **builds** et
-  répond `up_to_date` / `update_available` / `update_required`. L'installation reste faite par le
-  système (Android : APK depuis le site `vixeo_web`, pas de Play Store ; iOS : distribution web
-  d'Apple, dont le serveur reste à construire).
+- **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : **seule source, les releases
+  GitHub** `android-<build>` publiées par la CI de `vixeo_frontend` (`App\Services\GitHubReleases`,
+  cache 5 min : APK, SHA-256, notes). Un titre contenant `[obligatoire]` force les versions plus
+  anciennes à se mettre à jour. Pas de table ni de commande (`vixeo:release` et `app_releases`
+  supprimées, demande du développeur). `GET /app/update` (sans connexion) compare les **builds**
+  et répond `up_to_date` / `update_available` / `update_required` ; GitHub en panne → `up_to_date`.
+  Pas d'appli iOS pour l'instant : iOS est toujours `up_to_date`. L'installation reste faite par
+  le système (Android : APK, pas de Play Store).
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
@@ -176,7 +178,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
   avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
   par QR code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
-  et export des données (RGPD), vérification des mises à jour des applis (`app_releases`).
+  et export des données (RGPD), vérification des mises à jour des applis (releases GitHub).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer

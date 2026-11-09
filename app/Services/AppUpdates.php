@@ -4,15 +4,14 @@ namespace App\Services;
 
 use App\Enums\AppPlatform;
 use App\Enums\AppUpdateStatus;
-use App\Models\AppRelease;
+use App\Support\AppRelease;
 
 /**
  * Tells an installed app whether to update (docs/mise-a-jour.md).
  *
- * Builds are compared, never version names. The newest release is the highest build among the
- * `app_releases` table (`php artisan vixeo:release`) and, for Android, the GitHub releases
- * published by the CI (GitHubReleases). A release marked `required` (table only) forces every
- * older install to update.
+ * Builds are compared, never version names. The only source is GitHub: the Android releases
+ * published by the CI (GitHubReleases); one whose title contains « [obligatoire] » forces every
+ * older install to update. No iOS app is published yet: iOS is always up to date.
  */
 class AppUpdates
 {
@@ -21,15 +20,9 @@ class AppUpdates
     /** @return array{status: AppUpdateStatus, latest: ?AppRelease, minimum_build: ?int, update_url: ?string} */
     public function check(AppPlatform $platform, int $build): array
     {
-        $candidates = array_filter([
-            AppRelease::query()->published($platform)->orderByDesc('build')->first(),
-            $platform === AppPlatform::Android ? $this->github->latestAndroid() : null,
-        ]);
-        usort($candidates, fn (AppRelease $a, AppRelease $b) => $b->build <=> $a->build);
-        $latest = $candidates[0] ?? null;
-
-        $minimum = AppRelease::query()->published($platform)->where('required', true)->max('build');
-        $minimum = $minimum === null ? null : (int) $minimum;
+        ['latest' => $latest, 'minimum_build' => $minimum] = $platform === AppPlatform::Android
+            ? $this->github->android()
+            : ['latest' => null, 'minimum_build' => null];
 
         $status = match (true) {
             $latest === null || $build >= $latest->build => AppUpdateStatus::UpToDate,
