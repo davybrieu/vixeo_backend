@@ -5025,7 +5025,7 @@
                             "string",
                             "null"
                         ],
-                        "description": "Title logo (transparent PNG, w500). Home rows only: null elsewhere (the title page has it) or when TMDb has none."
+                        "description": "Title logo (transparent PNG, w500). Home and search only: null elsewhere (the title page has it) or when TMDb has none."
                     },
                     "logo_aspect_ratio": {
                         "type": [
@@ -5039,12 +5039,55 @@
                             "string",
                             "null"
                         ],
-                        "description": "Poster without text (to show under the logo), w500. Home rows only; null: use `poster_url`."
+                        "description": "Poster without text (to show under the logo), w500. Home and search only; null: use `poster_url`."
                     },
                     "textless_poster_url": {
                         "type": [
                             "string",
                             "null"
+                        ]
+                    },
+                    "summary": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Length, genres and age rating, so that the hero shows them at once. Home and search\nonly; null elsewhere (the title page has them).",
+                        "properties": {
+                            "runtime": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ],
+                                "description": "Movie length in minutes (null when unknown)."
+                            },
+                            "number_of_seasons": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ],
+                                "description": "TV show: number of seasons (null when unknown)."
+                            },
+                            "genres": {
+                                "type": "array",
+                                "description": "Genre names, in French.",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "age_rating": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ],
+                                "description": "Minimum age (0 = all audiences), null when unknown."
+                            }
+                        },
+                        "required": [
+                            "runtime",
+                            "number_of_seasons",
+                            "genres",
+                            "age_rating"
                         ]
                     }
                 },
@@ -5065,7 +5108,8 @@
                     "logo_url",
                     "logo_aspect_ratio",
                     "textless_poster_path",
-                    "textless_poster_url"
+                    "textless_poster_url",
+                    "summary"
                 ],
                 "title": "MediaItemResource"
             },

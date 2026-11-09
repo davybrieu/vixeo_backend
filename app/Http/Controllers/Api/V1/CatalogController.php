@@ -13,7 +13,7 @@ use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
 use App\Services\Tmdb\AgeGate;
-use App\Services\Tmdb\TitleArtwork;
+use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +25,7 @@ use Illuminate\Http\JsonResponse;
  */
 class CatalogController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleArtwork $artwork) {}
+    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleSummaries $summaries) {}
 
     /**
      * Catalog configuration.
@@ -58,7 +58,7 @@ class CatalogController extends Controller
     {
         $home = $this->catalog->home($request->enum('type', MediaType::class));
 
-        $filtered = $this->artwork->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = $this->summaries->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
             'featured' => $home['featured'],
             ...array_map(fn (array $section) => $section['items'], $home['sections']),
         ]));
@@ -121,7 +121,7 @@ class CatalogController extends Controller
     public function discover(DiscoverRequest $request, MediaType $type): JsonResponse
     {
         $page = $this->catalog->discover($type, $request->titleFilters(), $request->sort(), $request->page());
-        $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
+        $page['results'] = $this->summaries->add($this->ageGate->filter(ResolveProfile::profile($request), $page['results']));
 
         return response()->json([
             'data' => MediaItemResource::collection($page['results']),

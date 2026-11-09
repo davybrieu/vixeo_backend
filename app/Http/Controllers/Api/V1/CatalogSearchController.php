@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\SearchRequest;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\PersonItemResource;
 use App\Services\Tmdb\AgeGate;
+use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ use Illuminate\Http\JsonResponse;
  */
 class CatalogSearchController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate) {}
+    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleSummaries $summaries) {}
 
     /**
      * Search (all types).
@@ -36,10 +37,10 @@ class CatalogSearchController extends Controller
     {
         $results = $this->catalog->search($request->searchQuery(), $request->titleFilters(), $request->sort());
 
-        $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = $this->summaries->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
             'movies' => $results['movies']['results'],
             'shows' => $results['shows']['results'],
-        ]);
+        ]));
         $results['movies']['results'] = $filtered['movies'];
         $results['shows']['results'] = $filtered['shows'];
 
@@ -77,6 +78,9 @@ class CatalogSearchController extends Controller
             ? $this->catalog->searchTitles($type, $request->searchQuery(), $filters, $sort)
             : $this->catalog->searchType($type, $request->searchQuery(), $request->page());
         $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
+        if ($type !== SearchType::Person) {
+            $page['results'] = $this->summaries->add($page['results']);
+        }
 
         return response()->json([
             'data' => $type === SearchType::Person

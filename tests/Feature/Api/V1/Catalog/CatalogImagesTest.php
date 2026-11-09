@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
@@ -83,14 +84,17 @@ it('reads pages without images', function () {
         ->assertJsonPath('data.textless_backdrop_url', null);
 });
 
-/** A typed home: every movie list answers with the same two titles. */
+/**
+ * A typed home: every movie list answers with the same two titles; each title's details (with
+ * its images) come from [$imagesById] (null: TMDb fails for that title).
+ */
 function fakeMovieHome(array $imagesById): void
 {
     $fakes = [];
     foreach ($imagesById as $id => $images) {
-        $fakes["api.themoviedb.org/3/movie/{$id}/images*"] = $images === null
+        $fakes["api.themoviedb.org/3/movie/{$id}?*"] = $images === null
             ? Http::response(['status_message' => 'Error'], 500)
-            : Http::response($images);
+            : Http::response(array_merge(Tmdb::movieDetails(), ['id' => $id, 'images' => $images]));
     }
     Http::fake($fakes + [
         'api.themoviedb.org/3/trending/movie/week*' => Http::response(Tmdb::page([Tmdb::movie(1), Tmdb::movie(2)])),
@@ -98,7 +102,13 @@ function fakeMovieHome(array $imagesById): void
     ]);
 }
 
-it('gives the title logo of each home item, fetched once per title and cached', function () {
+/** Requests for the details of titles (not the lists). */
+function detailRequests(): Collection
+{
+    return collect(Http::recorded())->filter(fn ($pair) => preg_match('#/3/(movie|tv)/\d+\?#', $pair[0]->url()));
+}
+
+it('gives the logo, length, genres and age rating of each home item, fetched once per title and cached', function () {
     fakeMovieHome([
         1 => ['logos' => [image('/one.png', 'fr', 5.0, 4.0)], 'backdrops' => [], 'posters' => [
             image('/poster-fr.jpg', 'fr', 9.0, 0.667),
@@ -117,36 +127,65 @@ it('gives the title logo of each home item, fetched once per title and cached', 
         ->and($home->json('featured.0.textless_poster_url'))->toBe('https://image.tmdb.org/t/p/w500/poster-clean.jpg')
         ->and($home->json('featured.0.textless_poster_path'))->toBe('/poster-clean.jpg')
         ->and($home->json('featured.1.textless_poster_url'))->toBeNull()
-        ->and($home->json('sections.0.items.0.logo_url'))->toBe('https://image.tmdb.org/t/p/w500/one.png');
+        ->and($home->json('sections.0.items.0.logo_url'))->toBe('https://image.tmdb.org/t/p/w500/one.png')
+        // What the hero shows, at once.
+        ->and($home->json('featured.0.summary'))->toBe([
+            'runtime' => 139,
+            'number_of_seasons' => null,
+            'genres' => ['Drame'],
+            'age_rating' => 16,
+        ])
+        ->and($home->json('sections.0.items.1.summary.runtime'))->toBe(139);
 
-    $imageRequests = fn () => collect(Http::recorded())->filter(fn ($pair) => str_contains($pair[0]->url(), '/images'));
-    // The same title in several rows: asked once, with the logo languages.
-    expect($imageRequests())->toHaveCount(2)
-        ->and($imageRequests()->every(fn ($pair) => $pair[0]['include_image_language'] === 'fr,en,null'))->toBeTrue();
+    // The same title in several rows: asked once, with its images and certifications.
+    expect(detailRequests())->toHaveCount(2)
+        ->and(detailRequests()->every(fn ($pair) => $pair[0]['include_image_language'] === 'fr,en,null'
+            && $pair[0]['append_to_response'] === 'images,release_dates'))->toBeTrue();
 
-    // Cached: the next home asks nothing more for the logos.
+    // Cached: the next home asks nothing more.
     $this->getJson('/api/v1/catalog/home?type=movie')->assertOk();
-    expect($imageRequests())->toHaveCount(2);
+    expect(detailRequests())->toHaveCount(2);
 });
 
-it('keeps the home when a logo lookup fails', function () {
+it('keeps the home when a title lookup fails', function () {
     fakeMovieHome([1 => null, 2 => ['logos' => [image('/two.png', 'en')], 'backdrops' => []]]);
 
     $this->getJson('/api/v1/catalog/home?type=movie')
         ->assertOk()
         ->assertJsonPath('featured.0.logo_url', null)
         ->assertJsonPath('featured.0.textless_poster_url', null)
-        ->assertJsonPath('featured.1.logo_url', 'https://image.tmdb.org/t/p/w500/two.png');
+        // The app then reads the title page.
+        ->assertJsonPath('featured.0.summary', null)
+        ->assertJsonPath('featured.1.logo_url', 'https://image.tmdb.org/t/p/w500/two.png')
+        ->assertJsonPath('featured.1.summary.genres', ['Drame']);
 });
 
-it('gives no logo in search results (the title page has it)', function () {
+it('gives the same at once in search results: seasons of a TV show', function () {
     Http::fake([
-        'api.themoviedb.org/3/search/*' => Http::response(Tmdb::page([Tmdb::movie(1)])),
+        'api.themoviedb.org/3/search/movie*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/search/person*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/search/tv*' => Http::response(Tmdb::page([Tmdb::show(1399)])),
+        'api.themoviedb.org/3/tv/1399?*' => Http::response(array_merge(Tmdb::showDetails(), [
+            'images' => ['logos' => [image('/got.png', 'en', 5.0, 2.0)], 'backdrops' => [], 'posters' => []],
+        ])),
     ]);
 
-    $this->getJson('/api/v1/catalog/search?query=fight')
+    $this->getJson('/api/v1/catalog/search?query=game')
         ->assertOk()
-        ->assertJsonPath('movies.data.0.logo_url', null)
-        ->assertJsonPath('movies.data.0.textless_poster_url', null);
-    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/images'));
+        ->assertJsonPath('shows.data.0.logo_url', 'https://image.tmdb.org/t/p/w500/got.png')
+        ->assertJsonPath('shows.data.0.summary.runtime', null)
+        ->assertJsonPath('shows.data.0.summary.number_of_seasons', 8)
+        ->assertJsonPath('shows.data.0.summary.genres', ['Science-Fiction & Fantastique']);
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/3/tv/1399?')
+        && $request['append_to_response'] === 'images,content_ratings');
+});
+
+it('gives no summary in other lists (the title page has it)', function () {
+    Http::fake(['api.themoviedb.org/3/movie/popular*' => Http::response(Tmdb::page([Tmdb::movie(1)]))]);
+
+    $this->getJson('/api/v1/catalog/movie/lists/popular')
+        ->assertOk()
+        ->assertJsonPath('data.0.logo_url', null)
+        ->assertJsonPath('data.0.summary', null);
+    expect(detailRequests())->toBeEmpty();
 });

@@ -24,6 +24,7 @@ class MediaItemResource extends JsonResource
         $backdrop = F::string($r, 'backdrop_path');
         $logo = is_array($r['logo'] ?? null) ? $r['logo'] : null;
         $textlessPoster = F::string($r, 'textless_poster');
+        $summary = is_array($r['summary'] ?? null) ? $r['summary'] : null;
 
         return [
             /** TMDb id. */
@@ -45,13 +46,31 @@ class MediaItemResource extends JsonResource
             'backdrop_path' => $backdrop,
             /** Backdrop, w1280. */
             'backdrop_url' => F::image($backdrop, 'w1280'),
-            /** Title logo (transparent PNG, w500). Home rows only: null elsewhere (the title page has it) or when TMDb has none. */
+            /** Title logo (transparent PNG, w500). Home and search only: null elsewhere (the title page has it) or when TMDb has none. */
             'logo_url' => F::image(isset($logo['path']) ? (string) $logo['path'] : null, 'w500'),
             /** Logo width / height. */
             'logo_aspect_ratio' => isset($logo['aspect_ratio']) ? (float) $logo['aspect_ratio'] : null,
-            /** Poster without text (to show under the logo), w500. Home rows only; null: use `poster_url`. */
+            /** Poster without text (to show under the logo), w500. Home and search only; null: use `poster_url`. */
             'textless_poster_path' => $textlessPoster,
             'textless_poster_url' => F::image($textlessPoster, 'w500'),
+            /**
+             * Length, genres and age rating, so that the hero shows them at once. Home and search
+             * only; null elsewhere (the title page has them).
+             */
+            'summary' => $summary === null ? null : [
+                /** Movie length in minutes (null when unknown). */
+                'runtime' => isset($summary['runtime']) ? (int) $summary['runtime'] : null,
+                /** TV show: number of seasons (null when unknown). */
+                'number_of_seasons' => isset($summary['number_of_seasons']) ? (int) $summary['number_of_seasons'] : null,
+                /**
+                 * Genre names, in French.
+                 *
+                 * @var list<string>
+                 */
+                'genres' => array_values(array_map(strval(...), (array) ($summary['genres'] ?? []))),
+                /** Minimum age (0 = all audiences), null when unknown. */
+                'age_rating' => isset($summary['age_rating']) ? (int) $summary['age_rating'] : null,
+            ],
         ];
     }
 }
