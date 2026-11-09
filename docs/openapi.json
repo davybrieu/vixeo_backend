@@ -3757,6 +3757,71 @@
                 }
             }
         },
+        "/v1/catalog/resolve": {
+            "post": {
+                "operationId": "v1.catalog.resolve",
+                "description": "Runs the scraper's extractor for the link's host and returns the HLS/MP4 stream the\nplayer should load, with the headers it must send. 502 when the link cannot be resolved\n(unknown host, extraction failure): the app then shows an error instead of the raw link.",
+                "summary": "Resolve a player link into a playable stream",
+                "tags": [
+                    "Stream"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveStreamRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ResolvedStreamResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ResolvedStreamResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Cette source n\u2019est pas lisible."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/profiles/{profile}/sync": {
             "get": {
                 "operationId": "v1.profiles.sync.pull",
@@ -6263,6 +6328,58 @@
                     "device_name"
                 ],
                 "title": "ResetPasswordRequest"
+            },
+            "ResolveStreamRequest": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Player page URL to resolve into a playable stream (\"https://voe.sx/e/abc\").",
+                        "maxLength": 2048
+                    }
+                },
+                "required": [
+                    "url"
+                ],
+                "title": "ResolveStreamRequest"
+            },
+            "ResolvedStreamResource": {
+                "type": "object",
+                "properties": {
+                    "stream": {
+                        "type": "string",
+                        "description": "Playable stream URL (HLS `.m3u8` or progressive `.mp4`)."
+                    },
+                    "stream_type": {
+                        "type": "string",
+                        "description": "\"m3u8\" or \"mp4\"."
+                    },
+                    "extractor": {
+                        "type": "string",
+                        "description": "Extractor that resolved the link (\"voe\", \"streamtape\"\u2026), null for the generic one."
+                    },
+                    "headers": {
+                        "type": "object",
+                        "description": "HTTP headers the player must send when fetching the stream (Referer, Origin\u2026).",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "subtitles": {
+                        "type": "array",
+                        "description": "Subtitles found next to the stream, when the extractor provides some.",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "stream",
+                    "stream_type",
+                    "extractor",
+                    "headers",
+                    "subtitles"
+                ],
+                "title": "ResolvedStreamResource"
             },
             "SearchSort": {
                 "type": "string",

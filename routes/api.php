@@ -153,6 +153,9 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->whereNumber('id')->name('movie.sources');
             Route::get('tv/{id}/season/{season}/episode/{episode}/sources', [StreamController::class, 'episodeSources'])
                 ->whereNumber(['id', 'season', 'episode'])->name('episode.sources');
+            // Resolve a chosen player link into a playable stream (docs/lecture.md).
+            Route::post('resolve', [StreamController::class, 'resolve'])
+                ->middleware('throttle:resolve')->name('resolve');
         });
     });
 });
