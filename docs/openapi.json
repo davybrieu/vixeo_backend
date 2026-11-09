@@ -36,6 +36,19 @@
                         }
                     },
                     {
+                        "name": "version",
+                        "in": "query",
+                        "description": "Version name of the installed app (\"1.2.0\"). Optional: older builds don't send it.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                            "maxLength": 32
+                        }
+                    },
+                    {
                         "name": "build",
                         "in": "query",
                         "required": true,
@@ -57,6 +70,13 @@
                                     "properties": {
                                         "status": {
                                             "$ref": "#/components/schemas/AppUpdateStatus"
+                                        },
+                                        "current_version": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Version name sent by the app (null for older builds that don't send it)."
                                         },
                                         "current_build": {
                                             "type": "integer"
@@ -96,7 +116,8 @@
                                                     "description": "SHA-256 of the APK, to check before installing (null without APK)."
                                                 },
                                                 "published_at": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "description": "Publication date, ISO 8601."
                                                 }
                                             },
                                             "required": [
@@ -125,6 +146,7 @@
                                     },
                                     "required": [
                                         "status",
+                                        "current_version",
                                         "current_build",
                                         "latest",
                                         "minimum_build",
@@ -342,7 +364,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "const": "If an account uses this address, a code has been sent to it."
+                                            "const": "Si un compte utilise cette adresse, un code vient d\u2019y \u00eatre envoy\u00e9."
                                         },
                                         "expires_in_minutes": {
                                             "type": "integer",
@@ -448,7 +470,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "const": "This code is invalid or has expired."
+                                            "const": "Ce code est invalide ou a expir\u00e9. Affichez un nouveau code sur la TV."
                                         }
                                     },
                                     "required": [
@@ -1805,6 +1827,787 @@
                 }
             }
         },
+        "/v1/profiles/{profile}/tmdb": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.show",
+                "description": "`linked: false` (other fields null) when the profile has none.",
+                "summary": "Linked TMDb account",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbAccount"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TmdbAccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TmdbAccountResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.tmdb.destroy",
+                "description": "The ratings stay on TMDb; Vixeo's session on the account is ended.",
+                "summary": "Unlink the TMDb account",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbAccount"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/link": {
+            "post": {
+                "operationId": "v1.profiles.tmdb.link",
+                "description": "Open `authorize_url` (or show it as a QR code on a TV): the person signs in to TMDb and\napproves Vixeo, then the app polls POST \u2026/tmdb/link/complete every `interval` seconds.\nLinking again replaces the current account.",
+                "summary": "Start linking a TMDb account",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbAccount"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "authorize_url": {
+                                            "type": "string",
+                                            "description": "TMDb page where the person approves Vixeo."
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "description": "Seconds before this page expires."
+                                        },
+                                        "interval": {
+                                            "type": "integer",
+                                            "description": "Seconds between two polls.",
+                                            "const": 5
+                                        }
+                                    },
+                                    "required": [
+                                        "authorize_url",
+                                        "expires_in",
+                                        "interval"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/link/complete": {
+            "post": {
+                "operationId": "v1.profiles.tmdb.link.complete",
+                "description": "202 `{\"status\":\"pending\"}` until the person approved Vixeo on TMDb, then 200 with the\naccount. 410 when the approval page expired: start again.",
+                "summary": "Finish linking a TMDb account",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbAccount"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "410": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "expired"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "La page d\u2019autorisation TMDb a expir\u00e9 : recommencez."
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "pending"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "linked"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TmdbAccountResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.index",
+                "description": "Movies, TV shows or episodes, the most recently rated first, 20 per page. Filtered by the\nprofile's age limit.",
+                "summary": "My ratings",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": true,
+                        "description": "Movies, TV shows or episodes.",
+                        "schema": {
+                            "$ref": "#/components/schemas/RatedType"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (1 to 500), 20 ratings per page.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RatedItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.season",
+                "description": "Only the rated episodes.",
+                "summary": "My ratings of a season's episodes",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}/episode/{episode}": {
+            "put": {
+                "operationId": "v1.profiles.tmdb.ratings.episode.rate",
+                "description": "Creates or updates the rating on TMDb.",
+                "summary": "Rate an episode",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "required": [
+                                                "value"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.tmdb.ratings.episode.unrate",
+                "summary": "Remove an episode rating",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/{type}/{id}": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.show",
+                "description": "`value` is null when not rated.",
+                "summary": "My rating of a movie or TV show",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": [
+                                                        "number",
+                                                        "null"
+                                                    ],
+                                                    "description": "0.5 to 10, null when not rated."
+                                                }
+                                            },
+                                            "required": [
+                                                "value"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.profiles.tmdb.ratings.rate",
+                "description": "Creates or updates the rating on TMDb.",
+                "summary": "Rate a movie or TV show",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "required": [
+                                                "value"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.tmdb.ratings.unrate",
+                "summary": "Remove a movie or TV show rating",
+                "tags": [
+                    "Compte TMDb",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/parental-control": {
             "get": {
                 "operationId": "v1.parental-control.show",
@@ -2754,6 +3557,110 @@
                 }
             }
         },
+        "/v1/catalog/movie/{id}/sources": {
+            "get": {
+                "operationId": "v1.catalog.movie.sources",
+                "tags": [
+                    "Stream"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StreamSourceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StreamSourceResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/sources": {
+            "get": {
+                "operationId": "v1.catalog.episode.sources",
+                "tags": [
+                    "Stream"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StreamSourceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StreamSourceResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/profiles/{profile}/sync": {
             "get": {
                 "operationId": "v1.profiles.sync.pull",
@@ -3434,6 +4341,176 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/categories": {
+            "get": {
+                "operationId": "v1.tv.categories",
+                "summary": "Live TV categories from the configured Xtream panel",
+                "tags": [
+                    "Tv"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "parent_id": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "name",
+                                                    "parent_id"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/channels": {
+            "get": {
+                "operationId": "v1.tv.channels",
+                "summary": "Live channels, optionally filtered by category_id",
+                "tags": [
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/channels/{id}/stream": {
+            "get": {
+                "operationId": "v1.tv.channels.stream",
+                "summary": "Resolve a playable stream URL for a live channel (credentials stay server-side in the built URL)",
+                "tags": [
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "url": {
+                                                    "type": "string"
+                                                },
+                                                "format": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "hls",
+                                                        "ts"
+                                                    ]
+                                                },
+                                                "headers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "url",
+                                                "format",
+                                                "headers"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4653,6 +5730,10 @@
                             null
                         ]
                     },
+                    "no_spoiler": {
+                        "type": "boolean",
+                        "description": "Hide episode artwork, titles and descriptions until the episode is selected."
+                    },
                     "skip_intro": {
                         "type": "boolean",
                         "description": "The player skips the opening credits by itself (else it shows a \"Passer\" button)."
@@ -4748,6 +5829,10 @@
                         ],
                         "description": "Preferred subtitles, null = none."
                     },
+                    "no_spoiler": {
+                        "type": "boolean",
+                        "description": "Hide episode artwork, titles and descriptions until selected."
+                    },
                     "skip_intro": {
                         "type": "boolean",
                         "description": "Segments the player skips by itself (TheIntroDB timestamps, see GET \u2026/segments)."
@@ -4792,6 +5877,7 @@
                     "has_pin",
                     "audio_language",
                     "subtitle_language",
+                    "no_spoiler",
                     "skip_intro",
                     "skip_recap",
                     "skip_credits",
@@ -4841,6 +5927,123 @@
                     "searched_at"
                 ],
                 "title": "ProfileSearchResource"
+            },
+            "RateRequest": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "description": "Rating from 0.5 to 10, by half points (TMDb scale).",
+                        "minimum": 0.5,
+                        "maximum": 10
+                    }
+                },
+                "required": [
+                    "value"
+                ],
+                "title": "RateRequest"
+            },
+            "RatedItemResource": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/RatedType"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "description": "TMDb id of the movie or TV show (the page to open), also for an episode."
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Movie or TV show title."
+                    },
+                    "date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Release, first air or episode air date, YYYY-MM-DD."
+                    },
+                    "year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "season_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "episode_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "episode_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Poster of the movie or TV show, w342."
+                    },
+                    "backdrop_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Backdrop, w1280."
+                    },
+                    "still_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Episode image, w300."
+                    },
+                    "value": {
+                        "type": "number",
+                        "description": "The profile's rating, 0.5 to 10."
+                    },
+                    "vote_average": {
+                        "type": "number",
+                        "description": "TMDb average rating, out of 10."
+                    }
+                },
+                "required": [
+                    "type",
+                    "id",
+                    "title",
+                    "date",
+                    "year",
+                    "season_number",
+                    "episode_number",
+                    "episode_name",
+                    "poster_url",
+                    "backdrop_url",
+                    "still_url",
+                    "value",
+                    "vote_average"
+                ],
+                "title": "RatedItemResource"
+            },
+            "RatedType": {
+                "type": "string",
+                "description": "What a profile rates on TMDb (docs/compte-tmdb.md).\n",
+                "enum": [
+                    "movie",
+                    "tv",
+                    "episode"
+                ],
+                "title": "RatedType"
             },
             "RegisterRequest": {
                 "type": "object",
@@ -5438,6 +6641,56 @@
                 ],
                 "title": "SkipSegmentsResource"
             },
+            "StreamSourceResource": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "provider",
+                    "name",
+                    "url"
+                ],
+                "title": "StreamSourceResource"
+            },
             "SubtitleResource": {
                 "type": "object",
                 "properties": {
@@ -5624,6 +6877,58 @@
                     "changes"
                 ],
                 "title": "SyncPushRequest"
+            },
+            "TmdbAccountResource": {
+                "type": "object",
+                "properties": {
+                    "linked": {
+                        "type": "boolean",
+                        "description": "A TMDb account is linked to this profile."
+                    },
+                    "account_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "TMDb account id."
+                    },
+                    "username": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Name shown on TMDb (may be null)."
+                    },
+                    "avatar_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "TMDb avatar, w185."
+                    },
+                    "linked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "ISO 8601."
+                    }
+                },
+                "required": [
+                    "linked",
+                    "account_id",
+                    "username",
+                    "name",
+                    "avatar_url",
+                    "linked_at"
+                ],
+                "title": "TmdbAccountResource"
             },
             "UserResource": {
                 "type": "object",

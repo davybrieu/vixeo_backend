@@ -102,6 +102,35 @@ class TmdbClient
     }
 
     /**
+     * One uncached call, for a person's TMDb account (session_id in `$query`, as TMDb v3 wants).
+     * The caller reads the status: nothing is thrown except when TMDb can't be reached. Only
+     * the path is ever logged, never the query (it holds the session).
+     *
+     * @param  'get'|'post'|'delete'  $method
+     * @param  array<string, scalar>  $query
+     * @param  array<string, mixed>  $body
+     */
+    public function send(string $method, string $path, array $query = [], array $body = []): Response
+    {
+        $this->ensureConfigured();
+        $query = $this->withApiKey(['language' => config('services.tmdb.language')] + $query);
+        $url = ltrim($path, '/').'?'.http_build_query($query);
+        $request = $this->configure(Http::createPendingRequest());
+
+        try {
+            return match ($method) {
+                'get' => $request->retry([200, 600], when: fn (Throwable $e) => $e instanceof ConnectionException, throw: false)->get($url),
+                'post' => $request->post($url, $body),
+                'delete' => $request->delete($url, $body),
+            };
+        } catch (ConnectionException) {
+            Log::warning('TMDb unreachable', ['path' => $path]);
+
+            throw new TmdbUnavailableException;
+        }
+    }
+
+    /**
      * @param  array<string, scalar>  $query
      * @return array<string, mixed>
      */

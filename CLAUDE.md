@@ -101,6 +101,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   24 h). Sous-titres : OpenSubtitles avec la clé Vixeo commune (`Playback\OpenSubtitles`), fichiers
   servis en WebVTT depuis notre cache (quota quotidien d'OpenSubtitles). Les applis ne parlent
   jamais à ces services.
+- **Compte TMDb du profil et notes** (doc : `docs/compte-tmdb.md`) : liaison par la page
+  d'autorisation de TMDb (`App\Services\TmdbLinks` : jeton de requête en cache, l'appli interroge
+  `link/complete`), table `tmdb_links` (une par profil ; le même compte TMDb peut être lié à
+  plusieurs profils, de comptes Vixeo différents ; session TMDb **chiffrée**, jamais envoyée aux
+  applis). Notes de films, séries et épisodes (0,5 à 10) lues et écrites **sur TMDb**
+  (`Tmdb\TmdbAccount`, sans cache) : TMDb est la source, donc elles sont synchronisées partout.
+  L'API de TMDb n'accepte pas d'avis écrits. Session refusée par TMDb → liaison supprimée, 409.
+  `TmdbClient::send` : appels sans cache pour un compte, ne journalise que le chemin.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (favori / progression /
@@ -163,6 +171,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   temporaire d'un titre avec le PIN parental.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
+- Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb.
 - Pas encore synchronisés : flux favoris et « dernier flux qui a fonctionné ».
 - Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
   configuration distante (chaînes FAST).

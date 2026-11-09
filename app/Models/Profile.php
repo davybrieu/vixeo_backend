@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -83,6 +84,12 @@ class Profile extends Model
     public function searches(): HasMany
     {
         return $this->hasMany(ProfileSearch::class);
+    }
+
+    /** TMDb account linked to this profile (docs/compte-tmdb.md). @return HasOne<TmdbLink, $this> */
+    public function tmdbLink(): HasOne
+    {
+        return $this->hasOne(TmdbLink::class);
     }
 
     /** Age limit that applies to this profile, null = no limit. */

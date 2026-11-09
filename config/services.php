@@ -36,6 +36,8 @@ return [
         'token' => env('TMDB_READ_ACCESS_TOKEN'),
         'api_key' => env('TMDB_API_KEY'),
         'base_url' => env('TMDB_BASE_URL', 'https://api.themoviedb.org/3'),
+        // Page where a person approves Vixeo on their TMDb account (docs/compte-tmdb.md).
+        'authenticate_url' => env('TMDB_AUTHENTICATE_URL', 'https://www.themoviedb.org/authenticate'),
         'image_base_url' => env('TMDB_IMAGE_BASE_URL', 'https://image.tmdb.org/t/p/'),
         'language' => env('TMDB_LANGUAGE', 'fr-FR'),
         'region' => env('TMDB_REGION', 'FR'),

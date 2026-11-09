@@ -26,7 +26,7 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with(['items', 'searches'])->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbLink'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
@@ -44,6 +44,12 @@ class AccountExport
                     'query' => $s->query,
                     'searched_at' => $s->updated_at?->toIso8601String(),
                 ])->values()->all(),
+                // The ratings themselves are on TMDb, not at Vixeo.
+                'tmdb_account' => $p->tmdbLink === null ? null : [
+                    'account_id' => $p->tmdbLink->account_id,
+                    'username' => $p->tmdbLink->username,
+                    'linked_at' => $p->tmdbLink->linked_at?->toIso8601String(),
+                ],
                 'has_pin' => $p->pin !== null,
                 'created_at' => $p->created_at?->toIso8601String(),
                 'library' => $p->items->map(fn (ProfileItem $i) => [

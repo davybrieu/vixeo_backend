@@ -213,6 +213,7 @@ return [
         'year_from' => 'année de début',
         'year_to' => 'année de fin',
         'min_rating' => 'note minimale',
+        'value' => 'note',
         'audio_language' => 'langue audio',
         'subtitle_language' => 'langue des sous-titres',
         'skip_intro' => 'passer le générique de début',

@@ -45,5 +45,9 @@
     "Live TV is not configured.": "La TV en direct n'est pas configurée sur le serveur.",
     "Channel not found.": "Chaîne introuvable.",
     "Unable to reach the live TV server.": "Impossible de joindre le serveur de TV en direct.",
-    "Invalid response from the live TV server.": "Réponse invalide du serveur de TV en direct."
+    "Invalid response from the live TV server.": "Réponse invalide du serveur de TV en direct.",
+    "Your TMDb account is no longer linked to this profile: link it again.": "Votre compte TMDb n’est plus lié à ce profil : liez-le à nouveau.",
+    "Link a TMDb account to this profile first.": "Liez d’abord un compte TMDb à ce profil.",
+    "The TMDb approval page has expired: start again.": "La page d’autorisation TMDb a expiré : recommencez.",
+    "TMDb refused this request.": "TMDb a refusé cette demande."
 }

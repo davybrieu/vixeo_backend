@@ -50,6 +50,9 @@ class AppServiceProvider extends ServiceProvider
         // Each new subtitle file uses Vixeo's OpenSubtitles daily quota (cached ones don't).
         RateLimiter::for('subtitles', fn (Request $request) => Limit::perHour(40)->by($request->user()?->id ?: $request->ip()));
 
+        // TMDb account: the link page polls every 5 s, title pages read the ratings.
+        RateLimiter::for('tmdb-account', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+
         // Players save progress regularly; pulls are paginated.
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 

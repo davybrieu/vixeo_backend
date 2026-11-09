@@ -46,7 +46,8 @@ class AppUpdateController extends Controller
                 'download_url' => $latest->download_url === null ? null : (string) $latest->download_url,
                 /** SHA-256 of the APK, to check before installing (null without APK). */
                 'sha256' => $latest->sha256 === null ? null : (string) $latest->sha256,
-                'published_at' => $latest->published_at->toIso8601String(),
+                /** Publication date, ISO 8601. */
+                'published_at' => (string) $latest->published_at->toIso8601String(),
             ],
             /** Installs older than this build must update (null: none required). */
             'minimum_build' => $result['minimum_build'],

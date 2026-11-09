@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\StreamController;
+use App\Http\Controllers\Api\V1\TmdbAccountController;
+use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
@@ -86,6 +88,27 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('searches/clear', [ProfileSearchController::class, 'clear'])->name('searches.clear');
             Route::delete('searches/{search}', [ProfileSearchController::class, 'destroy'])
                 ->scopeBindings()->whereNumber('search')->name('searches.destroy');
+        });
+
+        // TMDb account of a profile and its ratings (docs/compte-tmdb.md).
+        Route::prefix('profiles/{profile}/tmdb')->name('profiles.tmdb.')->middleware('throttle:tmdb-account')->group(function () {
+            Route::get('/', [TmdbAccountController::class, 'show'])->name('show');
+            Route::delete('/', [TmdbAccountController::class, 'destroy'])->name('destroy');
+            Route::post('link', [TmdbAccountController::class, 'start'])->name('link');
+            Route::post('link/complete', [TmdbAccountController::class, 'complete'])->name('link.complete');
+            Route::get('ratings', [TmdbRatingController::class, 'index'])->name('ratings.index');
+            Route::get('ratings/tv/{id}/season/{season}', [TmdbRatingController::class, 'season'])
+                ->whereNumber(['id', 'season'])->name('ratings.season');
+            Route::put('ratings/tv/{id}/season/{season}/episode/{episode}', [TmdbRatingController::class, 'rateEpisode'])
+                ->whereNumber(['id', 'season', 'episode'])->name('ratings.episode.rate');
+            Route::delete('ratings/tv/{id}/season/{season}/episode/{episode}', [TmdbRatingController::class, 'unrateEpisode'])
+                ->whereNumber(['id', 'season', 'episode'])->name('ratings.episode.unrate');
+            Route::get('ratings/{type}/{id}', [TmdbRatingController::class, 'show'])
+                ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.show');
+            Route::put('ratings/{type}/{id}', [TmdbRatingController::class, 'rate'])
+                ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.rate');
+            Route::delete('ratings/{type}/{id}', [TmdbRatingController::class, 'unrate'])
+                ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.unrate');
         });
 
         // Live TV (personal legal Xtream panel — credentials stay on the server).
