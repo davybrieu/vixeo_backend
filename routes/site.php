@@ -16,10 +16,8 @@ Route::controller(SiteController::class)->name('site.')->group(function () {
     Route::get('/robots.txt', 'robots')->name('robots');
 });
 
-// One page: installing and the FAQ are sections of the home page. The old pages and the short
-// links stay as redirects: installed apps open /installer#android to update (docs/mise-a-jour.md).
-Route::permanentRedirect('/installer', '/#installer');
-Route::permanentRedirect('/faq', '/#faq');
+// One page: installing and the FAQ are sections of the home page. The old /installer and /faq
+// pages are gone and answer 404 (developer's request); the short links point to the install section.
 Route::permanentRedirect('/telecharger', '/#installer');
 Route::permanentRedirect('/android', '/#installer');
 Route::permanentRedirect('/tv', '/#installer');

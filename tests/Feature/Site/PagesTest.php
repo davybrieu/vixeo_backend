@@ -144,12 +144,17 @@ it('lists only the filled legal information', function () {
         ->where('host', ['name' => 'Hébergeur SA']));
 });
 
-it('sends the old pages and the short links to the sections of the home page', function (string $from, string $to) {
-    // Installed apps open /installer#android to update (docs/mise-a-jour.md).
+it('answers 404 on the old Installer and FAQ pages', function (string $uri) {
+    withLatestAndroid(null);
+
+    $this->get(site($uri))
+        ->assertNotFound()
+        ->assertInertia(fn (Assert $page) => $page->component('Error')->where('status', 404));
+})->with(['/installer', '/faq']);
+
+it('sends the short links to the install section of the home page', function (string $from, string $to) {
     $this->get(site($from))->assertStatus(301)->assertRedirect(site($to));
 })->with([
-    ['/installer', '/#installer'],
-    ['/faq', '/#faq'],
     ['/telecharger', '/#installer'],
     ['/android', '/#installer'],
     ['/tv', '/#installer'],
