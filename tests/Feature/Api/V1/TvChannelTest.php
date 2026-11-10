@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
@@ -106,6 +108,33 @@ it('tells why a logo is refused (php artisan tv:logos)', function () {
     Http::fake(['logo.test/arte.png' => Http::response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', 200, ['Content-Type' => 'image/svg+xml'])]);
 
     $this->artisan('tv:logos')
-        ->expectsOutputToContain('Arte : REFUSÉ, SVG image (not accepted) (hôte logo.test, HTTP 200, type image/svg+xml')
+        ->expectsOutputToContain('Arte : REFUSÉ, SVG image (not accepted) (HTTP 200, type image/svg+xml')
+        ->expectsOutputToContain('adresse du fournisseur : https://logo.test/arte.png')
+        ->assertSuccessful();
+});
+
+it('falls back to plain HTTP when the logo host breaks the TLS handshake', function () {
+    Http::fake(function (Request $request) {
+        if ($request->url() === 'https://logo.test/arte.png') {
+            throw new ConnectionException('cURL error 35: TLS connect error');
+        }
+
+        return $request->url() === 'http://logo.test/arte.png' ? Http::response(tinyPng()) : null;
+    });
+    Http::fake([
+        'ping.test/api/app/ping' => Http::response(['addonSig' => 'sig']),
+        'vavoo.test/mediahubmx-catalog.json' => Http::response(['items' => [
+            ['type' => 'iptv', 'ids' => ['id' => 'arte'], 'name' => 'Arte', 'url' => 'https://vavoo.test/s/arte', 'group' => 'France', 'logo' => 'https://logo.test/arte.png'],
+        ]]),
+    ]);
+
+    $logo = $this->getJson('/api/v1/tv/channels/arte')->json('data.logo');
+
+    // The app still gets it over https, from our origin.
+    expect($logo)->toStartWith('https://api.vixeo.test/');
+    $this->get($logo)->assertOk()->assertHeader('Content-Type', 'image/png');
+    $this->artisan('tv:logos')
+        ->expectsOutputToContain('Arte : OK, image/png')
+        ->expectsOutputToContain('adresse du fournisseur : http://logo.test/arte.png')
         ->assertSuccessful();
 });

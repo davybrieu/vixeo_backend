@@ -2,6 +2,7 @@
 
 namespace App\Services\Tv;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -82,14 +83,14 @@ class ChannelLogos
     /**
      * Fetches the logo and says what happened, for the relay and `php artisan tv:logos`.
      *
-     * @return array{image: array{body: string, content_type: string}|null, reason: string|null, host: string|null, status: int|null, content_type: string|null, bytes: int}
+     * @return array{image: array{body: string, content_type: string}|null, reason: string|null, host: string|null, status: int|null, content_type: string|null, bytes: int, url: string|null}
      */
     public function inspect(string $hash): array
     {
         $map = Cache::get(self::MAP_KEY, []);
         $url = is_array($map) ? ($map[$hash] ?? null) : null;
         if (! is_string($url)) {
-            return ['image' => null, 'reason' => 'unknown logo (list the channels first)', 'host' => null, 'status' => null, 'content_type' => null, 'bytes' => 0];
+            return ['image' => null, 'reason' => 'unknown logo (list the channels first)', 'host' => null, 'status' => null, 'content_type' => null, 'bytes' => 0, 'url' => null];
         }
 
         $result = $this->fetch($url);
@@ -100,17 +101,33 @@ class ChannelLogos
         return $result;
     }
 
-    /** @return array{image: array{body: string, content_type: string}|null, reason: string|null, host: string|null, status: int|null, content_type: string|null, bytes: int} */
+    private function get(string $url): Response
+    {
+        return Http::timeout(8)->connectTimeout(5)->accept('image/*')->get($url);
+    }
+
+    /** @return array{image: array{body: string, content_type: string}|null, reason: string|null, host: string|null, status: int|null, content_type: string|null, bytes: int, url: string} */
     private function fetch(string $url): array
     {
         $host = parse_url($url, PHP_URL_HOST);
         $host = is_string($host) ? $host : null;
-        $result = ['image' => null, 'reason' => null, 'host' => $host, 'status' => null, 'content_type' => null, 'bytes' => 0];
+        $result = ['image' => null, 'reason' => null, 'host' => $host, 'status' => null, 'content_type' => null, 'bytes' => 0, 'url' => $url];
 
         try {
-            $response = Http::timeout(8)->connectTimeout(5)->accept('image/*')->get($url);
+            $response = $this->get($url);
         } catch (Throwable $e) {
-            return ['reason' => 'unreachable: '.$e->getMessage()] + $result;
+            // Some logo hosts break the TLS handshake but serve the same image over plain HTTP. The
+            // app still gets it over HTTPS, from our origin: only this server talks HTTP to them.
+            if (! str_starts_with(strtolower($url), 'https://')) {
+                return ['reason' => 'unreachable: '.$e->getMessage()] + $result;
+            }
+            $plain = 'http://'.substr($url, strlen('https://'));
+            try {
+                $response = $this->get($plain);
+                $result['url'] = $plain;
+            } catch (Throwable $retry) {
+                return ['reason' => 'unreachable over https ('.$e->getMessage().') and http ('.$retry->getMessage().')'] + $result;
+            }
         }
 
         $body = $response->successful() ? $response->body() : '';

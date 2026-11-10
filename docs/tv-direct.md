@@ -41,7 +41,9 @@ refuse les images en HTTP clair.
 
 - **L'image n'est jamais stockée sur notre serveur** (décision du développeur) : à chaque demande,
   elle est lue chez le fournisseur, vérifiée sur ses octets (PNG, JPEG, WebP ou GIF ; pas de SVG ;
-  512 Ko au plus) et transmise. Seule la correspondance hash → adresse est gardée dans le cache
+  512 Ko au plus) et transmise. Si le serveur du logo casse la connexion HTTPS (erreur TLS),
+  le relais réessaie la même adresse en `http://` : l'appli reçoit toujours l'image en HTTPS,
+  depuis notre domaine. Seule la correspondance hash → adresse est gardée dans le cache
   (du texte, 7 jours), pour que l'URL reste la même.
 - L'URL est **stable** pour un même logo : l'appli et le navigateur gardent l'image **7 jours**
   (`Cache-Control: public, max-age=604800`). La route est publique (une image se charge sans

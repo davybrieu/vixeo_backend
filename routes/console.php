@@ -44,9 +44,11 @@ Artisan::command('tv:logos {--limit=5 : logos to try}', function () {
             '%s : %s',
             $channel['name'],
             $result['image'] === null
-                ? sprintf('REFUSÉ, %s (hôte %s, HTTP %s, type %s, %d octets)', $result['reason'], $result['host'] ?? '?', $result['status'] ?? '-', $result['content_type'] ?? '-', $result['bytes'])
+                ? sprintf('REFUSÉ, %s (HTTP %s, type %s, %d octets)', $result['reason'], $result['status'] ?? '-', $result['content_type'] ?? '-', $result['bytes'])
                 : 'OK, '.$result['image']['content_type'].', '.$result['bytes'].' octets',
         ));
+        // The provider's own address (server-side only: never sent to the apps).
+        $this->line('    adresse du fournisseur : '.($result['url'] ?? '?'));
     }
     $this->line('Adresse du premier logo dans l\'API : '.$withLogo[0]['logo']);
 
