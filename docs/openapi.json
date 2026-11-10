@@ -6198,6 +6198,24 @@
                         ],
                         "format": "date-time"
                     },
+                    "is_liked": {
+                        "type": "boolean",
+                        "description": "In \"Favoris\" (\u2764), separate from \"Ma liste\" (is_favorite)."
+                    },
+                    "liked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "liked_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
                     "position_ms": {
                         "type": "integer",
                         "description": "Resume position in milliseconds."
@@ -6269,6 +6287,9 @@
                     "is_favorite",
                     "favorited_at",
                     "favorite_changed_at",
+                    "is_liked",
+                    "liked_at",
+                    "liked_changed_at",
                     "position_ms",
                     "duration_ms",
                     "progress",
@@ -7642,7 +7663,7 @@
                                 },
                                 "favorite": {
                                     "type": "object",
-                                    "description": "Favorite added or removed. At least one of favorite, progress, watched is required.",
+                                    "description": "\"Ma liste\": added or removed. At least one of favorite, liked, progress, watched is required.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"
@@ -7651,6 +7672,19 @@
                                             "type": "string",
                                             "format": "date-time",
                                             "description": "When the change happened on the device (ISO 8601)."
+                                        }
+                                    }
+                                },
+                                "liked": {
+                                    "type": "object",
+                                    "description": "\"Favoris\" (\u2764): added or removed (movies, TV shows, episodes, live channels).",
+                                    "properties": {
+                                        "value": {
+                                            "type": "boolean"
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time"
                                         }
                                     }
                                 },

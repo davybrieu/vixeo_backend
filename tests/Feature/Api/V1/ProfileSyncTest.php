@@ -152,6 +152,46 @@ it('pulls everything on first sync, then only what changed', function () {
     pull()->assertJsonCount(1, 'data')->assertJsonPath('data.0.item_id', 'movie:2')->assertJsonPath('cursor', 3);
 });
 
+it('keeps "Favoris" (liked) apart from "Ma liste", for every type', function () {
+    push([
+        change(['liked' => ['value' => true, 'at' => '2026-06-01T10:00:00Z']]),
+        change([
+            'item_id' => 'episode:1399:1:3', 'type' => 'episode', 'title' => 'Le Prix du fer',
+            'parent_item_id' => 'tv:1399', 'season_number' => 1, 'episode_number' => 3,
+            'liked' => ['value' => true, 'at' => '2026-06-01T10:01:00Z'],
+        ]),
+        change(['source' => 'tv', 'item_id' => 'channel:tf1', 'type' => 'channel', 'title' => 'TF1', 'year' => null,
+            'liked' => ['value' => true, 'at' => '2026-06-01T10:02:00Z']]),
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.0.is_liked', true)
+        ->assertJsonPath('data.0.liked_at', '2026-06-01T10:00:00.000000Z')
+        ->assertJsonPath('data.0.is_favorite', false)
+        ->assertJsonPath('data.1.type', 'episode')
+        ->assertJsonPath('data.2.type', 'channel');
+
+    // Ma liste and Favoris don't overwrite each other.
+    push([change(['favorite' => ['value' => true, 'at' => '2026-06-01T11:00:00Z']])])
+        ->assertJsonPath('data.0.is_favorite', true)
+        ->assertJsonPath('data.0.is_liked', true);
+
+    // An older "unlike" from an offline device loses; a newer one wins and keeps Ma liste.
+    push([change(['liked' => ['value' => false, 'at' => '2026-06-01T09:00:00Z']])])->assertJsonPath('data.0.is_liked', true);
+    push([change(['liked' => ['value' => false, 'at' => '2026-06-01T12:00:00Z']])])
+        ->assertJsonPath('data.0.is_liked', false)
+        ->assertJsonPath('data.0.liked_at', null)
+        ->assertJsonPath('data.0.is_favorite', true);
+
+    // A new device downloads the liked items.
+    expect(pull()->json('data.*.item_id'))->toBe(['episode:1399:1:3', 'channel:tf1', 'movie:550']);
+});
+
+it('keeps the original date when liking again', function () {
+    push([change(['liked' => ['value' => true, 'at' => '2026-06-01T08:00:00Z']])]);
+    push([change(['liked' => ['value' => true, 'at' => '2026-06-01T09:00:00Z']])])
+        ->assertJsonPath('data.0.liked_at', '2026-06-01T08:00:00.000000Z');
+});
+
 it('paginates pulls', function () {
     push(collect(range(1, 5))->map(fn (int $n) => change([
         'item_id' => "movie:{$n}", 'favorite' => ['value' => true, 'at' => '2026-06-01T10:00:00Z'],
@@ -199,6 +239,7 @@ it('validates changes', function (array $changes, string $error) {
     'unknown type' => [[change(['type' => 'book', 'watched' => ['value' => true, 'at' => '2026-06-01']])], 'changes.0.type'],
     'bad source' => [[change(['source' => 'tmdb/../x', 'watched' => ['value' => true, 'at' => '2026-06-01']])], 'changes.0.source'],
     'missing date' => [[change(['favorite' => ['value' => true]])], 'changes.0.favorite.at'],
+    'missing liked date' => [[change(['liked' => ['value' => true]])], 'changes.0.liked.at'],
     'missing flag' => [[change(['progress' => ['position_ms' => 10, 'at' => '2026-06-01']])], 'changes.0.progress.continue_watching'],
     'credentials in image URL' => [[change([
         'poster_url' => 'https://jellyfin.local/Items/1/Images/Primary?api_key=secret',
