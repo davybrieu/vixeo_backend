@@ -55,8 +55,7 @@ committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'emp
 | - | - |
 | `/` | **La seule page de présentation** : accueil, installation (`#installer`, onglets Android / TV / navigateur avec le bouton de l'APK, l'empreinte SHA-256 et l'adresse courte pour la TV), fonctionnalités, questions fréquentes (`#faq`, `resources/js/data/faq.js`) |
 | `/mentions-legales`, `/confidentialite` | Informations légales, confidentialité du site |
-| `/installer`, `/faq` | Anciennes pages, supprimées : **404** (demande du développeur) |
-| `/telecharger`, `/android`, `/tv` | Liens courts : 301 vers `/#installer` |
+| `/installer`, `/faq`, `/telecharger`, `/android`, `/tv` | Anciennes pages et liens courts, supprimés : **404** (demande du développeur) |
 | `/apk` | Le fichier APK du moment (adresse à taper sur une TV), 404 sans APK |
 | `/sitemap.xml`, `/robots.txt` | Référencement (`SITE_URL`) |
 

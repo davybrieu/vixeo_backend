@@ -13,7 +13,7 @@ Une mise à jour passe par deux niveaux :
 | Plateforme | Comment la nouvelle version arrive | Lien envoyé par l'API |
 |---|---|---|
 | Android, Android TV | **Pas de Play Store** (décision du développeur) : l'appli télécharge elle-même le nouvel APK (`latest.download_url`), vérifie son empreinte SHA-256, puis lance l'installateur d'Android, qui demande une confirmation. L'APK doit être signé avec la même clé de release. | `ANDROID_UPDATE_URL` (`<SITE_URL>/#installer` par défaut, la section d'installation de l'accueil), en secours |
-| iOS | **Pas d'appli iOS pour l'instant** : l'API répond toujours `up_to_date` pour iOS. Plus tard (distribution web UE) : chaque version notarisée par Apple, paquet hébergé sur le site, que l'iPhone interroge au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`). | `IOS_UPDATE_URL` (`<WEB_URL>/telecharger` par défaut) |
+| iOS | **Pas d'appli iOS pour l'instant** : l'API répond toujours `up_to_date` pour iOS. Plus tard (distribution web UE) : chaque version notarisée par Apple, paquet hébergé sur le site, que l'iPhone interroge au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`). | `IOS_UPDATE_URL` (`<SITE_URL>/#installer` par défaut) |
 
 Côté iOS (plus tard), le serveur de distribution **reste à construire**. Il n'est possible qu'une fois la
 distribution web acceptée par Apple (voir `APPLE_NOTARIZATION.md` dans `vixeo_frontend`, point

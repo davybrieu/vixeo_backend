@@ -144,21 +144,13 @@ it('lists only the filled legal information', function () {
         ->where('host', ['name' => 'Hébergeur SA']));
 });
 
-it('answers 404 on the old Installer and FAQ pages', function (string $uri) {
+it('answers 404 on the old Installer and FAQ pages and short links', function (string $uri) {
     withLatestAndroid(null);
 
     $this->get(site($uri))
         ->assertNotFound()
         ->assertInertia(fn (Assert $page) => $page->component('Error')->where('status', 404));
-})->with(['/installer', '/faq']);
-
-it('sends the short links to the install section of the home page', function (string $from, string $to) {
-    $this->get(site($from))->assertStatus(301)->assertRedirect(site($to));
-})->with([
-    ['/telecharger', '/#installer'],
-    ['/android', '/#installer'],
-    ['/tv', '/#installer'],
-]);
+})->with(['/installer', '/faq', '/telecharger', '/android', '/tv']);
 
 it('answers the FAQ on the home page, with the install details', function () {
     withLatestAndroid(androidRelease(sha: str_repeat('ab', 32)));

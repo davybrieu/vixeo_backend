@@ -75,7 +75,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   import IPTV / M3U / Xtream, radio, replays. SSR : pas de `window` / `document` hors `onMounted`.
   Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.
   **Une seule page de présentation** : l'accueil, avec les sections `#installer` et `#faq` ; pages
-  Installer et FAQ supprimées (`/installer`, `/faq` → 404), barre de navigation
+  Installer et FAQ et liens courts supprimés (`/installer`, `/faq`, `/telecharger`, `/android`,
+  `/tv` → 404 ; `/apk` reste, adresse à taper sur une TV), barre de navigation
   sans liens ni menu burger (logo + « Ouvrir Vixeo »). Ne pas les recréer.
   **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
   modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.

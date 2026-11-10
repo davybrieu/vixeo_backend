@@ -138,8 +138,8 @@ MAIL_FROM_NAME=Vixeo
 # Durée de vie des jetons, en minutes (180 jours ; voir docs/compte.md)
 SANCTUM_EXPIRATION=259200
 
-# Mises à jour des applis (docs/mise-a-jour.md). Vides : SITE_URL/#installer et
-# SITE_URL/telecharger, c'est-à-dire https://www.vixeo.app/... Pas de Play Store.
+# Mises à jour des applis (docs/mise-a-jour.md). Vides : SITE_URL/#installer, c'est-à-dire
+# https://www.vixeo.app/#installer (Android et iOS). Pas de Play Store.
 ANDROID_UPDATE_URL=
 IOS_UPDATE_URL=
 APP_UPDATES_GITHUB_REPOSITORY=davybrieu/vixeo_frontend

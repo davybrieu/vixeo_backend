@@ -16,8 +16,6 @@ Route::controller(SiteController::class)->name('site.')->group(function () {
     Route::get('/robots.txt', 'robots')->name('robots');
 });
 
-// One page: installing and the FAQ are sections of the home page. The old /installer and /faq
-// pages are gone and answer 404 (developer's request); the short links point to the install section.
-Route::permanentRedirect('/telecharger', '/#installer');
-Route::permanentRedirect('/android', '/#installer');
-Route::permanentRedirect('/tv', '/#installer');
+// One page: installing and the FAQ are sections of the home page (#installer, #faq). The old
+// /installer and /faq pages and the short links /telecharger, /android, /tv are gone: 404
+// (developer's request). /apk stays: the address to type on a TV.
