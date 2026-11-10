@@ -52,6 +52,12 @@ class ChannelName
         // "13ème", "13eme", "13e" are the same ("13 EME RUE" = "13e rue").
         $name = preg_replace('/\b(\d+)\s*(?:eme|e)\b/', '$1e', $name) ?? $name;
         $words = preg_split('/[^a-z0-9]+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        // "&", "et", "and" don't name the channel; singular = plural ("TF1 SERIES & FILM" =
+        // "TF1 Séries Films" = "tf1-series-films-fr.png").
+        $words = array_map(
+            fn (string $w) => strlen($w) > 3 && $w !== 'plus' && str_ends_with($w, 's') ? substr($w, 0, -1) : $w,
+            array_values(array_filter($words, fn (string $w) => ! in_array($w, ['et', 'and'], true)))
+        );
         $kept = array_filter($words, fn (string $w) => ! in_array($w, self::NOISE, true));
         $key = implode('', $kept === [] ? $words : $kept);
 

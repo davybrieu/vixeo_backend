@@ -56,7 +56,8 @@ TV_EPG_URLS="https://epg.pw/xmltv/epg_FR.xml.gz,https://i.mjh.nz/Plex/fr.xml.gz,
   (`epg_channel_id`, donné par un panneau) ou par son **nom** (`ChannelName::key`, sur le nom
   nettoyé : « TF1 HD », « TF1.fr », « FR | TF1 » → `tf1` ; « Canal+ » → `canalplus` ;
   « BFMTV » → `bfm` ; « BE: ELEVENSPORTS 1 » → `elevensports1` ; « 13 EME RUE », « 13ème Rue »
-  → `13erue` ; « beIN SPORTS 1 French » → `beinsports1`). Après un changement de ces règles,
+  → `13erue` ; « beIN SPORTS 1 French » → `beinsport1` ; singulier = pluriel et « & », « et »
+  ignorés : « TF1 SERIES & FILM » = « TF1 Séries Films » = `tf1-series-films-fr.png`). Après un changement de ces règles,
   relancer `php artisan tv:epg` (l'index du guide et des logos est calculé au téléchargement).
   **Le premier fichier qui a des programmes pour la chaîne l'emporte.**
 - Un fichier illisible est ignoré (les autres servent) ; si aucun ne l'est, le guide précédent

@@ -101,10 +101,15 @@ it('gives one key per channel name', function (string $name, string $key) {
     ['6TER .c', '6ter'],
     ['13 EME RUE HD .s', '13erue'],
     ['13ème Rue', '13erue'],
-    ['BE: ELEVENSPORTS 1', 'elevensports1'],
-    ['BEIN SPORTS 1 (BACKUP)', 'beinsports1'],
-    ['beIN SPORTS 1 French', 'beinsports1'],
+    ['BE: ELEVENSPORTS 1', 'elevensport1'],
+    ['eleven-sports-1', 'elevensport1'],
+    ['BEIN SPORTS 1 (BACKUP)', 'beinsport1'],
+    ['beIN SPORTS 1 French', 'beinsport1'],
     ['CANAL+ SPORT 360 (1080P) .s', 'canalplussport360'],
+    ['TF1 SERIES & FILM', 'tf1seriefilm'],
+    ['TF1 Séries Films', 'tf1seriefilm'],
+    ['tf1-series-films', 'tf1seriefilm'],
+    ['Chasse et Pêche', 'chassepeche'],
 ]);
 
 it('cleans the provider names for display', function (string $name, string $clean) {
