@@ -11,7 +11,7 @@ class FavoriteStreamRequest extends FormRequest
         return [
             'source' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._:\-]+$/'],
             'item_id' => ['required', 'string', 'max:191'],
-            /** Stream chosen by the app inside the content ("vavoo:<channelId>", a player URL…). */
+            /** Stream chosen by the app inside the content ("frenchstream:<id>", a player URL…). */
             'stream_id' => ['required', 'string', 'max:191'],
             /** true = add to favorites (tried first), false = remove. */
             'favorite' => ['required', 'boolean'],

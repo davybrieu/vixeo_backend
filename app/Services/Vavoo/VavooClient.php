@@ -14,7 +14,7 @@ use RuntimeException;
  * Vavoo live TV through its "MediaHubMX" API, ported from the ONYX app (com.streamflixreborn
  * .streamflix.providers.VavooProvider). The API is signed: an "addonSig" obtained from a ping
  * endpoint authorises the catalog and resolve calls. Mirrors, signature and versions never leave
- * the server; apps only receive the resolved HLS URL and the User-Agent to send. See docs/tv-vavoo.md.
+ * the server; apps only receive the resolved HLS URL and the User-Agent to send. See docs/tv-direct.md.
  */
 class VavooClient
 {

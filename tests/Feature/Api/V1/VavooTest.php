@@ -4,6 +4,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 
+/**
+ * Vavoo served behind the provider-neutral `/tv/…` API: the app never sees the provider name.
+ */
 beforeEach(function () {
     config([
         'services.vavoo.base_urls' => ['https://vavoo.test'],
@@ -42,7 +45,7 @@ function fakeVavoo(array $items, ?string $resolveUrl = 'https://cdn.vavoo.test/t
 }
 
 it('requires a signed-in account', function () {
-    $this->getJson('/api/v1/tv/vavoo/channels')
+    $this->getJson('/api/v1/tv/channels')
         ->assertUnauthorized()
         ->assertExactJson(['message' => 'Non authentifié.']);
 });
@@ -51,11 +54,11 @@ it('lists the channel categories', function () {
     Sanctum::actingAs($this->user);
     fakeVavoo([vavooChannel('tf1', 'TF1'), vavooChannel('eurosport', 'Eurosport 1')]);
 
-    $this->getJson('/api/v1/tv/vavoo/categories')
+    $this->getJson('/api/v1/tv/categories')
         ->assertOk()
         ->assertExactJson(['data' => [
-            ['id' => 'Généralistes', 'name' => 'Généralistes'],
-            ['id' => 'Sport', 'name' => 'Sport'],
+            ['id' => 'Généralistes', 'name' => 'Généralistes', 'parent_id' => null],
+            ['id' => 'Sport', 'name' => 'Sport', 'parent_id' => null],
         ]]);
 
     Http::assertSent(fn ($request) => $request->url() === 'https://ping.test/api/app/ping');
@@ -65,17 +68,17 @@ it('lists the channels, sorted by name, and filters by category and search', fun
     Sanctum::actingAs($this->user);
     fakeVavoo([vavooChannel('tf1', 'TF1'), vavooChannel('eurosport', 'Eurosport 1')]);
 
-    $this->getJson('/api/v1/tv/vavoo/channels')
+    $this->getJson('/api/v1/tv/channels')
         ->assertOk()
         ->assertJsonPath('data.*.name', ['Eurosport 1', 'TF1'])
         ->assertJsonPath('data.1.id', 'tf1')
         ->assertJsonPath('data.1.logo', 'https://logo.test/tf1.png');
 
-    $this->getJson('/api/v1/tv/vavoo/channels?category_id=Sport')
+    $this->getJson('/api/v1/tv/channels?category_id=Sport')
         ->assertOk()
         ->assertJsonPath('data.*.name', ['Eurosport 1']);
 
-    $this->getJson('/api/v1/tv/vavoo/channels?q=tf')
+    $this->getJson('/api/v1/tv/channels?q=tf')
         ->assertOk()
         ->assertJsonPath('data.*.name', ['TF1']);
 });
@@ -84,7 +87,7 @@ it('resolves a channel into a playable stream with the headers to send', functio
     Sanctum::actingAs($this->user);
     fakeVavoo([vavooChannel('tf1', 'TF1')]);
 
-    $this->getJson('/api/v1/tv/vavoo/channels/tf1/stream')
+    $this->getJson('/api/v1/tv/channels/tf1/stream')
         ->assertOk()
         ->assertJsonPath('data.url', 'https://cdn.vavoo.test/tf1/master.m3u8')
         ->assertJsonPath('data.format', 'hls')
@@ -98,7 +101,7 @@ it('answers 404 for an unknown channel', function () {
     Sanctum::actingAs($this->user);
     fakeVavoo([vavooChannel('tf1', 'TF1')]);
 
-    $this->getJson('/api/v1/tv/vavoo/channels/nope/stream')
+    $this->getJson('/api/v1/tv/channels/nope/stream')
         ->assertNotFound()
         ->assertExactJson(['message' => 'Chaîne introuvable.']);
 });
@@ -107,16 +110,16 @@ it('says the service is unavailable when the signature cannot be obtained', func
     Sanctum::actingAs($this->user);
     Http::fake(['ping.test/api/app/ping' => Http::response('Boom', 500)]);
 
-    $this->getJson('/api/v1/tv/vavoo/categories')
+    $this->getJson('/api/v1/tv/categories')
         ->assertStatus(503)
-        ->assertExactJson(['message' => 'Impossible de joindre le serveur Vavoo. Réessayez dans quelques instants.']);
+        ->assertExactJson(['message' => 'La TV en direct est momentanément indisponible. Réessayez dans quelques instants.']);
 });
 
-it('says Vavoo is not configured when no mirror is set', function () {
+it('says live TV is not configured when no provider is set', function () {
     Sanctum::actingAs($this->user);
     config(['services.vavoo.base_urls' => [], 'services.vavoo.ping_urls' => []]);
 
-    $this->getJson('/api/v1/tv/vavoo/channels')
+    $this->getJson('/api/v1/tv/channels')
         ->assertStatus(503)
-        ->assertExactJson(['message' => "La TV Vavoo n'est pas configurée sur le serveur."]);
+        ->assertExactJson(['message' => "La TV en direct n'est pas configurée sur le serveur."]);
 });

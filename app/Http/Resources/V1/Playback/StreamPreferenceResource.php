@@ -16,7 +16,7 @@ class StreamPreferenceResource extends JsonResource
             'source' => $this->source,
             /** Id of the content inside that source ("movie:550"…). */
             'item_id' => $this->item_id,
-            /** Stream chosen by the app inside the content ("vavoo:<channelId>", a player URL…). */
+            /** Stream chosen by the app inside the content ("frenchstream:<id>", a player URL…). */
             'stream_id' => $this->stream_id,
             /** Resolved URL to replay it, null until it has worked once. */
             'stream_url' => $this->stream_url,
