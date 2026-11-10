@@ -105,6 +105,33 @@ it('resolves a channel into a playable stream proxied through our own origin', f
         && $request['url'] === 'https://vavoo.test/stream/tf1');
 });
 
+it('keeps every mirror answer as an ordered fallback source', function () {
+    Sanctum::actingAs($this->user);
+    config(['services.vavoo.base_urls' => ['https://vavoo1.test', 'https://vavoo2.test']]);
+
+    Http::fake([
+        'ping.test/api/app/ping' => Http::response(['addonSig' => 'sig-123']),
+        'vavoo1.test/mediahubmx-catalog.json' => Http::response(['items' => [vavooChannel('tf1', 'TF1')]]),
+        'vavoo2.test/mediahubmx-catalog.json' => Http::response(['items' => []]),
+        'vavoo1.test/mediahubmx-resolve.json' => Http::response(['url' => 'https://cdn1.test/tf1.m3u8']),
+        'vavoo2.test/mediahubmx-resolve.json' => Http::response(['url' => 'https://cdn2.test/tf1.m3u8']),
+    ]);
+
+    $data = $this->getJson('/api/v1/tv/channels/tf1/stream')
+        ->assertOk()
+        ->json('data');
+
+    // `url` stays the first candidate; `sources` lists every distinct mirror answer, in order.
+    expect($data['sources'])->toHaveCount(2)
+        ->and($data['url'])->toBe($data['sources'][0])
+        ->and($data['sources'][0])->not->toBe($data['sources'][1]);
+
+    // Each source is our own origin, never the provider's.
+    foreach ($data['sources'] as $source) {
+        expect($source)->toStartWith(config('app.url').'/api/v1/tv/stream/');
+    }
+});
+
 it('builds the stream url over https when TLS is terminated by a proxy', function () {
     Sanctum::actingAs($this->user);
     fakeVavoo([vavooChannel('tf1', 'TF1')]);

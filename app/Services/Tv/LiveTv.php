@@ -74,7 +74,13 @@ class LiveTv
     }
 
     /**
-     * @return array{url: string, format: string, headers: array<string, string>}
+     * Resolve a channel into playable streams.
+     *
+     * Several candidate URLs may come back for one channel (a signed provider answers with one
+     * URL per mirror, and any of them may be down). They are kept in order so the app can fall
+     * back to the next one when a stream refuses to play, instead of failing on the first.
+     *
+     * @return array{urls: list<string>, format: string, headers: array<string, string>}
      */
     public function stream(string $channelId): array
     {
@@ -84,7 +90,7 @@ class LiveTv
             }
 
             return [
-                'url' => $this->vavoo->streams($channelId)[0],
+                'urls' => $this->vavoo->streams($channelId),
                 'format' => 'hls',
                 'headers' => $this->vavoo->streamHeaders(),
             ];

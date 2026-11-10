@@ -78,9 +78,10 @@ class TvController extends Controller
     /**
      * Resolve a playable stream for a channel.
      *
-     * The provider internals stay server-side. The app receives a playlist URL on our own origin
-     * (so it works over HTTPS even when the provider only serves plain HTTP) and no headers: the
-     * player loads the media itself, through the token in the URL.
+     * The provider internals stay server-side. The app receives one or more playlist URLs on our
+     * own origin (so they work over HTTPS even when the provider only serves plain HTTP) and no
+     * headers: the player loads the media itself, through the token in the URL. `sources` lists
+     * the candidates in order; when one is down the app plays the next. `url` is the first one.
      */
     public function stream(string $id): JsonResponse
     {
@@ -90,9 +91,16 @@ class TvController extends Controller
             $this->rethrow($e);
         }
 
+        /** @var list<string> $sources */
+        $sources = array_map(
+            fn (string $url): string => $this->proxy->playUrl($url, $stream['headers'], $stream['format']),
+            $stream['urls'],
+        );
+
         return response()->json(['data' => [
-            'url' => $this->proxy->playUrl($stream['url'], $stream['headers'], $stream['format']),
-            'format' => $stream['format'],
+            'url' => (string) $sources[0],
+            'sources' => $sources,
+            'format' => (string) $stream['format'],
             'headers' => [],
         ]]);
     }
