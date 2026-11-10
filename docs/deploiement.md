@@ -185,9 +185,14 @@ $ACTIVATE_RELEASE()
 
 $RESTART_QUEUES()
 
-# Serveur SSR : l'arrêter pour que Forge le relance depuis la nouvelle release
-$FORGE_PHP artisan inertia:stop-ssr || true
+# Serveur SSR : l'arrêter pour que Forge le relance depuis la nouvelle release.
+# --graceful : ne fait pas échouer le déploiement si le serveur SSR ne tourne pas.
+$FORGE_PHP artisan inertia:stop-ssr --graceful
 ```
+
+Sans `--graceful`, un serveur SSR arrêté (daemon pas encore créé, ou en panne) fait échouer
+le déploiement juste après « Activating release » avec « Unable to connect to Inertia SSR
+server. » : la nouvelle release est déjà active, mais Forge marque le déploiement en échec.
 
 Forge coupe un déploiement au-delà de 10 minutes : `npm ci` + `npm run build` prennent moins
 d'une minute. Un build qui échoue arrête le déploiement avant l'activation : la version en ligne
