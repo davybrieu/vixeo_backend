@@ -70,6 +70,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   import IPTV / M3U / Xtream, radio, replays. SSR : pas de `window` / `document` hors `onMounted`.
   Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.
   Ajouter une page : route dans `routes/site.php`, page Vue, `SiteController::PAGES` (sitemap).
+  **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
+  modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.
 
 - Toutes les routes sous `/api/v1` (`routes/api.php`). **Pas de changement cassant en v1** :
   les applis installées ne se mettent pas à jour en même temps que l'API. Ajouter des champs

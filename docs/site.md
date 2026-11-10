@@ -42,6 +42,13 @@ php artisan inertia:start-ssr &
 php artisan serve
 ```
 
+## Build committé
+
+`public/build` (client) et `bootstrap/ssr` (bundle SSR autonome, sans `node_modules`) sont dans
+le dépôt : Forge ne lance pas npm. **Après toute modification du site, `npm run build` puis
+committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'empreinte des sources
+(`bootstrap/ssr/source-hash.txt`, écrite par `vite.config.js`) et échoue si le build est en retard.
+
 ## Pages
 
 | Adresse | Contenu |

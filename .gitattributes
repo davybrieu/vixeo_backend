@@ -9,3 +9,7 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Committed build of the site (docs/site.md): generated, not reviewed.
+/public/build/** linguist-generated=true -diff
+/bootstrap/ssr/** linguist-generated=true -diff

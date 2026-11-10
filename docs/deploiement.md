@@ -53,7 +53,7 @@ et on lui ajoute les domaines du site :
 - Dépôt `davybrieu/vixeo_backend`, branche `main`
 - **Push to deploy** et **Zero-downtime deployments** activés
 - Base PostgreSQL et Redis créés sur le serveur
-- Node **22** ou plus installé sur le serveur (build du site et serveur SSR) : `node -v`
+- Node **22** ou plus installé sur le serveur (serveur SSR) : `node -v`
 
 ## 3. HTTPS et Nginx
 
@@ -174,9 +174,9 @@ cd $FORGE_RELEASE_DIRECTORY
 
 $FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-# Site de présentation : client (public/build) et SSR (bootstrap/ssr)
-npm ci
-npm run build
+# Site : le build (public/build, bootstrap/ssr) est dans le dépôt, pas de npm ici.
+# Garde-fou : ne jamais activer une release sans bundle SSR.
+test -f bootstrap/ssr/ssr.js || { echo "bootstrap/ssr/ssr.js manquant : npm run build et commit"; exit 1; }
 
 $FORGE_PHP artisan migrate --force
 $FORGE_PHP artisan optimize
@@ -194,9 +194,13 @@ Sans `--graceful`, un serveur SSR arrêté (daemon pas encore créé, ou en pann
 le déploiement juste après « Activating release » avec « Unable to connect to Inertia SSR
 server. » : la nouvelle release est déjà active, mais Forge marque le déploiement en échec.
 
-Forge coupe un déploiement au-delà de 10 minutes : `npm ci` + `npm run build` prennent moins
-d'une minute. Un build qui échoue arrête le déploiement avant l'activation : la version en ligne
-ne change pas. `node_modules` reste dans la release : le serveur SSR en a besoin.
+**Le build du site est committé** (`public/build` et `bootstrap/ssr`) : le serveur ne lance ni
+`npm ci` ni `npm run build`, il a seulement besoin de Node pour exécuter le serveur SSR. Le bundle
+SSR est autonome (`ssr.noExternal` dans `vite.config.js`) : il tourne sans `node_modules`. Après
+toute modification du site (`resources/js`, `resources/css`, `resources/views`, `vite.config.js`,
+`package-lock.json`), lancer `npm run build` et committer le résultat :
+`tests/Unit/FrontendBuildTest.php` échoue tant que le build committé ne correspond pas aux
+sources (empreinte dans `bootstrap/ssr/source-hash.txt`).
 
 ## 6. Serveur SSR (onglet Daemons / Processes)
 

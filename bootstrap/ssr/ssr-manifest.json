@@ -1,0 +1,188 @@
+{
+  "\u0000plugin-vue:export-helper": [
+    "/build/assets/Install-CHmaglKu.js",
+    "/build/assets/Install-BqCdPJWZ.css"
+  ],
+  "\u0000rolldown/runtime.js": [],
+  "node_modules/@babel/parser/lib/index.js": [],
+  "node_modules/@inertiajs/core/dist/index.js": [],
+  "node_modules/@inertiajs/core/dist/server.js": [],
+  "node_modules/@inertiajs/vue3/dist/index.js": [],
+  "node_modules/@inertiajs/vue3/dist/server.js": [],
+  "node_modules/@jridgewell/resolve-uri/dist/resolve-uri.mjs": [],
+  "node_modules/@jridgewell/sourcemap-codec/dist/sourcemap-codec.mjs": [],
+  "node_modules/@jridgewell/trace-mapping/dist/trace-mapping.mjs": [],
+  "node_modules/@vue/compiler-core/dist/compiler-core.cjs.prod.js": [],
+  "node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.prod.js": [],
+  "node_modules/@vue/compiler-ssr/dist/compiler-ssr.cjs.js": [],
+  "node_modules/@vue/reactivity/dist/reactivity.cjs.prod.js": [],
+  "node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js": [],
+  "node_modules/@vue/runtime-dom/dist/runtime-dom.cjs.prod.js": [],
+  "node_modules/@vue/server-renderer/dist/server-renderer.cjs.prod.js": [],
+  "node_modules/@vue/shared/dist/shared.cjs.prod.js": [],
+  "node_modules/entities/dist/commonjs/decode-codepoint.js": [],
+  "node_modules/entities/dist/commonjs/decode.js": [],
+  "node_modules/entities/dist/commonjs/generated/decode-data-html.js": [],
+  "node_modules/entities/dist/commonjs/generated/decode-data-xml.js": [],
+  "node_modules/entities/dist/commonjs/internal/bin-trie-flags.js": [],
+  "node_modules/entities/dist/commonjs/internal/decode-shared.js": [],
+  "node_modules/es-toolkit/dist/_internal/globalThis.mjs": [],
+  "node_modules/es-toolkit/dist/_internal/isUnsafeProperty.mjs": [],
+  "node_modules/es-toolkit/dist/_internal/isUnsafeToWriteProperty.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/assignValue.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/baseClone.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/baseToString.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/getSymbols.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/getTag.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/hasOwn.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/isDeepKey.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/isIndex.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/isKey.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/tags.mjs": [],
+  "node_modules/es-toolkit/dist/compat/_internal/toKey.mjs": [],
+  "node_modules/es-toolkit/dist/compat/function/debounce.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/cloneDeep.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/cloneDeepWith.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/get.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/has.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/merge.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/mergeWith.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/set.mjs": [],
+  "node_modules/es-toolkit/dist/compat/object/updateWith.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isArguments.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isArrayLike.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isArrayLikeObject.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isBuffer.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isObject.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isObjectLike.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isPlainObject.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isSymbol.mjs": [],
+  "node_modules/es-toolkit/dist/compat/predicate/isTypedArray.mjs": [],
+  "node_modules/es-toolkit/dist/compat/string/escape.mjs": [],
+  "node_modules/es-toolkit/dist/compat/util/eq.mjs": [],
+  "node_modules/es-toolkit/dist/compat/util/toPath.mjs": [],
+  "node_modules/es-toolkit/dist/compat/util/toString.mjs": [],
+  "node_modules/es-toolkit/dist/function/debounce.mjs": [],
+  "node_modules/es-toolkit/dist/function/noop.mjs": [],
+  "node_modules/es-toolkit/dist/object/cloneDeep.mjs": [],
+  "node_modules/es-toolkit/dist/object/cloneDeepWith.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isBuffer.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isEqual.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isEqualWith.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isLength.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isPlainObject.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isPrimitive.mjs": [],
+  "node_modules/es-toolkit/dist/predicate/isTypedArray.mjs": [],
+  "node_modules/es-toolkit/dist/string/escape.mjs": [],
+  "node_modules/estree-walker/dist/umd/estree-walker.js": [],
+  "node_modules/laravel-precognition/dist/client.js": [],
+  "node_modules/laravel-precognition/dist/form.js": [],
+  "node_modules/laravel-precognition/dist/http/errors.js": [],
+  "node_modules/laravel-precognition/dist/http/fetchClient.js": [],
+  "node_modules/laravel-precognition/dist/http/url.js": [],
+  "node_modules/laravel-precognition/dist/index.js": [],
+  "node_modules/laravel-precognition/dist/validator.js": [],
+  "node_modules/source-map-js/lib/array-set.js": [],
+  "node_modules/source-map-js/lib/base64-vlq.js": [],
+  "node_modules/source-map-js/lib/base64.js": [],
+  "node_modules/source-map-js/lib/binary-search.js": [],
+  "node_modules/source-map-js/lib/mapping-list.js": [],
+  "node_modules/source-map-js/lib/quick-sort.js": [],
+  "node_modules/source-map-js/lib/source-map-consumer.js": [],
+  "node_modules/source-map-js/lib/source-map-generator.js": [],
+  "node_modules/source-map-js/lib/source-node.js": [],
+  "node_modules/source-map-js/lib/util.js": [],
+  "node_modules/source-map-js/source-map.js": [],
+  "node_modules/vue/dist/vue.cjs.js": [],
+  "node_modules/vue/dist/vue.cjs.prod.js": [],
+  "node_modules/vue/index.js": [],
+  "node_modules/vue/index.mjs": [],
+  "node_modules/vue/server-renderer/index.mjs": [],
+  "resources/js/components/FaqList.vue": [
+    "/build/assets/Faq-B9VLzjgO.js"
+  ],
+  "resources/js/components/FeatureRow.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/components/Icon.vue": [],
+  "resources/js/components/InstallButtons.vue": [
+    "/build/assets/InstallButtons-BkApJZq4.js"
+  ],
+  "resources/js/components/PlatformPicker.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/components/SectionHeading.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/components/Seo.vue": [
+    "/build/assets/Seo-5b7tehtx.js"
+  ],
+  "resources/js/components/SiteFooter.vue": [],
+  "resources/js/components/SiteNav.vue": [],
+  "resources/js/components/VxButton.vue": [],
+  "resources/js/components/VxLogo.vue": [],
+  "resources/js/data/avatars.js": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/data/faq.js": [
+    "/build/assets/Faq-B9VLzjgO.js"
+  ],
+  "resources/js/layouts/SiteLayout.vue": [],
+  "resources/js/mock/PhoneFrame.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/PhoneHomeScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/PhoneListScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/PhoneParentalScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/PixelAvatar.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/PosterTile.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/TvCodeScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/TvDetailsScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/TvFrame.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/TvHomeScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/mock/TvWhoScreen.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/pages/Error.vue": [
+    "/build/assets/Error-HiHDVvxV.js"
+  ],
+  "resources/js/pages/Faq.vue": [
+    "/build/assets/Faq-B9VLzjgO.js"
+  ],
+  "resources/js/pages/Home.vue": [
+    "/build/assets/Home-DoiY2OGz.js"
+  ],
+  "resources/js/pages/Install.vue": [
+    "/build/assets/Install-CHmaglKu.js",
+    "/build/assets/Install-BqCdPJWZ.css"
+  ],
+  "resources/js/pages/Install.vue?vue&type=style&index=0&scoped=25923853&lang.css": [
+    "/build/assets/Install-CHmaglKu.js",
+    "/build/assets/Install-BqCdPJWZ.css"
+  ],
+  "resources/js/pages/Legal.vue": [
+    "/build/assets/Legal-BdUD5RIs.js"
+  ],
+  "resources/js/pages/Privacy.vue": [
+    "/build/assets/Privacy-C4Ip4bKm.js"
+  ],
+  "resources/js/ssr.js": []
+}
