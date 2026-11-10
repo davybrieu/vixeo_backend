@@ -1306,6 +1306,78 @@
                 }
             }
         },
+        "/v1/catalog/people/popular": {
+            "get": {
+                "operationId": "v1.catalog.people.popular",
+                "description": "The search page's \"Personnes\" without a text: TMDb's popular people, same items as the\npeople search (`PersonItemResource`).",
+                "summary": "Popular people (paginated)",
+                "tags": [
+                    "Catalogue",
+                    "CatalogSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (1 to 500).",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PersonItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/{type}/lists/{list}": {
             "get": {
                 "operationId": "v1.catalog.list",
@@ -4968,7 +5040,7 @@
         "/v1/tv/channels/{id}/stream": {
             "get": {
                 "operationId": "v1.tv.channels.stream",
-                "description": "The provider internals stay server-side. The app receives one or more playlist URLs on our\nown origin (so they work over HTTPS even when the provider only serves plain HTTP) and no\nheaders: the player loads the media itself, through the token in the URL. `sources` lists\nthe candidates in order; when one is down the app plays the next. `url` is the first one.",
+                "description": "The provider internals stay server-side. The app receives a playlist URL on our own origin\n(so it works over HTTPS even when the provider only serves plain HTTP) and no headers: the\nplayer loads the media itself, through the token in the URL.",
                 "summary": "Resolve a playable stream for a channel",
                 "tags": [
                     "TV en direct",
@@ -4998,10 +5070,6 @@
                                                 "url": {
                                                     "type": "string"
                                                 },
-                                                "sources": {
-                                                    "type": "array",
-                                                    "items": {}
-                                                },
                                                 "format": {
                                                     "type": "string"
                                                 },
@@ -5016,7 +5084,6 @@
                                             },
                                             "required": [
                                                 "url",
-                                                "sources",
                                                 "format",
                                                 "headers"
                                             ]

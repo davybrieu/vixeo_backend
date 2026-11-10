@@ -263,6 +263,19 @@ class TmdbCatalog
         return $items;
     }
 
+    /**
+     * Popular people (search page without text, "Personnes"). Adult profiles are left out.
+     *
+     * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
+     */
+    public function popularPeople(int $page = 1): array
+    {
+        $result = $this->page($this->tmdb->get('person/popular', ['page' => $page], 'lists'), 'person');
+        $result['results'] = array_values(array_filter($result['results'], fn (array $p) => empty($p['adult'])));
+
+        return $result;
+    }
+
     /** @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>} */
     public function searchType(SearchType $type, string $query, int $page = 1): array
     {

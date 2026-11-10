@@ -143,6 +143,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
             Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
             Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
+            Route::get('people/popular', [CatalogSearchController::class, 'popularPeople'])->name('people.popular');
             Route::get('{type}/lists/{list}', [CatalogController::class, 'list'])->name('list');
             Route::get('{type}/discover', [CatalogController::class, 'discover'])->name('discover');
             Route::get('movie/{id}', [CatalogTitleController::class, 'movie'])->whereNumber('id')->name('movie');

@@ -117,7 +117,7 @@ class XtreamClient
         $url = sprintf('%s/live/%s/%s/%s.%s', $base, $user, $pass, $streamId, $format);
 
         return [
-            'urls' => [$url],
+            'url' => $url,
             'format' => $format === 'm3u8' ? 'hls' : 'ts',
             'headers' => [],
         ];
