@@ -6,6 +6,7 @@ use App\Enums\SearchSort;
 use App\Enums\SearchType;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
+use App\Http\Requests\Api\V1\CatalogPageRequest;
 use App\Http\Requests\Api\V1\SearchRequest;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\PersonItemResource;
@@ -56,6 +57,26 @@ class CatalogSearchController extends Controller
             'people' => [
                 'data' => PersonItemResource::collection($results['people']['results']),
                 'total_results' => (int) $results['people']['total_results'],
+            ],
+        ]);
+    }
+
+    /**
+     * Popular people (paginated).
+     *
+     * The search page's "Personnes" without a text: TMDb's popular people, same items as the
+     * people search (`PersonItemResource`).
+     */
+    public function popularPeople(CatalogPageRequest $request): JsonResponse
+    {
+        $page = $this->catalog->popularPeople($request->page());
+
+        return response()->json([
+            'data' => PersonItemResource::collection($page['results']),
+            'meta' => [
+                'page' => (int) $page['page'],
+                'total_pages' => (int) $page['total_pages'],
+                'total_results' => (int) $page['total_results'],
             ],
         ]);
     }

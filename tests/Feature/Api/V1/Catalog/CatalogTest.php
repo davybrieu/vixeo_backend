@@ -280,6 +280,25 @@ it('searches one type with pagination', function () {
         ->assertJsonPath('meta.total_pages', 4);
 });
 
+it('lists popular people without a text, adult profiles left out', function () {
+    Http::fake(['api.themoviedb.org/3/person/popular*' => Http::response(Tmdb::page([
+        ['id' => 287, 'name' => 'Brad Pitt', 'known_for_department' => 'Acting', 'profile_path' => '/pitt.jpg'],
+        ['id' => 9, 'name' => 'Adult', 'adult' => true, 'known_for_department' => 'Acting', 'profile_path' => null],
+    ], totalPages: 3, page: 2))]);
+
+    $this->getJson('/api/v1/catalog/people/popular?page=2')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0', [
+            'id' => 287, 'name' => 'Brad Pitt', 'known_for_department' => 'Acting',
+            'profile_path' => '/pitt.jpg', 'profile_url' => 'https://image.tmdb.org/t/p/w185/pitt.jpg',
+        ])
+        ->assertJsonPath('meta.page', 2)
+        ->assertJsonPath('meta.total_pages', 3);
+
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'person/popular') && $request['page'] == 2);
+});
+
 it('requires a search query', function () {
     $this->getJson('/api/v1/catalog/search?query=%20')
         ->assertUnprocessable()
