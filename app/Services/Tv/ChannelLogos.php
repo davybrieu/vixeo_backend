@@ -93,15 +93,32 @@ class ChannelLogos
             return null;
         }
 
+        $host = parse_url($url, PHP_URL_HOST);
         $body = $response->successful() ? $response->body() : '';
         if ($body === '' || strlen($body) > self::MAX_BYTES) {
+            Log::info('Channel logo refused', [
+                'host' => $host,
+                'status' => $response->status(),
+                'bytes' => strlen($body),
+                'reason' => $body === '' ? 'no image' : 'too big',
+            ]);
+
             return null;
         }
 
         // Trust the bytes, not the Content-Type of the provider.
         $info = @getimagesizefromstring($body);
         $type = is_array($info) ? (self::TYPES[$info[2]] ?? null) : null;
+        if ($type === null) {
+            Log::info('Channel logo refused', [
+                'host' => $host,
+                'content_type' => $response->header('Content-Type'),
+                'reason' => 'not a PNG, JPEG, WebP or GIF image',
+            ]);
 
-        return $type === null ? null : ['body' => $body, 'content_type' => $type];
+            return null;
+        }
+
+        return ['body' => $body, 'content_type' => $type];
     }
 }

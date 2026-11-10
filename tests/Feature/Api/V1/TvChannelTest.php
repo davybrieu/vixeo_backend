@@ -92,3 +92,12 @@ it('refuses a logo bigger than 512 KB', function () {
 
     $this->get($logo)->assertNotFound();
 });
+
+it('diagnoses the logos from the command line (php artisan tv:logos)', function () {
+    Http::fake(['logo.test/arte.png' => Http::response(tinyPng())]);
+
+    $this->artisan('tv:logos')
+        ->expectsOutputToContain('2 chaînes, 1 avec un logo du fournisseur.')
+        ->expectsOutputToContain('Arte : OK, image/png')
+        ->assertSuccessful();
+});

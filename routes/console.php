@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\Tv\ChannelLogos;
+use App\Services\Tv\LiveTv;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -12,3 +14,39 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Why don't the channel logos show? Counts the channels with a logo from the provider, then tries
+// to relay a few of them like GET /tv/logo/{hash} does (docs/tv-direct.md). Nothing is stored.
+Artisan::command('tv:logos {--limit=5 : logos to try}', function () {
+    $live = app(LiveTv::class);
+    $logos = app(ChannelLogos::class);
+
+    try {
+        $channels = $live->channels();
+    } catch (Throwable $e) {
+        $this->error('Chaînes indisponibles : '.$e->getMessage());
+
+        return 1;
+    }
+
+    $withLogo = array_values(array_filter($channels, fn (array $c) => $c['logo'] !== null));
+    $this->info(count($channels).' chaînes, '.count($withLogo).' avec un logo du fournisseur.');
+    if ($withLogo === []) {
+        $this->warn('Le fournisseur ne donne aucun logo : rien à afficher.');
+
+        return 0;
+    }
+
+    foreach (array_slice($withLogo, 0, (int) $this->option('limit')) as $channel) {
+        $hash = basename((string) parse_url($channel['logo'], PHP_URL_PATH));
+        $image = $logos->image($hash);
+        $this->line(sprintf(
+            '%s : %s',
+            $channel['name'],
+            $image === null ? 'REFUSÉ (raison dans storage/logs, « Channel logo »)' : 'OK, '.$image['content_type'].', '.strlen($image['body']).' octets',
+        ));
+    }
+    $this->line('Adresse du premier logo dans l\'API : '.$withLogo[0]['logo']);
+
+    return 0;
+})->purpose('Diagnose the live TV channel logos');

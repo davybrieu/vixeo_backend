@@ -48,6 +48,9 @@ refuse les images en HTTP clair.
   jeton) et limitée à 600 requêtes par minute et par IP (`throttle:tv-logos`).
 - Introuvable ou invalide : 404, et l'appli affiche son icône. Une chaîne sans logo chez le
   fournisseur garde `logo: null`.
+- Logos qui ne s'affichent pas : `php artisan tv:logos` (dans le dossier `current` du site)
+  compte les chaînes qui ont un logo chez le fournisseur et essaie d'en relayer quelques-uns ; la
+  raison de chaque refus est dans `storage/logs` (« Channel logo refused / unreachable »).
 
 ## Flux proxifié (pourquoi l'appli ne reçoit jamais l'URL du fournisseur)
 
