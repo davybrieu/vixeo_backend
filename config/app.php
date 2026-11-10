@@ -59,8 +59,9 @@ return [
     */
     'web_url' => env('WEB_URL', 'http://localhost:8080'),
 
-    // Presentation site (vixeo_web): install page of the Android APK (/installer).
-    'site_url' => env('SITE_URL', 'http://localhost:8100'),
+    // Presentation site (routes/site.php, SITE_DOMAIN): install page of the Android APK (/installer).
+    // Without SITE_URL (local), the site is served on APP_URL along with the API.
+    'site_url' => env('SITE_URL') ?: env('APP_URL', 'http://localhost'),
 
     /*
     |--------------------------------------------------------------------------

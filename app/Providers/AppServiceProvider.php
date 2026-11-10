@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\SiteController;
+use App\Services\LatestAndroidRelease;
+use App\Support\Platform;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -10,12 +13,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Once per request: the site's layout and page both ask for the latest release.
+        $this->app->scoped(LatestAndroidRelease::class);
     }
 
     public function boot(): void
@@ -59,10 +64,38 @@ class AppServiceProvider extends ServiceProvider
         // Players save progress regularly; pulls are paginated.
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 
+        $this->shareSiteProps();
+
         Scramble::configure()
             ->routes(fn ($route) => str_starts_with($route->uri, 'api/v1'))
             ->withDocumentTransformers(function (OpenApi $openApi) {
                 $openApi->secure(SecurityScheme::http('bearer'));
             });
+    }
+
+    /** Presentation site (routes/site.php): props shared with every page, error pages included. */
+    private function shareSiteProps(): void
+    {
+        Inertia::share([
+            'site' => function () {
+                // No Play Store: the APK of the latest GitHub release, or the one of the .env.
+                $apk = app(LatestAndroidRelease::class)->apk();
+
+                return [
+                    'url' => SiteController::siteUrl(),
+                    // The Vixeo web app (Flutter web, vixeo_frontend): WEB_URL.
+                    'appUrl' => rtrim((string) config('app.web_url'), '/'),
+                    'android' => [
+                        'apkUrl' => $apk['url'] ?? null,
+                        'apkSha256' => $apk['sha256'] ?? null,
+                        'minimum' => config('vixeo.android.minimum'),
+                    ],
+                    'contactEmail' => config('vixeo.publisher.email') ?: null,
+                    'publisher' => config('vixeo.publisher.name') ?: null,
+                ];
+            },
+            'platform' => fn () => Platform::fromUserAgent(request()->userAgent())->value,
+            'path' => fn () => '/'.ltrim(request()->path(), '/'),
+        ]);
     }
 }

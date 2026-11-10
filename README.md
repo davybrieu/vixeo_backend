@@ -1,17 +1,27 @@
-# Vixeo — API
+# Vixeo — API et site
 
-API REST Laravel de Vixeo (comptes, profils, synchronisation, configuration distante).
+Un seul projet Laravel, deux domaines (voir [`docs/deploiement.md`](docs/deploiement.md)) :
+
+- **`api.vixeo.app`** : API REST de Vixeo (comptes, profils, synchronisation, catalogue…), sous
+  `/api/v1` ;
+- **`www.vixeo.app`** : site de présentation et d'installation (Vue 3 + Inertia, rendu côté
+  serveur), voir [`docs/site.md`](docs/site.md). `vixeo.app` redirige vers `www.vixeo.app`.
+
 L'appli Flutter est dans [`vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
 
 ## Démarrage
 
 ```bash
-composer install
+composer install && npm ci
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-php artisan serve
+npm run build                     # ou `npm run dev` pendant le développement du site
+php artisan serve                 # site sur http://localhost:8000, API sur /api/v1
 ```
+
+En local, `API_DOMAIN` et `SITE_DOMAIN` sont vides : un seul hôte sert le site (`/`) et l'API
+(`/api/v1`).
 
 - Tests : `./vendor/bin/pest`
 - Formatage : `./vendor/bin/pint`
