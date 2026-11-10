@@ -15,15 +15,36 @@ des chaînes et une URL HLS jouable.
 | GET | `/tv/categories` | catégories de chaînes |
 | GET | `/tv/channels?category_id=&q=` | chaînes, triées par nom |
 | GET | `/tv/channels/{id}/stream` | résout une chaîne en flux jouable |
+| GET | `/tv/stream/{token}` | média d'un flux (playlist HLS réécrite ou segment), proxifié |
 
 - `category_id` vient de `/categories` ; `q` filtre sur le nom (insensible à la casse).
 - Un identifiant de chaîne est une chaîne libre : il peut être numérique (`1399`) ou texte (`tf1`)
   selon le fournisseur.
-- La réponse de `/stream` contient `url`, `format` (`hls`) et `headers` (les en-têtes à envoyer
-  avec la requête vidéo). Certaines URL sont signées : elles ne sont valables qu'avec ces en-têtes.
+- La réponse de `/stream` contient `url`, `format` (`hls`) et `headers` (toujours vide). `url`
+  pointe **sur notre propre domaine** (`/tv/stream/{token}`), jamais sur celui du fournisseur.
+- La route `/tv/stream/{token}` sert le média lui-même : le lecteur l'appelle **sans jeton
+  d'authentification** (un élément `<video>` et ExoPlayer n'en envoient pas). C'est le **jeton
+  signé et opaque** présent dans l'URL qui l'autorise, et il expire.
 - La TV en direct est **facultative** : sans fournisseur configuré, les routes répondent 503
   « La TV en direct n'est pas configurée sur le serveur. » Un fournisseur injoignable répond aussi
   503 « La TV en direct est momentanément indisponible. »
+
+## Flux proxifié (pourquoi l'appli ne reçoit jamais l'URL du fournisseur)
+
+Certains fournisseurs ne publient leurs flux qu'en **HTTP clair**. Donner cette URL telle quelle à
+l'appli casse la lecture : une page servie en HTTPS la bloque (contenu mixte) et une version
+Android de production refuse le trafic non chiffré. L'appli reçoit donc une URL **sur notre propre
+origine** (HTTPS) :
+
+- `App\Services\Tv\StreamProxy` récupère la playlist côté serveur, **réécrit chaque URI**
+  (segments, clés de chiffrement, variantes) vers nos routes, et renvoie la playlist.
+- Chaque URI de la playlist pointe vers `/tv/stream/{token}` sur un chemin **relatif** : aucune
+  fuite du domaine du fournisseur. Un flux qui n'est pas une playlist (segment, MPEG-TS brut) est
+  transmis tel quel.
+- Le jeton est chiffré avec `APP_KEY` (`Crypt`) : seul ce serveur peut en fabriquer un. Il
+  contient l'URL du fournisseur et ses en-têtes (par ex. le `User-Agent` attendu), qui restent donc
+  côté serveur, et une échéance (`TV_PROXY_TTL`). Une URL copiée cesse de fonctionner après.
+- Un jeton absent, falsifié ou expiré répond 502 avec un message neutre.
 
 ## Fonctionnement interne (côté serveur uniquement)
 
@@ -48,7 +69,8 @@ Chaque fournisseur met ses résultats en cache (durées réglables) pour limiter
 
 Les variables d'environnement de chaque fournisseur (URL, miroirs, endpoints de ping, pays,
 timeouts, TTL de cache, versions de client) sont documentées dans `.env.example`. Elles vivent dans
-la configuration, pas dans le code, pour pouvoir être mises à jour sans republier l'appli.
+la configuration, pas dans le code, pour pouvoir être mises à jour sans republier l'appli. Le proxy
+lui-même se règle avec `TV_PROXY_TTL` (durée de vie d'un jeton média) et `TV_PROXY_TIMEOUT`.
 
 ## À vérifier avant la mise en ligne
 

@@ -46,6 +46,14 @@ Route::prefix('v1')->name('v1.')->group(function () {
         ->middleware('throttle:device-poll')
         ->name('auth.device.poll');
 
+    // Media proxied through our own origin: the player loads this URL without a bearer token
+    // (a <video> element and ExoPlayer send none), so the signed, opaque token in the path is what
+    // authorises it. Public on purpose: kept out of the `auth:sanctum` group and of
+    // `throttle:catalog` (a live stream fires one request per segment). See docs/tv-direct.md.
+    Route::prefix('tv')->name('tv.')->group(function () {
+        Route::get('stream/{token}', [TvController::class, 'media'])->name('stream.media');
+    });
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::prefix('auth/device')->name('auth.device.')->middleware('throttle:device-approve')->group(function () {

@@ -134,6 +134,17 @@ return [
     ],
 
     /*
+    | Live TV stream proxy. The provider URL and its headers are hidden behind a signed token;
+    | these settings only tune the proxy itself. See docs/tv-direct.md.
+    */
+    'tv' => [
+        // Seconds a proxied media token stays valid (a copied URL stops working after that).
+        'proxy_ttl' => (int) env('TV_PROXY_TTL', 21600),
+        // Seconds to wait for one upstream playlist / segment request.
+        'proxy_timeout' => (int) env('TV_PROXY_TIMEOUT', 20),
+    ],
+
+    /*
     | Personal legal Xtream Codes panel (live TV). Credentials stay on the server only.
     | XTREAM_BASE_URL example: http://panel.example.com:8080
     */

@@ -4822,6 +4822,50 @@
                 }
             }
         },
+        "/v1/tv/stream/{token}": {
+            "get": {
+                "operationId": "v1.tv.stream.media",
+                "description": "The player loads this URL without a bearer token: the signed, opaque token in the path is\nwhat authorises it. An HLS playlist is rewritten so its URIs point back to this server.",
+                "summary": "Media of a channel, proxied (HLS playlist and its segments)",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/vnd.apple.mpegurl": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "no-store",
+                                        "private, max-age=30"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tv/categories": {
             "get": {
                 "operationId": "v1.tv.categories",
@@ -4924,7 +4968,7 @@
         "/v1/tv/channels/{id}/stream": {
             "get": {
                 "operationId": "v1.tv.channels.stream",
-                "description": "The provider internals stay server-side; the app gets the HLS URL and the headers to send.",
+                "description": "The provider internals stay server-side. The app receives a playlist URL on our own origin\n(so it works over HTTPS even when the provider only serves plain HTTP) and no headers: the\nplayer loads the media itself, through the token in the URL.",
                 "summary": "Resolve a playable stream for a channel",
                 "tags": [
                     "TV en direct",
@@ -4958,10 +5002,12 @@
                                                     "type": "string"
                                                 },
                                                 "headers": {
-                                                    "type": "object",
-                                                    "additionalProperties": {
+                                                    "type": "array",
+                                                    "items": {
                                                         "type": "string"
-                                                    }
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0
                                                 }
                                             },
                                             "required": [

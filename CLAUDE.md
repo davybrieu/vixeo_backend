@@ -155,9 +155,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   l'appli ne sait jamais quel fournisseur sert les chaînes. `App\Services\Tv\LiveTv` choisit le
   fournisseur configuré, normalise sa réponse dans une forme unique et traduit ses erreurs en
   messages neutres. Les fournisseurs sont un détail serveur (identifiants, miroirs et signatures
-  ne partent jamais vers les applis, qui ne reçoivent que des chaînes et une URL HLS jouable) ;
-  ajouter ou remplacer un fournisseur ne touche pas l'API publique. La TV est facultative : sans
-  fournisseur configuré, 503.
+  ne partent jamais vers les applis) ; ajouter ou remplacer un fournisseur ne touche pas l'API
+  publique. Le média passe par `App\Services\Tv\StreamProxy` : l'appli reçoit une URL **sur notre
+  domaine** (`GET /tv/stream/{token}`, **publique**, autorisée par le jeton signé et non par le
+  bearer) et la playlist HLS est réécrite côté serveur. Certains fournisseurs ne publient qu'en
+  HTTP clair : le proxy évite le contenu mixte (web HTTPS) et le blocage du trafic non chiffré
+  (Android de production). La TV est facultative : sans fournisseur configuré, 503.
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
