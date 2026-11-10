@@ -39,11 +39,13 @@ Artisan::command('tv:logos {--limit=5 : logos to try}', function () {
 
     foreach (array_slice($withLogo, 0, (int) $this->option('limit')) as $channel) {
         $hash = basename((string) parse_url($channel['logo'], PHP_URL_PATH));
-        $image = $logos->image($hash);
+        $result = $logos->inspect($hash);
         $this->line(sprintf(
             '%s : %s',
             $channel['name'],
-            $image === null ? 'REFUSÉ (raison dans storage/logs, « Channel logo »)' : 'OK, '.$image['content_type'].', '.strlen($image['body']).' octets',
+            $result['image'] === null
+                ? sprintf('REFUSÉ, %s (hôte %s, HTTP %s, type %s, %d octets)', $result['reason'], $result['host'] ?? '?', $result['status'] ?? '-', $result['content_type'] ?? '-', $result['bytes'])
+                : 'OK, '.$result['image']['content_type'].', '.$result['bytes'].' octets',
         ));
     }
     $this->line('Adresse du premier logo dans l\'API : '.$withLogo[0]['logo']);

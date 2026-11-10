@@ -101,3 +101,11 @@ it('diagnoses the logos from the command line (php artisan tv:logos)', function 
         ->expectsOutputToContain('Arte : OK, image/png')
         ->assertSuccessful();
 });
+
+it('tells why a logo is refused (php artisan tv:logos)', function () {
+    Http::fake(['logo.test/arte.png' => Http::response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', 200, ['Content-Type' => 'image/svg+xml'])]);
+
+    $this->artisan('tv:logos')
+        ->expectsOutputToContain('Arte : REFUSÉ, SVG image (not accepted) (hôte logo.test, HTTP 200, type image/svg+xml')
+        ->assertSuccessful();
+});

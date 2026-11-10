@@ -76,49 +76,68 @@ class ChannelLogos
      */
     public function image(string $hash): ?array
     {
-        $map = Cache::get(self::MAP_KEY, []);
-        $url = is_array($map) ? ($map[$hash] ?? null) : null;
-
-        return is_string($url) ? $this->fetch($url) : null;
+        return $this->inspect($hash)['image'];
     }
 
-    /** @return array{body: string, content_type: string}|null */
-    private function fetch(string $url): ?array
+    /**
+     * Fetches the logo and says what happened, for the relay and `php artisan tv:logos`.
+     *
+     * @return array{image: array{body: string, content_type: string}|null, reason: string|null, host: string|null, status: int|null, content_type: string|null, bytes: int}
+     */
+    public function inspect(string $hash): array
     {
-        try {
-            $response = Http::timeout(8)->connectTimeout(5)->get($url);
-        } catch (Throwable $e) {
-            Log::info('Channel logo unreachable', ['host' => parse_url($url, PHP_URL_HOST), 'error' => $e->getMessage()]);
-
-            return null;
+        $map = Cache::get(self::MAP_KEY, []);
+        $url = is_array($map) ? ($map[$hash] ?? null) : null;
+        if (! is_string($url)) {
+            return ['image' => null, 'reason' => 'unknown logo (list the channels first)', 'host' => null, 'status' => null, 'content_type' => null, 'bytes' => 0];
         }
 
-        $host = parse_url($url, PHP_URL_HOST);
-        $body = $response->successful() ? $response->body() : '';
-        if ($body === '' || strlen($body) > self::MAX_BYTES) {
-            Log::info('Channel logo refused', [
-                'host' => $host,
-                'status' => $response->status(),
-                'bytes' => strlen($body),
-                'reason' => $body === '' ? 'no image' : 'too big',
-            ]);
+        $result = $this->fetch($url);
+        if ($result['reason'] !== null) {
+            Log::info('Channel logo refused', array_diff_key($result, ['image' => true]));
+        }
 
-            return null;
+        return $result;
+    }
+
+    /** @return array{image: array{body: string, content_type: string}|null, reason: string|null, host: string|null, status: int|null, content_type: string|null, bytes: int} */
+    private function fetch(string $url): array
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        $host = is_string($host) ? $host : null;
+        $result = ['image' => null, 'reason' => null, 'host' => $host, 'status' => null, 'content_type' => null, 'bytes' => 0];
+
+        try {
+            $response = Http::timeout(8)->connectTimeout(5)->accept('image/*')->get($url);
+        } catch (Throwable $e) {
+            return ['reason' => 'unreachable: '.$e->getMessage()] + $result;
+        }
+
+        $body = $response->successful() ? $response->body() : '';
+        $result = [
+            'status' => $response->status(),
+            'content_type' => $response->header('Content-Type') ?: null,
+            'bytes' => strlen($body),
+        ] + $result;
+        if (! $response->successful()) {
+            return ['reason' => 'HTTP '.$response->status()] + $result;
+        }
+        if ($body === '') {
+            return ['reason' => 'empty response'] + $result;
+        }
+        if (strlen($body) > self::MAX_BYTES) {
+            return ['reason' => 'too big (over 512 KB)'] + $result;
         }
 
         // Trust the bytes, not the Content-Type of the provider.
         $info = @getimagesizefromstring($body);
         $type = is_array($info) ? (self::TYPES[$info[2]] ?? null) : null;
         if ($type === null) {
-            Log::info('Channel logo refused', [
-                'host' => $host,
-                'content_type' => $response->header('Content-Type'),
-                'reason' => 'not a PNG, JPEG, WebP or GIF image',
-            ]);
+            $svg = str_contains(strtolower(substr($body, 0, 1024)), '<svg');
 
-            return null;
+            return ['reason' => $svg ? 'SVG image (not accepted)' : 'not a PNG, JPEG, WebP or GIF image'] + $result;
         }
 
-        return ['body' => $body, 'content_type' => $type];
+        return ['image' => ['body' => $body, 'content_type' => $type]] + $result;
     }
 }
