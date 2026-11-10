@@ -234,3 +234,24 @@ it('keeps only the titles a kid profile may see', function () {
     $this->getJson('/api/v1/catalog/titles?ids=movie:550,tv:1399', ['X-Profile-Id' => $kid->id])->assertOk()
         ->assertJsonPath('data.*.id', [1399]);
 });
+
+it('gives the logo of each "Vous pourriez aussi aimer" title, like the home rows', function () {
+    Http::fake([
+        // The title page, recommending Seven (807).
+        'api.themoviedb.org/3/movie/550?*' => Http::response(array_merge(Tmdb::movieDetails(), [
+            'recommendations' => ['results' => [Tmdb::movie(807, ['title' => 'Seven'])]],
+        ])),
+        // Seven's details, read once for its logo and summary.
+        'api.themoviedb.org/3/movie/807?*' => Http::response(array_merge(Tmdb::movieDetails(), [
+            'id' => 807,
+            'images' => ['logos' => [image('/seven.png', 'fr', 5.0, 3.5)], 'backdrops' => [], 'posters' => []],
+        ])),
+    ]);
+
+    $movie = $this->getJson('/api/v1/catalog/movie/550')->assertOk()->json('data');
+
+    expect($movie['recommended'][0]['title'])->toBe('Seven')
+        ->and($movie['recommended'][0]['logo_url'])->toBe('https://image.tmdb.org/t/p/w500/seven.png')
+        ->and($movie['recommended'][0]['logo_aspect_ratio'])->toEqual(3.5)
+        ->and($movie['recommended'][0]['summary'])->not->toBeNull();
+});

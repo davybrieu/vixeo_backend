@@ -9,6 +9,7 @@ use App\Http\Resources\V1\Catalog\PersonResource;
 use App\Http\Resources\V1\Catalog\SeasonResource;
 use App\Http\Resources\V1\Catalog\ShowResource;
 use App\Services\Tmdb\AgeGate;
+use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ use Illuminate\Http\Request;
  */
 class CatalogTitleController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate) {}
+    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleSummaries $summaries) {}
 
     /**
      * Movie.
@@ -84,7 +85,9 @@ class CatalogTitleController extends Controller
         $profile = ResolveProfile::profile($request);
 
         $this->ageGate->authorizeTitle($profile, $title);
-        $title['recommended'] = $this->ageGate->filter($profile, $title['recommended']);
+        // "Vous pourriez aussi aimer" cards show the title logo like the home rows: logo, textless
+        // poster and summary come with each title (TitleSummaries, cached a day, one batch).
+        $title['recommended'] = $this->summaries->add($this->ageGate->filter($profile, $title['recommended']));
 
         return $title;
     }

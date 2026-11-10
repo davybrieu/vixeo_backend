@@ -129,8 +129,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     ajoute à chaque titre le logo (`logo_url`), une affiche sans texte (`textless_poster_url`,
     carrousel du téléphone) et `summary` (durée ou nombre de saisons, genres, âge conseillé), pour
     que la grande image et le carrousel affichent tout d'un coup ; un appel TMDb par titre (fiche
-    avec `images` et classifications), en un lot (`getMany`, cache d'un jour, partagé). Les autres
-    listes n'en ont pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
+    avec `images` et classifications), en un lot (`getMany`, cache d'un jour, partagé). Les
+    recommandations d'une fiche (« Vous pourriez aussi aimer », `recommended`) aussi
+    (`CatalogTitleController::restricted`), pour le logo des vignettes. Les autres listes n'en ont
+    pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
     plus, `TitleSummaries::titles`, même cache) donne plusieurs titres d'un coup avec ces champs :
     « Ma liste » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
