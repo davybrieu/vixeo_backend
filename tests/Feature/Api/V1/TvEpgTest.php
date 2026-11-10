@@ -59,11 +59,11 @@ function secondGuide(): string
 </tv>';
 }
 
-function fakeTv(mixed $first = null, int $status = 200, mixed $second = null): void
+function fakeTv(mixed $first = null, int $status = 200, mixed $second = null, ?array $items = null): void
 {
     Http::fake([
         'ping.test/api/app/ping' => Http::response(['addonSig' => 'sig']),
-        'vavoo.test/mediahubmx-catalog.json' => Http::response(['items' => [
+        'vavoo.test/mediahubmx-catalog.json' => Http::response(['items' => $items ?? [
             ['type' => 'iptv', 'ids' => ['id' => 'tf1'], 'name' => 'TF1 HD', 'url' => 'https://vavoo.test/s/tf1', 'group' => 'France', 'logo' => ''],
             ['type' => 'iptv', 'ids' => ['id' => 'arte'], 'name' => 'Arte', 'url' => 'https://vavoo.test/s/arte', 'group' => 'France', 'logo' => 'https://logo.test/arte.png'],
             ['type' => 'iptv', 'ids' => ['id' => 'm6'], 'name' => 'M6', 'url' => 'https://vavoo.test/s/m6', 'group' => 'France', 'logo' => ''],
@@ -98,7 +98,45 @@ it('gives one key per channel name', function (string $name, string $key) {
     ['BFMTV', 'bfm'],
     ['BFM TV', 'bfm'],
     ['MTV', 'mtv'],
+    ['6TER .c', '6ter'],
+    ['13 EME RUE HD .s', '13erue'],
+    ['13ème Rue', '13erue'],
+    ['BE: ELEVENSPORTS 1', 'elevensports1'],
+    ['BEIN SPORTS 1 (BACKUP)', 'beinsports1'],
+    ['beIN SPORTS 1 French', 'beinsports1'],
+    ['CANAL+ SPORT 360 (1080P) .s', 'canalplussport360'],
 ]);
+
+it('cleans the provider names for display', function (string $name, string $clean) {
+    expect(ChannelName::clean($name))->toBe($clean);
+})->with([
+    ['6TER .c', '6TER'],
+    ['13 EME RUE HD .s', '13 EME RUE'],
+    ['20 MINUTES TV .c', '20 MINUTES TV'],
+    ['TF1 FHD .b', 'TF1'],
+    ['BEIN SPORTS 1 (BACKUP)', 'BEIN SPORTS 1'],
+    ['CANAL+ SPORT 360 (1080P) .s', 'CANAL+ SPORT 360'],
+    ['BFM BUSINESS', 'BFM BUSINESS'],
+    ['HD', 'HD'],
+]);
+
+it('matches the guide and the logos with the cleaned name, and shows it', function () {
+    config(['services.tv.logos_repository' => 'tv-logo/tv-logos', 'services.tv.logos_directories' => ['countries/france']]);
+    fakeTv(items: [
+        ['type' => 'iptv', 'ids' => ['id' => 'tf1'], 'name' => 'TF1 FHD .c', 'url' => 'https://vavoo.test/s/tf1', 'group' => 'France', 'logo' => ''],
+    ]);
+    app(Epg::class)->refresh();
+
+    $this->getJson('/api/v1/tv/channels')->assertOk()->assertJsonCount(1, 'data');
+    $this->getJson('/api/v1/tv/channels/tf1')
+        ->assertOk()
+        ->assertJsonPath('data.name', 'TF1')
+        ->assertJsonPath('data.logo', proxiedLogo(implode("\n", [
+            'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/tf1-fr.png',
+            'https://other.test/tf1.png',
+        ])));
+    $this->getJson('/api/v1/tv/channels/tf1/epg')->assertOk()->assertJsonPath('data.0.title', 'Le journal');
+});
 
 it('gives the programmes of a channel from the first guide that has them', function () {
     fakeTv();

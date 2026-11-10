@@ -60,7 +60,7 @@ class LiveTv
         // Logo candidates, best first: the logo library (clean, transparent PNGs), the programme
         // guide's icon, then the provider's. All relayed from our own origin (ChannelLogos): the
         // app never sees their address.
-        $channels = array_map(fn (array $c) => ['logo' => array_values(array_filter([
+        $channels = array_map(fn (array $c) => ['name' => ChannelName::clean($c['name']), 'logo' => array_values(array_filter([
             $this->library->logo($c['name']),
             $this->epg->icon($c['epg_channel_id'], $c['name']),
             $c['logo'],
