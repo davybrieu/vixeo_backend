@@ -21,7 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // The API runs behind Cloudflare and Laravel Forge's Nginx, which terminate TLS. Trust
+        // their X-Forwarded-* headers so route() builds https URLs: the live-TV proxy hands the
+        // player an absolute URL on our own origin, and an http:// one is blocked as mixed content
+        // by browsers and as cleartext traffic by a release Android build.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
