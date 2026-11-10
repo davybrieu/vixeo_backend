@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\ProfileSearch;
+use App\Models\ProfileStream;
 use App\Models\TmdbRating;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -27,7 +28,7 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbLink', 'tmdbRatings'])->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'streams', 'searches', 'tmdbLink', 'tmdbRatings'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
@@ -77,6 +78,18 @@ class AccountExport
                     'last_engaged_at' => $i->last_engaged_at?->toIso8601String(),
                     'is_watched' => $i->is_watched,
                     'watched_at' => $i->watched_at?->toIso8601String(),
+                ])->values()->all(),
+                // Stream preferences: favorites (❤) and the last stream that worked per content.
+                'stream_preferences' => $p->streams->sortByDesc('last_worked_at')->map(fn (ProfileStream $s) => [
+                    'source' => $s->source,
+                    'item_id' => $s->item_id,
+                    'stream_id' => $s->stream_id,
+                    'stream_url' => $s->stream_url,
+                    'quality' => $s->quality,
+                    'language' => $s->language,
+                    'is_favorite' => $s->is_favorite,
+                    'favorited_at' => $s->favorited_at?->toIso8601String(),
+                    'last_worked_at' => $s->last_worked_at?->toIso8601String(),
                 ])->values()->all(),
             ])->values()->all(),
             'devices' => $user->tokens()->get()->map(fn (PersonalAccessToken $t) => [

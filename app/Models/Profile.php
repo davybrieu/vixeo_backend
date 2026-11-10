@@ -86,6 +86,12 @@ class Profile extends Model
         return $this->hasMany(ProfileSearch::class);
     }
 
+    /** Stream preferences (favorites, last one that worked). @return HasMany<ProfileStream, $this> */
+    public function streams(): HasMany
+    {
+        return $this->hasMany(ProfileStream::class);
+    }
+
     /** TMDb account linked to this profile (docs/compte-tmdb.md). @return HasOne<TmdbLink, $this> */
     public function tmdbLink(): HasOne
     {

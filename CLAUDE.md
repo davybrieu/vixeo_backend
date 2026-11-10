@@ -151,6 +151,17 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de
   l'en-tête `X-Profile-Id` (`ResolveProfile`, `AgeGate`) : toute nouvelle route du catalogue qui
   renvoie des titres doit passer par `AgeGate`.
+- **TV en direct** (doc : `docs/tv-vavoo.md`) : deux sources, gardées côté serveur (identifiants,
+  miroirs et signatures ne partent jamais vers les applis, qui ne reçoivent que des chaînes et une
+  URL HLS jouable). Xtream Codes (panneau personnel, `App\Services\Xtream\XtreamClient`) et Vavoo
+  (API « MediaHubMX » signée, `App\Services\Vavoo\VavooClient` : jeton `addonSig` en cache 5 min,
+  catalogue en cache 30 min, plusieurs miroirs essayés à tour de rôle). Routes sous `/tv/…`
+  (`throttle:catalog`). Vavoo est facultatif : sans configuration, 503.
+- **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
+  contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
+  favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
+  signalés par l'appli (`POST /catalog/streams/dead`), mis en cache 24 h pour tous les comptes
+  (`dead_streams`, `App\Services\Playback\DeadStreams`), retirés de la liste des sources.
 - **Jamais de secret dans une URL** (PIN, mot de passe, jeton) : corps de requête ou en-tête.
   Pas de champ secret sur un DELETE (Scramble le documenterait en paramètre d'URL) ; un test
   de `tests/Feature/OpenApiTest.php` le vérifie.
@@ -185,6 +196,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
 - Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb,
   commentaires gardés par Vixeo.
-- Pas encore synchronisés : flux favoris et « dernier flux qui a fonctionné ».
+- Fait aussi : TV en direct (Xtream Codes et Vavoo) et flux favoris / « dernier flux qui a
+  fonctionné » synchronisés par profil, avec cache partagé des flux morts.
 - Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
   configuration distante (chaînes FAST).

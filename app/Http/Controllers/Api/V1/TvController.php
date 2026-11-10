@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\TvChannelsRequest;
 use App\Services\Xtream\XtreamClient;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -32,14 +32,12 @@ class TvController extends Controller
     }
 
     /**
-     * Live channels, optionally filtered by category_id.
+     * Live channels, optionally filtered by category_id and by a name search with q.
      */
-    public function channels(Request $request): JsonResponse
+    public function channels(TvChannelsRequest $request): JsonResponse
     {
-        $categoryId = $request->query('category_id');
-        $categoryId = is_string($categoryId) && $categoryId !== '' ? $categoryId : null;
-        $q = $request->query('q');
-        $q = is_string($q) ? trim($q) : '';
+        $categoryId = $request->categoryId();
+        $q = $request->search();
 
         try {
             $channels = $this->xtream->liveChannels($categoryId);

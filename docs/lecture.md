@@ -39,6 +39,41 @@ L'appli garde la liste des noms français des langues : en ajouter une = la mett
   une enregistrée dans les 2 dernières minutes la remplace.
 - Table `profile_searches`, supprimée avec le profil (donc avec le compte), dans l'export.
 
+## Flux : favoris et dernier flux qui marche (synchronisés)
+
+Chaque contenu (film, épisode, chaîne…) a plusieurs flux possibles. Le lecteur les essaie dans
+cet ordre : **favoris (❤) d'abord**, puis **le dernier flux qui a marché**, puis la liste normale.
+Ces choix sont par profil et suivis sur tous ses appareils.
+
+| Méthode | Route | Rôle |
+|---|---|---|
+| GET | `/profiles/{id}/streams?source=&item_id=` | les flux préférés d'un contenu |
+| POST | `/profiles/{id}/streams/favorite` `{source, item_id, stream_id, favorite}` | ajoute/retire un favori |
+| POST | `/profiles/{id}/streams/worked` `{source, item_id, stream_id, …}` | le flux vient de marcher |
+
+- `source` + `item_id` identifient le contenu, comme pour les recherches et l'historique
+  (`"tmdb"` + `"movie:550"`, `"vavoo"` + identifiant de chaîne…). `stream_id` identifie le flux
+  (l'URL du lecteur, ou l'identifiant de chaîne en TV).
+- Marquer un flux comme « qui marche » le **ranime** aussi : un flux signalé mort puis rejoué
+  repart de la liste propre.
+- Retirer un favori ne « oublie » pas le flux : s'il avait marché, il reste proposé après les
+  favoris.
+- Table `profile_streams`, supprimée avec le profil (donc avec le compte), dans l'export.
+
+## Flux morts (cache partagé, 24 h)
+
+Quand la lecture échoue, l'appli le signale ; le flux est retiré de la liste des sources pour
+**tout le monde** pendant 24 h, sans attendre que chaque spectateur retombe dessus.
+
+| Méthode | Route | Rôle |
+|---|---|---|
+| POST | `/catalog/streams/dead` `{source, stream_id}` | signale un flux mort |
+
+- Cache `dead_streams` (`App\Services\Playback\DeadStreams`), 24 h, partagé entre tous les comptes.
+- `GET /catalog/{type}/{id}/sources` (et l'équivalent série) filtre les flux signalés morts.
+- Table `dead_streams` (une ligne par flux, la date du dernier signalement) ; pas dans l'export,
+  ce n'est pas une donnée personnelle.
+
 ## Moments à passer : TheIntroDB
 
 `GET /catalog/movie/{id}/segments` et `GET /catalog/tv/{id}/season/{s}/episode/{e}/segments`

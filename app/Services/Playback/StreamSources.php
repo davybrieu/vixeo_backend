@@ -91,7 +91,7 @@ class StreamSources
     /** Racines des miroirs Rpmvid qui tournent souvent. */
     private const SUPPORTED_HOST_PATTERNS = ['flemmix.', '.upns.', '.rpmlive.', '.rpmstream.', '.p2pstream.', '.ezplayer.'];
 
-    public function __construct(private TmdbClient $tmdb) {}
+    public function __construct(private TmdbClient $tmdb, private DeadStreams $dead) {}
 
     /**
      * Providers the sources panel offers, in display order.
@@ -234,10 +234,14 @@ class StreamSources
 
         // Only hand the app links we can actually resolve into a stream: a link
         // with no extractor would leave the player with nothing to play.
-        return array_values(array_filter(
+        $sources = array_values(array_filter(
             $sources,
             fn (array $source) => $this->hasExtractor((string) ($source['url'] ?? '')),
         ));
+
+        // Streams the players reported as dead (24 h) are dropped up front, so nobody
+        // else has to wait for the same failure. See docs/lecture.md.
+        return $this->dead->filter($sources);
     }
 
     private function scraperBase(): string

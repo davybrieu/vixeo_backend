@@ -1,7 +1,7 @@
 {
     "openapi": "3.1.2",
     "info": {
-        "title": "Laravel",
+        "title": "Vixeo",
         "version": "1.0.0",
         "description": "API de Vixeo : comptes, profils, synchronisation et configuration distante."
     },
@@ -2837,6 +2837,211 @@
                 }
             }
         },
+        "/v1/profiles/{profile}/streams": {
+            "get": {
+                "operationId": "v1.profiles.streams.index",
+                "description": "Favorites first, then the most recently working. The player tries them in this order before\nthe plain source list.",
+                "summary": "Preferences of a content",
+                "tags": [
+                    "Lecture",
+                    "StreamPreference"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "required": true,
+                        "description": "Source of the content, same as the profile item (\"tmdb\", \"fast:pluto\"\u2026).",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9._:\\-]+$",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "item_id",
+                        "in": "query",
+                        "required": true,
+                        "description": "Id of the content inside the source (\"movie:550\", \"episode:1399:1:3\"\u2026).",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 191
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StreamPreferenceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StreamPreferenceResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/streams/favorite": {
+            "post": {
+                "operationId": "v1.profiles.streams.favorite",
+                "summary": "Add or remove a stream favorite (\u2764)",
+                "tags": [
+                    "Lecture",
+                    "StreamPreference"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteStreamRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StreamPreferenceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StreamPreferenceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/streams/worked": {
+            "post": {
+                "operationId": "v1.profiles.streams.worked",
+                "description": "Remembered per profile so the player tries it first next time. Also clears the stream from\nthe dead cache, since it clearly works again.",
+                "summary": "Report that a stream worked",
+                "tags": [
+                    "Lecture",
+                    "StreamPreference"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkedStreamRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StreamPreferenceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StreamPreferenceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/movie/{id}/segments": {
             "get": {
                 "operationId": "v1.catalog.movie.segments",
@@ -3113,6 +3318,54 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/streams/dead": {
+            "post": {
+                "operationId": "v1.catalog.streams.dead",
+                "description": "No content and no profile: a dead link is dead for everyone. Kept 24 h.",
+                "summary": "Report a stream as dead",
+                "tags": [
+                    "Lecture",
+                    "DeadStream"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeadStreamRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Le flux a \u00e9t\u00e9 signal\u00e9 comme mort."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -3688,16 +3941,21 @@
                     {
                         "name": "extract",
                         "in": "query",
+                        "description": "Resolve each link into a playable stream (slower, hits the scraper).",
                         "schema": {
-                            "type": "boolean",
-                            "default": false
+                            "type": "boolean"
                         }
                     },
                     {
                         "name": "provider",
                         "in": "query",
+                        "description": "Keep only the links of that provider.",
                         "schema": {
-                            "type": "string"
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
                         }
                     }
                 ],
@@ -3725,6 +3983,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -3763,16 +4024,21 @@
                     {
                         "name": "extract",
                         "in": "query",
+                        "description": "Resolve each link into a playable stream (slower, hits the scraper).",
                         "schema": {
-                            "type": "boolean",
-                            "default": false
+                            "type": "boolean"
                         }
                     },
                     {
                         "name": "provider",
                         "in": "query",
+                        "description": "Keep only the links of that provider.",
                         "schema": {
-                            "type": "string"
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
                         }
                     }
                 ],
@@ -3800,6 +4066,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4553,6 +4822,153 @@
                 }
             }
         },
+        "/v1/tv/vavoo/categories": {
+            "get": {
+                "operationId": "v1.tv.vavoo.categories",
+                "description": "The French categories the channels are sorted into (Sport, Cin\u00e9ma, Info\u2026).",
+                "summary": "Channel categories",
+                "tags": [
+                    "TV en direct",
+                    "Vavoo"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `VavooCategoryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VavooCategoryResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/vavoo/channels": {
+            "get": {
+                "operationId": "v1.tv.vavoo.channels",
+                "description": "Optionally filtered by category_id, and by a name search with q.",
+                "summary": "Channels",
+                "tags": [
+                    "TV en direct",
+                    "Vavoo"
+                ],
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Category returned by GET /tv/vavoo/categories.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Filter by channel name.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `VavooChannelResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VavooChannelResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/vavoo/channels/{id}/stream": {
+            "get": {
+                "operationId": "v1.tv.vavoo.channels.stream",
+                "description": "The signature and the channel URL stay server-side; the app gets the HLS URL and the\nheaders to send.",
+                "summary": "Resolve a playable stream for a channel",
+                "tags": [
+                    "TV en direct",
+                    "Vavoo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`VavooStreamResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VavooStreamResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/tv/categories": {
             "get": {
                 "operationId": "v1.tv.categories",
@@ -4610,7 +5026,7 @@
         "/v1/tv/channels": {
             "get": {
                 "operationId": "v1.tv.channels",
-                "summary": "Live channels, optionally filtered by category_id",
+                "summary": "Live channels, optionally filtered by category_id and by a name search with q",
                 "tags": [
                     "Tv"
                 ],
@@ -4618,15 +5034,25 @@
                     {
                         "name": "category_id",
                         "in": "query",
+                        "description": "Category returned by GET /tv/categories.",
                         "schema": {
-                            "type": "string"
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
                         }
                     },
                     {
                         "name": "q",
                         "in": "query",
+                        "description": "Filter by channel name.",
                         "schema": {
-                            "type": "string"
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
                         }
                     }
                 ],
@@ -4652,6 +5078,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4902,6 +5331,27 @@
                 ],
                 "title": "CrewResource"
             },
+            "DeadStreamRequest": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Provider of the stream (\"frenchstream\", \"wiflix\", \"vavoo\"\u2026).",
+                        "pattern": "^[A-Za-z0-9._:\\-]+$",
+                        "maxLength": 100
+                    },
+                    "stream_id": {
+                        "type": "string",
+                        "description": "Stream the app knows it by (usually the player page URL from the sources list).",
+                        "maxLength": 191
+                    }
+                },
+                "required": [
+                    "source",
+                    "stream_id"
+                ],
+                "title": "DeadStreamRequest"
+            },
             "DeleteAccountRequest": {
                 "type": "object",
                 "properties": {
@@ -5078,6 +5528,36 @@
                     "still_url"
                 ],
                 "title": "EpisodeResource"
+            },
+            "FavoriteStreamRequest": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9._:\\-]+$",
+                        "maxLength": 100
+                    },
+                    "item_id": {
+                        "type": "string",
+                        "maxLength": 191
+                    },
+                    "stream_id": {
+                        "type": "string",
+                        "description": "Stream chosen by the app inside the content (\"vavoo:<channelId>\", a player URL\u2026).",
+                        "maxLength": 191
+                    },
+                    "favorite": {
+                        "type": "boolean",
+                        "description": "true = add to favorites (tried first), false = remove."
+                    }
+                },
+                "required": [
+                    "source",
+                    "item_id",
+                    "stream_id",
+                    "favorite"
+                ],
+                "title": "FavoriteStreamRequest"
             },
             "ForgotPasswordRequest": {
                 "type": "object",
@@ -6399,11 +6879,17 @@
                         "description": "Playable stream URL (HLS `.m3u8` or progressive `.mp4`)."
                     },
                     "stream_type": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "description": "\"m3u8\" or \"mp4\"."
                     },
                     "extractor": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "description": "Extractor that resolved the link (\"voe\", \"streamtape\"\u2026), null for the generic one."
                     },
                     "headers": {
@@ -6966,6 +7452,86 @@
                 ],
                 "title": "SkipSegmentsResource"
             },
+            "StreamPreferenceResource": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Source of the content (\"tmdb\", \"fast:pluto\"\u2026), same as the profile item."
+                    },
+                    "item_id": {
+                        "type": "string",
+                        "description": "Id of the content inside that source (\"movie:550\"\u2026)."
+                    },
+                    "stream_id": {
+                        "type": "string",
+                        "description": "Stream chosen by the app inside the content (\"vavoo:<channelId>\", a player URL\u2026)."
+                    },
+                    "stream_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Resolved URL to replay it, null until it has worked once."
+                    },
+                    "stream_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "extractor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "quality": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_favorite": {
+                        "type": "boolean"
+                    },
+                    "favorited_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "last_worked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "Last time this stream played successfully (null = never)."
+                    }
+                },
+                "required": [
+                    "source",
+                    "item_id",
+                    "stream_id",
+                    "stream_url",
+                    "stream_type",
+                    "extractor",
+                    "quality",
+                    "language",
+                    "is_favorite",
+                    "favorited_at",
+                    "last_worked_at"
+                ],
+                "title": "StreamPreferenceResource"
+            },
             "StreamSourceResource": {
                 "type": "object",
                 "properties": {
@@ -7284,6 +7850,75 @@
                 ],
                 "title": "UserResource"
             },
+            "VavooCategoryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "title": "VavooCategoryResource"
+            },
+            "VavooChannelResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "category_id": {
+                        "type": "string"
+                    },
+                    "logo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "category_id",
+                    "logo"
+                ],
+                "title": "VavooChannelResource"
+            },
+            "VavooStreamResource": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "Playable stream URL (HLS `.m3u8`)."
+                    },
+                    "format": {
+                        "type": "string",
+                        "description": "\"hls\"."
+                    },
+                    "headers": {
+                        "type": "object",
+                        "description": "HTTP headers the player must send when fetching the stream (User-Agent\u2026).",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "url",
+                    "format",
+                    "headers"
+                ],
+                "title": "VavooStreamResource"
+            },
             "VerifyParentalPinRequest": {
                 "type": "object",
                 "properties": {
@@ -7344,6 +7979,68 @@
                     "language"
                 ],
                 "title": "VideoResource"
+            },
+            "WorkedStreamRequest": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9._:\\-]+$",
+                        "maxLength": 100
+                    },
+                    "item_id": {
+                        "type": "string",
+                        "maxLength": 191
+                    },
+                    "stream_id": {
+                        "type": "string",
+                        "maxLength": 191
+                    },
+                    "stream_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uri",
+                        "description": "Resolved URL, so the player can replay it without resolving again.",
+                        "maxLength": 2048
+                    },
+                    "stream_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\"m3u8\" or \"mp4\".",
+                        "maxLength": 20
+                    },
+                    "extractor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
+                    },
+                    "quality": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
+                    },
+                    "language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 10
+                    }
+                },
+                "required": [
+                    "source",
+                    "item_id",
+                    "stream_id"
+                ],
+                "title": "WorkedStreamRequest"
             }
         },
         "responses": {

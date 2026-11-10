@@ -104,6 +104,36 @@ return [
     ],
 
     /*
+    | Vavoo live TV (docs/lecture.md). Vavoo's MediaHubMX API is signed with an "addonSig"
+    | obtained from a ping endpoint; mirrors and signature stay on the server, apps only get
+    | the resolved HLS URL and the User-Agent to send. Mirrors and versions are ONYX's.
+    */
+    'vavoo' => [
+        'base_urls' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'VAVOO_BASE_URLS',
+            'https://vavoo.net,https://vavoo.to,https://kool.ws,https://vavoo.top'
+        ))))),
+        'ping_urls' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'VAVOO_PING_URLS',
+            'https://www.vypn.net/api/app/ping,https://www.lokke.app/api/app/ping,https://www.vavoo.tv/api/app/ping'
+        ))))),
+        'user_agent' => env('VAVOO_USER_AGENT', 'MediaHubMX/2'),
+        'catalog_client_version' => env('VAVOO_CATALOG_CLIENT_VERSION', '3.1.0'),
+        'resolve_client_version' => env('VAVOO_RESOLVE_CLIENT_VERSION', '3.0.2'),
+        // Country the catalog is filtered on ("France", "Canada"…), or "all" for every country.
+        'country' => env('VAVOO_COUNTRY', 'France'),
+        // Stream URLs kept per channel when resolving (ONYX keeps 3).
+        'max_streams' => (int) env('VAVOO_MAX_STREAMS', 3),
+        'timeout' => (int) env('VAVOO_TIMEOUT', 20),
+        'ttl' => [
+            // ONYX refreshes the signature every 5 min.
+            'signature' => (int) env('VAVOO_TTL_SIGNATURE', 300),
+            // ONYX caches the channel registry 30 min.
+            'catalog' => (int) env('VAVOO_TTL_CATALOG', 1800),
+        ],
+    ],
+
+    /*
     | Personal legal Xtream Codes panel (live TV). Credentials stay on the server only.
     | XTREAM_BASE_URL example: http://panel.example.com:8080
     */

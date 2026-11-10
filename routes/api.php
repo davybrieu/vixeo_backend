@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
+use App\Http\Controllers\Api\V1\DeadStreamController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
@@ -16,9 +17,11 @@ use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\StreamController;
+use App\Http\Controllers\Api\V1\StreamPreferenceController;
 use App\Http\Controllers\Api\V1\TmdbAccountController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
+use App\Http\Controllers\Api\V1\VavooController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
 
@@ -82,6 +85,11 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('favorites', [ProfileLibraryController::class, 'favorites'])->name('favorites');
             Route::get('history', [ProfileLibraryController::class, 'history'])->name('history');
 
+            // Stream preferences of a content: favorites (❤) and the last stream that worked.
+            Route::get('streams', [StreamPreferenceController::class, 'index'])->name('streams.index');
+            Route::post('streams/favorite', [StreamPreferenceController::class, 'favorite'])->name('streams.favorite');
+            Route::post('streams/worked', [StreamPreferenceController::class, 'worked'])->name('streams.worked');
+
             // Recent searches, the same on all the profile's devices (docs/lecture.md).
             Route::get('searches', [ProfileSearchController::class, 'index'])->name('searches.index');
             Route::post('searches', [ProfileSearchController::class, 'store'])->name('searches.store');
@@ -118,6 +126,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('channels/{id}/stream', [TvController::class, 'stream'])
                 ->where('id', '[0-9]+')
                 ->name('channels.stream');
+
+            // Vavoo live TV (signature and channel URLs stay server-side, docs/tv-vavoo.md).
+            Route::prefix('vavoo')->name('vavoo.')->group(function () {
+                Route::get('categories', [VavooController::class, 'categories'])->name('categories');
+                Route::get('channels', [VavooController::class, 'channels'])->name('channels');
+                Route::get('channels/{id}/stream', [VavooController::class, 'stream'])->name('channels.stream');
+            });
         });
 
         // Catalog (TMDb metadata, cached).
@@ -157,6 +172,9 @@ Route::prefix('v1')->name('v1.')->group(function () {
             // Resolve a chosen player link into a playable stream (docs/lecture.md).
             Route::post('resolve', [StreamController::class, 'resolve'])
                 ->middleware('throttle:resolve')->name('resolve');
+
+            // Report a stream as dead, so the sources panel drops it for everyone (24 h).
+            Route::post('streams/dead', [DeadStreamController::class, 'store'])->name('streams.dead');
         });
     });
 });
