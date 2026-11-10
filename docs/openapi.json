@@ -4968,7 +4968,7 @@
         "/v1/tv/channels/{id}/stream": {
             "get": {
                 "operationId": "v1.tv.channels.stream",
-                "description": "The provider internals stay server-side. The app receives one or more playlist URLs on our\nown origin (so they work over HTTPS even when the provider only serves plain HTTP) and no\nheaders: the player loads the media itself, through the token in the URL. `sources` lists\nthe candidates in order; when one is down the app plays the next. `url` is the first one.",
+                "description": "The provider internals stay server-side. The app receives a playlist URL on our own origin\n(so it works over HTTPS even when the provider only serves plain HTTP) and no headers: the\nplayer loads the media itself, through the token in the URL.",
                 "summary": "Resolve a playable stream for a channel",
                 "tags": [
                     "TV en direct",
@@ -4998,10 +4998,6 @@
                                                 "url": {
                                                     "type": "string"
                                                 },
-                                                "sources": {
-                                                    "type": "array",
-                                                    "items": {}
-                                                },
                                                 "format": {
                                                     "type": "string"
                                                 },
@@ -5016,7 +5012,6 @@
                                             },
                                             "required": [
                                                 "url",
-                                                "sources",
                                                 "format",
                                                 "headers"
                                             ]

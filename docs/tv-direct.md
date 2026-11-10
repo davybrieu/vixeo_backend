@@ -20,11 +20,8 @@ des chaînes et une URL HLS jouable.
 - `category_id` vient de `/categories` ; `q` filtre sur le nom (insensible à la casse).
 - Un identifiant de chaîne est une chaîne libre : il peut être numérique (`1399`) ou texte (`tf1`)
   selon le fournisseur.
-- La réponse de `/stream` contient `url`, `sources` (même URL en tête), `format` (`hls`) et
-  `headers` (toujours vide). `url` et chaque entrée de `sources` pointent **sur notre propre
-  domaine** (`/tv/stream/{token}`), jamais sur celui du fournisseur. `sources` liste, dans l'ordre,
-  toutes les URL jouables résolues pour la chaîne (un fournisseur à miroirs en renvoie une par
-  miroir) : quand l'une ne démarre pas, l'appli joue la suivante. `url` reste la première.
+- La réponse de `/stream` contient `url`, `format` (`hls`) et `headers` (toujours vide). `url`
+  pointe **sur notre propre domaine** (`/tv/stream/{token}`), jamais sur celui du fournisseur.
 - La route `/tv/stream/{token}` sert le média lui-même : le lecteur l'appelle **sans jeton
   d'authentification** (un élément `<video>` et ExoPlayer n'en envoient pas). C'est le **jeton
   signé et opaque** présent dans l'URL qui l'autorise, et il expire.
