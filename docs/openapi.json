@@ -5095,12 +5095,6 @@
                                                         "integer",
                                                         "null"
                                                     ]
-                                                },
-                                                "epg_channel_id": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -5108,8 +5102,7 @@
                                                 "name",
                                                 "category_id",
                                                 "logo",
-                                                "number",
-                                                "epg_channel_id"
+                                                "number"
                                             ]
                                         }
                                     },

@@ -73,10 +73,6 @@ timeouts, TTL de cache, versions de client) sont documentées dans `.env.example
 la configuration, pas dans le code, pour pouvoir être mises à jour sans republier l'appli. Le proxy
 lui-même se règle avec `TV_PROXY_TTL` (durée de vie d'un jeton média) et `TV_PROXY_TIMEOUT`.
 
-Pas de guide des programmes (EPG) : supprimé à la demande du développeur (plus de
-`/tv/channels/{id}/epg` ni de `TV_EPG_URL`). Une chaîne sans logo chez le fournisseur a
-`logo: null`.
-
 ## À vérifier avant la mise en ligne
 
 Comme pour toute source de TV en direct, l'usage du fournisseur doit être vérifié au regard du

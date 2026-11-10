@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 
 /**
- * The channel page of the app (`/tv/channels/{id}`). There is no programme guide (EPG) any more:
- * removed at the developer's request.
+ * The channel page of the app (`/tv/channels/{id}`).
  */
 beforeEach(function () {
     config([
@@ -43,8 +42,4 @@ it('gives a channel with the provider logo, or none', function () {
 
 it('answers 404 for an unknown channel', function () {
     $this->getJson('/api/v1/tv/channels/nope')->assertNotFound()->assertJsonPath('message', 'Chaîne introuvable.');
-});
-
-it('has no programme guide any more', function () {
-    $this->getJson('/api/v1/tv/channels/tf1/epg')->assertNotFound();
 });

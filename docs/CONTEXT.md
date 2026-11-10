@@ -791,4 +791,3 @@ Lorsqu'une nouvelle session Claude Code démarre :
 13. Ne jamais implémenter de logique spécifique aux fournisseurs ou aux mécanismes d'extraction dans Flutter.
 14. Toute récupération de contenus doit passer par l'API Vixeo.
 15. Ne pas ajouter de lecture depuis les serveurs de l'utilisateur (Jellyfin, Plex, Emby) : la lecture passe uniquement par les serveurs de Vixeo, sans configuration (§3.4).
-16. Pas de guide des programmes (EPG) pour la TV en direct : supprimé à la demande du développeur, ne pas le réintroduire.

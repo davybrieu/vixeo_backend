@@ -50,7 +50,7 @@ class LiveTv
     }
 
     /**
-     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null, epg_channel_id: string|null}>
+     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null}>
      */
     public function channels(): array
     {
@@ -60,7 +60,7 @@ class LiveTv
     /**
      * One channel by id (its page in the app).
      *
-     * @return array{id: string, name: string, category_id: string, logo: string|null, number: int|null, epg_channel_id: string|null}
+     * @return array{id: string, name: string, category_id: string, logo: string|null, number: int|null}
      */
     public function channel(string $channelId): array
     {
@@ -74,7 +74,7 @@ class LiveTv
     }
 
     /**
-     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null, epg_channel_id: string|null}>
+     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null}>
      */
     private function providerChannels(): array
     {
@@ -90,7 +90,6 @@ class LiveTv
                     'category_id' => (string) $c['category_id'],
                     'logo' => $c['logo'] === null ? null : (string) $c['logo'],
                     'number' => null,
-                    'epg_channel_id' => null,
                 ],
                 $this->vavoo->channels()
             );

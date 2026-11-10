@@ -48,7 +48,7 @@ class XtreamClient
     }
 
     /**
-     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null, epg_channel_id: string|null}>
+     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null}>
      */
     public function liveChannels(?string $categoryId = null): array
     {
@@ -69,7 +69,6 @@ class XtreamClient
                     'category_id' => (string) ($row['category_id'] ?? ''),
                     'logo' => filled($row['stream_icon'] ?? null) ? (string) $row['stream_icon'] : null,
                     'number' => isset($row['num']) ? (int) $row['num'] : null,
-                    'epg_channel_id' => filled($row['epg_channel_id'] ?? null) ? (string) $row['epg_channel_id'] : null,
                 ])
                 ->filter(fn ($row) => $row['id'] !== '' && $row['name'] !== '')
                 ->values()
