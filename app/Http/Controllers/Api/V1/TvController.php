@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\TvChannelsRequest;
 use App\Services\Tv\LiveTv;
+use App\Services\Tv\StreamProxy;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
@@ -21,7 +23,7 @@ use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
  */
 class TvController extends Controller
 {
-    public function __construct(private LiveTv $live) {}
+    public function __construct(private LiveTv $live, private StreamProxy $proxy) {}
 
     /**
      * Channel categories.
@@ -76,7 +78,9 @@ class TvController extends Controller
     /**
      * Resolve a playable stream for a channel.
      *
-     * The provider internals stay server-side; the app gets the HLS URL and the headers to send.
+     * The provider internals stay server-side. The app receives a playlist URL on our own origin
+     * (so it works over HTTPS even when the provider only serves plain HTTP) and no headers: the
+     * player loads the media itself, through the token in the URL.
      */
     public function stream(string $id): JsonResponse
     {
@@ -86,7 +90,34 @@ class TvController extends Controller
             $this->rethrow($e);
         }
 
-        return response()->json(['data' => $stream]);
+        return response()->json(['data' => [
+            'url' => $this->proxy->playUrl($stream['url'], $stream['headers'], $stream['format']),
+            'format' => $stream['format'],
+            'headers' => [],
+        ]]);
+    }
+
+    /**
+     * Media of a channel, proxied (HLS playlist and its segments).
+     *
+     * The player loads this URL without a bearer token: the signed, opaque token in the path is
+     * what authorises it. An HLS playlist is rewritten so its URIs point back to this server.
+     */
+    public function media(string $token): Response
+    {
+        try {
+            $media = $this->proxy->media($token);
+        } catch (RuntimeException $e) {
+            $this->rethrow($e);
+        }
+
+        $isPlaylist = str_contains($media['content_type'], 'mpegurl');
+
+        return response($media['body'], 200, [
+            'Content-Type' => $media['content_type'],
+            // A live playlist changes every few seconds: never cache it. Segments are immutable.
+            'Cache-Control' => $isPlaylist ? 'no-store' : 'private, max-age=30',
+        ]);
     }
 
     private function rethrow(RuntimeException $e): never

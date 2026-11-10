@@ -73,14 +73,19 @@ it('serves the panel channels with the common shape and filters them', function 
         ->assertJsonPath('data.*.name', ['France 2']);
 });
 
-it('resolves a panel channel into a playable stream', function () {
+it('resolves a panel channel into a playable stream proxied through our own origin', function () {
     Sanctum::actingAs($this->user);
     fakePanel();
 
-    $this->getJson('/api/v1/tv/channels/1399/stream')
+    // The panel URL carries the credentials: it must never reach the app.
+    $response = $this->getJson('/api/v1/tv/channels/1399/stream')
         ->assertOk()
-        ->assertJsonPath('data.url', 'https://panel.test/live/user/pass/1399.m3u8')
-        ->assertJsonPath('data.format', 'hls');
+        ->assertJsonPath('data.format', 'hls')
+        ->assertJsonPath('data.headers', []);
+
+    $url = $response->json('data.url');
+    expect($url)->toStartWith(config('app.url').'/api/v1/tv/stream/')
+        ->and($url)->not->toContain('panel.test');
 });
 
 it('answers 404 for an unknown panel channel', function () {
