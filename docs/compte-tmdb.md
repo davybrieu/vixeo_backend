@@ -47,7 +47,7 @@ d'autorisation de TMDb :
 
 | Méthode | Route (`/api/v1/profiles/{profile}/tmdb/…`) | Rôle |
 | --- | --- | --- |
-| GET | `ratings?type=movie\|tv\|episode&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, le plus récent d'abord, avec les commentaires (`per_page` jusqu'à 500) |
+| GET | `ratings?type=movie\|tv\|episode&sort=recent\|oldest\|highest\|lowest&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, avec les commentaires (`per_page` jusqu'à 500). Tri `sort` : `recent` (par défaut, notés le plus récemment d'abord), `oldest` (les plus anciens d'abord), `highest` (mieux notés d'abord), `lowest` (moins bien notés d'abord) ; à note égale, le plus récent d'abord. Le tri est fait avant la pagination |
 | GET | `ratings/{movie\|tv}/{id}` | note et commentaire du profil pour un film / une série (`value` : `null` si aucune) |
 | GET | `ratings/tv/{id}/season/{season}` | notes et commentaires des épisodes d'une saison (seulement ceux notés) |
 | PUT | `ratings/{movie\|tv}/{id}` | noter ou modifier (`value` : 0,5 à 10, multiple de 0,5 ; `comment` facultatif, 2000 caractères) |

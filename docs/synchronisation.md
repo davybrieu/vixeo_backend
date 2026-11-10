@@ -1,6 +1,6 @@
 # Synchronisation par profil
 
-« Ma liste », « Favoris », progression de lecture (« Continuer à regarder », reprise) et contenus vus sont
+« Ma liste », progression de lecture (« Continuer à regarder », reprise) et contenus vus sont
 synchronisés **par profil** entre tous les appareils du compte. L'appli garde une copie
 locale (drift) et fonctionne hors ligne ; l'API sert de point de rendez-vous.
 
@@ -27,18 +27,17 @@ Chaque item porte un **instantané d'affichage** (`title`, `year`, `poster_url`,
 dans les URL d'images** (`api_key`, `token`… sont refusés) : pour Jellyfin/Plex, utiliser des
 URL d'images publiques ou laisser `poster_url` vide et la reconstruire localement.
 
-Et quatre **groupes d'état**, chacun avec la date du dernier changement :
+Et trois **groupes d'état**, chacun avec la date du dernier changement :
 
 | Groupe | Champs | Date du changement |
 | - | - | - |
 | Ma liste (« favori » historique) | `is_favorite`, `favorited_at` | `favorite_changed_at` |
-| Favoris (❤) | `is_liked`, `liked_at` | `liked_changed_at` |
 | Progression | `position_ms`, `duration_ms`, `last_engaged_at` | `progress_changed_at` |
 | Vu | `is_watched`, `watched_at` | `watched_changed_at` |
 
-- « Ma liste » (à regarder plus tard) et « Favoris » (ce que le profil aime : films, séries,
-  épisodes, chaînes) sont **indépendants** : un même contenu peut être dans les deux. Le nom
-  `favorite` du premier reste pour ne pas casser la v1.
+- « Ma liste » (à regarder plus tard) porte le nom historique `favorite` dans l'API. Les
+  « Favoris » ❤ (`liked`, `is_liked`…) ont été supprimés : un envoi qui ne contient que `liked`
+  est refusé (422).
 - « Continuer à regarder » = `last_engaged_at` non nul et `is_watched` faux, du plus récent
   au plus ancien.
 - `progress` (0 à 1) est calculé par l'API pour la barre de progression.
@@ -100,7 +99,6 @@ Actions de l'appui long :
 | Action | Changement |
 | - | - |
 | Ajouter à / retirer de « Ma liste » | `favorite: { value: true/false, at }` |
-| Ajouter aux / retirer des « Favoris » | `liked: { value: true/false, at }` |
 | Marquer vu / non vu | `watched: { value: true/false, at }` |
 | Vu jusqu'ici (épisodes) | un changement `watched` par épisode précédent, dans le même envoi |
 | Retirer de « Continuer à regarder » | `progress: { position_ms: <inchangée>, continue_watching: false, at }` |

@@ -10,11 +10,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Per-profile sync of "Ma liste" (favorite), "Favoris" (liked), playback progress and watched state.
+ * Per-profile sync of "Ma liste" (favorite), playback progress and watched state.
  *
  * - Every write gives the item a new revision (per-profile counter). Clients pull
  *   "everything after revision N" and keep the last revision as their cursor.
- * - Conflicts are resolved per group (favorite / liked / progress / watched) with the
+ * - Conflicts are resolved per group (favorite / progress / watched) with the
  *   client-side timestamp of the change: the most recent change wins, so a favorite
  *   set on the TV and a progress saved on the phone never overwrite each other.
  */
@@ -117,18 +117,6 @@ class ProfileSync
                 $item->favorited_at = $favorite ? ($item->is_favorite ? ($item->favorited_at ?? $at) : $at) : null;
                 $item->is_favorite = $favorite;
                 $item->favorite_changed_at = $at;
-            }
-        }
-
-        if (isset($change['liked'])) {
-            $at = $this->time($change['liked']['at']);
-
-            if ($this->isNewer($at, $item->liked_changed_at)) {
-                $liked = (bool) $change['liked']['value'];
-                // Liking again keeps the original date (most recent first in "Favoris").
-                $item->liked_at = $liked ? ($item->is_liked ? ($item->liked_at ?? $at) : $at) : null;
-                $item->is_liked = $liked;
-                $item->liked_changed_at = $at;
             }
         }
 

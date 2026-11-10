@@ -144,7 +144,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (« Ma liste » =
-  `favorite`, « Favoris » ❤ = `liked`, progression, vu), le plus récent gagne ; chaque écriture prend `++profiles.sync_revision` sous verrou.
+  `favorite`, progression, vu ; plus de « Favoris » ❤ `liked`, supprimés), le plus récent gagne ; chaque écriture prend `++profiles.sync_revision` sous verrou.
 - **Connexion TV par QR code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; la page de validation
   est `<WEB_URL>/tv` (appli web).

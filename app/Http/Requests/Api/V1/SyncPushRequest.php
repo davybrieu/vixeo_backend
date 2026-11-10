@@ -36,16 +36,11 @@ class SyncPushRequest extends FormRequest
             'changes.*.season_number' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
             'changes.*.episode_number' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
 
-            /** "Ma liste": added or removed. At least one of favorite, liked, progress, watched is required. */
-            'changes.*.favorite' => ['required_without_all:changes.*.liked,changes.*.progress,changes.*.watched', 'array:value,at'],
+            /** "Ma liste": added or removed. At least one of favorite, progress, watched is required. */
+            'changes.*.favorite' => ['required_without_all:changes.*.progress,changes.*.watched', 'array:value,at'],
             'changes.*.favorite.value' => ['required_with:changes.*.favorite', 'boolean'],
             /** When the change happened on the device (ISO 8601). */
             'changes.*.favorite.at' => ['required_with:changes.*.favorite', 'date'],
-
-            /** "Favoris" (❤): added or removed (movies, TV shows, episodes, live channels). */
-            'changes.*.liked' => ['sometimes', 'array:value,at'],
-            'changes.*.liked.value' => ['required_with:changes.*.liked', 'boolean'],
-            'changes.*.liked.at' => ['required_with:changes.*.liked', 'date'],
 
             /** Playback progress. */
             'changes.*.progress' => ['sometimes', 'array:position_ms,duration_ms,continue_watching,at'],

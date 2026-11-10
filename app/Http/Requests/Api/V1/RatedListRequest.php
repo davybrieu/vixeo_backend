@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Enums\RatedSort;
 use App\Enums\RatedType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,8 @@ class RatedListRequest extends FormRequest
         return [
             /** Movies, TV shows or episodes; every type when left out. */
             'type' => ['sometimes', Rule::enum(RatedType::class)],
+            /** recent (default), oldest, highest (best rated first) or lowest (worst rated first). */
+            'sort' => ['sometimes', Rule::enum(RatedSort::class)],
             /** Page number. */
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000'],
             /** Ratings per page (1 to 500, 20 by default). */
@@ -25,6 +28,13 @@ class RatedListRequest extends FormRequest
         $type = $this->validated('type');
 
         return is_string($type) ? RatedType::from($type) : null;
+    }
+
+    public function sort(): RatedSort
+    {
+        $sort = $this->validated('sort');
+
+        return is_string($sort) ? RatedSort::from($sort) : RatedSort::Recent;
     }
 
     public function page(): int
