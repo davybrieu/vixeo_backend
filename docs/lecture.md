@@ -52,7 +52,7 @@ Ces choix sont par profil et suivis sur tous ses appareils.
 | POST | `/profiles/{id}/streams/worked` `{source, item_id, stream_id, …}` | le flux vient de marcher |
 
 - `source` + `item_id` identifient le contenu, comme pour les recherches et l'historique
-  (`"tmdb"` + `"movie:550"`, `"vavoo"` + identifiant de chaîne…). `stream_id` identifie le flux
+  (`"tmdb"` + `"movie:550"`, `"fast:pluto"` + identifiant de chaîne…). `stream_id` identifie le flux
   (l'URL du lecteur, ou l'identifiant de chaîne en TV).
 - Marquer un flux comme « qui marche » le **ranime** aussi : un flux signalé mort puis rejoué
   repart de la liste propre.

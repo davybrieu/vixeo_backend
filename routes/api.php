@@ -21,7 +21,6 @@ use App\Http\Controllers\Api\V1\StreamPreferenceController;
 use App\Http\Controllers\Api\V1\TmdbAccountController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
-use App\Http\Controllers\Api\V1\VavooController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
 
@@ -119,20 +118,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.unrate');
         });
 
-        // Live TV (personal legal Xtream panel — credentials stay on the server).
+        // Live TV, provider-neutral: the app calls /tv/… and never knows the provider
+        // (Vavoo, a personal Xtream panel…). Credentials, mirrors and signatures stay server-side.
         Route::prefix('tv')->name('tv.')->middleware('throttle:catalog')->group(function () {
             Route::get('categories', [TvController::class, 'categories'])->name('categories');
             Route::get('channels', [TvController::class, 'channels'])->name('channels');
-            Route::get('channels/{id}/stream', [TvController::class, 'stream'])
-                ->where('id', '[0-9]+')
-                ->name('channels.stream');
-
-            // Vavoo live TV (signature and channel URLs stay server-side, docs/tv-vavoo.md).
-            Route::prefix('vavoo')->name('vavoo.')->group(function () {
-                Route::get('categories', [VavooController::class, 'categories'])->name('categories');
-                Route::get('channels', [VavooController::class, 'channels'])->name('channels');
-                Route::get('channels/{id}/stream', [VavooController::class, 'stream'])->name('channels.stream');
-            });
+            // Channel ids are strings on some providers (Vavoo "tf1"), digits on Xtream.
+            Route::get('channels/{id}/stream', [TvController::class, 'stream'])->name('channels.stream');
         });
 
         // Catalog (TMDb metadata, cached).

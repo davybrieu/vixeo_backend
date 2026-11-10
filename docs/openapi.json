@@ -4822,158 +4822,13 @@
                 }
             }
         },
-        "/v1/tv/vavoo/categories": {
-            "get": {
-                "operationId": "v1.tv.vavoo.categories",
-                "description": "The French categories the channels are sorted into (Sport, Cin\u00e9ma, Info\u2026).",
-                "summary": "Channel categories",
-                "tags": [
-                    "TV en direct",
-                    "Vavoo"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Array of `VavooCategoryResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/VavooCategoryResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/tv/vavoo/channels": {
-            "get": {
-                "operationId": "v1.tv.vavoo.channels",
-                "description": "Optionally filtered by category_id, and by a name search with q.",
-                "summary": "Channels",
-                "tags": [
-                    "TV en direct",
-                    "Vavoo"
-                ],
-                "parameters": [
-                    {
-                        "name": "category_id",
-                        "in": "query",
-                        "description": "Category returned by GET /tv/vavoo/categories.",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 100
-                        }
-                    },
-                    {
-                        "name": "q",
-                        "in": "query",
-                        "description": "Filter by channel name.",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Array of `VavooChannelResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/VavooChannelResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/v1/tv/vavoo/channels/{id}/stream": {
-            "get": {
-                "operationId": "v1.tv.vavoo.channels.stream",
-                "description": "The signature and the channel URL stay server-side; the app gets the HLS URL and the\nheaders to send.",
-                "summary": "Resolve a playable stream for a channel",
-                "tags": [
-                    "TV en direct",
-                    "Vavoo"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`VavooStreamResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/VavooStreamResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
         "/v1/tv/categories": {
             "get": {
                 "operationId": "v1.tv.categories",
-                "summary": "Live TV categories from the configured Xtream panel",
+                "description": "The categories the channels are sorted into (Sport, Cin\u00e9ma, Info\u2026).",
+                "summary": "Channel categories",
                 "tags": [
+                    "TV en direct",
                     "Tv"
                 ],
                 "responses": {
@@ -4986,28 +4841,7 @@
                                     "properties": {
                                         "data": {
                                             "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "string"
-                                                    },
-                                                    "name": {
-                                                        "type": "string"
-                                                    },
-                                                    "parent_id": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "name",
-                                                    "parent_id"
-                                                ]
-                                            }
+                                            "items": {}
                                         }
                                     },
                                     "required": [
@@ -5026,8 +4860,10 @@
         "/v1/tv/channels": {
             "get": {
                 "operationId": "v1.tv.channels",
-                "summary": "Live channels, optionally filtered by category_id and by a name search with q",
+                "description": "Optionally filtered by category_id, and by a name search with q.",
+                "summary": "Channels",
                 "tags": [
+                    "TV en direct",
                     "Tv"
                 ],
                 "parameters": [
@@ -5088,8 +4924,10 @@
         "/v1/tv/channels/{id}/stream": {
             "get": {
                 "operationId": "v1.tv.channels.stream",
-                "summary": "Resolve a playable stream URL for a live channel (credentials stay server-side in the built URL)",
+                "description": "The provider internals stay server-side; the app gets the HLS URL and the headers to send.",
+                "summary": "Resolve a playable stream for a channel",
                 "tags": [
+                    "TV en direct",
                     "Tv"
                 ],
                 "parameters": [
@@ -5117,19 +4955,13 @@
                                                     "type": "string"
                                                 },
                                                 "format": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "hls",
-                                                        "ts"
-                                                    ]
+                                                    "type": "string"
                                                 },
                                                 "headers": {
-                                                    "type": "array",
-                                                    "items": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
                                                         "type": "string"
-                                                    },
-                                                    "minItems": 0,
-                                                    "maxItems": 0
+                                                    }
                                                 }
                                             },
                                             "required": [
@@ -5336,7 +5168,7 @@
                 "properties": {
                     "source": {
                         "type": "string",
-                        "description": "Provider of the stream (\"frenchstream\", \"wiflix\", \"vavoo\"\u2026).",
+                        "description": "Provider of the stream (\"frenchstream\", \"wiflix\"\u2026).",
                         "pattern": "^[A-Za-z0-9._:\\-]+$",
                         "maxLength": 100
                     },
@@ -5543,7 +5375,7 @@
                     },
                     "stream_id": {
                         "type": "string",
-                        "description": "Stream chosen by the app inside the content (\"vavoo:<channelId>\", a player URL\u2026).",
+                        "description": "Stream chosen by the app inside the content (\"frenchstream:<id>\", a player URL\u2026).",
                         "maxLength": 191
                     },
                     "favorite": {
@@ -7465,7 +7297,7 @@
                     },
                     "stream_id": {
                         "type": "string",
-                        "description": "Stream chosen by the app inside the content (\"vavoo:<channelId>\", a player URL\u2026)."
+                        "description": "Stream chosen by the app inside the content (\"frenchstream:<id>\", a player URL\u2026)."
                     },
                     "stream_url": {
                         "type": [
@@ -7849,75 +7681,6 @@
                     "created_at"
                 ],
                 "title": "UserResource"
-            },
-            "VavooCategoryResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id",
-                    "name"
-                ],
-                "title": "VavooCategoryResource"
-            },
-            "VavooChannelResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "category_id": {
-                        "type": "string"
-                    },
-                    "logo": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    }
-                },
-                "required": [
-                    "id",
-                    "name",
-                    "category_id",
-                    "logo"
-                ],
-                "title": "VavooChannelResource"
-            },
-            "VavooStreamResource": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "Playable stream URL (HLS `.m3u8`)."
-                    },
-                    "format": {
-                        "type": "string",
-                        "description": "\"hls\"."
-                    },
-                    "headers": {
-                        "type": "object",
-                        "description": "HTTP headers the player must send when fetching the stream (User-Agent\u2026).",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "required": [
-                    "url",
-                    "format",
-                    "headers"
-                ],
-                "title": "VavooStreamResource"
             },
             "VerifyParentalPinRequest": {
                 "type": "object",

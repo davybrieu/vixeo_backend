@@ -46,6 +46,7 @@
     "Channel not found.": "Chaîne introuvable.",
     "Unable to reach the live TV server.": "Impossible de joindre le serveur de TV en direct.",
     "Invalid response from the live TV server.": "Réponse invalide du serveur de TV en direct.",
+    "Live TV is temporarily unavailable.": "La TV en direct est momentanément indisponible. Réessayez dans quelques instants.",
     "Vavoo is not configured.": "La TV Vavoo n'est pas configurée sur le serveur.",
     "Vavoo is temporarily unavailable.": "Impossible de joindre le serveur Vavoo. Réessayez dans quelques instants.",
     "Dead stream recorded.": "Le flux a été signalé comme mort.",

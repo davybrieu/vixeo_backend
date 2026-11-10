@@ -151,12 +151,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de
   l'en-tête `X-Profile-Id` (`ResolveProfile`, `AgeGate`) : toute nouvelle route du catalogue qui
   renvoie des titres doit passer par `AgeGate`.
-- **TV en direct** (doc : `docs/tv-vavoo.md`) : deux sources, gardées côté serveur (identifiants,
-  miroirs et signatures ne partent jamais vers les applis, qui ne reçoivent que des chaînes et une
-  URL HLS jouable). Xtream Codes (panneau personnel, `App\Services\Xtream\XtreamClient`) et Vavoo
-  (API « MediaHubMX » signée, `App\Services\Vavoo\VavooClient` : jeton `addonSig` en cache 5 min,
-  catalogue en cache 30 min, plusieurs miroirs essayés à tour de rôle). Routes sous `/tv/…`
-  (`throttle:catalog`). Vavoo est facultatif : sans configuration, 503.
+- **TV en direct** (doc : `docs/tv-direct.md`) : **API neutre** sous `/tv/…` (`throttle:catalog`),
+  l'appli ne sait jamais quel fournisseur sert les chaînes. `App\Services\Tv\LiveTv` choisit le
+  fournisseur configuré, normalise sa réponse dans une forme unique et traduit ses erreurs en
+  messages neutres. Les fournisseurs sont un détail serveur (identifiants, miroirs et signatures
+  ne partent jamais vers les applis, qui ne reçoivent que des chaînes et une URL HLS jouable) ;
+  ajouter ou remplacer un fournisseur ne touche pas l'API publique. La TV est facultative : sans
+  fournisseur configuré, 503.
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
@@ -196,7 +197,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
 - Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb,
   commentaires gardés par Vixeo.
-- Fait aussi : TV en direct (Xtream Codes et Vavoo) et flux favoris / « dernier flux qui a
+- Fait aussi : TV en direct (API neutre, fournisseurs côté serveur) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
 - Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
   configuration distante (chaînes FAST).
