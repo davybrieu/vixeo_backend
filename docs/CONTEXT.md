@@ -62,6 +62,8 @@ Fonctionnalités visées
   - Affichage des chaînes disponibles.
   - Organisation par catégories.
   - Chaînes favorites.
+  - Guide des programmes (EPG) et logos des chaînes, lus par le serveur (fichiers XMLTV de
+    `TV_EPG_URLS`, bibliothèque de logos `tv-logo/tv-logos`).
   - Interface adaptée à la navigation TV.
 - Profils (« Qui regarde ? ») :
   - Favoris indépendants.
@@ -765,6 +767,7 @@ Toute nouvelle intégration externe ou modification des mécanismes de récupér
 
 Étape 4 — Personnalisation
 
+- Guide des programmes (EPG) : fait (`docs/tv-direct.md`).
 - Favoris des chaînes.
 - Dossiers personnalisés.
 - Mode léger affiné.

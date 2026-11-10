@@ -143,6 +143,20 @@ return [
         'proxy_ttl' => (int) env('TV_PROXY_TTL', 21600),
         // Seconds to wait for one upstream playlist / segment request.
         'proxy_timeout' => (int) env('TV_PROXY_TIMEOUT', 20),
+        // Programme guide: XMLTV files (gzip accepted), comma-separated, the preferred first.
+        // Empty = no guide. Downloaded by `php artisan tv:epg` (scheduled every 6 hours).
+        'epg_urls' => array_values(array_filter(array_map('trim', explode(',', (string) env('TV_EPG_URLS', ''))))),
+        // Seconds the guide is kept (longer than the 6 hours between two downloads).
+        'epg_ttl' => (int) env('TV_EPG_TTL', 43200),
+        'epg_timeout' => (int) env('TV_EPG_TIMEOUT', 120),
+        // Logo library: a GitHub repository of TV logos and the folders read, the preferred first.
+        // Empty repository = no library (logos of the guide and the provider only).
+        'logos_repository' => env('TV_LOGOS_REPOSITORY', 'tv-logo/tv-logos'),
+        'logos_directories' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'TV_LOGOS_DIRECTORIES',
+            'countries/france,countries/belgium,countries/switzerland,countries/international'
+        ))))),
+        'logos_ttl' => (int) env('TV_LOGOS_TTL', 86400),
     ],
 
     /*

@@ -15,6 +15,7 @@ des chaînes et une URL HLS jouable.
 | GET | `/tv/categories` | catégories de chaînes |
 | GET | `/tv/channels?category_id=&q=` | chaînes, triées par nom |
 | GET | `/tv/channels/{id}` | une chaîne (page de la chaîne dans l'appli) |
+| GET | `/tv/channels/{id}/epg` | programme de la chaîne (guide), à partir de celui en cours |
 | GET | `/tv/channels/{id}/stream` | résout une chaîne en flux jouable |
 | GET | `/tv/stream/{token}` | média d'un flux (playlist HLS réécrite ou segment), proxifié |
 | GET | `/tv/logo/{hash}` | logo d'une chaîne (image), proxifié : c'est l'URL `logo` des chaînes |
@@ -31,10 +32,58 @@ des chaînes et une URL HLS jouable.
   « La TV en direct n'est pas configurée sur le serveur. » Un fournisseur injoignable répond aussi
   503 « La TV en direct est momentanément indisponible. »
 
+## Guide des programmes (EPG)
+
+Le programme vient de fichiers **XMLTV** (le format standard des guides TV, `.xml` ou `.xml.gz`)
+listés dans `TV_EPG_URLS`, séparés par des virgules, **le préféré d'abord** :
+
+```
+TV_EPG_URLS="https://epg.pw/xmltv/epg_FR.xml.gz,https://i.mjh.nz/Plex/fr.xml.gz,https://i.mjh.nz/PlutoTV/fr.xml.gz,https://i.mjh.nz/SamsungTVPlus/fr.xml.gz"
+```
+
+- `App\Services\Tv\Epg` télécharge chaque fichier dans un fichier temporaire (plusieurs dizaines
+  de Mo : jamais en mémoire), le lit au fil de l'eau et garde en cache les programmes des
+  **48 prochaines heures**, **une entrée de cache par chaîne** (une requête ne lit que la chaîne
+  demandée), plus un index des noms et des icônes.
+- Le téléchargement se fait **hors des requêtes** : `php artisan tv:epg`, planifié toutes les
+  **6 heures** (`routes/console.php`, il faut le planificateur de Forge) ; le guide reste en cache
+  `TV_EPG_TTL` secondes (12 h par défaut). Sans guide en cache (premier lancement), la première
+  demande le télécharge **après avoir répondu** (programme vide en attendant).
+- Une chaîne du fournisseur est rattachée au guide par son identifiant de guide
+  (`epg_channel_id`, donné par un panneau) ou par son **nom** (`App\Services\Tv\ChannelName` :
+  « TF1 HD », « TF1.fr », « FR | TF1 » → `tf1` ; « Canal+ » → `canalplus` ; « BFMTV » → `bfm`).
+  **Le premier fichier qui a des programmes pour la chaîne l'emporte.**
+- Un fichier illisible est ignoré (les autres servent) ; si aucun ne l'est, le guide précédent
+  est gardé. Sans `TV_EPG_URLS`, `available` vaut `false` : l'appli affiche « Le programme n'est
+  pas disponible pour le moment. »
+
+Réponse de `/tv/channels/{id}/epg` : `{"data": [...], "available": true}`, chaque programme avec
+`title`, `subtitle`, `description`, `category`, `image` (https seulement, sinon `null`), `start`
+et `end` (UTC, ISO 8601). 30 programmes au plus, à partir de celui en cours. L'identifiant de
+guide d'une chaîne reste côté serveur (il n'est pas dans les réponses).
+
+`php artisan tv:epg` affiche, pour chaque fichier, le nombre de chaînes et de programmes lus (ou
+l'erreur), puis le nombre de logos de la bibliothèque.
+
 ## Logos des chaînes (relayés par notre domaine, jamais stockés)
 
-Le `logo` d'une chaîne n'est jamais l'adresse du fournisseur : `App\Services\Tv\ChannelLogos` la
-remplace par `https://<API_URL>/api/v1/tv/logo/<hash>` (SHA-256 de l'adresse d'origine). Sans
+Chaque chaîne a jusqu'à trois logos possibles, **dans cet ordre** :
+
+1. la **bibliothèque de logos** : le dépôt GitHub public `tv-logo/tv-logos` (`TV_LOGOS_REPOSITORY`),
+   PNG transparents nommés d'après la chaîne (`countries/france/tf1-fr.png`). Les dossiers de
+   `TV_LOGOS_DIRECTORIES` (par défaut France, Belgique, Suisse, international, le premier
+   l'emporte) sont lus **une fois par jour** avec l'API de GitHub (`App\Services\Tv\LogoLibrary`,
+   une requête par dossier) ; le nom du fichier sans son suffixe de pays (`-fr`) est comparé au nom
+   de la chaîne comme pour le guide ;
+2. l'**icône du guide des programmes** (`<icon>` de la chaîne dans les fichiers XMLTV) ;
+3. le logo du **fournisseur**.
+
+Le relais sert **le premier qui donne une image valable** : un logo introuvable dans la
+bibliothèque ou refusé passe au suivant. Les logos restent la propriété des chaînes ; ils servent
+seulement à reconnaître la chaîne.
+
+Le `logo` d'une chaîne n'est jamais l'adresse d'origine : `App\Services\Tv\ChannelLogos` la
+remplace par `https://<API_URL>/api/v1/tv/logo/<hash>` (SHA-256 des adresses possibles). Sans
 cela, les logos ne s'affichaient pas : Flutter web télécharge les images avec `fetch` (il faut des
 en-têtes CORS, que les hébergeurs de logos n'envoient pas) et une version Android de production
 refuse les images en HTTP clair.
@@ -48,10 +97,11 @@ refuse les images en HTTP clair.
 - L'URL est **stable** pour un même logo : l'appli et le navigateur gardent l'image **7 jours**
   (`Cache-Control: public, max-age=604800`). La route est publique (une image se charge sans
   jeton) et limitée à 600 requêtes par minute et par IP (`throttle:tv-logos`).
-- Introuvable ou invalide : 404, et l'appli affiche son icône. Une chaîne sans logo chez le
-  fournisseur garde `logo: null`.
+- Introuvable ou invalide : 404, et l'appli affiche son icône. Une chaîne sans aucun logo garde
+  `logo: null`.
 - Logos qui ne s'affichent pas : `php artisan tv:logos` (dans le dossier `current` du site)
-  compte les chaînes qui ont un logo chez le fournisseur et essaie d'en relayer quelques-uns ; la
+  compte les chaînes qui ont un logo (bibliothèque, guide ou fournisseur) et essaie d'en relayer
+  quelques-uns ; la
   raison de chaque refus est dans `storage/logs` (« Channel logo refused / unreachable »).
 
 ## Flux proxifié (pourquoi l'appli ne reçoit jamais l'URL du fournisseur)
@@ -93,12 +143,15 @@ Chaque fournisseur met ses résultats en cache (durées réglables) pour limiter
 ## Configuration (Forge, jamais dans le dépôt)
 
 Les variables d'environnement de chaque fournisseur (URL, miroirs, endpoints de ping, pays,
-timeouts, TTL de cache, versions de client) sont documentées dans `.env.example`. Elles vivent dans
+timeouts, TTL de cache, versions de client), du guide (`TV_EPG_URLS`, `TV_EPG_TTL`,
+`TV_EPG_TIMEOUT`) et de la bibliothèque de logos (`TV_LOGOS_REPOSITORY`, `TV_LOGOS_DIRECTORIES`)
+sont documentées dans `.env.example`. Elles vivent dans
 la configuration, pas dans le code, pour pouvoir être mises à jour sans republier l'appli. Le proxy
 lui-même se règle avec `TV_PROXY_TTL` (durée de vie d'un jeton média) et `TV_PROXY_TIMEOUT`.
 
 ## À vérifier avant la mise en ligne
 
 Comme pour toute source de TV en direct, l'usage du fournisseur doit être vérifié au regard du
-droit d'auteur dans les pays visés. Les API non documentées peuvent changer sans préavis : les
+droit d'auteur dans les pays visés. Vérifier aussi les conditions d'utilisation des fichiers de
+guide (`TV_EPG_URLS`) et de la bibliothèque de logos. Les API non documentées peuvent changer sans préavis : les
 réglages concernés sont dans la configuration, à ajuster si le protocole évolue.
