@@ -105,6 +105,23 @@ it('resolves a channel into a playable stream proxied through our own origin', f
         && $request['url'] === 'https://vavoo.test/stream/tf1');
 });
 
+it('builds the stream url over https when TLS is terminated by a proxy', function () {
+    Sanctum::actingAs($this->user);
+    fakeVavoo([vavooChannel('tf1', 'TF1')]);
+
+    // Cloudflare and Forge terminate TLS: the origin sees plain HTTP plus the proxy headers.
+    $url = $this->withHeaders([
+        'X-Forwarded-Proto' => 'https',
+        'X-Forwarded-Host' => 'api.vixeo.app',
+        'X-Forwarded-For' => '203.0.113.7',
+    ])->getJson('http://api.vixeo.app/api/v1/tv/channels/tf1/stream')
+        ->assertOk()
+        ->json('data.url');
+
+    // An http:// URL would be blocked: mixed content in a browser, cleartext on release Android.
+    expect($url)->toStartWith('https://api.vixeo.app/api/v1/tv/stream/');
+});
+
 it('serves the proxied playlist with its segment URIs pointing back to us', function () {
     Sanctum::actingAs($this->user);
     fakeVavoo([vavooChannel('tf1', 'TF1')]);

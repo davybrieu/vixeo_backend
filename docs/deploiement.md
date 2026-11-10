@@ -103,6 +103,11 @@ Les réponses TMDb sont mises en cache dans Redis (1 h pour les listes et la rec
   chaque jour les codes TV et les jetons expirés.
 - HTTPS : certificat (Let's Encrypt) et redirection HTTP → HTTPS activés sur le site Forge ;
   ajouter l'en-tête `Strict-Transport-Security` dans la configuration Nginx du site.
+- Cloudflare et Nginx terminent le TLS : l'origine reçoit du HTTP. L'application fait confiance
+  aux proxys (`trustProxies(at: '*')` dans `bootstrap/app.php`) pour lire `X-Forwarded-Proto` et
+  construire des URL `https://`. Sans cela, le proxy TV remet au lecteur une URL `http://`, que le
+  navigateur bloque (contenu mixte) et qu'une version Android de production refuse (trafic clair) :
+  écran noir sur les deux plateformes. À garder cohérent si la topologie réseau change.
 - Vérifier `https://api.<domaine>/up` (healthcheck Laravel).
 - La doc interactive `/docs/api` n'est accessible qu'en environnement `local` ;
   la spec publiée est `docs/openapi.json` dans le dépôt.
