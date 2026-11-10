@@ -197,9 +197,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   bearer) et la playlist HLS est réécrite côté serveur. Certains fournisseurs ne publient qu'en
   HTTP clair : le proxy évite le contenu mixte (web HTTPS) et le blocage du trafic non chiffré
   (Android de production). La TV est facultative : sans fournisseur configuré, 503.
-  `GET /tv/channels/{id}` = une chaîne (page de la chaîne). **Logos** : jamais l'adresse du
-  fournisseur, mais `GET /tv/logo/{hash}` sur notre domaine (`App\Services\Tv\ChannelLogos` :
-  hash SHA-256 stable, image vérifiée et gardée 7 jours, publique, CORS ; sans logo : `null`).
+  `GET /tv/channels/{id}` = une chaîne (page de la chaîne).
+  **Logos** : l'URL du fournisseur, telle quelle ; l'appli l'affiche elle-même (décision du
+  développeur : **jamais téléchargés ni relayés par notre serveur**, pas de proxy de logos).
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :

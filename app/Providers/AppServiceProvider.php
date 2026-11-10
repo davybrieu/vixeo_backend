@@ -50,9 +50,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('account-export', fn (Request $request) => Limit::perHour(3)->by($request->user()?->id ?: $request->ip()));
 
         // Catalog screens fire several requests at once (home, details, seasons…).
-        // A screen of channels loads a few dozen logos at once; the apps then cache them.
-        RateLimiter::for('tv-logos', fn (Request $request) => Limit::perMinute(600)->by($request->ip()));
-
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
 
         // Each new subtitle file uses Vixeo's OpenSubtitles daily quota (cached ones don't).

@@ -52,12 +52,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
     // `throttle:catalog` (a live stream fires one request per segment). See docs/tv-direct.md.
     Route::prefix('tv')->name('tv.')->group(function () {
         Route::get('stream/{token}', [TvController::class, 'media'])->name('stream.media');
-        // Channel logos, from our origin (App\Services\Tv\ChannelLogos). Public too: images are
-        // loaded without a bearer token. The hash only points to a logo the API already listed.
-        Route::get('logo/{hash}', [TvController::class, 'logo'])
-            ->where('hash', '[0-9a-f]{32}')
-            ->middleware('throttle:tv-logos')
-            ->name('logo');
     });
 
     Route::middleware('auth:sanctum')->group(function () {

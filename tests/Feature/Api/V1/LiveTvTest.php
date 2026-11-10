@@ -65,7 +65,7 @@ it('serves the panel channels with the common shape and filters them', function 
         ->assertOk()
         ->assertJsonPath('data.0.id', '1399')
         ->assertJsonPath('data.0.name', 'TF1')
-        ->assertJsonPath('data.0.logo', proxiedLogo('https://logo.test/tf1.png'))
+        ->assertJsonPath('data.0.logo', 'https://logo.test/tf1.png')
         ->assertJsonPath('data.0.number', 1);
 
     $this->getJson('/api/v1/tv/channels?q=france')

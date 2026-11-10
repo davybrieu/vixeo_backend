@@ -76,7 +76,7 @@ it('lists the channels, sorted by name, and filters by category and search', fun
         ->assertOk()
         ->assertJsonPath('data.*.name', ['Eurosport 1', 'TF1'])
         ->assertJsonPath('data.1.id', 'tf1')
-        ->assertJsonPath('data.1.logo', proxiedLogo('https://logo.test/tf1.png'));
+        ->assertJsonPath('data.1.logo', 'https://logo.test/tf1.png');
 
     $this->getJson('/api/v1/tv/channels?category_id=Sport')
         ->assertOk()
