@@ -46,7 +46,7 @@ it('says up to date without any release on GitHub', function () {
         ->assertJsonPath('status', 'up_to_date')
         ->assertJsonPath('latest', null)
         ->assertJsonPath('minimum_build', null)
-        ->assertJsonPath('update_url', 'http://localhost:8100/installer#android');
+        ->assertJsonPath('update_url', 'https://www.vixeo.test/installer#android');
 });
 
 it('offers the newest Android release published on GitHub, with its APK and checksum', function () {

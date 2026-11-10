@@ -180,7 +180,9 @@ Attention au coût en bande passante et aux ressources serveur si le backend rel
 4.3 Dépôts : deux dépôts séparés — décidé
 
 - "vixeo_frontend" : application Flutter.
-- "vixeo_backend" : API Laravel.
+- "vixeo_backend" : API Laravel **et** site de présentation (un seul projet Laravel, un seul site
+  Forge : `api.vixeo.app` pour l'API, `www.vixeo.app` pour le site ; l'ancien dépôt "vixeo_web"
+  y a été fusionné, voir `docs/deploiement.md`).
 
 Chaque dépôt dispose de son propre "CLAUDE.md" contenant :
 

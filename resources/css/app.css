@@ -1,0 +1,80 @@
+/* Only the site's sources: the rest of the project (API, docs/openapi.json, scraper) is not scanned. */
+@import 'tailwindcss' source(none);
+
+@source '../js';
+@source '../views';
+
+/* Fonts served by the site itself (OFL licence, texts in public/fonts). */
+@font-face { font-family: 'Sora'; src: url('/fonts/Sora-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Sora'; src: url('/fonts/Sora-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Sora'; src: url('/fonts/Sora-ExtraBold.woff2') format('woff2'); font-weight: 800; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+
+/* Vixeo design system: same values as VxColors in vixeo_frontend/lib/core/theme.dart. */
+@theme {
+    --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    --color-bg: #070a08;
+    --color-surface: #101512;
+    --color-field: #141a16;
+    --color-surface-high: #1f2722;
+    --color-line: #2a332d;
+    --color-line-strong: #3a453e;
+
+    --color-accent: #2ee58a;
+    --color-accent-hover: #7cf0b4;
+    --color-on-accent: #03140a;
+
+    --color-text: #f1f5f2;
+    --color-text-secondary: #a9b3ac;
+    --color-text-muted: #808b84;
+    --color-text-soft: #c9d1cb;
+
+    /* Poster placeholders (VxColors.posterTones). */
+    --color-tone-1: #1b2a22;
+    --color-tone-2: #22261f;
+    --color-tone-3: #1a2230;
+    --color-tone-4: #2a2026;
+    --color-tone-5: #14221e;
+    --color-tone-6: #2b2a1e;
+    --color-tone-7: #1f1b2a;
+    --color-tone-8: #18261f;
+}
+
+@layer base {
+    html {
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        scroll-behavior: smooth;
+        scroll-padding-top: 6rem;
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+    }
+
+    /* Same focus as the app: a green ring. */
+    :focus-visible {
+        outline: 3px solid var(--color-accent);
+        outline-offset: 3px;
+    }
+
+    h1, h2, h3 {
+        font-family: var(--font-display);
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}

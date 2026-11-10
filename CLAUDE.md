@@ -1,8 +1,17 @@
-# Vixeo — API (vixeo_backend)
+# Vixeo — API et site (vixeo_backend)
 
 API REST Laravel de **Vixeo**, media center multiplateforme (Flutter : web, Android,
-Android TV, iOS). L'appli cliente est dans le dépôt
-[`davybrieu/vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
+Android TV, iOS), **et site de présentation** (ancien dépôt `vixeo_web`, fusionné ici). L'appli
+cliente est dans le dépôt [`davybrieu/vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
+
+**Un seul projet, un seul site Forge, deux domaines** (décision du développeur) :
+`api.vixeo.app` → l'API (`routes/api.php` sous `/api/v1`, `routes/api-host.php`),
+`www.vixeo.app` → le site (`routes/site.php`, Vue + Inertia SSR, doc : `docs/site.md`),
+`vixeo.app` → 301 vers `www`. Routage par `Host` dans `bootstrap/app.php` (`App\Support\Hosts`,
+`config/vixeo.php` : `API_DOMAIN`, `SITE_DOMAIN`, `SITE_REDIRECT_DOMAINS`). Sans domaines (local,
+vides) : un seul hôte, le site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
+de `phpunit.xml` (`api.vixeo.test`, `www.vixeo.test`) : URL relative = hôte de l'API, le site se
+teste avec des URL absolues (`site('/faq')` dans `tests/Feature/Site/PagesTest.php`).
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
 périmètre légal (§3, ce qui est hors périmètre ne doit pas être implémenté), sécurité (§6),
@@ -10,7 +19,7 @@ feuille de route (§10).
 
 **Distribution Android** (décision du développeur, ne plus poser la question) : **pas de Play
 Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est distribuée en
-**APK signé** depuis le site `vixeo_web` (page `/installer`). Conséquences :
+**APK signé** depuis le site (`www.vixeo.app/installer`, dans ce dépôt). Conséquences :
 - chaque version est signée avec la **même clé de release** (keystore hors du dépôt, dans les
   secrets) : sinon Android refuse d'installer la mise à jour par-dessus l'ancienne version ;
 - les mises à jour passent par la vérification intégrée à l'appli (`GET /app/update`), pas par
@@ -27,6 +36,7 @@ Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est d
 ## Stack
 
 - Laravel 13, PHP 8.3+, Sanctum (jetons Bearer), Scramble (OpenAPI), Pest 4, Pint.
+- Site : Vue 3, Inertia 3 (SSR, `php artisan inertia:start-ssr`), Tailwind CSS 4, Vite.
 - PostgreSQL en production, Redis pour cache et files d'attente.
 - Les tests tournent sur SQLite en mémoire (`phpunit.xml`) ; les relancer aussi sur PostgreSQL
   avant un push qui touche aux migrations ou aux requêtes.
@@ -34,7 +44,7 @@ Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est d
 ## Commandes
 
 ```bash
-composer install
+composer install && npm ci
 cp .env.example .env && php artisan key:generate
 php artisan migrate
 
@@ -42,7 +52,9 @@ php artisan migrate
 ./vendor/bin/pint                 # formatage (vérification : pint --test)
 composer openapi                  # régénère docs/openapi.json (échoue si un type est inconnu)
                                   # (conteneur cloud, en root : COMPOSER_ALLOW_SUPERUSER=1)
-php artisan serve                 # http://localhost:8000, doc interactive sur /docs/api (env local)
+npm run dev                       # site : Vite (SSR compris) ; npm run build = client + SSR
+php artisan serve                 # http://localhost:8000 (site sur /, API sur /api/v1),
+                                  # doc interactive sur /docs/api (env local)
 ```
 
 Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par défaut :
@@ -50,6 +62,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 `DB_CONNECTION=pgsql DB_DATABASE=... DB_USERNAME=... DB_PASSWORD=... ./vendor/bin/pest`.
 
 ## Conventions
+
+- **Site de présentation** (`docs/site.md`) : groupe de middleware `site` (ni session, ni CSRF,
+  **aucun cookie**, aucun service tiers, polices servies par le site). Erreurs : pages Inertia
+  `Error` sur le site, JSON sur l'hôte de l'API et sous `/api/*` (`Hosts::isApi`). Textes honnêtes
+  (ce que l'appli fait aujourd'hui, « En préparation » sinon), pas de bouton ni page iOS, écarté :
+  import IPTV / M3U / Xtream, radio, replays. SSR : pas de `window` / `document` hors `onMounted`.
+  Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.
+  Ajouter une page : route dans `routes/site.php`, page Vue, `SiteController::PAGES` (sitemap).
 
 - Toutes les routes sous `/api/v1` (`routes/api.php`). **Pas de changement cassant en v1** :
   les applis installées ne se mettent pas à jour en même temps que l'API. Ajouter des champs
@@ -181,17 +201,20 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 ## Branches et déploiement
 
-- Ce dépôt est **uniquement l'API** : pas de front, pas d'assets, et **pas de workflow
-  GitHub Actions** (décision du développeur). Lancer Pint et Pest localement avant chaque push.
+- Ce dépôt contient l'API et le site de présentation, **pas de workflow GitHub Actions**
+  (décision du développeur). Lancer Pint, Pest et `npm run build` localement avant chaque push.
 
 - Pour l'instant, le travail se fait **directement sur `main`** (demande du développeur).
-- `main` est déployée automatiquement par Laravel Forge (Push to deploy) :
-  voir [`docs/deploiement.md`](docs/deploiement.md).
+- `main` est déployée automatiquement par Laravel Forge (Push to deploy, un seul site pour
+  les deux domaines, daemon SSR) : voir [`docs/deploiement.md`](docs/deploiement.md).
 - Secrets de déploiement : dans les secrets GitHub / Forge, jamais dans le dépôt ni dans
   les variables de l'environnement Claude Code cloud.
 
 ## État actuel
 
+- Fait aussi : site de présentation (accueil, installer Android / Android TV / navigateur, FAQ,
+  mentions légales, confidentialité, pages d'erreur, sitemap) sur `www.vixeo.app`, dans ce projet.
+  À faire avant la mise en ligne : mentions légales dans le `.env` de production.
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
   (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
