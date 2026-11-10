@@ -73,7 +73,7 @@ et `SiteController::PAGES` (sitemap). Chaque page pose `<Seo title description>`
 | `WEB_URL` | Appli web Flutter (boutons « Ouvrir dans le navigateur », « Créer un compte ») |
 | `VIXEO_ANDROID_APK_URL`, `VIXEO_ANDROID_APK_SHA256` | Secours : APK et empreinte s'il n'y a pas de release GitHub |
 | `VIXEO_PUBLISHER_*`, `VIXEO_PUBLICATION_DIRECTOR`, `VIXEO_CONTACT_EMAIL`, `VIXEO_HOST_*` | Mentions légales (obligatoires avant la mise en ligne) |
-| `INERTIA_SSR_ENABLED`, `INERTIA_SSR_URL` | Rendu côté serveur |
+| `INERTIA_SSR_ENABLED`, `INERTIA_SSR_URL` | Rendu côté serveur ; le serveur SSR écoute le port de cette URL, sur 127.0.0.1 (lu au démarrage, pas figé dans le build) |
 
 **Pas de Play Store** : l'APK (et son empreinte SHA-256) vient de la dernière release GitHub
 `android-<build>` publiée par la CI de `vixeo_frontend`, lue directement par

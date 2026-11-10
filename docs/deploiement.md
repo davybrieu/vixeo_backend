@@ -109,7 +109,10 @@ CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 
-# Site : rendu côté serveur (daemon de la section 6)
+# Site : rendu côté serveur (daemon de la section 6). Le port de INERTIA_SSR_URL sert aux
+# deux côtés : Laravel s'y connecte, le serveur SSR l'écoute (127.0.0.1 seulement). Pour changer
+# de port (ex. 13715 si un autre site du serveur prend déjà 13714) : modifier l'URL, redéployer,
+# puis redémarrer le daemon SSR.
 INERTIA_SSR_ENABLED=true
 INERTIA_SSR_URL=http://127.0.0.1:13714
 
@@ -215,6 +218,13 @@ Le dossier `current` est le lien vers la release active : le daemon relancé apr
 déploiement (dernière ligne du script) prend le nouveau bundle. Sans lui, le site reste
 fonctionnel mais n'est rendu que dans le navigateur (moins bon pour le référencement).
 `php artisan inertia:check-ssr` vérifie qu'il répond.
+
+Le serveur SSR lit son adresse au démarrage dans `INERTIA_SSR_URL` (variable d'environnement,
+sinon le `.env` du dossier `current`) : port de l'URL, interface `127.0.0.1` (jamais joignable
+depuis l'extérieur). Défaut : `http://127.0.0.1:13714`. Le message « Starting SSR server on port
+… » du journal du daemon indique le port utilisé ; il doit être le même que celui de l'URL.
+Un port déjà pris (`EADDRINUSE`) : souvent l'ancien daemon SSR d'un autre site (ancien
+`vixeo_web`) encore actif, à supprimer, ou bien choisir un autre port.
 
 ## 7. Worker et planificateur (inchangés)
 

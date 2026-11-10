@@ -7196,7 +7196,7 @@ var set7 = (n) => {
 	const started = isStarted();
 	n = clamp(n, settings.minimum, 1);
 	status = n === 1 ? null : n;
-	const progress3 = render(!started);
+	const progress3 = render$1(!started);
 	const bar = progress3.querySelector(settings.barSelector);
 	const speed = settings.speed;
 	const ease = settings.easing;
@@ -7256,7 +7256,7 @@ var increaseByRandom = (amount) => {
 	})();
 	return set7(clamp(n + amount, 0, .994));
 };
-var render = (fromStart) => {
+var render$1 = (fromStart) => {
 	if (isRendered()) return document.getElementById(baseComponentSelector);
 	document.documentElement.classList.add(`${baseComponentSelector}-busy`);
 	const bar = progress2.querySelector(settings.barSelector);
@@ -38404,6 +38404,711 @@ var link_default = (0, vue_exports.defineComponent)({
 	}
 });
 var config = config$1.extend({});
+// node_modules/@jridgewell/sourcemap-codec/dist/sourcemap-codec.mjs
+var comma = ",".charCodeAt(0);
+";".charCodeAt(0);
+var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+var intToChar = /* @__PURE__ */ new Uint8Array(64);
+var charToInt = /* @__PURE__ */ new Uint8Array(128);
+for (let i = 0; i < chars.length; i++) {
+	const c = chars.charCodeAt(i);
+	intToChar[i] = c;
+	charToInt[c] = i;
+}
+function decodeInteger(reader) {
+	let value = 0;
+	let shift = 0;
+	let integer = 0;
+	do {
+		integer = charToInt[reader.next()];
+		value |= (integer & 31) << shift;
+		shift += 5;
+	} while (integer & 32);
+	return value;
+}
+function decodeSign(num) {
+	return num & 1 ? -2147483648 | -(num >>> 1) : num >>> 1;
+}
+function hasMoreVlq(reader, max) {
+	if (reader.pos >= max) return false;
+	return reader.peek() !== comma;
+}
+var StringReader = class {
+	constructor(buffer) {
+		this.pos = 0;
+		this.buffer = buffer;
+	}
+	next() {
+		return this.buffer.charCodeAt(this.pos++);
+	}
+	peek() {
+		return this.buffer.charCodeAt(this.pos);
+	}
+	indexOf(char) {
+		const { buffer, pos } = this;
+		const idx = buffer.indexOf(char, pos);
+		return idx === -1 ? buffer.length : idx;
+	}
+};
+function decode(mappings) {
+	const { length } = mappings;
+	const reader = new StringReader(mappings);
+	const decoded = [];
+	let genColumn = 0;
+	let sourcesIndex = 0;
+	let sourceLine = 0;
+	let sourceColumn = 0;
+	let namesIndex = 0;
+	do {
+		const semi = reader.indexOf(";");
+		const line = [];
+		let sorted = true;
+		let lastCol = 0;
+		genColumn = 0;
+		while (reader.pos < semi) {
+			let seg;
+			genColumn += decodeSign(decodeInteger(reader));
+			if (genColumn < lastCol) sorted = false;
+			lastCol = genColumn;
+			if (hasMoreVlq(reader, semi)) {
+				sourcesIndex += decodeSign(decodeInteger(reader));
+				sourceLine += decodeSign(decodeInteger(reader));
+				sourceColumn += decodeSign(decodeInteger(reader));
+				if (hasMoreVlq(reader, semi)) {
+					namesIndex += decodeSign(decodeInteger(reader));
+					seg = [
+						genColumn,
+						sourcesIndex,
+						sourceLine,
+						sourceColumn,
+						namesIndex
+					];
+				} else seg = [
+					genColumn,
+					sourcesIndex,
+					sourceLine,
+					sourceColumn
+				];
+			} else seg = [genColumn];
+			line.push(seg);
+			reader.pos++;
+		}
+		if (!sorted) sort(line);
+		decoded.push(line);
+		reader.pos = semi + 1;
+	} while (reader.pos <= length);
+	return decoded;
+}
+function sort(line) {
+	line.sort(sortComparator$1);
+}
+function sortComparator$1(a, b) {
+	return a[0] - b[0];
+}
+// node_modules/@jridgewell/resolve-uri/dist/resolve-uri.mjs
+var schemeRegex = /^[\w+.-]+:\/\//;
+/**
+* Matches the parts of a URL:
+* 1. Scheme, including ":", guaranteed.
+* 2. User/password, including "@", optional.
+* 3. Host, guaranteed.
+* 4. Port, including ":", optional.
+* 5. Path, including "/", optional.
+* 6. Query, including "?", optional.
+* 7. Hash, including "#", optional.
+*/
+var urlRegex = /^([\w+.-]+:)\/\/([^@/#?]*@)?([^:/#?]*)(:\d+)?(\/[^#?]*)?(\?[^#]*)?(#.*)?/;
+/**
+* File URLs are weird. They dont' need the regular `//` in the scheme, they may or may not start
+* with a leading `/`, they can have a domain (but only if they don't start with a Windows drive).
+*
+* 1. Host, optional.
+* 2. Path, which may include "/", guaranteed.
+* 3. Query, including "?", optional.
+* 4. Hash, including "#", optional.
+*/
+var fileRegex = /^file:(?:\/\/((?![a-z]:)[^/#?]*)?)?(\/?[^#?]*)(\?[^#]*)?(#.*)?/i;
+function isAbsoluteUrl(input) {
+	return schemeRegex.test(input);
+}
+function isSchemeRelativeUrl(input) {
+	return input.startsWith("//");
+}
+function isAbsolutePath(input) {
+	return input.startsWith("/");
+}
+function isFileUrl(input) {
+	return input.startsWith("file:");
+}
+function isRelative(input) {
+	return /^[.?#]/.test(input);
+}
+function parseAbsoluteUrl(input) {
+	const match = urlRegex.exec(input);
+	return makeUrl(match[1], match[2] || "", match[3], match[4] || "", match[5] || "/", match[6] || "", match[7] || "");
+}
+function parseFileUrl(input) {
+	const match = fileRegex.exec(input);
+	const path = match[2];
+	return makeUrl("file:", "", match[1] || "", "", isAbsolutePath(path) ? path : "/" + path, match[3] || "", match[4] || "");
+}
+function makeUrl(scheme, user, host, port, path, query, hash) {
+	return {
+		scheme,
+		user,
+		host,
+		port,
+		path,
+		query,
+		hash,
+		type: 7
+	};
+}
+function parseUrl(input) {
+	if (isSchemeRelativeUrl(input)) {
+		const url = parseAbsoluteUrl("http:" + input);
+		url.scheme = "";
+		url.type = 6;
+		return url;
+	}
+	if (isAbsolutePath(input)) {
+		const url = parseAbsoluteUrl("http://foo.com" + input);
+		url.scheme = "";
+		url.host = "";
+		url.type = 5;
+		return url;
+	}
+	if (isFileUrl(input)) return parseFileUrl(input);
+	if (isAbsoluteUrl(input)) return parseAbsoluteUrl(input);
+	const url = parseAbsoluteUrl("http://foo.com/" + input);
+	url.scheme = "";
+	url.host = "";
+	url.type = input ? input.startsWith("?") ? 3 : input.startsWith("#") ? 2 : 4 : 1;
+	return url;
+}
+function stripPathFilename(path) {
+	if (path.endsWith("/..")) return path;
+	const index = path.lastIndexOf("/");
+	return path.slice(0, index + 1);
+}
+function mergePaths(url, base) {
+	normalizePath(base, base.type);
+	if (url.path === "/") url.path = base.path;
+	else url.path = stripPathFilename(base.path) + url.path;
+}
+/**
+* The path can have empty directories "//", unneeded parents "foo/..", or current directory
+* "foo/.". We need to normalize to a standard representation.
+*/
+function normalizePath(url, type) {
+	const rel = type <= 4;
+	const pieces = url.path.split("/");
+	let pointer = 1;
+	let positive = 0;
+	let addTrailingSlash = false;
+	for (let i = 1; i < pieces.length; i++) {
+		const piece = pieces[i];
+		if (!piece) {
+			addTrailingSlash = true;
+			continue;
+		}
+		addTrailingSlash = false;
+		if (piece === ".") continue;
+		if (piece === "..") {
+			if (positive) {
+				addTrailingSlash = true;
+				positive--;
+				pointer--;
+			} else if (rel) pieces[pointer++] = piece;
+			continue;
+		}
+		pieces[pointer++] = piece;
+		positive++;
+	}
+	let path = "";
+	for (let i = 1; i < pointer; i++) path += "/" + pieces[i];
+	if (!path || addTrailingSlash && !path.endsWith("/..")) path += "/";
+	url.path = path;
+}
+/**
+* Attempts to resolve `input` URL/path relative to `base`.
+*/
+function resolve(input, base) {
+	if (!input && !base) return "";
+	const url = parseUrl(input);
+	let inputType = url.type;
+	if (base && inputType !== 7) {
+		const baseUrl = parseUrl(base);
+		const baseType = baseUrl.type;
+		switch (inputType) {
+			case 1: url.hash = baseUrl.hash;
+			case 2: url.query = baseUrl.query;
+			case 3:
+			case 4: mergePaths(url, baseUrl);
+			case 5:
+				url.user = baseUrl.user;
+				url.host = baseUrl.host;
+				url.port = baseUrl.port;
+			case 6: url.scheme = baseUrl.scheme;
+		}
+		if (baseType > inputType) inputType = baseType;
+	}
+	normalizePath(url, inputType);
+	const queryHash = url.query + url.hash;
+	switch (inputType) {
+		case 2:
+		case 3: return queryHash;
+		case 4: {
+			const path = url.path.slice(1);
+			if (!path) return queryHash || ".";
+			if (isRelative(base || input) && !isRelative(path)) return "./" + path + queryHash;
+			return path + queryHash;
+		}
+		case 5: return url.path + queryHash;
+		default: return url.scheme + "//" + url.user + url.host + url.port + url.path + queryHash;
+	}
+}
+// node_modules/@jridgewell/trace-mapping/dist/trace-mapping.mjs
+function stripFilename(path) {
+	if (!path) return "";
+	const index = path.lastIndexOf("/");
+	return path.slice(0, index + 1);
+}
+function resolver(mapUrl, sourceRoot) {
+	const from = stripFilename(mapUrl);
+	const prefix = sourceRoot ? sourceRoot + "/" : "";
+	return (source) => resolve(prefix + (source || ""), from);
+}
+var COLUMN = 0;
+var SOURCES_INDEX = 1;
+var SOURCE_LINE = 2;
+var SOURCE_COLUMN = 3;
+var NAMES_INDEX = 4;
+function maybeSort(mappings, owned) {
+	const unsortedIndex = nextUnsortedSegmentLine(mappings, 0);
+	if (unsortedIndex === mappings.length) return mappings;
+	if (!owned) mappings = mappings.slice();
+	for (let i = unsortedIndex; i < mappings.length; i = nextUnsortedSegmentLine(mappings, i + 1)) mappings[i] = sortSegments(mappings[i], owned);
+	return mappings;
+}
+function nextUnsortedSegmentLine(mappings, start) {
+	for (let i = start; i < mappings.length; i++) if (!isSorted(mappings[i])) return i;
+	return mappings.length;
+}
+function isSorted(line) {
+	for (let j = 1; j < line.length; j++) if (line[j][COLUMN] < line[j - 1][COLUMN]) return false;
+	return true;
+}
+function sortSegments(line, owned) {
+	if (!owned) line = line.slice();
+	return line.sort(sortComparator);
+}
+function sortComparator(a, b) {
+	return a[COLUMN] - b[COLUMN];
+}
+var found = false;
+function binarySearch(haystack, needle, low, high) {
+	while (low <= high) {
+		const mid = low + (high - low >> 1);
+		const cmp = haystack[mid][COLUMN] - needle;
+		if (cmp === 0) {
+			found = true;
+			return mid;
+		}
+		if (cmp < 0) low = mid + 1;
+		else high = mid - 1;
+	}
+	found = false;
+	return low - 1;
+}
+function upperBound(haystack, needle, index) {
+	for (let i = index + 1; i < haystack.length; index = i++) if (haystack[i][COLUMN] !== needle) break;
+	return index;
+}
+function lowerBound(haystack, needle, index) {
+	for (let i = index - 1; i >= 0; index = i--) if (haystack[i][COLUMN] !== needle) break;
+	return index;
+}
+function memoizedState() {
+	return {
+		lastKey: -1,
+		lastNeedle: -1,
+		lastIndex: -1
+	};
+}
+function memoizedBinarySearch(haystack, needle, state, key) {
+	const { lastKey, lastNeedle, lastIndex } = state;
+	let low = 0;
+	let high = haystack.length - 1;
+	if (key === lastKey) {
+		if (needle === lastNeedle) {
+			found = lastIndex !== -1 && haystack[lastIndex][COLUMN] === needle;
+			return lastIndex;
+		}
+		if (needle >= lastNeedle) low = lastIndex === -1 ? 0 : lastIndex;
+		else high = lastIndex;
+	}
+	state.lastKey = key;
+	state.lastNeedle = needle;
+	return state.lastIndex = binarySearch(haystack, needle, low, high);
+}
+function parse(map) {
+	return typeof map === "string" ? JSON.parse(map) : map;
+}
+var LINE_GTR_ZERO = "`line` must be greater than 0 (lines start at line 1)";
+var COL_GTR_EQ_ZERO = "`column` must be greater than or equal to 0 (columns start at column 0)";
+var TraceMap = class {
+	constructor(map, mapUrl) {
+		const isString = typeof map === "string";
+		if (!isString && map._decodedMemo) return map;
+		const parsed = parse(map);
+		const { version, file, names, sourceRoot, sources, sourcesContent } = parsed;
+		this.version = version;
+		this.file = file;
+		this.names = names || [];
+		this.sourceRoot = sourceRoot;
+		this.sources = sources;
+		this.sourcesContent = sourcesContent;
+		this.ignoreList = parsed.ignoreList || parsed.x_google_ignoreList || void 0;
+		const resolve = resolver(mapUrl, sourceRoot);
+		this.resolvedSources = sources.map(resolve);
+		const { mappings } = parsed;
+		if (typeof mappings === "string") {
+			this._encoded = mappings;
+			this._decoded = void 0;
+		} else if (Array.isArray(mappings)) {
+			this._encoded = void 0;
+			this._decoded = maybeSort(mappings, isString);
+		} else if (parsed.sections) throw new Error(`TraceMap passed sectioned source map, please use FlattenMap export instead`);
+		else throw new Error(`invalid source map: ${JSON.stringify(parsed)}`);
+		this._decodedMemo = memoizedState();
+		this._bySources = void 0;
+		this._bySourceMemos = void 0;
+	}
+};
+function cast(map) {
+	return map;
+}
+function decodedMappings(map) {
+	var _a;
+	return (_a = cast(map))._decoded || (_a._decoded = decode(cast(map)._encoded));
+}
+function originalPositionFor(map, needle) {
+	let { line, column, bias } = needle;
+	line--;
+	if (line < 0) throw new Error(LINE_GTR_ZERO);
+	if (column < 0) throw new Error(COL_GTR_EQ_ZERO);
+	const decoded = decodedMappings(map);
+	if (line >= decoded.length) return OMapping(null, null, null, null);
+	const segments = decoded[line];
+	const index = traceSegmentInternal(segments, cast(map)._decodedMemo, line, column, bias || 1);
+	if (index === -1) return OMapping(null, null, null, null);
+	const segment = segments[index];
+	if (segment.length === 1) return OMapping(null, null, null, null);
+	const { names, resolvedSources } = map;
+	return OMapping(resolvedSources[segment[SOURCES_INDEX]], segment[SOURCE_LINE] + 1, segment[SOURCE_COLUMN], segment.length === 5 ? names[segment[NAMES_INDEX]] : null);
+}
+function OMapping(source, line, column, name) {
+	return {
+		source,
+		line,
+		column,
+		name
+	};
+}
+function traceSegmentInternal(segments, memo, line, column, bias) {
+	let index = memoizedBinarySearch(segments, column, memo, line);
+	if (found) index = (bias === -1 ? upperBound : lowerBound)(segments, column, index);
+	else if (bias === -1) index++;
+	if (index === -1 || index === segments.length) return -1;
+	return index;
+}
+// node_modules/@inertiajs/core/dist/server.js
+var bigIntMarker = "$bigint";
+function parsePage(text) {
+	const page = JSON.parse(text);
+	if (page?.preserveBigIntegers === true && text.includes(`"${bigIntMarker}"`)) reviveBigIntegers(page);
+	return page;
+}
+function reviveBigIntegers(value) {
+	if (Array.isArray(value)) {
+		for (let index = 0; index < value.length; index++) value[index] = reviveBigInteger(value[index]);
+		return;
+	}
+	for (const key of Object.keys(value)) value[key] = reviveBigInteger(value[key]);
+}
+function reviveBigInteger(value) {
+	if (value === null || typeof value !== "object") return value;
+	if (typeof value[bigIntMarker] === "string") return BigInt(value[bigIntMarker]);
+	reviveBigIntegers(value);
+	return value;
+}
+var sourceMapResolver = null;
+function setSourceMapResolver(resolver) {
+	sourceMapResolver = resolver;
+}
+var BROWSER_APIS = {
+	window: "The global window object",
+	document: "The DOM document object",
+	navigator: "The navigator object",
+	location: "The location object",
+	history: "The browser history API",
+	screen: "The screen object",
+	localStorage: "Browser local storage",
+	sessionStorage: "Browser session storage",
+	innerWidth: "Browser viewport width",
+	innerHeight: "Browser viewport height",
+	outerWidth: "Browser window width",
+	outerHeight: "Browser window height",
+	scrollX: "Horizontal scroll position",
+	scrollY: "Vertical scroll position",
+	devicePixelRatio: "The device pixel ratio",
+	matchMedia: "The matchMedia function",
+	IntersectionObserver: "The IntersectionObserver API",
+	ResizeObserver: "The ResizeObserver API",
+	MutationObserver: "The MutationObserver API",
+	requestAnimationFrame: "The requestAnimationFrame function",
+	requestIdleCallback: "The requestIdleCallback function",
+	Image: "The Image constructor",
+	Audio: "The Audio constructor",
+	Worker: "The Worker constructor",
+	BroadcastChannel: "The BroadcastChannel constructor",
+	fetch: "The fetch API",
+	XMLHttpRequest: "The XMLHttpRequest API"
+};
+function detectBrowserApi(error) {
+	const message = error.message.toLowerCase();
+	for (const api of Object.keys(BROWSER_APIS)) if ([
+		`${api.toLowerCase()} is not defined`,
+		`'${api.toLowerCase()}' is not defined`,
+		`"${api.toLowerCase()}" is not defined`,
+		`cannot read properties of undefined (reading '${api.toLowerCase()}')`,
+		`cannot read property '${api.toLowerCase()}'`
+	].some((pattern) => message.includes(pattern))) return api;
+	return null;
+}
+function isComponentResolutionError(error) {
+	const message = error.message.toLowerCase();
+	return message.includes("cannot find module") || message.includes("failed to resolve") || message.includes("module not found") || message.includes("could not resolve");
+}
+var LIFECYCLE_HOOKS = "onMounted/useEffect/onMount";
+function getBrowserApiHint(api) {
+	const apiDescription = BROWSER_APIS[api] || `The "${api}" object`;
+	if (["localStorage", "sessionStorage"].includes(api)) return `${apiDescription} doesn't exist in Node.js. Check "typeof ${api} !== 'undefined'" before using it, or move the code to a ${LIFECYCLE_HOOKS} lifecycle hook.`;
+	if (["window", "document"].includes(api)) return `${apiDescription} doesn't exist in Node.js. Wrap browser-specific code in a ${LIFECYCLE_HOOKS} lifecycle hook, or check "typeof ${api} !== 'undefined'" before using it.`;
+	if ([
+		"IntersectionObserver",
+		"ResizeObserver",
+		"MutationObserver"
+	].includes(api)) return `${apiDescription} doesn't exist in Node.js. Create observers inside a ${LIFECYCLE_HOOKS} lifecycle hook, not at the module level.`;
+	if (["fetch", "XMLHttpRequest"].includes(api)) return `${apiDescription} may not be available in all Node.js versions. For SSR, ensure data fetching happens on the server (in your controller) and is passed as props, or use a ${LIFECYCLE_HOOKS} hook for client-side fetching.`;
+	return `${apiDescription} doesn't exist in Node.js. Move this code to a ${LIFECYCLE_HOOKS} lifecycle hook, or guard it with "typeof ${api} !== 'undefined'".`;
+}
+function getComponentResolutionHint(component) {
+	return `Could not resolve component${component ? ` "${component}"` : ""}. Check that the file exists and the path is correct. Ensure the component name matches the file name exactly (case-sensitive).`;
+}
+function getRenderErrorHint() {
+	return "An error occurred while rendering the component. Check the component for browser-specific code that runs during initialization. Move any code that accesses browser APIs to a lifecycle hook.";
+}
+function extractSourceLocation(stack) {
+	if (!stack) return;
+	for (const line of stack.split("\n")) {
+		if (!line.includes("at ")) continue;
+		if (line.includes("node_modules") || line.includes("node:")) continue;
+		let match = line.match(/\(([^)]+):(\d+):(\d+)\)/);
+		if (!match) match = line.match(/at\s+(?:file:\/\/)?(.+):(\d+):(\d+)\s*$/);
+		if (match) {
+			const file = match[1].replace(/^file:\/\//, "");
+			const lineNum = parseInt(match[2], 10);
+			const colNum = parseInt(match[3], 10);
+			if (sourceMapResolver) {
+				const resolved = sourceMapResolver(file, lineNum, colNum);
+				if (resolved) return `${resolved.file}:${resolved.line}:${resolved.column}`;
+			}
+			return `${file}:${lineNum}:${colNum}`;
+		}
+	}
+}
+function classifySSRError(error, component, url) {
+	const normalizedError = error instanceof Error ? error : new Error(typeof error === "string" ? error : String(error));
+	const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+	const base = {
+		error: normalizedError.message,
+		component,
+		url,
+		stack: normalizedError.stack,
+		sourceLocation: extractSourceLocation(normalizedError.stack),
+		timestamp
+	};
+	const browserApi = detectBrowserApi(normalizedError);
+	if (browserApi) return {
+		...base,
+		type: "browser-api",
+		browserApi,
+		hint: getBrowserApiHint(browserApi)
+	};
+	if (isComponentResolutionError(normalizedError)) return {
+		...base,
+		type: "component-resolution",
+		hint: getComponentResolutionHint(component)
+	};
+	return {
+		...base,
+		type: "render",
+		hint: getRenderErrorHint()
+	};
+}
+var colors = {
+	reset: "\x1B[0m",
+	red: "\x1B[31m",
+	yellow: "\x1B[33m",
+	cyan: "\x1B[36m",
+	dim: "\x1B[2m",
+	bold: "\x1B[1m",
+	bgRed: "\x1B[41m",
+	white: "\x1B[37m"
+};
+function makeRelative(path2, root) {
+	const normalizedPath = path2.replace(/\\/g, "/");
+	const base = (root ?? process.cwd()).replace(/\\/g, "/");
+	if (normalizedPath.startsWith(base + "/")) return normalizedPath.slice(base.length + 1);
+	return path2;
+}
+function formatConsoleError(classified, root, formatErrors = true, suppressedWarnings = []) {
+	if (!formatErrors) return `SSR Error ${classified.component ? `[${classified.component}]` : ""}: ${classified.error}`;
+	const componentPart = classified.component ? `  ${colors.cyan}${classified.component}${colors.reset}` : "";
+	const lines = [
+		"",
+		`  ${colors.bgRed}${colors.white}${colors.bold} SSR ERROR ${colors.reset}${componentPart}`,
+		"",
+		`  ${classified.error}`
+	];
+	if (classified.sourceLocation) {
+		const relativePath = makeRelative(classified.sourceLocation, root);
+		lines.push(`  ${colors.dim}Source: ${relativePath}${colors.reset}`);
+	}
+	if (classified.url) lines.push(`  ${colors.dim}URL: ${classified.url}${colors.reset}`);
+	lines.push("", `  ${colors.yellow}Hint${colors.reset}  ${classified.hint}`, "");
+	if (classified.stack) lines.push(`  ${colors.dim}${classified.stack.split("\n").join("\n  ")}${colors.reset}`, "");
+	if (suppressedWarnings.length > 0) lines.push(`  ${colors.dim}Suppressed ${suppressedWarnings.length} framework warning(s).${colors.reset}`, "");
+	return lines.join("\n");
+}
+var sourceMaps = /* @__PURE__ */ new Map();
+setSourceMapResolver((file, line, column) => {
+	if (!file.includes("/ssr/") || !file.endsWith(".js")) return null;
+	const mapFile = file + ".map";
+	if (!existsSync(mapFile)) return null;
+	let traceMap = sourceMaps.get(mapFile);
+	if (!traceMap) try {
+		traceMap = new TraceMap(readFileSync(mapFile, "utf-8"));
+		sourceMaps.set(mapFile, traceMap);
+	} catch {
+		return null;
+	}
+	const original = originalPositionFor(traceMap, {
+		line,
+		column
+	});
+	if (original.source) {
+		const mapDir = path.dirname(mapFile);
+		return {
+			file: path.resolve(mapDir, original.source),
+			line: original.line ?? line,
+			column: original.column ?? column
+		};
+	}
+	return null;
+});
+var readableToString = (readable) => new Promise((resolve, reject) => {
+	let data = "";
+	readable.setEncoding("utf8");
+	readable.on("data", (chunk) => data += chunk);
+	readable.on("end", () => resolve(data));
+	readable.on("error", (err) => reject(err));
+});
+var server_default = (render, options) => {
+	const { port = 13714, host = "0.0.0.0", cluster: useCluster = false, formatErrors = true } = (typeof options === "number" ? { port: options } : options) ?? {};
+	const log = (message) => {
+		console.log(useCluster && !cluster.isPrimary ? `[${cluster.worker?.id ?? "N/A"} / ${cluster.worker?.process?.pid ?? "N/A"}] ${message}` : message);
+	};
+	if (useCluster && cluster.isPrimary) {
+		log("Primary Inertia SSR server process started...");
+		for (let i = 0; i < availableParallelism(); i++) cluster.fork();
+		cluster.on("message", (_worker, message) => {
+			if (message === "shutdown") {
+				for (const id in cluster.workers) cluster.workers[id]?.kill();
+				process2.exit();
+			}
+		});
+		return render;
+	}
+	const handleRender = async (request, response) => {
+		let page;
+		try {
+			page = parsePage(await readableToString(request));
+		} catch (e) {
+			response.writeHead(400, {
+				"Content-Type": "application/json",
+				Server: "Inertia.js SSR"
+			});
+			response.write(JSON.stringify({ error: `Invalid page object: ${e.message}` }));
+			return;
+		}
+		const originalWarn = console.warn;
+		if (formatErrors) console.warn = () => {};
+		try {
+			const result = await render(page);
+			response.writeHead(200, {
+				"Content-Type": "application/json",
+				Server: "Inertia.js SSR"
+			});
+			response.write(JSON.stringify(result));
+		} catch (e) {
+			const error = e;
+			if (!formatErrors) throw error;
+			const classified = classifySSRError(error, page.component, page.url);
+			console.error(formatConsoleError(classified));
+			response.writeHead(500, {
+				"Content-Type": "application/json",
+				Server: "Inertia.js SSR"
+			});
+			response.write(JSON.stringify(classified));
+		} finally {
+			console.warn = originalWarn;
+		}
+	};
+	const routes = {
+		"/health": async () => ({
+			status: "OK",
+			timestamp: Date.now()
+		}),
+		"/shutdown": async () => {
+			if (cluster.isWorker) process2.send?.("shutdown");
+			process2.exit();
+		},
+		"/render": handleRender,
+		"/404": async () => ({
+			status: "NOT_FOUND",
+			timestamp: Date.now()
+		})
+	};
+	createServer(async (request, response) => {
+		const result = await (routes[request.url] ?? routes["/404"])(request, response);
+		if (!response.headersSent) {
+			response.writeHead(200, {
+				"Content-Type": "application/json",
+				Server: "Inertia.js SSR"
+			});
+			response.write(JSON.stringify(result));
+		}
+		response.end();
+	}).listen({
+		port,
+		host
+	}, () => log("Inertia SSR server started."));
+	log(`Starting SSR server on port ${port}...`);
+	return render;
+};
 // node_modules/@vue/compiler-ssr/dist/compiler-ssr.cjs.js
 /**
 * @vue/compiler-ssr v3.5.44
@@ -40172,713 +40877,9 @@ _sfc_main.setup = (props, ctx) => {
 	(ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("resources/js/layouts/SiteLayout.vue");
 	return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
-// node_modules/@jridgewell/sourcemap-codec/dist/sourcemap-codec.mjs
-var comma = ",".charCodeAt(0);
-";".charCodeAt(0);
-var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-var intToChar = /* @__PURE__ */ new Uint8Array(64);
-var charToInt = /* @__PURE__ */ new Uint8Array(128);
-for (let i = 0; i < chars.length; i++) {
-	const c = chars.charCodeAt(i);
-	intToChar[i] = c;
-	charToInt[c] = i;
-}
-function decodeInteger(reader) {
-	let value = 0;
-	let shift = 0;
-	let integer = 0;
-	do {
-		integer = charToInt[reader.next()];
-		value |= (integer & 31) << shift;
-		shift += 5;
-	} while (integer & 32);
-	return value;
-}
-function decodeSign(num) {
-	return num & 1 ? -2147483648 | -(num >>> 1) : num >>> 1;
-}
-function hasMoreVlq(reader, max) {
-	if (reader.pos >= max) return false;
-	return reader.peek() !== comma;
-}
-var StringReader = class {
-	constructor(buffer) {
-		this.pos = 0;
-		this.buffer = buffer;
-	}
-	next() {
-		return this.buffer.charCodeAt(this.pos++);
-	}
-	peek() {
-		return this.buffer.charCodeAt(this.pos);
-	}
-	indexOf(char) {
-		const { buffer, pos } = this;
-		const idx = buffer.indexOf(char, pos);
-		return idx === -1 ? buffer.length : idx;
-	}
-};
-function decode(mappings) {
-	const { length } = mappings;
-	const reader = new StringReader(mappings);
-	const decoded = [];
-	let genColumn = 0;
-	let sourcesIndex = 0;
-	let sourceLine = 0;
-	let sourceColumn = 0;
-	let namesIndex = 0;
-	do {
-		const semi = reader.indexOf(";");
-		const line = [];
-		let sorted = true;
-		let lastCol = 0;
-		genColumn = 0;
-		while (reader.pos < semi) {
-			let seg;
-			genColumn += decodeSign(decodeInteger(reader));
-			if (genColumn < lastCol) sorted = false;
-			lastCol = genColumn;
-			if (hasMoreVlq(reader, semi)) {
-				sourcesIndex += decodeSign(decodeInteger(reader));
-				sourceLine += decodeSign(decodeInteger(reader));
-				sourceColumn += decodeSign(decodeInteger(reader));
-				if (hasMoreVlq(reader, semi)) {
-					namesIndex += decodeSign(decodeInteger(reader));
-					seg = [
-						genColumn,
-						sourcesIndex,
-						sourceLine,
-						sourceColumn,
-						namesIndex
-					];
-				} else seg = [
-					genColumn,
-					sourcesIndex,
-					sourceLine,
-					sourceColumn
-				];
-			} else seg = [genColumn];
-			line.push(seg);
-			reader.pos++;
-		}
-		if (!sorted) sort(line);
-		decoded.push(line);
-		reader.pos = semi + 1;
-	} while (reader.pos <= length);
-	return decoded;
-}
-function sort(line) {
-	line.sort(sortComparator$1);
-}
-function sortComparator$1(a, b) {
-	return a[0] - b[0];
-}
-// node_modules/@jridgewell/resolve-uri/dist/resolve-uri.mjs
-var schemeRegex = /^[\w+.-]+:\/\//;
-/**
-* Matches the parts of a URL:
-* 1. Scheme, including ":", guaranteed.
-* 2. User/password, including "@", optional.
-* 3. Host, guaranteed.
-* 4. Port, including ":", optional.
-* 5. Path, including "/", optional.
-* 6. Query, including "?", optional.
-* 7. Hash, including "#", optional.
-*/
-var urlRegex = /^([\w+.-]+:)\/\/([^@/#?]*@)?([^:/#?]*)(:\d+)?(\/[^#?]*)?(\?[^#]*)?(#.*)?/;
-/**
-* File URLs are weird. They dont' need the regular `//` in the scheme, they may or may not start
-* with a leading `/`, they can have a domain (but only if they don't start with a Windows drive).
-*
-* 1. Host, optional.
-* 2. Path, which may include "/", guaranteed.
-* 3. Query, including "?", optional.
-* 4. Hash, including "#", optional.
-*/
-var fileRegex = /^file:(?:\/\/((?![a-z]:)[^/#?]*)?)?(\/?[^#?]*)(\?[^#]*)?(#.*)?/i;
-function isAbsoluteUrl(input) {
-	return schemeRegex.test(input);
-}
-function isSchemeRelativeUrl(input) {
-	return input.startsWith("//");
-}
-function isAbsolutePath(input) {
-	return input.startsWith("/");
-}
-function isFileUrl(input) {
-	return input.startsWith("file:");
-}
-function isRelative(input) {
-	return /^[.?#]/.test(input);
-}
-function parseAbsoluteUrl(input) {
-	const match = urlRegex.exec(input);
-	return makeUrl(match[1], match[2] || "", match[3], match[4] || "", match[5] || "/", match[6] || "", match[7] || "");
-}
-function parseFileUrl(input) {
-	const match = fileRegex.exec(input);
-	const path = match[2];
-	return makeUrl("file:", "", match[1] || "", "", isAbsolutePath(path) ? path : "/" + path, match[3] || "", match[4] || "");
-}
-function makeUrl(scheme, user, host, port, path, query, hash) {
-	return {
-		scheme,
-		user,
-		host,
-		port,
-		path,
-		query,
-		hash,
-		type: 7
-	};
-}
-function parseUrl(input) {
-	if (isSchemeRelativeUrl(input)) {
-		const url = parseAbsoluteUrl("http:" + input);
-		url.scheme = "";
-		url.type = 6;
-		return url;
-	}
-	if (isAbsolutePath(input)) {
-		const url = parseAbsoluteUrl("http://foo.com" + input);
-		url.scheme = "";
-		url.host = "";
-		url.type = 5;
-		return url;
-	}
-	if (isFileUrl(input)) return parseFileUrl(input);
-	if (isAbsoluteUrl(input)) return parseAbsoluteUrl(input);
-	const url = parseAbsoluteUrl("http://foo.com/" + input);
-	url.scheme = "";
-	url.host = "";
-	url.type = input ? input.startsWith("?") ? 3 : input.startsWith("#") ? 2 : 4 : 1;
-	return url;
-}
-function stripPathFilename(path) {
-	if (path.endsWith("/..")) return path;
-	const index = path.lastIndexOf("/");
-	return path.slice(0, index + 1);
-}
-function mergePaths(url, base) {
-	normalizePath(base, base.type);
-	if (url.path === "/") url.path = base.path;
-	else url.path = stripPathFilename(base.path) + url.path;
-}
-/**
-* The path can have empty directories "//", unneeded parents "foo/..", or current directory
-* "foo/.". We need to normalize to a standard representation.
-*/
-function normalizePath(url, type) {
-	const rel = type <= 4;
-	const pieces = url.path.split("/");
-	let pointer = 1;
-	let positive = 0;
-	let addTrailingSlash = false;
-	for (let i = 1; i < pieces.length; i++) {
-		const piece = pieces[i];
-		if (!piece) {
-			addTrailingSlash = true;
-			continue;
-		}
-		addTrailingSlash = false;
-		if (piece === ".") continue;
-		if (piece === "..") {
-			if (positive) {
-				addTrailingSlash = true;
-				positive--;
-				pointer--;
-			} else if (rel) pieces[pointer++] = piece;
-			continue;
-		}
-		pieces[pointer++] = piece;
-		positive++;
-	}
-	let path = "";
-	for (let i = 1; i < pointer; i++) path += "/" + pieces[i];
-	if (!path || addTrailingSlash && !path.endsWith("/..")) path += "/";
-	url.path = path;
-}
-/**
-* Attempts to resolve `input` URL/path relative to `base`.
-*/
-function resolve(input, base) {
-	if (!input && !base) return "";
-	const url = parseUrl(input);
-	let inputType = url.type;
-	if (base && inputType !== 7) {
-		const baseUrl = parseUrl(base);
-		const baseType = baseUrl.type;
-		switch (inputType) {
-			case 1: url.hash = baseUrl.hash;
-			case 2: url.query = baseUrl.query;
-			case 3:
-			case 4: mergePaths(url, baseUrl);
-			case 5:
-				url.user = baseUrl.user;
-				url.host = baseUrl.host;
-				url.port = baseUrl.port;
-			case 6: url.scheme = baseUrl.scheme;
-		}
-		if (baseType > inputType) inputType = baseType;
-	}
-	normalizePath(url, inputType);
-	const queryHash = url.query + url.hash;
-	switch (inputType) {
-		case 2:
-		case 3: return queryHash;
-		case 4: {
-			const path = url.path.slice(1);
-			if (!path) return queryHash || ".";
-			if (isRelative(base || input) && !isRelative(path)) return "./" + path + queryHash;
-			return path + queryHash;
-		}
-		case 5: return url.path + queryHash;
-		default: return url.scheme + "//" + url.user + url.host + url.port + url.path + queryHash;
-	}
-}
-// node_modules/@jridgewell/trace-mapping/dist/trace-mapping.mjs
-function stripFilename(path) {
-	if (!path) return "";
-	const index = path.lastIndexOf("/");
-	return path.slice(0, index + 1);
-}
-function resolver(mapUrl, sourceRoot) {
-	const from = stripFilename(mapUrl);
-	const prefix = sourceRoot ? sourceRoot + "/" : "";
-	return (source) => resolve(prefix + (source || ""), from);
-}
-var COLUMN = 0;
-var SOURCES_INDEX = 1;
-var SOURCE_LINE = 2;
-var SOURCE_COLUMN = 3;
-var NAMES_INDEX = 4;
-function maybeSort(mappings, owned) {
-	const unsortedIndex = nextUnsortedSegmentLine(mappings, 0);
-	if (unsortedIndex === mappings.length) return mappings;
-	if (!owned) mappings = mappings.slice();
-	for (let i = unsortedIndex; i < mappings.length; i = nextUnsortedSegmentLine(mappings, i + 1)) mappings[i] = sortSegments(mappings[i], owned);
-	return mappings;
-}
-function nextUnsortedSegmentLine(mappings, start) {
-	for (let i = start; i < mappings.length; i++) if (!isSorted(mappings[i])) return i;
-	return mappings.length;
-}
-function isSorted(line) {
-	for (let j = 1; j < line.length; j++) if (line[j][COLUMN] < line[j - 1][COLUMN]) return false;
-	return true;
-}
-function sortSegments(line, owned) {
-	if (!owned) line = line.slice();
-	return line.sort(sortComparator);
-}
-function sortComparator(a, b) {
-	return a[COLUMN] - b[COLUMN];
-}
-var found = false;
-function binarySearch(haystack, needle, low, high) {
-	while (low <= high) {
-		const mid = low + (high - low >> 1);
-		const cmp = haystack[mid][COLUMN] - needle;
-		if (cmp === 0) {
-			found = true;
-			return mid;
-		}
-		if (cmp < 0) low = mid + 1;
-		else high = mid - 1;
-	}
-	found = false;
-	return low - 1;
-}
-function upperBound(haystack, needle, index) {
-	for (let i = index + 1; i < haystack.length; index = i++) if (haystack[i][COLUMN] !== needle) break;
-	return index;
-}
-function lowerBound(haystack, needle, index) {
-	for (let i = index - 1; i >= 0; index = i--) if (haystack[i][COLUMN] !== needle) break;
-	return index;
-}
-function memoizedState() {
-	return {
-		lastKey: -1,
-		lastNeedle: -1,
-		lastIndex: -1
-	};
-}
-function memoizedBinarySearch(haystack, needle, state, key) {
-	const { lastKey, lastNeedle, lastIndex } = state;
-	let low = 0;
-	let high = haystack.length - 1;
-	if (key === lastKey) {
-		if (needle === lastNeedle) {
-			found = lastIndex !== -1 && haystack[lastIndex][COLUMN] === needle;
-			return lastIndex;
-		}
-		if (needle >= lastNeedle) low = lastIndex === -1 ? 0 : lastIndex;
-		else high = lastIndex;
-	}
-	state.lastKey = key;
-	state.lastNeedle = needle;
-	return state.lastIndex = binarySearch(haystack, needle, low, high);
-}
-function parse(map) {
-	return typeof map === "string" ? JSON.parse(map) : map;
-}
-var LINE_GTR_ZERO = "`line` must be greater than 0 (lines start at line 1)";
-var COL_GTR_EQ_ZERO = "`column` must be greater than or equal to 0 (columns start at column 0)";
-var TraceMap = class {
-	constructor(map, mapUrl) {
-		const isString = typeof map === "string";
-		if (!isString && map._decodedMemo) return map;
-		const parsed = parse(map);
-		const { version, file, names, sourceRoot, sources, sourcesContent } = parsed;
-		this.version = version;
-		this.file = file;
-		this.names = names || [];
-		this.sourceRoot = sourceRoot;
-		this.sources = sources;
-		this.sourcesContent = sourcesContent;
-		this.ignoreList = parsed.ignoreList || parsed.x_google_ignoreList || void 0;
-		const resolve = resolver(mapUrl, sourceRoot);
-		this.resolvedSources = sources.map(resolve);
-		const { mappings } = parsed;
-		if (typeof mappings === "string") {
-			this._encoded = mappings;
-			this._decoded = void 0;
-		} else if (Array.isArray(mappings)) {
-			this._encoded = void 0;
-			this._decoded = maybeSort(mappings, isString);
-		} else if (parsed.sections) throw new Error(`TraceMap passed sectioned source map, please use FlattenMap export instead`);
-		else throw new Error(`invalid source map: ${JSON.stringify(parsed)}`);
-		this._decodedMemo = memoizedState();
-		this._bySources = void 0;
-		this._bySourceMemos = void 0;
-	}
-};
-function cast(map) {
-	return map;
-}
-function decodedMappings(map) {
-	var _a;
-	return (_a = cast(map))._decoded || (_a._decoded = decode(cast(map)._encoded));
-}
-function originalPositionFor(map, needle) {
-	let { line, column, bias } = needle;
-	line--;
-	if (line < 0) throw new Error(LINE_GTR_ZERO);
-	if (column < 0) throw new Error(COL_GTR_EQ_ZERO);
-	const decoded = decodedMappings(map);
-	if (line >= decoded.length) return OMapping(null, null, null, null);
-	const segments = decoded[line];
-	const index = traceSegmentInternal(segments, cast(map)._decodedMemo, line, column, bias || 1);
-	if (index === -1) return OMapping(null, null, null, null);
-	const segment = segments[index];
-	if (segment.length === 1) return OMapping(null, null, null, null);
-	const { names, resolvedSources } = map;
-	return OMapping(resolvedSources[segment[SOURCES_INDEX]], segment[SOURCE_LINE] + 1, segment[SOURCE_COLUMN], segment.length === 5 ? names[segment[NAMES_INDEX]] : null);
-}
-function OMapping(source, line, column, name) {
-	return {
-		source,
-		line,
-		column,
-		name
-	};
-}
-function traceSegmentInternal(segments, memo, line, column, bias) {
-	let index = memoizedBinarySearch(segments, column, memo, line);
-	if (found) index = (bias === -1 ? upperBound : lowerBound)(segments, column, index);
-	else if (bias === -1) index++;
-	if (index === -1 || index === segments.length) return -1;
-	return index;
-}
-// node_modules/@inertiajs/core/dist/server.js
-var bigIntMarker = "$bigint";
-function parsePage(text) {
-	const page = JSON.parse(text);
-	if (page?.preserveBigIntegers === true && text.includes(`"${bigIntMarker}"`)) reviveBigIntegers(page);
-	return page;
-}
-function reviveBigIntegers(value) {
-	if (Array.isArray(value)) {
-		for (let index = 0; index < value.length; index++) value[index] = reviveBigInteger(value[index]);
-		return;
-	}
-	for (const key of Object.keys(value)) value[key] = reviveBigInteger(value[key]);
-}
-function reviveBigInteger(value) {
-	if (value === null || typeof value !== "object") return value;
-	if (typeof value[bigIntMarker] === "string") return BigInt(value[bigIntMarker]);
-	reviveBigIntegers(value);
-	return value;
-}
-var sourceMapResolver = null;
-function setSourceMapResolver(resolver) {
-	sourceMapResolver = resolver;
-}
-var BROWSER_APIS = {
-	window: "The global window object",
-	document: "The DOM document object",
-	navigator: "The navigator object",
-	location: "The location object",
-	history: "The browser history API",
-	screen: "The screen object",
-	localStorage: "Browser local storage",
-	sessionStorage: "Browser session storage",
-	innerWidth: "Browser viewport width",
-	innerHeight: "Browser viewport height",
-	outerWidth: "Browser window width",
-	outerHeight: "Browser window height",
-	scrollX: "Horizontal scroll position",
-	scrollY: "Vertical scroll position",
-	devicePixelRatio: "The device pixel ratio",
-	matchMedia: "The matchMedia function",
-	IntersectionObserver: "The IntersectionObserver API",
-	ResizeObserver: "The ResizeObserver API",
-	MutationObserver: "The MutationObserver API",
-	requestAnimationFrame: "The requestAnimationFrame function",
-	requestIdleCallback: "The requestIdleCallback function",
-	Image: "The Image constructor",
-	Audio: "The Audio constructor",
-	Worker: "The Worker constructor",
-	BroadcastChannel: "The BroadcastChannel constructor",
-	fetch: "The fetch API",
-	XMLHttpRequest: "The XMLHttpRequest API"
-};
-function detectBrowserApi(error) {
-	const message = error.message.toLowerCase();
-	for (const api of Object.keys(BROWSER_APIS)) if ([
-		`${api.toLowerCase()} is not defined`,
-		`'${api.toLowerCase()}' is not defined`,
-		`"${api.toLowerCase()}" is not defined`,
-		`cannot read properties of undefined (reading '${api.toLowerCase()}')`,
-		`cannot read property '${api.toLowerCase()}'`
-	].some((pattern) => message.includes(pattern))) return api;
-	return null;
-}
-function isComponentResolutionError(error) {
-	const message = error.message.toLowerCase();
-	return message.includes("cannot find module") || message.includes("failed to resolve") || message.includes("module not found") || message.includes("could not resolve");
-}
-var LIFECYCLE_HOOKS = "onMounted/useEffect/onMount";
-function getBrowserApiHint(api) {
-	const apiDescription = BROWSER_APIS[api] || `The "${api}" object`;
-	if (["localStorage", "sessionStorage"].includes(api)) return `${apiDescription} doesn't exist in Node.js. Check "typeof ${api} !== 'undefined'" before using it, or move the code to a ${LIFECYCLE_HOOKS} lifecycle hook.`;
-	if (["window", "document"].includes(api)) return `${apiDescription} doesn't exist in Node.js. Wrap browser-specific code in a ${LIFECYCLE_HOOKS} lifecycle hook, or check "typeof ${api} !== 'undefined'" before using it.`;
-	if ([
-		"IntersectionObserver",
-		"ResizeObserver",
-		"MutationObserver"
-	].includes(api)) return `${apiDescription} doesn't exist in Node.js. Create observers inside a ${LIFECYCLE_HOOKS} lifecycle hook, not at the module level.`;
-	if (["fetch", "XMLHttpRequest"].includes(api)) return `${apiDescription} may not be available in all Node.js versions. For SSR, ensure data fetching happens on the server (in your controller) and is passed as props, or use a ${LIFECYCLE_HOOKS} hook for client-side fetching.`;
-	return `${apiDescription} doesn't exist in Node.js. Move this code to a ${LIFECYCLE_HOOKS} lifecycle hook, or guard it with "typeof ${api} !== 'undefined'".`;
-}
-function getComponentResolutionHint(component) {
-	return `Could not resolve component${component ? ` "${component}"` : ""}. Check that the file exists and the path is correct. Ensure the component name matches the file name exactly (case-sensitive).`;
-}
-function getRenderErrorHint() {
-	return "An error occurred while rendering the component. Check the component for browser-specific code that runs during initialization. Move any code that accesses browser APIs to a lifecycle hook.";
-}
-function extractSourceLocation(stack) {
-	if (!stack) return;
-	for (const line of stack.split("\n")) {
-		if (!line.includes("at ")) continue;
-		if (line.includes("node_modules") || line.includes("node:")) continue;
-		let match = line.match(/\(([^)]+):(\d+):(\d+)\)/);
-		if (!match) match = line.match(/at\s+(?:file:\/\/)?(.+):(\d+):(\d+)\s*$/);
-		if (match) {
-			const file = match[1].replace(/^file:\/\//, "");
-			const lineNum = parseInt(match[2], 10);
-			const colNum = parseInt(match[3], 10);
-			if (sourceMapResolver) {
-				const resolved = sourceMapResolver(file, lineNum, colNum);
-				if (resolved) return `${resolved.file}:${resolved.line}:${resolved.column}`;
-			}
-			return `${file}:${lineNum}:${colNum}`;
-		}
-	}
-}
-function classifySSRError(error, component, url) {
-	const normalizedError = error instanceof Error ? error : new Error(typeof error === "string" ? error : String(error));
-	const timestamp = (/* @__PURE__ */ new Date()).toISOString();
-	const base = {
-		error: normalizedError.message,
-		component,
-		url,
-		stack: normalizedError.stack,
-		sourceLocation: extractSourceLocation(normalizedError.stack),
-		timestamp
-	};
-	const browserApi = detectBrowserApi(normalizedError);
-	if (browserApi) return {
-		...base,
-		type: "browser-api",
-		browserApi,
-		hint: getBrowserApiHint(browserApi)
-	};
-	if (isComponentResolutionError(normalizedError)) return {
-		...base,
-		type: "component-resolution",
-		hint: getComponentResolutionHint(component)
-	};
-	return {
-		...base,
-		type: "render",
-		hint: getRenderErrorHint()
-	};
-}
-var colors = {
-	reset: "\x1B[0m",
-	red: "\x1B[31m",
-	yellow: "\x1B[33m",
-	cyan: "\x1B[36m",
-	dim: "\x1B[2m",
-	bold: "\x1B[1m",
-	bgRed: "\x1B[41m",
-	white: "\x1B[37m"
-};
-function makeRelative(path2, root) {
-	const normalizedPath = path2.replace(/\\/g, "/");
-	const base = (root ?? process.cwd()).replace(/\\/g, "/");
-	if (normalizedPath.startsWith(base + "/")) return normalizedPath.slice(base.length + 1);
-	return path2;
-}
-function formatConsoleError(classified, root, formatErrors = true, suppressedWarnings = []) {
-	if (!formatErrors) return `SSR Error ${classified.component ? `[${classified.component}]` : ""}: ${classified.error}`;
-	const componentPart = classified.component ? `  ${colors.cyan}${classified.component}${colors.reset}` : "";
-	const lines = [
-		"",
-		`  ${colors.bgRed}${colors.white}${colors.bold} SSR ERROR ${colors.reset}${componentPart}`,
-		"",
-		`  ${classified.error}`
-	];
-	if (classified.sourceLocation) {
-		const relativePath = makeRelative(classified.sourceLocation, root);
-		lines.push(`  ${colors.dim}Source: ${relativePath}${colors.reset}`);
-	}
-	if (classified.url) lines.push(`  ${colors.dim}URL: ${classified.url}${colors.reset}`);
-	lines.push("", `  ${colors.yellow}Hint${colors.reset}  ${classified.hint}`, "");
-	if (classified.stack) lines.push(`  ${colors.dim}${classified.stack.split("\n").join("\n  ")}${colors.reset}`, "");
-	if (suppressedWarnings.length > 0) lines.push(`  ${colors.dim}Suppressed ${suppressedWarnings.length} framework warning(s).${colors.reset}`, "");
-	return lines.join("\n");
-}
-var sourceMaps = /* @__PURE__ */ new Map();
-setSourceMapResolver((file, line, column) => {
-	if (!file.includes("/ssr/") || !file.endsWith(".js")) return null;
-	const mapFile = file + ".map";
-	if (!existsSync(mapFile)) return null;
-	let traceMap = sourceMaps.get(mapFile);
-	if (!traceMap) try {
-		traceMap = new TraceMap(readFileSync(mapFile, "utf-8"));
-		sourceMaps.set(mapFile, traceMap);
-	} catch {
-		return null;
-	}
-	const original = originalPositionFor(traceMap, {
-		line,
-		column
-	});
-	if (original.source) {
-		const mapDir = path.dirname(mapFile);
-		return {
-			file: path.resolve(mapDir, original.source),
-			line: original.line ?? line,
-			column: original.column ?? column
-		};
-	}
-	return null;
-});
-var readableToString = (readable) => new Promise((resolve, reject) => {
-	let data = "";
-	readable.setEncoding("utf8");
-	readable.on("data", (chunk) => data += chunk);
-	readable.on("end", () => resolve(data));
-	readable.on("error", (err) => reject(err));
-});
-var server_default = (render, options) => {
-	const { port = 13714, host = "0.0.0.0", cluster: useCluster = false, formatErrors = true } = (typeof options === "number" ? { port: options } : options) ?? {};
-	const log = (message) => {
-		console.log(useCluster && !cluster.isPrimary ? `[${cluster.worker?.id ?? "N/A"} / ${cluster.worker?.process?.pid ?? "N/A"}] ${message}` : message);
-	};
-	if (useCluster && cluster.isPrimary) {
-		log("Primary Inertia SSR server process started...");
-		for (let i = 0; i < availableParallelism(); i++) cluster.fork();
-		cluster.on("message", (_worker, message) => {
-			if (message === "shutdown") {
-				for (const id in cluster.workers) cluster.workers[id]?.kill();
-				process2.exit();
-			}
-		});
-		return render;
-	}
-	const handleRender = async (request, response) => {
-		let page;
-		try {
-			page = parsePage(await readableToString(request));
-		} catch (e) {
-			response.writeHead(400, {
-				"Content-Type": "application/json",
-				Server: "Inertia.js SSR"
-			});
-			response.write(JSON.stringify({ error: `Invalid page object: ${e.message}` }));
-			return;
-		}
-		const originalWarn = console.warn;
-		if (formatErrors) console.warn = () => {};
-		try {
-			const result = await render(page);
-			response.writeHead(200, {
-				"Content-Type": "application/json",
-				Server: "Inertia.js SSR"
-			});
-			response.write(JSON.stringify(result));
-		} catch (e) {
-			const error = e;
-			if (!formatErrors) throw error;
-			const classified = classifySSRError(error, page.component, page.url);
-			console.error(formatConsoleError(classified));
-			response.writeHead(500, {
-				"Content-Type": "application/json",
-				Server: "Inertia.js SSR"
-			});
-			response.write(JSON.stringify(classified));
-		} finally {
-			console.warn = originalWarn;
-		}
-	};
-	const routes = {
-		"/health": async () => ({
-			status: "OK",
-			timestamp: Date.now()
-		}),
-		"/shutdown": async () => {
-			if (cluster.isWorker) process2.send?.("shutdown");
-			process2.exit();
-		},
-		"/render": handleRender,
-		"/404": async () => ({
-			status: "NOT_FOUND",
-			timestamp: Date.now()
-		})
-	};
-	createServer(async (request, response) => {
-		const result = await (routes[request.url] ?? routes["/404"])(request, response);
-		if (!response.headersSent) {
-			response.writeHead(200, {
-				"Content-Type": "application/json",
-				Server: "Inertia.js SSR"
-			});
-			response.write(JSON.stringify(result));
-		}
-		response.end();
-	}).listen({
-		port,
-		host
-	}, () => log("Inertia SSR server started."));
-	log(`Starting SSR server on port ${port}...`);
-	return render;
-};
 // resources/js/ssr.js
-var renderPromise = createInertiaApp({
+var app;
+var render = (page) => (app ??= createInertiaApp({
 	resolve: async (name, page) => {
 		const module = await (/* @__PURE__ */ Object.assign({
 			"./pages/Error.vue": () => import("./assets/Error-HiHDVvxV.js"),
@@ -40893,10 +40894,30 @@ var renderPromise = createInertiaApp({
 	},
 	layout: () => _sfc_main,
 	title: (title) => title ? `${title} · Vixeo` : "Vixeo"
-});
-renderPromise.catch((error) => console.error(error));
-var renderPage = async (page) => {
-	return (await renderPromise)(page, server_renderer_exports.renderToString);
-};
-server_default(renderPage);
+})).then((renderApp) => renderApp(page, server_renderer_exports.renderToString));
+function ssrUrl() {
+	if (process.env.INERTIA_SSR_URL) return process.env.INERTIA_SSR_URL;
+	try {
+		const line = readFileSync(".env", "utf8").match(/^\s*INERTIA_SSR_URL\s*=\s*(.*)$/m);
+		return line ? line[1].trim().replace(/^(['"])(.*)\1$/, "$2") : null;
+	} catch {
+		return null;
+	}
+}
+function ssrOptions() {
+	try {
+		const url = new URL(ssrUrl() || "http://127.0.0.1:13714");
+		return {
+			port: Number(url.port) || 13714,
+			host: url.hostname || "127.0.0.1"
+		};
+	} catch {
+		return {
+			port: 13714,
+			host: "127.0.0.1"
+		};
+	}
+}
+var renderPage = render;
+server_default(renderPage, ssrOptions());
 export { head_default as a, vue_exports as c, renderPage as default, server_renderer_exports as i, _sfc_main$3 as n, link_default as o, _sfc_main$5 as r, usePage as s, _sfc_main$2 as t };
