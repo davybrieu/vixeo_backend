@@ -60,10 +60,14 @@ class LiveTv
         // Logo candidates, best first: the logo library (clean, transparent PNGs), the programme
         // guide's icon, then the provider's. All relayed from our own origin (ChannelLogos): the
         // app never sees their address.
+        // Then, when none of them knows the full name, the library's and the guide's logo of a
+        // shorter name ("RMC SPORT LIVE 16" → RMC Sport).
         $channels = array_map(fn (array $c) => ['name' => ChannelName::clean($c['name']), 'logo' => array_values(array_filter([
             $this->library->logo($c['name']),
             $this->epg->icon($c['epg_channel_id'], $c['name']),
             $c['logo'],
+            $this->library->logo($c['name'], fallback: true),
+            $this->epg->icon(null, $c['name'], fallback: true),
         ]))] + $c, $this->providerChannels());
 
         // The guide id is a server-side detail.

@@ -38,6 +38,46 @@ class ChannelName
 
     public static function key(string $name): string
     {
+        return self::join(self::words($name));
+    }
+
+    /**
+     * Keys to try when the full name matches nothing, for logos only (never for the programmes,
+     * which would be another channel's): the name without its last words, longest first, at least
+     * 4 letters. "RMC SPORT LIVE 16" → "rmcsportlive", "rmcsport"; "A LA CARTE 10" → "alacarte".
+     *
+     * @return list<string>
+     */
+    public static function fallbackKeys(string $name): array
+    {
+        $words = self::words($name);
+        $keys = [];
+        for ($n = count($words) - 1; $n >= 1; $n--) {
+            $key = self::join(array_slice($words, 0, $n));
+            if (strlen($key) >= 4) {
+                $keys[] = $key;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /** @param  list<string>  $words */
+    private static function join(array $words): string
+    {
+        $key = implode('', $words);
+
+        // "BFMTV" = "BFM TV" (but "MTV" stays "mtv").
+        return strlen($key) > 4 && str_ends_with($key, 'tv') ? substr($key, 0, -2) : $key;
+    }
+
+    /**
+     * The words that name the channel, normalised.
+     *
+     * @return list<string>
+     */
+    private static function words(string $name): array
+    {
         $name = mb_strtolower(self::clean($name));
         // Whatever is still in brackets doesn't name the channel ("BEIN SPORTS 1 (B)").
         $name = trim(preg_replace('/\s*[\(\[][^\)\]]*[\)\]]?\s*$/u', '', $name) ?? $name) ?: $name;
@@ -58,10 +98,8 @@ class ChannelName
             fn (string $w) => strlen($w) > 3 && $w !== 'plus' && str_ends_with($w, 's') ? substr($w, 0, -1) : $w,
             array_values(array_filter($words, fn (string $w) => ! in_array($w, ['et', 'and'], true)))
         );
-        $kept = array_filter($words, fn (string $w) => ! in_array($w, self::NOISE, true));
-        $key = implode('', $kept === [] ? $words : $kept);
+        $kept = array_values(array_filter($words, fn (string $w) => ! in_array($w, self::NOISE, true)));
 
-        // "BFMTV" = "BFM TV" (but "MTV" stays "mtv").
-        return strlen($key) > 4 && str_ends_with($key, 'tv') ? substr($key, 0, -2) : $key;
+        return $kept === [] ? $words : $kept;
     }
 }

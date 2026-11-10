@@ -76,12 +76,27 @@ class Epg
         ], array_slice($list, 0, $limit));
     }
 
-    /** The guide's icon of a channel (its address at the guide's source), or null. */
-    public function icon(?string $epgChannelId, string $name): ?string
+    /**
+     * The guide's icon of a channel (its address at the guide's source), or null. `$fallback`: the
+     * icon of a shorter name instead ({@see ChannelName::fallbackKeys}).
+     */
+    public function icon(?string $epgChannelId, string $name, bool $fallback = false): ?string
     {
         $index = $this->index();
+        if ($index === null) {
+            return null;
+        }
+        if (! $fallback) {
+            return $this->find($index['icons'], $epgChannelId, $name);
+        }
+        // The icon of a shorter name (logos only: never the programmes of another channel).
+        foreach (ChannelName::fallbackKeys($name) as $key) {
+            if (isset($index['icons'][$key])) {
+                return $index['icons'][$key];
+            }
+        }
 
-        return $index === null ? null : $this->find($index['icons'], $epgChannelId, $name);
+        return null;
     }
 
     /**

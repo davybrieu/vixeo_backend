@@ -207,7 +207,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   « 6TER .c », « TF1 FHD » → « 6TER », « TF1 », aussi le nom affiché), le premier fichier qui a des programmes
   l'emporte. **Logos** : candidats dans l'ordre bibliothèque `tv-logo/tv-logos`
   (`LogoLibrary`, API GitHub une fois par jour, `TV_LOGOS_DIRECTORIES`), icône du guide, logo du
-  fournisseur ; jamais leur adresse, mais `GET /tv/logo/{hash}` sur notre domaine
+  fournisseur, puis secours sur un nom plus court (`ChannelName::fallbackKeys`, logos seulement,
+  jamais le programme) ; `php artisan tv:match` liste les chaînes sans logo ni programme ; jamais leur adresse, mais `GET /tv/logo/{hash}` sur notre domaine
   (`App\Services\Tv\ChannelLogos` : hash SHA-256 stable des candidats, le relais sert le premier
   qui donne une image ; l'image est **relayée, jamais stockée** sur le serveur (décision du
   développeur), vérifiée, gardée 7 jours par l'appli et le navigateur (`Cache-Control`) ; publique,

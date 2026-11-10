@@ -73,6 +73,7 @@ function fakeTv(mixed $first = null, int $status = 200, mixed $second = null, ?a
         'api.github.com/repos/tv-logo/tv-logos/contents/countries/france' => Http::response([
             ['name' => 'tf1-fr.png', 'type' => 'file', 'download_url' => 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/tf1-fr.png'],
             ['name' => 'm6-fr.png', 'type' => 'file', 'download_url' => 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/m6-fr.png'],
+            ['name' => 'rmc-sport-fr.png', 'type' => 'file', 'download_url' => 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/rmc-sport-fr.png'],
             ['name' => '0_all_logos_mosaic.md', 'type' => 'file', 'download_url' => 'https://raw.githubusercontent.com/x.md'],
             ['name' => 'hd', 'type' => 'dir', 'download_url' => null],
         ]),
@@ -202,7 +203,7 @@ it('downloads the guide and the logo library from the command line (php artisan 
     $this->artisan('tv:epg')
         ->expectsOutputToContain('https://guide.test/one.xml.gz : 2 chaînes, 2 programmes')
         ->expectsOutputToContain('https://other.test/two.xml : 2 chaînes, 2 programmes')
-        ->expectsOutputToContain('Bibliothèque de logos : 2 logos')
+        ->expectsOutputToContain('Bibliothèque de logos : 3 logos')
         ->assertSuccessful();
 });
 
@@ -240,4 +241,37 @@ it('answers 404 for the guide of an unknown channel', function () {
     fakeTv();
 
     $this->getJson('/api/v1/tv/channels/nope/epg')->assertNotFound()->assertJsonPath('message', 'Chaîne introuvable.');
+});
+
+it('falls back to the logo of a shorter name, after the exact ones', function () {
+    expect(ChannelName::fallbackKeys('RMC SPORT LIVE 16'))->toBe(['rmcsportlive', 'rmcsport'])
+        ->and(ChannelName::fallbackKeys('A LA CARTE 10'))->toBe(['alacarte'])
+        ->and(ChannelName::fallbackKeys('BFM 2'))->toBe([]);
+
+    config(['services.tv.logos_repository' => 'tv-logo/tv-logos', 'services.tv.logos_directories' => ['countries/france']]);
+    fakeTv(items: [
+        ['type' => 'iptv', 'ids' => ['id' => 'm6m'], 'name' => 'M6 MUSIC .c', 'url' => 'https://vavoo.test/s/m6m', 'group' => 'France', 'logo' => ''],
+        ['type' => 'iptv', 'ids' => ['id' => 'rmc16'], 'name' => 'RMC SPORT LIVE 16 .c', 'url' => 'https://vavoo.test/s/rmc16', 'group' => 'France', 'logo' => 'https://logo.test/rmc16.png'],
+    ]);
+    app(Epg::class)->refresh();
+
+    $channels = collect($this->getJson('/api/v1/tv/channels')->assertOk()->json('data'))->keyBy('id');
+    // "m6" is too short to be a fallback: no logo rather than a wrong one.
+    expect($channels['m6m']['logo'])->toBeNull()
+        // The provider's own logo comes before the fallback (RMC Sport's logo of the library).
+        ->and($channels['rmc16']['logo'])->toBe(proxiedLogo(implode("\n", [
+            'https://logo.test/rmc16.png',
+            'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/rmc-sport-fr.png',
+        ])));
+});
+
+it('lists the channels without a logo or a programme (php artisan tv:match)', function () {
+    fakeTv();
+    app(Epg::class)->refresh();
+
+    $this->artisan('tv:match')
+        ->expectsOutputToContain('3 chaînes : 2 avec un logo, 2 avec un programme.')
+        ->expectsOutputToContain('Sans logo (1 noms) :')
+        ->expectsOutputToContain('  M6  [m6]')
+        ->assertSuccessful();
 });

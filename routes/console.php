@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Tv\ChannelLogos;
+use App\Services\Tv\ChannelName;
 use App\Services\Tv\Epg;
 use App\Services\Tv\LiveTv;
 use App\Services\Tv\LogoLibrary;
@@ -87,3 +88,43 @@ Artisan::command('tv:epg', function () {
 
     return 0;
 })->purpose('Download the live TV programme guide and the logo library');
+
+// Which channels have no logo or no programme? Counts them and lists their names with the key used
+// to match them (docs/tv-direct.md), to see which names to fix. Reads the cache only.
+Artisan::command('tv:match {--limit=50 : names listed per group}', function () {
+    $live = app(LiveTv::class);
+
+    try {
+        $channels = $live->channels();
+    } catch (Throwable $e) {
+        $this->error('Chaînes indisponibles : '.$e->getMessage());
+
+        return 1;
+    }
+
+    $noLogo = [];
+    $noGuide = [];
+    foreach ($channels as $channel) {
+        if ($channel['logo'] === null) {
+            $noLogo[] = $channel['name'];
+        }
+        if ($live->programmes($channel['id']) === []) {
+            $noGuide[] = $channel['name'];
+        }
+    }
+
+    $total = count($channels);
+    $this->info(sprintf('%d chaînes : %d avec un logo, %d avec un programme.', $total, $total - count($noLogo), $total - count($noGuide)));
+    foreach (['Sans logo' => $noLogo, 'Sans programme' => $noGuide] as $title => $names) {
+        $names = array_values(array_unique($names));
+        if ($names === []) {
+            continue;
+        }
+        $this->line($title.' ('.count($names).' noms) :');
+        foreach (array_slice($names, 0, (int) $this->option('limit')) as $name) {
+            $this->line('  '.$name.'  ['.ChannelName::key($name).']');
+        }
+    }
+
+    return 0;
+})->purpose('List the live TV channels without a logo or a programme');

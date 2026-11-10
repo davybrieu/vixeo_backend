@@ -69,6 +69,10 @@ Réponse de `/tv/channels/{id}/epg` : `{"data": [...], "available": true}`, chaq
 et `end` (UTC, ISO 8601). 30 programmes au plus, à partir de celui en cours. L'identifiant de
 guide d'une chaîne reste côté serveur (il n'est pas dans les réponses).
 
+`php artisan tv:match` compte les chaînes avec un logo et un programme, et liste les noms
+sans l'un ou l'autre avec leur clé de comparaison (entre crochets) : c'est la clé à retrouver
+dans le guide ou dans le nom de fichier de la bibliothèque.
+
 `php artisan tv:epg` affiche, pour chaque fichier, le nombre de chaînes et de programmes lus (ou
 l'erreur), puis le nombre de logos de la bibliothèque.
 
@@ -83,7 +87,12 @@ Chaque chaîne a jusqu'à trois logos possibles, **dans cet ordre** :
    une requête par dossier) ; le nom du fichier sans son suffixe de pays (`-fr`) est comparé au nom
    de la chaîne comme pour le guide ;
 2. l'**icône du guide des programmes** (`<icon>` de la chaîne dans les fichiers XMLTV) ;
-3. le logo du **fournisseur**.
+3. le logo du **fournisseur** ;
+4. **passe de secours**, si aucun des trois ne connaît le nom complet : le logo de la bibliothèque,
+   puis du guide, pour un **nom plus court** (`ChannelName::fallbackKeys` : on retire les derniers
+   mots, au moins 4 lettres) : « RMC SPORT LIVE 16 » → `rmcsportlive`, puis `rmcsport`. Jamais pour
+   le programme : ce serait celui d'une autre chaîne. Trop court (« BFM 2 » → `bfm`) : pas de
+   secours, plutôt pas de logo qu'un mauvais.
 
 Le relais sert **le premier qui donne une image valable** : un logo introuvable dans la
 bibliothèque ou refusé passe au suivant. Les logos restent la propriété des chaînes ; ils servent

@@ -29,12 +29,20 @@ class LogoLibrary
         return filled(config('services.tv.logos_repository')) && $this->directories() !== [];
     }
 
-    /** The library's logo of a channel, or null. */
-    public function logo(string $name): ?string
+    /**
+     * The library's logo of a channel, or null. `$fallback`: the logo of a shorter name instead
+     * ({@see ChannelName::fallbackKeys}, "RMC SPORT LIVE 16" → rmc-sport-fr.png).
+     */
+    public function logo(string $name, bool $fallback = false): ?string
     {
-        $key = ChannelName::key($name);
+        $map = $this->map();
+        foreach ($fallback ? ChannelName::fallbackKeys($name) : [ChannelName::key($name)] as $key) {
+            if ($key !== '' && isset($map[$key])) {
+                return $map[$key];
+            }
+        }
 
-        return $key === '' ? null : ($this->map()[$key] ?? null);
+        return null;
     }
 
     /**
