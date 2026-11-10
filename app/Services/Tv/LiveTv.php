@@ -20,6 +20,7 @@ class LiveTv
     public function __construct(
         private VavooClient $vavoo,
         private XtreamClient $xtream,
+        private ChannelLogos $logos,
     ) {}
 
     /** Whether at least one provider is configured. */
@@ -54,7 +55,8 @@ class LiveTv
      */
     public function channels(): array
     {
-        return $this->providerChannels();
+        // Logos on our own origin (ChannelLogos): never the provider's address.
+        return $this->logos->rewrite($this->providerChannels());
     }
 
     /**

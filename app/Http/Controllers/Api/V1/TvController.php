@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\TvChannelsRequest;
+use App\Services\Tv\ChannelLogos;
 use App\Services\Tv\LiveTv;
 use App\Services\Tv\StreamProxy;
 use Illuminate\Http\JsonResponse;
@@ -78,7 +79,8 @@ class TvController extends Controller
     /**
      * One channel.
      *
-     * Its name, category and logo (null when the provider has none): the channel page of the app.
+     * Its name, category and logo (an image on our origin, `GET /tv/logo/{hash}`; null when the
+     * provider has none): the channel page of the app.
      */
     public function show(string $id): JsonResponse
     {
@@ -133,6 +135,28 @@ class TvController extends Controller
             'Content-Type' => $media['content_type'],
             // A live playlist changes every few seconds: never cache it. Segments are immutable.
             'Cache-Control' => $isPlaylist ? 'no-store' : 'private, max-age=30',
+        ]);
+    }
+
+    /**
+     * Logo of a channel.
+     *
+     * The image (PNG, JPEG, WebP or GIF), served from our origin: the `logo` URL of a channel.
+     * 404 when the provider has no usable image (the app then shows its own icon).
+     *
+     * @unauthenticated
+     */
+    public function logo(string $hash, ChannelLogos $logos): Response
+    {
+        $image = $logos->image($hash);
+        abort_if($image === null, 404);
+
+        return response($image['body'], 200, [
+            'Content-Type' => $image['content_type'],
+            // The URL is stable for a given logo: the apps and browsers keep it 7 days. Our server
+            // keeps nothing (ChannelLogos).
+            'Cache-Control' => 'public, max-age=604800',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

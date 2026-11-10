@@ -4946,6 +4946,57 @@
                 }
             }
         },
+        "/v1/tv/logo/{hash}": {
+            "get": {
+                "operationId": "v1.tv.logo",
+                "description": "The image (PNG, JPEG, WebP or GIF), served from our origin: the `logo` URL of a channel.\n404 when the provider has no usable image (the app then shows its own icon).",
+                "summary": "Logo of a channel",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "hash",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "public, max-age=604800"
+                                }
+                            },
+                            "X-Content-Type-Options": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "nosniff"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/tv/categories": {
             "get": {
                 "operationId": "v1.tv.categories",
@@ -5048,7 +5099,7 @@
         "/v1/tv/channels/{id}": {
             "get": {
                 "operationId": "v1.tv.channels.show",
-                "description": "Its name, category and logo (null when the provider has none): the channel page of the app.",
+                "description": "Its name, category and logo (an image on our origin, `GET /tv/logo/{hash}`; null when the\nprovider has none): the channel page of the app.",
                 "summary": "One channel",
                 "tags": [
                     "TV en direct",
@@ -8048,6 +8099,25 @@
                     }
                 }
             },
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
             "AuthenticationException": {
                 "description": "Unauthenticated",
                 "content": {
@@ -8069,25 +8139,6 @@
             },
             "AuthorizationException": {
                 "description": "Authorization error",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
-            "ModelNotFoundException": {
-                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {
