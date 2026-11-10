@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\MediaType;
+use App\Enums\RatedSort;
 use App\Enums\RatedType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\RatedListRequest;
@@ -35,7 +36,8 @@ class TmdbRatingController extends Controller
     /**
      * My ratings ("Mes avis").
      *
-     * Every type, or one, the most recently rated first, with the comments. Filtered by the
+     * Every type, or one, with the comments: the most recently rated first, or sorted by `sort`
+     * (oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the
      * profile's age limit. Ratings given on themoviedb.org show up within 10 minutes.
      */
     public function index(RatedListRequest $request, Profile $profile): JsonResponse
@@ -44,6 +46,7 @@ class TmdbRatingController extends Controller
         $type = $request->type();
         $rows = $this->ratings->all($profile, $this->link($profile))
             ->when($type !== null, fn ($rows) => $rows->where('type', $type))
+            ->sort(self::order($request->sort()))
             ->values();
 
         // The age limit of the TV show applies to its episodes.
@@ -179,5 +182,22 @@ class TmdbRatingController extends Controller
     private function link(Profile $profile): TmdbLink
     {
         return $profile->tmdbLink ?? throw TmdbLinkRevoked::notLinked();
+    }
+
+    /**
+     * Comparison for "Mes avis": by rating date, or by value then the most recent.
+     *
+     * @return \Closure(TmdbRating, TmdbRating): int
+     */
+    private static function order(RatedSort $sort): \Closure
+    {
+        $recent = fn (TmdbRating $a, TmdbRating $b) => [$b->rated_at->getTimestamp(), $b->id] <=> [$a->rated_at->getTimestamp(), $a->id];
+
+        return match ($sort) {
+            RatedSort::Recent => $recent,
+            RatedSort::Oldest => fn (TmdbRating $a, TmdbRating $b) => $recent($b, $a),
+            RatedSort::Highest => fn (TmdbRating $a, TmdbRating $b) => ($b->value <=> $a->value) ?: $recent($a, $b),
+            RatedSort::Lowest => fn (TmdbRating $a, TmdbRating $b) => ($a->value <=> $b->value) ?: $recent($a, $b),
+        };
     }
 }

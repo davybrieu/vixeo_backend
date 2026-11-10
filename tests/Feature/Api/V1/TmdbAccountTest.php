@@ -346,6 +346,33 @@ it('lists every rating with its comment, the most recently rated first, by page'
         ->assertJsonPath('meta.total_pages', 2);
 });
 
+it('sorts my ratings by date or by rating, equal ratings the most recent first', function () {
+    linkProfile($this->profile);
+    fakeRatedAccount(ratedState(
+        movies: [
+            Tmdb::movie(550, ['rating' => 8.5]),
+            Tmdb::movie(551, ['title' => 'Dune', 'rating' => 6.0]),
+            Tmdb::movie(552, ['title' => 'Alien', 'rating' => 8.5]),
+        ],
+        shows: [Tmdb::show(1399, ['rating' => 9.0])],
+    ));
+    $titles = fn (string $query) => $this->getJson("{$this->url}/ratings?per_page=500{$query}")->assertOk()->json('data.*.title');
+
+    expect($titles(''))->toBe(['Fight Club', 'Dune', 'Alien', 'Game of Thrones'])
+        ->and($titles('&sort=recent'))->toBe(['Fight Club', 'Dune', 'Alien', 'Game of Thrones'])
+        ->and($titles('&sort=oldest'))->toBe(['Game of Thrones', 'Alien', 'Dune', 'Fight Club'])
+        ->and($titles('&sort=highest'))->toBe(['Game of Thrones', 'Fight Club', 'Alien', 'Dune'])
+        ->and($titles('&sort=lowest'))->toBe(['Dune', 'Fight Club', 'Alien', 'Game of Thrones'])
+        ->and($titles('&sort=highest&type=movie'))->toBe(['Fight Club', 'Alien', 'Dune']);
+
+    // Sorted before paging.
+    $this->getJson("{$this->url}/ratings?sort=lowest&per_page=2&page=2")->assertOk()
+        ->assertJsonPath('data.*.title', ['Alien', 'Game of Thrones']);
+
+    $this->getJson("{$this->url}/ratings?sort=title")->assertUnprocessable()
+        ->assertJsonPath('errors.sort.0', 'La valeur sélectionnée pour tri n\'est pas valide.');
+});
+
 it('follows ratings given or removed on themoviedb.org, at most every 10 minutes', function () {
     linkProfile($this->profile);
     $tmdb = ratedState(movies: [Tmdb::movie(550, ['rating' => 8.0])]);

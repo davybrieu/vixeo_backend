@@ -2210,7 +2210,7 @@
         "/v1/profiles/{profile}/tmdb/ratings": {
             "get": {
                 "operationId": "v1.profiles.tmdb.ratings.index",
-                "description": "Every type, or one, the most recently rated first, with the comments. Filtered by the\nprofile's age limit. Ratings given on themoviedb.org show up within 10 minutes.",
+                "description": "Every type, or one, with the comments: the most recently rated first, or sorted by `sort`\n(oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the\nprofile's age limit. Ratings given on themoviedb.org show up within 10 minutes.",
                 "summary": "My ratings (\"Mes avis\")",
                 "tags": [
                     "Compte TMDb",
@@ -2232,6 +2232,14 @@
                         "description": "Movies, TV shows or episodes; every type when left out.",
                         "schema": {
                             "$ref": "#/components/schemas/RatedType"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "recent (default), oldest, highest (best rated first) or lowest (worst rated first).\n| |\n|---|\n| `recent` <br/> Most recently rated first (default). |\n| `oldest` <br/> Least recently rated first. |\n| `highest` <br/> Best rated first (then the most recent). |\n| `lowest` <br/> Worst rated first (then the most recent). |",
+                        "schema": {
+                            "$ref": "#/components/schemas/RatedSort"
                         }
                     },
                     {
@@ -6328,24 +6336,6 @@
                         ],
                         "format": "date-time"
                     },
-                    "is_liked": {
-                        "type": "boolean",
-                        "description": "In \"Favoris\" (\u2764), separate from \"Ma liste\" (is_favorite)."
-                    },
-                    "liked_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "liked_changed_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
                     "position_ms": {
                         "type": "integer",
                         "description": "Resume position in milliseconds."
@@ -6417,9 +6407,6 @@
                     "is_favorite",
                     "favorited_at",
                     "favorite_changed_at",
-                    "is_liked",
-                    "liked_at",
-                    "liked_changed_at",
                     "position_ms",
                     "duration_ms",
                     "progress",
@@ -6888,6 +6875,17 @@
                     "vote_average"
                 ],
                 "title": "RatedItemResource"
+            },
+            "RatedSort": {
+                "type": "string",
+                "description": "Order of \"Mes avis\" (GET /profiles/{profile}/tmdb/ratings).\n| |\n|---|\n| `recent` <br/> Most recently rated first (default). |\n| `oldest` <br/> Least recently rated first. |\n| `highest` <br/> Best rated first (then the most recent). |\n| `lowest` <br/> Worst rated first (then the most recent). |",
+                "enum": [
+                    "recent",
+                    "oldest",
+                    "highest",
+                    "lowest"
+                ],
+                "title": "RatedSort"
             },
             "RatedType": {
                 "type": "string",
@@ -7793,7 +7791,7 @@
                                 },
                                 "favorite": {
                                     "type": "object",
-                                    "description": "\"Ma liste\": added or removed. At least one of favorite, liked, progress, watched is required.",
+                                    "description": "\"Ma liste\": added or removed. At least one of favorite, progress, watched is required.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"
@@ -7802,19 +7800,6 @@
                                             "type": "string",
                                             "format": "date-time",
                                             "description": "When the change happened on the device (ISO 8601)."
-                                        }
-                                    }
-                                },
-                                "liked": {
-                                    "type": "object",
-                                    "description": "\"Favoris\" (\u2764): added or removed (movies, TV shows, episodes, live channels).",
-                                    "properties": {
-                                        "value": {
-                                            "type": "boolean"
-                                        },
-                                        "at": {
-                                            "type": "string",
-                                            "format": "date-time"
                                         }
                                     }
                                 },
