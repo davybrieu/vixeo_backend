@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /*
-| Presentation site, served on SITE_DOMAIN (www.vixeo.test in phpunit.xml). Relative URLs hit the
-| API host (APP_URL), so every request here is absolute.
+| Presentation site, served on APP_URL (www.vixeo.test in phpunit.xml). Relative URLs hit the
+| API host (API_URL, tests/TestCase.php), so every request here is absolute.
 */
 
 const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';

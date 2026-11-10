@@ -85,16 +85,14 @@ APP_NAME=Vixeo
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...                  # celle du site de l'API, ne pas la changer
-APP_URL=https://api.vixeo.app
 APP_LOCALE=fr
 
-# Un projet, deux domaines (config/vixeo.php)
-API_DOMAIN=api.vixeo.app
-SITE_DOMAIN=www.vixeo.app
-SITE_URL=https://www.vixeo.app
-
-# Appli web Flutter (vixeo_frontend) : sa page /tv valide la connexion d'une TV par QR code.
-# Elle n'est pas servie par ce projet : garder son adresse (ex. https://app.vixeo.app).
+# Les trois adresses, chacune une seule fois : les domaines en sont tirés (config/vixeo.php).
+# Site de présentation
+APP_URL=https://www.vixeo.app
+# API
+API_URL=https://api.vixeo.app
+# Appli web Flutter (vixeo_frontend, servie ailleurs) : sa page /tv valide la connexion des TV
 WEB_URL=https://app.vixeo.app
 # Origines du Flutter web autorisées à appeler l'API, séparées par des virgules
 CORS_ALLOWED_ORIGINS=https://app.vixeo.app
@@ -139,7 +137,7 @@ MAIL_FROM_NAME=Vixeo
 # Durée de vie des jetons, en minutes (180 jours ; voir docs/compte.md)
 SANCTUM_EXPIRATION=259200
 
-# Mises à jour des applis (docs/mise-a-jour.md). Vides : SITE_URL/#installer, c'est-à-dire
+# Mises à jour des applis (docs/mise-a-jour.md). Vides : APP_URL/#installer, c'est-à-dire
 # https://www.vixeo.app/#installer (Android et iOS). Pas de Play Store.
 ANDROID_UPDATE_URL=
 IOS_UPDATE_URL=
@@ -162,8 +160,9 @@ VIXEO_HOST_PHONE="…"
 # (TV en direct, scraper : inchangés, voir .env.example)
 ```
 
-Les anciennes variables du site `VIXEO_APP_URL` et `VIXEO_API_URL` n'existent plus : le site lit
-`WEB_URL` et la dernière version Android directement (sans appel HTTP vers l'API).
+Les anciennes variables `SITE_URL`, `API_DOMAIN`, `SITE_DOMAIN`, `SITE_REDIRECT_DOMAINS`,
+`VIXEO_APP_URL` et `VIXEO_API_URL` n'existent plus : à supprimer de l'environnement. **Attention :
+`APP_URL` est maintenant l'adresse du site** (`https://www.vixeo.app`), plus celle de l'API.
 
 `php artisan optimize` met la configuration et les routes en cache : **après une modification de
 l'environnement, redéployer** (ou `php artisan optimize` dans `current`), sinon l'ancienne valeur

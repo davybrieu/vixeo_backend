@@ -1,7 +1,7 @@
 <?php
 
 /*
-| The API host (API_DOMAIN, api.vixeo.test in phpunit.xml): JSON only, never the site's pages.
+| The API host (API_URL, api.vixeo.test in phpunit.xml): JSON only, never the site's pages.
 */
 
 it('describes the API at the root of its host', function () {

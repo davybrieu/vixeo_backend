@@ -25,8 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         // Health check (Forge, monitoring): answers on every host.
         health: '/up',
-        // One app, two hosts (config/vixeo.php, docs/deploiement.md): the API on API_DOMAIN
-        // (api.vixeo.app), the presentation site on SITE_DOMAIN (www.vixeo.app). Without domains
+        // One app, two hosts (config/vixeo.php, docs/deploiement.md): the API on the host of
+        // API_URL (api.vixeo.app), the presentation site on the host of APP_URL (www.vixeo.app). Without domains
         // (local), one host serves both: the API under /api, the site everywhere else.
         then: function () {
             $api = Hosts::apiDomain();

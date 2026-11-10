@@ -2,7 +2,7 @@
 
 Site public de Vixeo : présentation de l'appli et mode d'emploi pour l'installer sur **Android**
 (téléphone, tablette, Android TV / Google TV) ou l'ouvrir dans le **navigateur**. Il vivait dans
-le dépôt `vixeo_web` ; il fait maintenant partie de ce projet, servi sur `SITE_DOMAIN`.
+le dépôt `vixeo_web` ; il fait maintenant partie de ce projet, servi à l'adresse `APP_URL`.
 
 Vue 3, Inertia 3 avec rendu côté serveur (SSR), Tailwind CSS 4. Pas de compte, pas de formulaire,
 **aucun cookie** (groupe de middleware `site` : ni session, ni jeton CSRF), aucun service tiers
@@ -13,7 +13,7 @@ Vue 3, Inertia 3 avec rendu côté serveur (SSR), Tailwind CSS 4. Pas de compte,
 ```
 routes/site.php                          pages du site (groupe de middleware `site`)
 routes/api-host.php                      racine et robots.txt de api.vixeo.app
-app/Support/Hosts.php                    quel hôte ? (API_DOMAIN, SITE_DOMAIN)
+app/Support/Hosts.php                    quel hôte ? (domaines tirés de API_URL et APP_URL)
 app/Http/Controllers/SiteController.php  pages (Inertia::render), sitemap, robots, redirection vixeo.app → www
 app/Http/Middleware/                     HandleInertiaRequests, SecurityHeaders
 app/Services/LatestAndroidRelease.php    dernière version Android (GitHubReleases, comme GET /app/update)
@@ -57,7 +57,7 @@ committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'emp
 | `/mentions-legales`, `/confidentialite` | Informations légales, confidentialité du site |
 | `/installer`, `/faq`, `/telecharger`, `/android`, `/tv` | Anciennes pages et liens courts, supprimés : **404** (demande du développeur) |
 | `/apk` | Le fichier APK du moment (adresse à taper sur une TV), 404 sans APK |
-| `/sitemap.xml`, `/robots.txt` | Référencement (`SITE_URL`) |
+| `/sitemap.xml`, `/robots.txt` | Référencement (`APP_URL`) |
 
 Barre de navigation : le logo (accueil) et « Ouvrir Vixeo », **sans liens de sections ni menu
 burger** (demande du développeur). Ne pas recréer de pages Installer, FAQ ou Fonctionnalités :
@@ -71,7 +71,7 @@ Vue (`resources/js/pages`), et `SiteController::PAGES` (sitemap). Chaque page po
 
 | Variable | Rôle |
 | - | - |
-| `SITE_DOMAIN`, `SITE_URL` | Domaine du site (`www.vixeo.app`) et son adresse publique (liens canoniques, sitemap) |
+| `APP_URL` | Adresse du site (`https://www.vixeo.app`) : son domaine, les liens canoniques, le sitemap |
 | `WEB_URL` | Appli web Flutter (boutons « Ouvrir dans le navigateur », « Créer un compte ») |
 | `VIXEO_ANDROID_APK_URL`, `VIXEO_ANDROID_APK_SHA256` | Secours : APK et empreinte s'il n'y a pas de release GitHub |
 | `VIXEO_PUBLISHER_*`, `VIXEO_PUBLICATION_DIRECTOR`, `VIXEO_CONTACT_EMAIL`, `VIXEO_HOST_*` | Mentions légales (obligatoires avant la mise en ligne) |

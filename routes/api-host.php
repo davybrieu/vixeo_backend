@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Route;
 
 /*
-| Root of the API host (api.vixeo.app), outside /api/v1. Only registered when API_DOMAIN is set:
-| without it, the site answers on / (config/vixeo.php).
+| Root of the API host (api.vixeo.app), outside /api/v1. Only registered when API_URL and APP_URL
+| have different hosts: otherwise the site answers on / (config/vixeo.php).
 */
 Route::get('/', fn () => response()->json([
     'name' => config('app.name'),

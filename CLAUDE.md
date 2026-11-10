@@ -8,9 +8,13 @@ cliente est dans le dépôt [`davybrieu/vixeo_frontend`](https://github.com/davy
 `api.vixeo.app` → l'API (`routes/api.php` sous `/api/v1`, `routes/api-host.php`),
 `www.vixeo.app` → le site (`routes/site.php`, Vue + Inertia SSR, doc : `docs/site.md`),
 `vixeo.app` → 301 vers `www` (**redirection du site Forge**, pas de Laravel). Routage par `Host`
-dans `bootstrap/app.php` (`App\Support\Hosts`, `config/vixeo.php` : `API_DOMAIN`, `SITE_DOMAIN`). Sans domaines (local,
-vides) : un seul hôte, le site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
-de `phpunit.xml` (`api.vixeo.test`, `www.vixeo.test`) : URL relative = hôte de l'API, le site se
+dans `bootstrap/app.php` (`App\Support\Hosts`). **Trois adresses, chacune écrite une seule fois**
+dans le `.env` : `APP_URL` = le site (`https://www.vixeo.app`), `API_URL` = l'API
+(`https://api.vixeo.app`), `WEB_URL` = l'appli web (`https://app.vixeo.app`) ; `config/vixeo.php`
+en tire les domaines avec `parse_url()` (`vixeo.urls`, `vixeo.domains`) : ne pas ajouter de clé
+qui répète un domaine. `API_URL` vide ou même hôte que `APP_URL` (en local) : un seul hôte, le
+site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
+de `phpunit.xml` (`api.vixeo.test`, `www.vixeo.test`) : URL relative = hôte de l'API (`tests/TestCase.php`), le site se
 teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Site/PagesTest.php`).
 
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la

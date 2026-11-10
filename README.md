@@ -20,8 +20,9 @@ npm run build                     # ou `npm run dev` pendant le développement d
 php artisan serve                 # site sur http://localhost:8000, API sur /api/v1
 ```
 
-En local, `API_DOMAIN` et `SITE_DOMAIN` sont vides : un seul hôte sert le site (`/`) et l'API
-(`/api/v1`).
+En local, `API_URL` est vide : un seul hôte (`APP_URL`) sert le site (`/`) et l'API (`/api/v1`).
+En production : `APP_URL=https://www.vixeo.app`, `API_URL=https://api.vixeo.app`,
+`WEB_URL=https://app.vixeo.app`.
 
 - Tests : `./vendor/bin/pest`
 - Formatage : `./vendor/bin/pint`

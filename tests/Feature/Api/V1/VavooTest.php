@@ -98,7 +98,7 @@ it('resolves a channel into a playable stream proxied through our own origin', f
 
     // The provider URL never reaches the app: only a token on our own origin.
     $url = $response->json('data.url');
-    expect($url)->toStartWith(config('app.url').'/api/v1/tv/stream/')
+    expect($url)->toStartWith(config('vixeo.urls.api').'/api/v1/tv/stream/')
         ->and($url)->not->toContain('cdn.vavoo.test');
 
     Http::assertSent(fn ($request) => $request->url() === 'https://vavoo.test/mediahubmx-resolve.json'

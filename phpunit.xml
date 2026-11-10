@@ -20,11 +20,9 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_LOCALE" value="fr"/>
-        <!-- Two hosts, as in production (config/vixeo.php): relative test URLs hit the API host. -->
-        <env name="APP_URL" value="https://api.vixeo.test"/>
-        <env name="API_DOMAIN" value="api.vixeo.test"/>
-        <env name="SITE_DOMAIN" value="www.vixeo.test"/>
-        <env name="SITE_URL" value="https://www.vixeo.test"/>
+        <!-- Two hosts, as in production (config/vixeo.php): relative test URLs hit the API host (tests/TestCase.php). -->
+        <env name="APP_URL" value="https://www.vixeo.test"/>
+        <env name="API_URL" value="https://api.vixeo.test"/>
         <env name="WEB_URL" value="https://app.vixeo.test"/>
         <env name="ANDROID_UPDATE_URL" value=""/>
         <env name="IOS_UPDATE_URL" value=""/>

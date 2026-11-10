@@ -84,7 +84,7 @@ it('resolves a panel channel into a playable stream proxied through our own orig
         ->assertJsonPath('data.headers', []);
 
     $url = $response->json('data.url');
-    expect($url)->toStartWith(config('app.url').'/api/v1/tv/stream/')
+    expect($url)->toStartWith(config('vixeo.urls.api').'/api/v1/tv/stream/')
         ->and($url)->not->toContain('panel.test');
 });
 

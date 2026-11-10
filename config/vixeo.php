@@ -4,16 +4,28 @@
 | Un seul projet Laravel pour l'API et le site de présentation, distingués par le domaine
 | (docs/deploiement.md). Tout se règle dans le .env (Forge : onglet Environment).
 */
+// Chaque adresse n'est écrite qu'une fois dans le .env : les domaines en sont tirés par parse_url().
+$siteUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/');
+$apiUrl = rtrim((string) (env('API_URL') ?: $siteUrl), '/');
+$host = fn (string $url): string => strtolower((string) parse_url($url, PHP_URL_HOST));
+// Deux hôtes seulement si l'API et le site ont des adresses différentes. Sinon (en local, API_URL
+// vide) : un seul hôte, le site sur /, l'API sur /api/v1.
+$split = $host($apiUrl) !== '' && $host($apiUrl) !== $host($siteUrl);
+
 return [
 
-    'domains' => [
-        // api.vixeo.app : l'API (/api/v1), réponses JSON uniquement.
-        'api' => env('API_DOMAIN') ?: null,
-        // www.vixeo.app : le site de présentation (Vue + Inertia, SSR).
-        'site' => env('SITE_DOMAIN') ?: null,
-        // vixeo.app → www.vixeo.app : redirection faite par le site Forge (docs/deploiement.md).
+    'urls' => [
+        // APP_URL : le site de présentation (https://www.vixeo.app).
+        'site' => $siteUrl,
+        // API_URL : l'API (https://api.vixeo.app), routes sous /api/v1.
+        'api' => $apiUrl,
     ],
-    // Sans API_DOMAIN ni SITE_DOMAIN (en local) : un seul hôte, le site sur /, l'API sur /api/v1.
+
+    // Tirés des adresses ci-dessus. vixeo.app → www.vixeo.app : redirection du site Forge.
+    'domains' => [
+        'api' => $split ? $host($apiUrl) : null,
+        'site' => $split ? $host($siteUrl) : null,
+    ],
 
     // Pas de Play Store (décision du développeur) : Android = APK téléchargé depuis le site.
     'android' => [

@@ -66,9 +66,9 @@ class SiteController extends Controller
         return response("User-agent: *\nAllow: /\n\nSitemap: {$base}/sitemap.xml\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 
-    /** Public address of the site (SITE_URL), without trailing slash. */
+    /** Public address of the site (APP_URL), without trailing slash. */
     public static function siteUrl(): string
     {
-        return rtrim((string) config('app.site_url'), '/');
+        return rtrim((string) config('vixeo.urls.site'), '/');
     }
 }
