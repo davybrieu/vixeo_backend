@@ -13,7 +13,6 @@ Un item est identifié par **`source` + `item_id`**, choisis par l'appli :
 | Film TMDb | `tmdb` | `movie:550` | `movie` |
 | Série TMDb | `tmdb` | `tv:1399` | `tv` |
 | Épisode TMDb | `tmdb` | `episode:1399:1:3` (série:saison:épisode) | `episode` |
-| Élément Jellyfin | `jellyfin:<serverId>` | id Jellyfin | `movie`, `episode`… |
 | Chaîne de la TV en direct (`/tv/…`) | `tv` | `channel:<id de la chaîne>` (ex. `channel:tf1`) | `channel` |
 | Chaîne FAST | `fast:<fournisseur>` (ex. `fast:pluto`) | id de la chaîne chez le fournisseur | `channel` |
 | Vidéo locale | `local:<appareil>` | chemin ou id du fichier | `video` |
@@ -24,8 +23,8 @@ Pour un épisode, renseigner aussi `parent_item_id` (ex. `tv:1399`), `season_num
 
 Chaque item porte un **instantané d'affichage** (`title`, `year`, `poster_url`,
 `backdrop_url`) pour afficher les listes sans interroger la source. **Jamais d'identifiants
-dans les URL d'images** (`api_key`, `token`… sont refusés) : pour Jellyfin/Plex, utiliser des
-URL d'images publiques ou laisser `poster_url` vide et la reconstruire localement.
+dans les URL d'images** (`api_key`, `token`… sont refusés) : utiliser des URL d'images
+publiques, ou laisser `poster_url` vide et la reconstruire localement.
 
 Et trois **groupes d'état**, chacun avec la date du dernier changement :
 

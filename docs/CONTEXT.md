@@ -109,6 +109,16 @@ Fonctionnalités visées
 
 - Utilisation de TheIntroDB pour récupérer les moments à passer (génériques, résumés, intros, etc.), lorsque les données sont disponibles.
 
+3.4 Lecture : les serveurs de Vixeo — décidé
+
+- Les contenus sont lus depuis les serveurs utilisés par Vixeo, **via l'API Vixeo** : l'appli lit
+  les sources de lecture, la TV en direct, les sous-titres et les moments à passer que l'API lui
+  renvoie (voir §5.1).
+- **Aucune configuration** pour l'utilisateur : il n'ajoute ni serveur, ni adresse, ni identifiant.
+  Il crée un compte et regarde.
+- **Pas de serveurs multimédias de l'utilisateur** (Jellyfin, Plex, Emby ou autre) : ni dans
+  l'API, ni dans l'appli, ni sur le site de présentation. Ne pas les proposer ni les réintroduire.
+
 ---
 
 4. Stack et organisation (décidé)
@@ -782,3 +792,4 @@ Lorsqu'une nouvelle session Claude Code démarre :
 12. Toujours garder à l'esprit que l'esthétique, la fluidité et l'expérience TV sont des priorités absolues.
 13. Ne jamais implémenter de logique spécifique aux fournisseurs ou aux mécanismes d'extraction dans Flutter.
 14. Toute récupération de contenus doit passer par l'API Vixeo.
+15. Ne pas ajouter de lecture depuis les serveurs de l'utilisateur (Jellyfin, Plex, Emby) : la lecture passe uniquement par les serveurs de Vixeo, sans configuration (§3.4).

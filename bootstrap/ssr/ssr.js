@@ -40481,7 +40481,6 @@ var require_server_renderer_cjs_prod = /* @__PURE__ */ __commonJSMin(((exports) 
 	exports.ssrRenderList = ssrRenderList;
 	exports.ssrRenderSlot = ssrRenderSlot;
 	exports.ssrRenderStyle = ssrRenderStyle;
-	exports.ssrRenderVNode = renderVNode;
 }));
 // node_modules/vue/server-renderer/index.mjs
 var server_renderer_exports = /* @__PURE__ */ __exportAll({});
@@ -40529,42 +40528,9 @@ var _sfc_main$4 = {
 		const site = usePage().props.site;
 		const year = (/* @__PURE__ */ new Date()).getFullYear();
 		return (_ctx, _push, _parent, _attrs) => {
-			_push(`<footer${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "border-t border-line/70 bg-surface/40" }, _attrs))}><div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]"><div>`);
+			_push(`<footer${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "border-t border-line/70 bg-surface/40" }, _attrs))}><div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]"><div>`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$5, { size: "h-8" }, null, _parent));
-			_push(`<p class="mt-4 max-w-xs text-sm leading-relaxed text-text-muted"> Vos films et séries, sur votre téléphone, votre TV Android et votre navigateur. </p></div><div><h2 class="text-sm font-semibold text-text">Vixeo</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li><a href="/#fonctionnalites" class="hover:text-text">Fonctionnalités</a></li><li>`);
-			_push((0, server_renderer_exports.ssrRenderComponent)((0, vue_exports.unref)(link_default), {
-				href: "/installer",
-				class: "hover:text-text"
-			}, {
-				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(`Installer`);
-					else return [(0, vue_exports.createTextVNode)("Installer")];
-				}),
-				_: 1
-			}, _parent));
-			_push(`</li><li><a${(0, server_renderer_exports.ssrRenderAttr)("href", (0, vue_exports.unref)(site).appUrl)} class="hover:text-text">Ouvrir dans le navigateur</a></li></ul></div><div><h2 class="text-sm font-semibold text-text">Aide</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li>`);
-			_push((0, server_renderer_exports.ssrRenderComponent)((0, vue_exports.unref)(link_default), {
-				href: "/faq",
-				class: "hover:text-text"
-			}, {
-				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(`Questions fréquentes`);
-					else return [(0, vue_exports.createTextVNode)("Questions fréquentes")];
-				}),
-				_: 1
-			}, _parent));
-			_push(`</li><li>`);
-			_push((0, server_renderer_exports.ssrRenderComponent)((0, vue_exports.unref)(link_default), {
-				href: "/installer#tv",
-				class: "hover:text-text"
-			}, {
-				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(`Connecter une TV`);
-					else return [(0, vue_exports.createTextVNode)("Connecter une TV")];
-				}),
-				_: 1
-			}, _parent));
-			_push(`</li>`);
+			_push(`<p class="mt-4 max-w-xs text-sm leading-relaxed text-text-muted"> Vos films et séries, sur votre téléphone, votre TV Android et votre navigateur. </p></div><div><h2 class="text-sm font-semibold text-text">Vixeo</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li><a href="/#installer" class="hover:text-text">Installer</a></li><li><a href="/#faq" class="hover:text-text">Questions fréquentes</a></li><li><a${(0, server_renderer_exports.ssrRenderAttr)("href", (0, vue_exports.unref)(site).appUrl)} class="hover:text-text">Ouvrir dans le navigateur</a></li>`);
 			if ((0, vue_exports.unref)(site).contactEmail) _push(`<li><a${(0, server_renderer_exports.ssrRenderAttr)("href", `mailto:${(0, vue_exports.unref)(site).contactEmail}`)} class="hover:text-text">Contact</a></li>`);
 			else _push(`<!---->`);
 			_push(`</ul></div><div><h2 class="text-sm font-semibold text-text">Informations</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li>`);
@@ -40767,24 +40733,6 @@ var _sfc_main$1 = {
 	__ssrInlineRender: true,
 	setup(__props) {
 		const page = usePage();
-		const open = (0, vue_exports.ref)(false);
-		(0, vue_exports.watch)(() => page.url, () => open.value = false);
-		const links = [
-			{
-				href: "/#fonctionnalites",
-				label: "Fonctionnalités",
-				anchor: true
-			},
-			{
-				href: "/installer",
-				label: "Installer"
-			},
-			{
-				href: "/faq",
-				label: "FAQ"
-			}
-		];
-		const current = (0, vue_exports.computed)(() => page.props.path);
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<header${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "fixed inset-x-0 top-3 z-50 px-3 sm:top-4" }, _attrs))}><nav aria-label="Navigation principale" class="mx-auto flex h-14 max-w-5xl items-center gap-2 rounded-2xl border border-white/8 bg-bg/70 pr-2 pl-4 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)((0, vue_exports.unref)(link_default), {
@@ -40798,23 +40746,6 @@ var _sfc_main$1 = {
 				}),
 				_: 1
 			}, _parent));
-			_push(`<ul class="hidden items-center gap-1 md:flex"><!--[-->`);
-			(0, server_renderer_exports.ssrRenderList)(links, (link) => {
-				_push(`<li>`);
-				(0, server_renderer_exports.ssrRenderVNode)(_push, (0, vue_exports.createVNode)((0, vue_exports.resolveDynamicComponent)(link.anchor ? "a" : (0, vue_exports.unref)(link_default)), {
-					href: link.href,
-					"aria-current": current.value === link.href ? "page" : null,
-					class: ["rounded-lg px-3 py-2 text-sm font-medium transition", current.value === link.href ? "bg-white/8 text-text" : "text-text-secondary hover:text-text"]
-				}, {
-					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-						if (_push) _push(`${(0, server_renderer_exports.ssrInterpolate)(link.label)}`);
-						else return [(0, vue_exports.createTextVNode)((0, vue_exports.toDisplayString)(link.label), 1)];
-					}),
-					_: 2
-				}), _parent);
-				_push(`</li>`);
-			});
-			_push(`<!--]--></ul>`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$2, {
 				href: (0, vue_exports.unref)(page).props.site.appUrl,
 				class: "!h-10 !px-4 !text-sm"
@@ -40825,27 +40756,7 @@ var _sfc_main$1 = {
 				}),
 				_: 1
 			}, _parent));
-			_push(`<button type="button" class="grid size-10 place-items-center rounded-xl text-text-soft hover:bg-white/8 md:hidden"${(0, server_renderer_exports.ssrRenderAttr)("aria-expanded", open.value)} aria-controls="menu-mobile">`);
-			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$3, {
-				name: open.value ? "close" : "menu",
-				label: open.value ? "Fermer le menu" : "Ouvrir le menu"
-			}, null, _parent));
-			_push(`</button></nav><div id="menu-mobile" class="mx-auto mt-2 max-w-5xl rounded-2xl border border-white/8 bg-surface/95 p-2 backdrop-blur-xl md:hidden" style="${(0, server_renderer_exports.ssrRenderStyle)(open.value ? null : { display: "none" })}"><!--[-->`);
-			(0, server_renderer_exports.ssrRenderList)(links, (link) => {
-				(0, server_renderer_exports.ssrRenderVNode)(_push, (0, vue_exports.createVNode)((0, vue_exports.resolveDynamicComponent)(link.anchor ? "a" : (0, vue_exports.unref)(link_default)), {
-					key: link.href,
-					href: link.href,
-					class: "block rounded-xl px-4 py-3 text-base font-medium text-text-soft hover:bg-white/5",
-					onClick: ($event) => open.value = false
-				}, {
-					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-						if (_push) _push(`${(0, server_renderer_exports.ssrInterpolate)(link.label)}`);
-						else return [(0, vue_exports.createTextVNode)((0, vue_exports.toDisplayString)(link.label), 1)];
-					}),
-					_: 2
-				}), _parent);
-			});
-			_push(`<!--]--></div></header>`);
+			_push(`</nav></header>`);
 		};
 	}
 };
@@ -40882,12 +40793,10 @@ var app;
 var render = (page) => (app ??= createInertiaApp({
 	resolve: async (name, page) => {
 		const module = await (/* @__PURE__ */ Object.assign({
-			"./pages/Error.vue": () => import("./assets/Error-HiHDVvxV.js"),
-			"./pages/Faq.vue": () => import("./assets/Faq-B9VLzjgO.js"),
-			"./pages/Home.vue": () => import("./assets/Home-DoiY2OGz.js"),
-			"./pages/Install.vue": () => import("./assets/Install-CHmaglKu.js"),
-			"./pages/Legal.vue": () => import("./assets/Legal-BdUD5RIs.js"),
-			"./pages/Privacy.vue": () => import("./assets/Privacy-C4Ip4bKm.js")
+			"./pages/Error.vue": () => import("./assets/Error-QB98lOxs.js"),
+			"./pages/Home.vue": () => import("./assets/Home-CH5OyYPe.js"),
+			"./pages/Legal.vue": () => import("./assets/Legal-CT5MV7tX.js"),
+			"./pages/Privacy.vue": () => import("./assets/Privacy-BveWGz03.js")
 		}))[`./pages/${name}.vue`]?.();
 		if (!module) throw new Error(`Page not found: ${name}`);
 		return module.default ?? module;
@@ -40920,4 +40829,4 @@ function ssrOptions() {
 }
 var renderPage = render;
 server_default(renderPage, ssrOptions());
-export { head_default as a, vue_exports as c, renderPage as default, server_renderer_exports as i, _sfc_main$3 as n, link_default as o, _sfc_main$5 as r, usePage as s, _sfc_main$2 as t };
+export { head_default as a, renderPage as default, server_renderer_exports as i, _sfc_main$3 as n, usePage as o, _sfc_main$5 as r, vue_exports as s, _sfc_main$2 as t };

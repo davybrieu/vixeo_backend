@@ -5679,7 +5679,7 @@
             },
             "ItemType": {
                 "type": "string",
-                "description": "Kind of content a profile item points to (any source: TMDb, Jellyfin / Plex, FAST channels\u2026).\n| |\n|---|\n| `movie` <br/>  |\n| `tv` <br/> A whole TV show (e.g. favorite series). |\n| `episode` <br/>  |\n| `channel` <br/> Live TV channel (FAST). |\n| `video` <br/> Any other video (local file\u2026). |",
+                "description": "Kind of content a profile item points to (any source: TMDb, live TV channels\u2026).\n| |\n|---|\n| `movie` <br/>  |\n| `tv` <br/> A whole TV show (e.g. favorite series). |\n| `episode` <br/>  |\n| `channel` <br/> Live TV channel (FAST). |\n| `video` <br/> Any other video (local file\u2026). |",
                 "enum": [
                     "movie",
                     "tv",
@@ -6478,7 +6478,7 @@
                             "array",
                             "null"
                         ],
-                        "description": "Sources or folders hidden on this profile, e.g. \"jellyfin:abc\" or \"jellyfin:abc#Films\" (100 max).",
+                        "description": "Sources or folders hidden on this profile, e.g. \"tv\" (all live TV) or \"tv#Sport\" (100 max).",
                         "items": {
                             "type": "string",
                             "maxLength": 191
@@ -7723,7 +7723,7 @@
                             "properties": {
                                 "source": {
                                     "type": "string",
-                                    "description": "Source chosen by the app: \"tmdb\", \"jellyfin:<serverId>\", \"plex:<serverId>\", \"fast:pluto\"\u2026",
+                                    "description": "Source chosen by the app: \"tmdb\" (movies, TV shows, episodes), \"tv\" (live TV channels)\u2026",
                                     "pattern": "^[A-Za-z0-9._:\\-]+$",
                                     "maxLength": 100
                                 },

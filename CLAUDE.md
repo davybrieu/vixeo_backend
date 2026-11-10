@@ -11,7 +11,12 @@ cliente est dans le dépôt [`davybrieu/vixeo_frontend`](https://github.com/davy
 `config/vixeo.php` : `API_DOMAIN`, `SITE_DOMAIN`, `SITE_REDIRECT_DOMAINS`). Sans domaines (local,
 vides) : un seul hôte, le site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
 de `phpunit.xml` (`api.vixeo.test`, `www.vixeo.test`) : URL relative = hôte de l'API, le site se
-teste avec des URL absolues (`site('/faq')` dans `tests/Feature/Site/PagesTest.php`).
+teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Site/PagesTest.php`).
+
+**Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
+question). Les applis lisent ce que l'API leur renvoie (sources de lecture, TV en direct, sous-titres,
+moments à passer) : l'utilisateur n'a **aucun serveur à configurer**. Pas de serveurs multimédias
+de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli, ni sur le site.
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
 périmètre légal (§3, ce qui est hors périmètre ne doit pas être implémenté), sécurité (§6),
@@ -19,7 +24,7 @@ feuille de route (§10).
 
 **Distribution Android** (décision du développeur, ne plus poser la question) : **pas de Play
 Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est distribuée en
-**APK signé** depuis le site (`www.vixeo.app/installer`, dans ce dépôt). Conséquences :
+**APK signé** depuis le site (`www.vixeo.app/#installer`, dans ce dépôt). Conséquences :
 - chaque version est signée avec la **même clé de release** (keystore hors du dépôt, dans les
   secrets) : sinon Android refuse d'installer la mise à jour par-dessus l'ancienne version ;
 - les mises à jour passent par la vérification intégrée à l'appli (`GET /app/update`), pas par
@@ -69,7 +74,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (ce que l'appli fait aujourd'hui, « En préparation » sinon), pas de bouton ni page iOS, écarté :
   import IPTV / M3U / Xtream, radio, replays. SSR : pas de `window` / `document` hors `onMounted`.
   Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.
-  Ajouter une page : route dans `routes/site.php`, page Vue, `SiteController::PAGES` (sitemap).
+  **Une seule page de présentation** : l'accueil, avec les sections `#installer` et `#faq` ; pages
+  Installer et FAQ supprimées (`/installer`, `/faq` → 301 vers ces sections), barre de navigation
+  sans liens ni menu burger (logo + « Ouvrir Vixeo »). Ne pas les recréer.
   **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
   modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.
 
@@ -214,8 +221,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 ## État actuel
 
-- Fait aussi : site de présentation (accueil, installer Android / Android TV / navigateur, FAQ,
-  mentions légales, confidentialité, pages d'erreur, sitemap) sur `www.vixeo.app`, dans ce projet.
+- Fait aussi : site de présentation sur `www.vixeo.app`, dans ce projet : une page d'accueil
+  (installation Android / Android TV / navigateur, fonctionnalités, FAQ), mentions légales,
+  confidentialité, pages d'erreur, sitemap.
   À faire avant la mise en ligne : mentions légales dans le `.env` de production.
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
   (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
@@ -234,5 +242,6 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   commentaires gardés par Vixeo.
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
-- Prochaines étapes possibles : serveurs média de l'utilisateur (Jellyfin / Plex / Emby),
-  configuration distante (chaînes FAST).
+- Prochaine étape possible : configuration distante (chaînes FAST).
+- Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
+  les serveurs de Vixeo.

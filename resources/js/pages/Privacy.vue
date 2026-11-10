@@ -28,15 +28,15 @@ const site = usePage().props.site;
                 durée limitée et ne servent à rien d’autre.
             </p>
             <p>
-                Pour afficher la dernière version Android, notre serveur interroge l’API Vixeo : votre navigateur n’y
-                participe pas.
+                Pour afficher la dernière version Android, notre serveur interroge GitHub, où chaque version de l’appli
+                est publiée : votre navigateur n’y participe pas.
             </p>
         </section>
 
         <section class="space-y-3" aria-labelledby="liens">
             <h2 id="liens" class="text-xl font-bold text-text">Liens vers d’autres services</h2>
             <p>
-                Le bouton « Télécharger l’APK » télécharge l’appli depuis ce site. « Ouvrir dans le navigateur » mène à
+                Le bouton « Télécharger l’APK » télécharge l’appli depuis GitHub, où chaque version est publiée. « Ouvrir dans le navigateur » mène à
                 l’appli Vixeo, décrite dans sa
                 <a :href="`${site.appUrl}/confidentialite`" class="font-semibold text-accent hover:text-accent-hover">politique de confidentialité</a>.
             </p>

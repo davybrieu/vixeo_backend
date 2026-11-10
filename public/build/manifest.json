@@ -1,110 +1,73 @@
 {
-  "_InstallButtons-Pp9Rnz4c.js": {
-    "file": "assets/InstallButtons-Pp9Rnz4c.js",
-    "name": "InstallButtons",
-    "imports": [
-      "_dist-DqWl-95F.js",
-      "resources/js/app.js"
-    ]
-  },
-  "_Seo-fa49TozX.js": {
-    "file": "assets/Seo-fa49TozX.js",
+  "_Seo-Dq4wpFYS.js": {
+    "file": "assets/Seo-Dq4wpFYS.js",
     "name": "Seo",
     "imports": [
-      "_dist-DqWl-95F.js"
+      "_dist-C6Kqx0Fb.js"
     ]
   },
-  "_dist-DqWl-95F.js": {
-    "file": "assets/dist-DqWl-95F.js",
+  "_dist-C6Kqx0Fb.js": {
+    "file": "assets/dist-C6Kqx0Fb.js",
     "name": "dist"
   },
   "resources/js/app.js": {
-    "file": "assets/app-CWaoSXo9.js",
+    "file": "assets/app-SkvXwIHB.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_dist-DqWl-95F.js"
+      "_dist-C6Kqx0Fb.js"
     ],
     "dynamicImports": [
       "resources/js/pages/Error.vue",
-      "resources/js/pages/Faq.vue",
       "resources/js/pages/Home.vue",
-      "resources/js/pages/Install.vue",
       "resources/js/pages/Legal.vue",
       "resources/js/pages/Privacy.vue"
     ],
     "css": [
-      "assets/app-B8MOfOx7.css"
+      "assets/app-DS0JJSVD.css"
     ]
   },
   "resources/js/pages/Error.vue": {
-    "file": "assets/Error-Dx8QVilF.js",
+    "file": "assets/Error-0fGuwAQT.js",
     "name": "Error",
     "src": "resources/js/pages/Error.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dist-DqWl-95F.js",
-      "_Seo-fa49TozX.js",
+      "_dist-C6Kqx0Fb.js",
+      "_Seo-Dq4wpFYS.js",
       "resources/js/app.js"
     ]
   },
-  "resources/js/pages/Faq.vue": {
-    "file": "assets/Faq-cna6Pj8b.js",
-    "name": "Faq",
-    "src": "resources/js/pages/Faq.vue",
-    "isDynamicEntry": true,
-    "imports": [
-      "_dist-DqWl-95F.js",
-      "resources/js/app.js",
-      "_Seo-fa49TozX.js"
-    ]
-  },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-Bu3jr822.js",
+    "file": "assets/Home-CQWc2IDB.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dist-DqWl-95F.js",
+      "_dist-C6Kqx0Fb.js",
       "resources/js/app.js",
-      "_InstallButtons-Pp9Rnz4c.js",
-      "_Seo-fa49TozX.js"
-    ]
-  },
-  "resources/js/pages/Install.vue": {
-    "file": "assets/Install-k0UGBujJ.js",
-    "name": "Install",
-    "src": "resources/js/pages/Install.vue",
-    "isDynamicEntry": true,
-    "imports": [
-      "_dist-DqWl-95F.js",
-      "resources/js/app.js",
-      "_InstallButtons-Pp9Rnz4c.js",
-      "_Seo-fa49TozX.js"
-    ],
-    "css": [
-      "assets/Install-BqCdPJWZ.css"
+      "_Seo-Dq4wpFYS.js"
     ]
   },
   "resources/js/pages/Legal.vue": {
-    "file": "assets/Legal-DHuf-myr.js",
+    "file": "assets/Legal-kpv9e5mu.js",
     "name": "Legal",
     "src": "resources/js/pages/Legal.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dist-DqWl-95F.js",
-      "_Seo-fa49TozX.js"
+      "_dist-C6Kqx0Fb.js",
+      "_Seo-Dq4wpFYS.js"
     ]
   },
   "resources/js/pages/Privacy.vue": {
-    "file": "assets/Privacy-Jex4fPX6.js",
+    "file": "assets/Privacy-rx_DqktP.js",
     "name": "Privacy",
     "src": "resources/js/pages/Privacy.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dist-DqWl-95F.js",
-      "_Seo-fa49TozX.js"
+      "_dist-C6Kqx0Fb.js",
+      "_Seo-Dq4wpFYS.js"
     ]
   }
 }

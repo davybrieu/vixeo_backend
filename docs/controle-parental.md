@@ -77,8 +77,8 @@ accéder aux réglages.
 `locked_sources` est une liste (100 max) de chaînes choisies par l'appli, avec la même
 convention que la synchro (`source` de `docs/synchronisation.md`) :
 
-- `jellyfin:<serverId>` : tout un serveur Jellyfin (idem `plex:`, `emby:`) ;
-- `jellyfin:<serverId>#<bibliothèque>` : une bibliothèque (dossier) de ce serveur ;
+- `tv` : toute la TV en direct ;
+- `<source>#<dossier>` : un dossier ou une catégorie de cette source ;
 - `fast:<fournisseur>`, `fast:<fournisseur>#<catégorie>` : chaînes gratuites ;
 - `local` : vidéos de l'appareil.
 

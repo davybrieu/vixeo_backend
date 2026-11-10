@@ -47,7 +47,7 @@ const site = usePage().props.site;
                 Database). This product uses the TMDB API but is not endorsed or certified by TMDB.
             </p>
             <p>Polices Sora et Inter, sous licence SIL Open Font License (<a href="/fonts/OFL-Sora.txt" class="text-accent">Sora</a>, <a href="/fonts/OFL-Inter.txt" class="text-accent">Inter</a>).</p>
-            <p>Jellyfin, Plex, Emby, Android, Google TV et Google Play sont des marques de leurs propriétaires respectifs.</p>
+            <p>Android, Google TV et Google Play sont des marques de leurs propriétaires respectifs.</p>
         </section>
 
         <section class="mt-10 space-y-3 leading-relaxed text-text-secondary" aria-labelledby="donnees">

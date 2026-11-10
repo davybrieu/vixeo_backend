@@ -25,7 +25,7 @@ const message = computed(() => messages[props.status] ?? messages[500]);
         <p class="mt-4 text-text-secondary">{{ message[1] }}</p>
         <div class="mt-9 flex flex-wrap justify-center gap-3">
             <VxButton href="/">Retour à l’accueil</VxButton>
-            <VxButton href="/installer" variant="outline">Installer Vixeo</VxButton>
+            <VxButton href="/#installer" variant="outline">Installer Vixeo</VxButton>
         </div>
     </section>
 </template>

@@ -53,16 +53,20 @@ committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'emp
 
 | Adresse | Contenu |
 | - | - |
-| `/` | Présentation, « Choisissez votre écran » (Android, TV, navigateur), fonctionnalités |
-| `/installer` | Étapes d'installation pour Android et Android TV, ouverture dans le navigateur |
-| `/faq` | Questions fréquentes |
+| `/` | **La seule page de présentation** : accueil, installation (`#installer`, onglets Android / TV / navigateur avec le bouton de l'APK, l'empreinte SHA-256 et l'adresse courte pour la TV), fonctionnalités, questions fréquentes (`#faq`, `resources/js/data/faq.js`) |
 | `/mentions-legales`, `/confidentialite` | Informations légales, confidentialité du site |
-| `/telecharger`, `/android`, `/tv` | Liens courts vers `/installer` (301) |
+| `/installer`, `/faq` | Anciennes pages, supprimées : 301 vers `/#installer` et `/#faq` (les applis installées ouvrent `/installer#android` pour se mettre à jour) |
+| `/telecharger`, `/android`, `/tv` | Liens courts : 301 vers `/#installer` |
 | `/apk` | Le fichier APK du moment (adresse à taper sur une TV), 404 sans APK |
 | `/sitemap.xml`, `/robots.txt` | Référencement (`SITE_URL`) |
 
-Ajouter une page publique : la route (`routes/site.php`), la page Vue (`resources/js/pages`),
-et `SiteController::PAGES` (sitemap). Chaque page pose `<Seo title description>`.
+Barre de navigation : le logo (accueil) et « Ouvrir Vixeo », **sans liens de sections ni menu
+burger** (demande du développeur). Ne pas recréer de pages Installer, FAQ ou Fonctionnalités :
+tout est sur l'accueil.
+
+Ajouter une page publique (si le développeur le demande) : la route (`routes/site.php`), la page
+Vue (`resources/js/pages`), et `SiteController::PAGES` (sitemap). Chaque page pose
+`<Seo title description>`.
 
 ## Réglages
 
@@ -95,6 +99,8 @@ tout, le site affiche « Version Android bientôt disponible » et propose le na
 
 - **Textes honnêtes** : ne décrire que ce que l'appli fait aujourd'hui ; ce qui arrive est marqué
   « En préparation ». Rappeler que Vixeo n'héberge ni ne diffuse de contenus, et la mention TMDb.
+- **Pas de serveurs multimédias de l'utilisateur** (Jellyfin, Plex, Emby) : la lecture passe par
+  les serveurs de Vixeo, via l'API, sans rien à configurer. Ne pas en parler sur le site.
 - **Écarté** (ne pas proposer) : import IPTV / M3U / Xtream, radio, replays, iOS (un iPhone voit
   la version web).
 - **SSR** : pas d'accès à `window` / `document` pendant le rendu (seulement dans `onMounted`).

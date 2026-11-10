@@ -55,8 +55,6 @@ it('renders every page with the shared site settings', function (string $uri, st
             ->has('site.android'));
 })->with([
     ['/', 'Home'],
-    ['/installer', 'Install'],
-    ['/faq', 'Faq'],
     ['/mentions-legales', 'Legal'],
     ['/confidentialite', 'Privacy'],
 ]);
@@ -76,7 +74,7 @@ it('sets no cookie and sends hardening headers', function () {
 it('tells the pages which device is visiting', function () {
     withLatestAndroid(null);
 
-    $this->withHeader('User-Agent', ANDROID_UA)->get(site('/installer'))
+    $this->withHeader('User-Agent', ANDROID_UA)->get(site('/'))
         ->assertInertia(fn (Assert $page) => $page->where('platform', 'android'));
 });
 
@@ -85,7 +83,7 @@ it('offers the APK of the latest GitHub release (no Play Store)', function () {
     withLatestAndroid(androidRelease(sha: $sha));
     config(['vixeo.android.apk_url' => 'https://www.vixeo.test/old.apk']);
 
-    $this->get(site('/installer'))->assertInertia(fn (Assert $page) => $page
+    $this->get(site('/'))->assertInertia(fn (Assert $page) => $page
         ->where('site.android.apkUrl', 'https://github.com/davybrieu/vixeo_frontend/releases/download/android-14/vixeo.apk')
         ->where('site.android.apkSha256', $sha)
         ->where('latestAndroid.version', '1.2.0')
@@ -109,7 +107,7 @@ it('reads the GitHub releases once per page', function () {
         ->shouldReceive('android')->once()
         ->andReturn(['latest' => androidRelease(), 'minimum_build' => null]);
 
-    $this->get(site('/installer'))->assertOk();
+    $this->get(site('/'))->assertOk();
 });
 
 it('still renders when the releases cannot be read', function () {
@@ -117,7 +115,7 @@ it('still renders when the releases cannot be read', function () {
         ->shouldReceive('android')
         ->andThrow(new RuntimeException('Redis is down'));
 
-    $this->get(site('/installer'))
+    $this->get(site('/'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('latestAndroid', null)->where('site.android.apkUrl', null));
 });
@@ -146,10 +144,27 @@ it('lists only the filled legal information', function () {
         ->where('host', ['name' => 'Hébergeur SA']));
 });
 
-it('redirects the short links to the install page', function () {
-    $this->get(site('/telecharger'))->assertStatus(301)->assertRedirect(site('/installer'));
-    $this->get(site('/android'))->assertStatus(301)->assertRedirect(site('/installer#android'));
-    $this->get(site('/tv'))->assertStatus(301)->assertRedirect(site('/installer#tv'));
+it('sends the old pages and the short links to the sections of the home page', function (string $from, string $to) {
+    // Installed apps open /installer#android to update (docs/mise-a-jour.md).
+    $this->get(site($from))->assertStatus(301)->assertRedirect(site($to));
+})->with([
+    ['/installer', '/#installer'],
+    ['/faq', '/#faq'],
+    ['/telecharger', '/#installer'],
+    ['/android', '/#installer'],
+    ['/tv', '/#installer'],
+]);
+
+it('answers the FAQ on the home page, with the install details', function () {
+    withLatestAndroid(androidRelease(sha: str_repeat('ab', 32)));
+
+    // The FAQ (resources/js/data/faq.js) is built by the page itself: the home page is the one
+    // page of the site, the old ones are gone.
+    $this->get(site('/'))->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->component('Home')
+        ->where('site.android.apkSha256', str_repeat('ab', 32)));
+    expect(file_exists(resource_path('js/pages/Faq.vue')))->toBeFalse()
+        ->and(file_exists(resource_path('js/pages/Install.vue')))->toBeFalse();
 });
 
 it('renders styled error pages', function () {
@@ -159,7 +174,7 @@ it('renders styled error pages', function () {
         ->assertNotFound()
         ->assertInertia(fn (Assert $page) => $page->component('Error')->where('status', 404)->has('site'));
 
-    $this->post(site('/faq'))
+    $this->post(site('/mentions-legales'))
         ->assertStatus(405)
         ->assertInertia(fn (Assert $page) => $page->component('Error')->where('status', 405));
 });
@@ -172,14 +187,17 @@ it('publishes a sitemap and robots.txt with the site address', function () {
     $this->get(site('/sitemap.xml'))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
-        ->assertSee('<loc>https://www.vixeo.test/installer</loc>', false);
+        ->assertSee('<loc>https://www.vixeo.test/</loc>', false)
+        ->assertSee('<loc>https://www.vixeo.test/mentions-legales</loc>', false)
+        ->assertDontSee('/installer', false)
+        ->assertDontSee('/faq', false);
 
     $this->get(site('/robots.txt'))->assertOk()->assertSee('Sitemap: https://www.vixeo.test/sitemap.xml');
 });
 
 it('redirects the bare domain to www, keeping the path and query', function () {
     $this->get('https://vixeo.test/')->assertStatus(301)->assertRedirect('https://www.vixeo.test/');
-    $this->get('https://vixeo.test/installer?ref=tv')->assertStatus(301)->assertRedirect('https://www.vixeo.test/installer?ref=tv');
+    $this->get('https://vixeo.test/mentions-legales?ref=tv')->assertStatus(301)->assertRedirect('https://www.vixeo.test/mentions-legales?ref=tv');
 });
 
 it('answers the health check on both hosts', function () {

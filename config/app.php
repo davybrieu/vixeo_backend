@@ -59,7 +59,7 @@ return [
     */
     'web_url' => env('WEB_URL', 'http://localhost:8080'),
 
-    // Presentation site (routes/site.php, SITE_DOMAIN): install page of the Android APK (/installer).
+    // Presentation site (routes/site.php, SITE_DOMAIN): install section of the home page (/#installer).
     // Without SITE_URL (local), the site is served on APP_URL along with the API.
     'site_url' => env('SITE_URL') ?: env('APP_URL', 'http://localhost'),
 

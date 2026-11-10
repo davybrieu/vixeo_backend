@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-/** Kind of content a profile item points to (any source: TMDb, Jellyfin / Plex, FAST channels…). */
+/** Kind of content a profile item points to (any source: TMDb, live TV channels…). */
 enum ItemType: string
 {
     case Movie = 'movie';

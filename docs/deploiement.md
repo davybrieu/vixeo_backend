@@ -138,7 +138,7 @@ MAIL_FROM_NAME=Vixeo
 # Durée de vie des jetons, en minutes (180 jours ; voir docs/compte.md)
 SANCTUM_EXPIRATION=259200
 
-# Mises à jour des applis (docs/mise-a-jour.md). Vides : SITE_URL/installer#android et
+# Mises à jour des applis (docs/mise-a-jour.md). Vides : SITE_URL/#installer et
 # SITE_URL/telecharger, c'est-à-dire https://www.vixeo.app/... Pas de Play Store.
 ANDROID_UPDATE_URL=
 IOS_UPDATE_URL=
@@ -235,7 +235,7 @@ Un port déjà pris (`EADDRINUSE`) : souvent l'ancien daemon SSR d'un autre site
 ## 8. Vérifier après le déploiement
 
 ```bash
-curl -sI https://vixeo.app/installer         # 301 → https://www.vixeo.app/installer
+curl -sI https://vixeo.app/faq               # 301 → https://www.vixeo.app/faq (puis /#faq)
 curl -s  https://api.vixeo.app/              # {"name":"Vixeo","api":"https://api.vixeo.app/api/v1"}
 curl -s  https://api.vixeo.app/api/v1/avatars | head -c 200
 curl -s  https://api.vixeo.app/nexiste-pas    # {"message":"Ressource introuvable."} (404)

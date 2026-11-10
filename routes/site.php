@@ -9,16 +9,17 @@ use Illuminate\Support\Facades\Route;
 */
 Route::controller(SiteController::class)->name('site.')->group(function () {
     Route::get('/', 'home')->name('home');
-    Route::get('/installer', 'install')->name('install');
     Route::get('/apk', 'apk')->name('apk');
-    Route::get('/faq', 'faq')->name('faq');
     Route::get('/mentions-legales', 'legal')->name('legal');
     Route::get('/confidentialite', 'privacy')->name('privacy');
     Route::get('/sitemap.xml', 'sitemap')->name('sitemap');
     Route::get('/robots.txt', 'robots')->name('robots');
 });
 
-// Short links: the API sends apps to /installer#android and /telecharger (docs/mise-a-jour.md).
-Route::permanentRedirect('/telecharger', '/installer');
-Route::permanentRedirect('/android', '/installer#android');
-Route::permanentRedirect('/tv', '/installer#tv');
+// One page: installing and the FAQ are sections of the home page. The old pages and the short
+// links stay as redirects: installed apps open /installer#android to update (docs/mise-a-jour.md).
+Route::permanentRedirect('/installer', '/#installer');
+Route::permanentRedirect('/faq', '/#faq');
+Route::permanentRedirect('/telecharger', '/#installer');
+Route::permanentRedirect('/android', '/#installer');
+Route::permanentRedirect('/tv', '/#installer');

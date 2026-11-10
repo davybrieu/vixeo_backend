@@ -20,7 +20,7 @@ class SyncPushRequest extends FormRequest
         return [
             /** Changes made on the device since its last push (500 max, applied in order). */
             'changes' => ['required', 'array', 'list', 'min:1', 'max:'.ProfileSync::MAX_PUSH],
-            /** Source chosen by the app: "tmdb", "jellyfin:<serverId>", "plex:<serverId>", "fast:pluto"… */
+            /** Source chosen by the app: "tmdb" (movies, TV shows, episodes), "tv" (live TV channels)… */
             'changes.*.source' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._:\-]+$/'],
             /** Item id inside the source, e.g. "movie:550", "episode:1399:1:3". */
             'changes.*.item_id' => ['required', 'string', 'max:191'],

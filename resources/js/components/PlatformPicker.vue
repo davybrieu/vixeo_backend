@@ -1,5 +1,5 @@
 <script setup>
-import { Link, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PhoneFrame from '../mock/PhoneFrame.vue';
 import PhoneHomeScreen from '../mock/PhoneHomeScreen.vue';
@@ -22,6 +22,9 @@ const screens = [
 const selected = ref(screens.some((s) => s.id === page.props.platform) ? page.props.platform : 'web');
 const tabs = ref([]);
 const minimum = computed(() => page.props.site.android.minimum);
+const android = computed(() => page.props.site.android);
+// Short link to type with a TV remote (route /apk).
+const apkShort = computed(() => `${page.props.site.url.replace(/^https?:\/\//, '')}/apk`);
 
 function onKey(event, index) {
     const moves = { ArrowRight: 1, ArrowLeft: -1, Home: -index, End: screens.length - 1 - index };
@@ -103,13 +106,21 @@ function onKey(event, index) {
 
                 <InstallButtons :screen="screen.id" class="mt-7" />
 
+                <p v-if="screen.id === 'android' && android.apkUrl" class="mt-4 text-sm leading-relaxed text-text-muted">
+                    La première fois, Android demande d’autoriser votre navigateur à installer des applis : acceptez,
+                    puis appuyez sur « Installer ».
+                    <span v-if="android.apkSha256" class="mt-2 block break-all">
+                        Empreinte SHA-256 : <code class="rounded bg-bg px-1.5 py-0.5 font-mono text-xs text-text-soft">{{ android.apkSha256 }}</code>
+                    </span>
+                </p>
+                <p v-if="screen.id === 'tv' && android.apkUrl" class="mt-4 text-sm leading-relaxed text-text-muted">
+                    Sur la TV, dans une appli qui télécharge des fichiers (un navigateur par exemple), ouvrez
+                    <strong class="text-text">{{ apkShort }}</strong>, puis installez Vixeo.
+                </p>
+
                 <p v-if="screen.id !== 'web' && latestAndroid" class="mt-4 text-sm text-text-muted">
                     Dernière version : {{ latestAndroid.version }}
                 </p>
-                <Link :href="`/installer#${screen.id}`" class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent-hover">
-                    Voir les étapes {{ screen.id === 'web' ? 'pour ouvrir Vixeo' : 'd’installation' }}
-                    <Icon name="arrow" :size="16" />
-                </Link>
             </div>
 
             <div class="mx-auto w-full" :class="screen.id === 'android' ? 'max-w-[15rem]' : 'max-w-xl'">

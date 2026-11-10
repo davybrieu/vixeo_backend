@@ -1,12 +1,14 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import FaqList from '../components/FaqList.vue';
 import FeatureRow from '../components/FeatureRow.vue';
 import Icon from '../components/Icon.vue';
 import PlatformPicker from '../components/PlatformPicker.vue';
 import SectionHeading from '../components/SectionHeading.vue';
 import Seo from '../components/Seo.vue';
 import VxButton from '../components/VxButton.vue';
+import faq from '../data/faq.js';
 import PhoneFrame from '../mock/PhoneFrame.vue';
 import PhoneHomeScreen from '../mock/PhoneHomeScreen.vue';
 import PhoneListScreen from '../mock/PhoneListScreen.vue';
@@ -25,6 +27,7 @@ const onAndroid = computed(() => page.props.platform !== 'web');
 const hasAndroid = computed(() => !!site.android.apkUrl);
 // On an Android device, installing comes first; elsewhere, opening in the browser.
 const androidFirst = computed(() => onAndroid.value && hasAndroid.value);
+const questions = faq(site);
 
 const screens = [
     { icon: 'phone', label: 'Téléphone Android' },
@@ -58,14 +61,14 @@ const screens = [
             </p>
             <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
                 <template v-if="androidFirst">
-                    <VxButton href="/installer#android" icon="download" size="lg">
+                    <VxButton href="#installer" icon="download" size="lg">
                         {{ page.props.platform === 'tv' ? 'Installer sur la TV' : 'Installer sur Android' }}
                     </VxButton>
                     <VxButton :href="site.appUrl" icon="globe" variant="outline" size="lg">Ouvrir dans le navigateur</VxButton>
                 </template>
                 <template v-else>
                     <VxButton :href="site.appUrl" icon="globe" size="lg">Ouvrir dans le navigateur</VxButton>
-                    <VxButton href="/installer#android" icon="phone" variant="outline" size="lg">Installer sur Android</VxButton>
+                    <VxButton href="#installer" icon="phone" variant="outline" size="lg">Installer sur Android</VxButton>
                 </template>
             </div>
             <p class="mt-5 text-sm text-text-muted">Vixeo n’héberge ni ne diffuse aucun film ni aucune série.</p>
@@ -91,7 +94,7 @@ const screens = [
     </section>
 
     <!-- Choose your screen -->
-    <section id="ecrans" class="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="titre-ecrans">
+    <section id="installer" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="titre-ecrans">
         <SectionHeading id="titre-ecrans" title="Choisissez votre écran.">
             Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au
             clavier et à la souris dans le navigateur.
@@ -183,25 +186,12 @@ const screens = [
         </div>
     </section>
 
-    <!-- Coming next -->
-    <section class="mx-auto max-w-6xl px-5 pb-20 sm:px-8 sm:pb-28" aria-labelledby="titre-suite">
-        <div class="rounded-3xl border border-line bg-gradient-to-br from-surface to-bg p-8 sm:p-12">
-            <div class="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                <div class="max-w-xl">
-                    <p class="text-sm font-semibold tracking-wide text-accent uppercase">En préparation</p>
-                    <h2 id="titre-suite" class="mt-3 text-2xl font-bold sm:text-3xl">La lecture depuis vos propres serveurs.</h2>
-                    <p class="mt-4 leading-relaxed text-text-secondary">
-                        Vixeo lira bientôt les films et séries de votre serveur multimédia personnel. Il ne fournira jamais
-                        de contenu lui-même.
-                    </p>
-                </div>
-                <ul class="flex flex-wrap gap-3">
-                    <li v-for="name in ['Jellyfin', 'Plex', 'Emby']" :key="name" class="flex items-center gap-2 rounded-2xl border border-line bg-bg px-5 py-3 font-semibold">
-                        <Icon name="server" :size="18" class="text-text-muted" /> {{ name }}
-                    </li>
-                </ul>
-            </div>
-        </div>
+    <!-- FAQ -->
+    <section id="faq" class="mx-auto max-w-4xl scroll-mt-24 px-5 pb-20 sm:px-8 sm:pb-28" aria-labelledby="titre-faq">
+        <SectionHeading id="titre-faq" title="Questions fréquentes.">
+            Tout ce qu’il faut savoir avant d’installer Vixeo.
+        </SectionHeading>
+        <FaqList :items="questions" class="mt-10" />
     </section>
 
     <!-- Final call -->
@@ -211,9 +201,8 @@ const screens = [
             <h2 id="titre-installer" class="text-3xl font-extrabold sm:text-5xl">Installez Vixeo en une minute.</h2>
             <p class="mt-5 text-lg text-text-secondary">Un seul compte pour votre téléphone, votre TV et votre navigateur.</p>
             <div class="mt-9 flex flex-wrap justify-center gap-3">
-                <VxButton href="/installer" icon="download" size="lg">Installer Vixeo</VxButton>
+                <VxButton href="#installer" icon="download" size="lg">Installer Vixeo</VxButton>
                 <VxButton :href="site.appUrl" icon="globe" variant="outline" size="lg">Ouvrir dans le navigateur</VxButton>
-                <VxButton href="/faq" variant="secondary" size="lg">Questions fréquentes</VxButton>
             </div>
         </div>
     </section>
@@ -224,9 +213,8 @@ const screens = [
             <h2 id="titre-pas" class="text-lg font-bold">Ce que Vixeo n’est pas.</h2>
             <div class="space-y-4 text-sm leading-relaxed text-text-muted">
                 <p>
-                    Vixeo organise des films et des séries et, bientôt, lira les contenus de vos propres serveurs. Il
-                    n’héberge, ne stocke et ne diffuse aucun film ni aucune série, et n’est affilié ni à Jellyfin, ni à
-                    Plex, ni à Emby.
+                    Vixeo organise des films et des séries. Il n’héberge, ne stocke et ne diffuse aucun film ni aucune
+                    série.
                 </p>
                 <p>
                     Les informations et images des titres proviennent de TMDb. This product uses the TMDB API but is not

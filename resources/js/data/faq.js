@@ -1,10 +1,11 @@
-// Questions of the FAQ page. Answers are HTML written here (never user input): links only.
+// Questions of the FAQ section of the home page (#faq). Answers are HTML written here (never user input): links only.
 // Keep them true to what the app does today (CLAUDE.md, « Textes »).
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const link = (href, text) => `<a href="${escape(href)}" class="font-semibold text-accent hover:text-accent-hover">${escape(text)}</a>`;
 
 export default function faq(site) {
     const app = site.appUrl;
+    const apkShort = `${site.url.replace(/^https?:\/\//, '')}/apk`;
     const contact = site.contactEmail ? ` Une autre question ? Écrivez-nous à ${link(`mailto:${site.contactEmail}`, site.contactEmail)}.` : '';
 
     return [
@@ -20,7 +21,6 @@ export default function faq(site) {
             question: 'Vixeo propose-t-il des films ou des séries à regarder ?',
             answer: [
                 'Non. Vixeo n’héberge, ne stocke et ne diffuse aucun film ni aucune série. Les informations et les images des titres viennent de TMDb.',
-                'La lecture depuis vos propres serveurs multimédias (Jellyfin, Plex, Emby) est en préparation.',
             ],
         },
         {
@@ -35,8 +35,16 @@ export default function faq(site) {
             id: 'play-store',
             question: 'Vixeo est-il sur le Play Store ?',
             answer: [
-                `Non. Sur Android (téléphone, tablette et TV), Vixeo s’installe uniquement depuis ce site, avec un fichier APK : ${link('/installer#android', 'voir les étapes')}. Ne l’installez depuis aucune autre source.`,
-                'Le fichier est signé : Android vérifie que chaque mise à jour vient bien de nous, et son empreinte SHA-256 est indiquée sur la page Installer.',
+                `Non. Sur Android (téléphone, tablette et TV), Vixeo s’installe uniquement depuis ce site, avec un fichier APK : ${link('#installer', 'télécharger l’APK')}. Ne l’installez depuis aucune autre source.`,
+                'Le fichier est signé : Android vérifie que chaque mise à jour vient bien de nous. Son empreinte SHA-256 est indiquée sous le bouton de téléchargement.',
+                'La première fois, Android demande d’autoriser votre navigateur à installer des applis (Paramètres, Applications, Accès spécial des applications, Installer des applis inconnues) : acceptez, puis appuyez sur « Installer ».',
+            ],
+        },
+        {
+            id: 'installer-tv',
+            question: 'Comment installer Vixeo sur ma TV ?',
+            answer: [
+                `Sur la TV, installez depuis Google Play une appli qui télécharge des fichiers (un navigateur ou une appli de téléchargement). Dans cette appli, ouvrez l’adresse <strong>${escape(apkShort)}</strong> : le fichier de Vixeo se télécharge. Autorisez cette appli à installer des applis quand Android le demande, puis installez Vixeo.`,
             ],
         },
         {
@@ -78,7 +86,7 @@ export default function faq(site) {
             id: 'mises-a-jour',
             question: 'Comment mettre Vixeo à jour ?',
             answer: [
-                'Sur Android, Vixeo vous prévient quand une nouvelle version est disponible : il la télécharge depuis ce site, vérifie le fichier, puis Android vous demande de confirmer l’installation. Dans le navigateur, vous avez toujours la dernière version.',
+                'Sur Android, Vixeo vous prévient quand une nouvelle version est disponible : il télécharge le fichier, le vérifie, puis Android vous demande de confirmer l’installation. Dans le navigateur, vous avez toujours la dernière version.',
             ],
         },
         {

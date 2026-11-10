@@ -12,16 +12,11 @@ use Inertia\Response as InertiaResponse;
 class SiteController extends Controller
 {
     /** Pages listed in the sitemap, with their priority. */
-    private const PAGES = ['/' => '1.0', '/installer' => '0.9', '/faq' => '0.6', '/mentions-legales' => '0.2', '/confidentialite' => '0.2'];
+    private const PAGES = ['/' => '1.0', '/mentions-legales' => '0.2', '/confidentialite' => '0.2'];
 
     public function home(LatestAndroidRelease $release): InertiaResponse
     {
         return Inertia::render('Home', ['latestAndroid' => $release->get()]);
-    }
-
-    public function install(LatestAndroidRelease $release): InertiaResponse
-    {
-        return Inertia::render('Install', ['latestAndroid' => $release->get()]);
     }
 
     /** Short link to type on a TV (www.vixeo.app/apk): the current APK. */
@@ -31,11 +26,6 @@ class SiteController extends Controller
         abort_if($apk === null, 404);
 
         return redirect()->away($apk['url'], 302);
-    }
-
-    public function faq(): InertiaResponse
-    {
-        return Inertia::render('Faq');
     }
 
     public function legal(): InertiaResponse

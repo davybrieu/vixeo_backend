@@ -8,7 +8,7 @@ const year = new Date().getFullYear();
 
 <template>
     <footer class="border-t border-line/70 bg-surface/40">
-        <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
             <div>
                 <VxLogo size="h-8" />
                 <p class="mt-4 max-w-xs text-sm leading-relaxed text-text-muted">
@@ -18,16 +18,9 @@ const year = new Date().getFullYear();
             <div>
                 <h2 class="text-sm font-semibold text-text">Vixeo</h2>
                 <ul class="mt-4 space-y-3 text-sm text-text-secondary">
-                    <li><a href="/#fonctionnalites" class="hover:text-text">Fonctionnalités</a></li>
-                    <li><Link href="/installer" class="hover:text-text">Installer</Link></li>
+                    <li><a href="/#installer" class="hover:text-text">Installer</a></li>
+                    <li><a href="/#faq" class="hover:text-text">Questions fréquentes</a></li>
                     <li><a :href="site.appUrl" class="hover:text-text">Ouvrir dans le navigateur</a></li>
-                </ul>
-            </div>
-            <div>
-                <h2 class="text-sm font-semibold text-text">Aide</h2>
-                <ul class="mt-4 space-y-3 text-sm text-text-secondary">
-                    <li><Link href="/faq" class="hover:text-text">Questions fréquentes</Link></li>
-                    <li><Link href="/installer#tv" class="hover:text-text">Connecter une TV</Link></li>
                     <li v-if="site.contactEmail"><a :href="`mailto:${site.contactEmail}`" class="hover:text-text">Contact</a></li>
                 </ul>
             </div>
