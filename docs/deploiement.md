@@ -230,7 +230,8 @@ Un port déjà pris (`EADDRINUSE`) : souvent l'ancien daemon SSR d'un autre site
 
 - **Queue** : connexion `redis`.
 - **Scheduler** : `php artisan schedule:run` chaque minute (supprime chaque jour les codes TV et
-  les jetons expirés).
+  les jetons expirés ; toutes les 6 h, `tv:epg` télécharge le guide des programmes et la
+  bibliothèque de logos de la TV en direct).
 
 ## 8. Vérifier après le déploiement
 

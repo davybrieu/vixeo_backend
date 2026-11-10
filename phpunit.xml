@@ -26,6 +26,8 @@
         <env name="WEB_URL" value="https://app.vixeo.test"/>
         <env name="ANDROID_UPDATE_URL" value=""/>
         <env name="IOS_UPDATE_URL" value=""/>
+        <env name="TV_EPG_URLS" value=""/>
+        <env name="TV_LOGOS_REPOSITORY" value=""/>
         <env name="INERTIA_SSR_ENABLED" value="false"/>
         <env name="VIXEO_ANDROID_APK_URL" value=""/>
         <env name="VIXEO_ANDROID_APK_SHA256" value=""/>

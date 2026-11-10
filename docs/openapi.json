@@ -5099,7 +5099,7 @@
         "/v1/tv/channels/{id}": {
             "get": {
                 "operationId": "v1.tv.channels.show",
-                "description": "Its name, category and logo (an image on our origin, `GET /tv/logo/{hash}`; null when the\nprovider has none): the channel page of the app.",
+                "description": "Its name, category and logo (an image on our origin, `GET /tv/logo/{hash}`, from the logo\nlibrary, the programme guide or the provider; null when none has one): the channel page of\nthe app.",
                 "summary": "One channel",
                 "tags": [
                     "TV en direct",
@@ -5159,6 +5159,101 @@
                                     },
                                     "required": [
                                         "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/channels/{id}/epg": {
+            "get": {
+                "operationId": "v1.tv.channels.epg",
+                "description": "The programmes from the one on now, in order (30 at most, the next 48 hours), with UTC\ntimes. `available` is false when the server has no guide; `data` is also empty when the\nguide doesn't know the channel, or while it is being downloaded for the first time.",
+                "summary": "Programme guide of a channel",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "subtitle": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "description": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "category": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "image": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "start": {
+                                                        "type": "string"
+                                                    },
+                                                    "end": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "title",
+                                                    "subtitle",
+                                                    "description",
+                                                    "category",
+                                                    "image",
+                                                    "start",
+                                                    "end"
+                                                ]
+                                            }
+                                        },
+                                        "available": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "available"
                                     ]
                                 }
                             }

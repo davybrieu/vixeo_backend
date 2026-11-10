@@ -21,6 +21,8 @@ class LiveTv
         private VavooClient $vavoo,
         private XtreamClient $xtream,
         private ChannelLogos $logos,
+        private LogoLibrary $library,
+        private Epg $epg,
     ) {}
 
     /** Whether at least one provider is configured. */
@@ -55,8 +57,21 @@ class LiveTv
      */
     public function channels(): array
     {
-        // Logos on our own origin (ChannelLogos): never the provider's address.
-        return $this->logos->rewrite($this->providerChannels());
+        // Logo candidates, best first: the logo library (clean, transparent PNGs), the programme
+        // guide's icon, then the provider's. All relayed from our own origin (ChannelLogos): the
+        // app never sees their address.
+        $channels = array_map(fn (array $c) => ['logo' => array_values(array_filter([
+            $this->library->logo($c['name']),
+            $this->epg->icon($c['epg_channel_id'], $c['name']),
+            $c['logo'],
+        ]))] + $c, $this->providerChannels());
+
+        // The guide id is a server-side detail.
+        return array_map(function (array $c): array {
+            unset($c['epg_channel_id']);
+
+            return $c;
+        }, $this->logos->rewrite($channels));
     }
 
     /**
@@ -76,7 +91,29 @@ class LiveTv
     }
 
     /**
-     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null}>
+     * The channel's programme guide, from the one on now (empty without a guide).
+     *
+     * @return list<array{title: string, subtitle: string|null, description: string|null, category: string|null, image: string|null, start: string, end: string}>
+     */
+    public function programmes(string $channelId): array
+    {
+        foreach ($this->providerChannels() as $channel) {
+            if ($channel['id'] === $channelId) {
+                return $this->epg->programmes($channel['epg_channel_id'], $channel['name']);
+            }
+        }
+
+        throw new RuntimeException(__('Channel not found.'));
+    }
+
+    /** Whether a programme guide is configured on the server. */
+    public function hasGuide(): bool
+    {
+        return $this->epg->configured();
+    }
+
+    /**
+     * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null, epg_channel_id: string|null}>
      */
     private function providerChannels(): array
     {
@@ -92,6 +129,7 @@ class LiveTv
                     'category_id' => (string) $c['category_id'],
                     'logo' => $c['logo'] === null ? null : (string) $c['logo'],
                     'number' => null,
+                    'epg_channel_id' => null,
                 ],
                 $this->vavoo->channels()
             );

@@ -99,7 +99,7 @@ it('diagnoses the logos from the command line (php artisan tv:logos)', function 
     Http::fake(['logo.test/arte.png' => Http::response(tinyPng())]);
 
     $this->artisan('tv:logos')
-        ->expectsOutputToContain('2 chaînes, 1 avec un logo du fournisseur.')
+        ->expectsOutputToContain('2 chaînes, 1 avec un logo.')
         ->expectsOutputToContain('Arte : OK, image/png')
         ->assertSuccessful();
 });
@@ -109,7 +109,7 @@ it('tells why a logo is refused (php artisan tv:logos)', function () {
 
     $this->artisan('tv:logos')
         ->expectsOutputToContain('Arte : REFUSÉ, SVG image (not accepted) (HTTP 200, type image/svg+xml')
-        ->expectsOutputToContain('adresse du fournisseur : https://logo.test/arte.png')
+        ->expectsOutputToContain('adresse d\'origine : https://logo.test/arte.png')
         ->assertSuccessful();
 });
 
@@ -135,6 +135,6 @@ it('falls back to plain HTTP when the logo host breaks the TLS handshake', funct
     $this->get($logo)->assertOk()->assertHeader('Content-Type', 'image/png');
     $this->artisan('tv:logos')
         ->expectsOutputToContain('Arte : OK, image/png')
-        ->expectsOutputToContain('adresse du fournisseur : http://logo.test/arte.png')
+        ->expectsOutputToContain('adresse d\'origine : http://logo.test/arte.png')
         ->assertSuccessful();
 });

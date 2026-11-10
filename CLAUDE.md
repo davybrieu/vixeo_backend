@@ -199,9 +199,16 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   bearer) et la playlist HLS est réécrite côté serveur. Certains fournisseurs ne publient qu'en
   HTTP clair : le proxy évite le contenu mixte (web HTTPS) et le blocage du trafic non chiffré
   (Android de production). La TV est facultative : sans fournisseur configuré, 503.
-  `GET /tv/channels/{id}` = une chaîne (page de la chaîne). **Logos** : jamais l'adresse du
-  fournisseur, mais `GET /tv/logo/{hash}` sur notre domaine (`App\Services\Tv\ChannelLogos` :
-  hash SHA-256 stable ; l'image est **relayée, jamais stockée** sur le serveur (décision du
+  `GET /tv/channels/{id}` = une chaîne (page de la chaîne). **Guide des programmes** :
+  `GET /tv/channels/{id}/epg` (`{data, available}`), fichiers XMLTV de `TV_EPG_URLS` (virgules,
+  le préféré d'abord ; `App\Services\Tv\Epg`), téléchargés par `php artisan tv:epg` toutes les
+  6 h (hors requêtes), 48 h de programmes, une entrée de cache par chaîne ; rattachement par
+  `epg_channel_id` ou par nom (`ChannelName::key`), le premier fichier qui a des programmes
+  l'emporte. **Logos** : candidats dans l'ordre bibliothèque `tv-logo/tv-logos`
+  (`LogoLibrary`, API GitHub une fois par jour, `TV_LOGOS_DIRECTORIES`), icône du guide, logo du
+  fournisseur ; jamais leur adresse, mais `GET /tv/logo/{hash}` sur notre domaine
+  (`App\Services\Tv\ChannelLogos` : hash SHA-256 stable des candidats, le relais sert le premier
+  qui donne une image ; l'image est **relayée, jamais stockée** sur le serveur (décision du
   développeur), vérifiée, gardée 7 jours par l'appli et le navigateur (`Cache-Control`) ; publique,
   CORS ; sans logo : `null`).
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
@@ -247,7 +254,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
 - Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb,
   commentaires gardés par Vixeo.
-- Fait aussi : TV en direct (API neutre, fournisseurs côté serveur) et flux favoris / « dernier flux qui a
+- Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
+  logos de la bibliothèque tv-logos) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par

@@ -14,7 +14,9 @@ use Throwable;
  * The providers' logo URLs can't be handed to the apps: Flutter web downloads images with fetch,
  * which needs CORS headers the logo hosts don't send; a release Android build refuses plain-HTTP
  * images; and the app must never see a provider's address. So each logo becomes a stable URL on
- * our API: the SHA-256 of the provider URL. Only that hash → URL map is kept server-side (text).
+ * our API: the SHA-256 of the logo's address. Only that hash → address map is kept server-side
+ * (text). A channel can have several candidates (the logo library, the programme guide, the
+ * provider: LiveTv::channels): the relay serves the first one that gives a usable image.
  *
  * The image itself is **never stored** on our server (developer's request): it is fetched from the
  * provider when asked, checked (a real raster image, 512 KB at most) and passed on. The apps and
@@ -32,12 +34,11 @@ class ChannelLogos
     private const TYPES = [IMAGETYPE_PNG => 'image/png', IMAGETYPE_JPEG => 'image/jpeg', IMAGETYPE_WEBP => 'image/webp', IMAGETYPE_GIF => 'image/gif'];
 
     /**
-     * The channels, each logo replaced by its URL on our API (null stays null).
+     * The channels, each logo (an address, or candidate addresses in order of preference)
+     * replaced by its URL on our API (none: null).
      *
-     * @template T of array{logo: string|null}
-     *
-     * @param  list<T>  $channels
-     * @return list<T>
+     * @param  list<array<string, mixed>>  $channels
+     * @return list<array<string, mixed>>
      */
     public function rewrite(array $channels): array
     {
@@ -46,14 +47,18 @@ class ChannelLogos
         $added = false;
 
         foreach ($channels as $i => $channel) {
-            $logo = $channel['logo'];
-            if ($logo === null || ! preg_match('#^https?://#i', $logo)) {
+            $candidates = array_values(array_unique(array_filter(
+                (array) ($channel['logo'] ?? null),
+                fn ($url) => is_string($url) && preg_match('#^https?://#i', $url)
+            )));
+            if ($candidates === []) {
                 $channels[$i]['logo'] = null;
 
                 continue;
             }
 
-            $hash = substr(hash('sha256', $logo), 0, 32);
+            $logo = count($candidates) === 1 ? $candidates[0] : $candidates;
+            $hash = substr(hash('sha256', implode("\n", $candidates)), 0, 32);
             if (($map[$hash] ?? null) !== $logo) {
                 $map[$hash] = $logo;
                 $added = true;
@@ -88,13 +93,17 @@ class ChannelLogos
     public function inspect(string $hash): array
     {
         $map = Cache::get(self::MAP_KEY, []);
-        $url = is_array($map) ? ($map[$hash] ?? null) : null;
-        if (! is_string($url)) {
+        $urls = array_values(array_filter((array) (is_array($map) ? ($map[$hash] ?? null) : null), 'is_string'));
+        if ($urls === []) {
             return ['image' => null, 'reason' => 'unknown logo (list the channels first)', 'host' => null, 'status' => null, 'content_type' => null, 'bytes' => 0, 'url' => null];
         }
 
-        $result = $this->fetch($url);
-        if ($result['reason'] !== null) {
+        // The first candidate that gives a usable image.
+        foreach ($urls as $url) {
+            $result = $this->fetch($url);
+            if ($result['reason'] === null) {
+                return $result;
+            }
             Log::info('Channel logo refused', array_diff_key($result, ['image' => true]));
         }
 
