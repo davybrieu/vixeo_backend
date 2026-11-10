@@ -143,6 +143,11 @@ return [
         'proxy_ttl' => (int) env('TV_PROXY_TTL', 21600),
         // Seconds to wait for one upstream playlist / segment request.
         'proxy_timeout' => (int) env('TV_PROXY_TIMEOUT', 20),
+        // Programme guide: an XMLTV file (gzip accepted). Empty = no guide (docs/tv-direct.md).
+        'epg_url' => env('TV_EPG_URL'),
+        // Seconds the parsed guide is kept before it is downloaded again.
+        'epg_ttl' => (int) env('TV_EPG_TTL', 21600),
+        'epg_timeout' => (int) env('TV_EPG_TIMEOUT', 60),
     ],
 
     /*

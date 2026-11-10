@@ -163,6 +163,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   bearer) et la playlist HLS est réécrite côté serveur. Certains fournisseurs ne publient qu'en
   HTTP clair : le proxy évite le contenu mixte (web HTTPS) et le blocage du trafic non chiffré
   (Android de production). La TV est facultative : sans fournisseur configuré, 503.
+  Guide des programmes (EPG) : un fichier **XMLTV** configuré (`TV_EPG_URL`), lu par
+  `App\Services\Tv\Epg` (index en cache 6 h ; chaîne retrouvée par `epg_channel_id` ou nom normalisé,
+  `Epg::normalize`) → `GET /tv/channels/{id}/epg` ; l'icône du guide sert de logo aux chaînes qui n'en
+  ont pas ; `GET /tv/channels/{id}` = une chaîne. Sans guide ou guide en panne : liste vide, jamais
+  d'erreur.
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :

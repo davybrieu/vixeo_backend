@@ -14,6 +14,8 @@ des chaînes et une URL HLS jouable.
 |---|---|---|
 | GET | `/tv/categories` | catégories de chaînes |
 | GET | `/tv/channels?category_id=&q=` | chaînes, triées par nom |
+| GET | `/tv/channels/{id}` | une chaîne (page de la chaîne dans l'appli) |
+| GET | `/tv/channels/{id}/epg` | programme de la chaîne (guide), à partir de celui en cours |
 | GET | `/tv/channels/{id}/stream` | résout une chaîne en flux jouable |
 | GET | `/tv/stream/{token}` | média d'un flux (playlist HLS réécrite ou segment), proxifié |
 
@@ -28,6 +30,29 @@ des chaînes et une URL HLS jouable.
 - La TV en direct est **facultative** : sans fournisseur configuré, les routes répondent 503
   « La TV en direct n'est pas configurée sur le serveur. » Un fournisseur injoignable répond aussi
   503 « La TV en direct est momentanément indisponible. »
+
+## Guide des programmes (EPG)
+
+Le guide vient d'un **fichier XMLTV** (le format standard des guides TV, `.xml` ou `.xml.gz`),
+configuré sur le serveur (`TV_EPG_URL`), quel que soit le fournisseur des flux. `App\Services\Tv\Epg`
+le télécharge et l'analyse au plus toutes les `TV_EPG_TTL` secondes (6 h par défaut), puis garde en
+cache un index : les programmes des 36 heures à venir et l'icône de chaque chaîne.
+
+- Une chaîne est retrouvée par son identifiant de guide (`epg_channel_id`, donné par un panneau) ou
+  par son **nom normalisé** : minuscules, sans accents ni ponctuation, sans « HD », « FHD », « 4K »,
+  préfixe de pays (« FR | ») ni suffixe (« .fr ») ; « TF1 HD » et la chaîne « TF1.fr » du guide se
+  rejoignent.
+- `/tv/channels/{id}/epg` répond `{ "data": [ { title, subtitle, description, category, image,
+  start, end } ], "available": true }`, heures en UTC, 30 programmes au plus, du programme en cours
+  aux suivants. `available` est faux sans guide configuré ; `data` est aussi vide quand le guide ne
+  connaît pas la chaîne.
+- Une chaîne **sans logo** chez le fournisseur prend l'icône du guide (`/tv/channels` et
+  `/tv/channels/{id}`).
+- Un guide absent, injoignable ou invalide ne bloque jamais la TV : le guide est vide (un échec est
+  gardé 10 min avant un nouvel essai).
+
+Choisir une source dont les conditions d'utilisation permettent cet usage (par exemple un projet
+ouvert de guide TV au format XMLTV).
 
 ## Flux proxifié (pourquoi l'appli ne reçoit jamais l'URL du fournisseur)
 
@@ -70,7 +95,8 @@ Chaque fournisseur met ses résultats en cache (durées réglables) pour limiter
 Les variables d'environnement de chaque fournisseur (URL, miroirs, endpoints de ping, pays,
 timeouts, TTL de cache, versions de client) sont documentées dans `.env.example`. Elles vivent dans
 la configuration, pas dans le code, pour pouvoir être mises à jour sans republier l'appli. Le proxy
-lui-même se règle avec `TV_PROXY_TTL` (durée de vie d'un jeton média) et `TV_PROXY_TIMEOUT`.
+lui-même se règle avec `TV_PROXY_TTL` (durée de vie d'un jeton média) et `TV_PROXY_TIMEOUT` ; le
+guide avec `TV_EPG_URL`, `TV_EPG_TTL` et `TV_EPG_TIMEOUT`.
 
 ## À vérifier avant la mise en ligne
 

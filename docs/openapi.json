@@ -5037,6 +5037,136 @@
                 }
             }
         },
+        "/v1/tv/channels/{id}": {
+            "get": {
+                "operationId": "v1.tv.channels.show",
+                "description": "Its name, category and logo (the programme guide's when the provider has none): the\nchannel page of the app.",
+                "summary": "One channel",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "category_id": {
+                                                    "type": "string"
+                                                },
+                                                "logo": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "number": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "epg_channel_id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "category_id",
+                                                "logo",
+                                                "number",
+                                                "epg_channel_id"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/channels/{id}/epg": {
+            "get": {
+                "operationId": "v1.tv.channels.epg",
+                "description": "The programmes from the one on now, in order (36 hours at most, 30 programmes), with UTC\ntimes. `available` is false when the server has no guide; `data` is empty too when the guide\ndoesn't know the channel.",
+                "summary": "Programme guide of a channel",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "available": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "available"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/tv/channels/{id}/stream": {
             "get": {
                 "operationId": "v1.tv.channels.stream",
