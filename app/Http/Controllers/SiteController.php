@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\LatestAndroidRelease;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -65,14 +64,6 @@ class SiteController extends Controller
         $base = self::siteUrl();
 
         return response("User-agent: *\nAllow: /\n\nSitemap: {$base}/sitemap.xml\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
-    }
-
-    /** vixeo.app (SITE_REDIRECT_DOMAINS) → the same page on www.vixeo.app. */
-    public function redirectToSite(Request $request): RedirectResponse
-    {
-        $query = $request->getQueryString();
-
-        return redirect()->away(self::siteUrl().'/'.ltrim($request->path(), '/').($query ? '?'.$query : ''), 301);
     }
 
     /** Public address of the site (SITE_URL), without trailing slash. */

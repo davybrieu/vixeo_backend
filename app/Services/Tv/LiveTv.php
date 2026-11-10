@@ -20,7 +20,6 @@ class LiveTv
     public function __construct(
         private VavooClient $vavoo,
         private XtreamClient $xtream,
-        private Epg $epg,
     ) {}
 
     /** Whether at least one provider is configured. */
@@ -55,11 +54,7 @@ class LiveTv
      */
     public function channels(): array
     {
-        // A channel without a logo takes the one of the programme guide, if it has one.
-        return array_map(
-            fn (array $c) => $c['logo'] === null ? ['logo' => $this->epg->icon($c['epg_channel_id'], $c['name'])] + $c : $c,
-            $this->providerChannels(),
-        );
+        return $this->providerChannels();
     }
 
     /**
@@ -76,24 +71,6 @@ class LiveTv
         }
 
         throw new RuntimeException(__('Channel not found.'));
-    }
-
-    /**
-     * The channel's programme guide, from the one on now (empty without a guide).
-     *
-     * @return list<array{title: string, subtitle: string|null, description: string|null, category: string|null, image: string|null, start: string, end: string}>
-     */
-    public function programmes(string $channelId): array
-    {
-        $channel = $this->channel($channelId);
-
-        return $this->epg->programmes($channel['epg_channel_id'], $channel['name']);
-    }
-
-    /** Whether a programme guide is configured. */
-    public function hasGuide(): bool
-    {
-        return $this->epg->configured();
     }
 
     /**

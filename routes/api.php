@@ -133,7 +133,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('channels', [TvController::class, 'channels'])->name('channels');
             // Channel ids are strings on some providers (Vavoo "tf1"), digits on Xtream.
             Route::get('channels/{id}', [TvController::class, 'show'])->name('channels.show');
-            Route::get('channels/{id}/epg', [TvController::class, 'epg'])->name('channels.epg');
             Route::get('channels/{id}/stream', [TvController::class, 'stream'])->name('channels.stream');
         });
 

@@ -21,12 +21,6 @@ final class Hosts
         return self::domain('site');
     }
 
-    /** @return list<string> */
-    public static function redirectDomains(): array
-    {
-        return array_values(array_map('strtolower', (array) config('vixeo.domains.redirect', [])));
-    }
-
     /** API request: JSON errors, never the site's error pages. */
     public static function isApi(Request $request): bool
     {

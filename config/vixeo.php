@@ -11,8 +11,7 @@ return [
         'api' => env('API_DOMAIN') ?: null,
         // www.vixeo.app : le site de présentation (Vue + Inertia, SSR).
         'site' => env('SITE_DOMAIN') ?: null,
-        // Domaines redirigés (301) vers le site, séparés par des virgules : vixeo.app → www.vixeo.app.
-        'redirect' => array_values(array_filter(array_map('trim', explode(',', (string) env('SITE_REDIRECT_DOMAINS', ''))))),
+        // vixeo.app → www.vixeo.app : redirection faite par le site Forge (docs/deploiement.md).
     ],
     // Sans API_DOMAIN ni SITE_DOMAIN (en local) : un seul hôte, le site sur /, l'API sur /api/v1.
 

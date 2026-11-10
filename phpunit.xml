@@ -25,7 +25,6 @@
         <env name="API_DOMAIN" value="api.vixeo.test"/>
         <env name="SITE_DOMAIN" value="www.vixeo.test"/>
         <env name="SITE_URL" value="https://www.vixeo.test"/>
-        <env name="SITE_REDIRECT_DOMAINS" value="vixeo.test"/>
         <env name="WEB_URL" value="https://app.vixeo.test"/>
         <env name="ANDROID_UPDATE_URL" value=""/>
         <env name="IOS_UPDATE_URL" value=""/>

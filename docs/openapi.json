@@ -5048,7 +5048,7 @@
         "/v1/tv/channels/{id}": {
             "get": {
                 "operationId": "v1.tv.channels.show",
-                "description": "Its name, category and logo (the programme guide's when the provider has none): the\nchannel page of the app.",
+                "description": "Its name, category and logo (null when the provider has none): the channel page of the app.",
                 "summary": "One channel",
                 "tags": [
                     "TV en direct",
@@ -5115,55 +5115,6 @@
                                     },
                                     "required": [
                                         "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/tv/channels/{id}/epg": {
-            "get": {
-                "operationId": "v1.tv.channels.epg",
-                "description": "The programmes from the one on now, in order (36 hours at most, 30 programmes), with UTC\ntimes. `available` is false when the server has no guide; `data` is empty too when the guide\ndoesn't know the channel.",
-                "summary": "Programme guide of a channel",
-                "tags": [
-                    "TV en direct",
-                    "Tv"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {}
-                                        },
-                                        "available": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "required": [
-                                        "data",
-                                        "available"
                                     ]
                                 }
                             }

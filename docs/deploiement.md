@@ -7,7 +7,7 @@ deux domaines :
 | - | - |
 | `api.vixeo.app` | L'API (`/api/v1/...`), réponses JSON uniquement, `robots.txt` qui interdit tout |
 | `www.vixeo.app` | Le site de présentation (Vue + Inertia, SSR), voir [`site.md`](site.md) |
-| `vixeo.app` | Redirection 301 vers `https://www.vixeo.app` (même chemin, même requête) |
+| `vixeo.app` | Redirection 301 vers `https://www.vixeo.app`, faite par **Forge** (pas par Laravel) |
 
 Laravel choisit les routes d'après l'en-tête `Host` (`bootstrap/app.php`, `config/vixeo.php`,
 `App\Support\Hosts`) : Nginx n'a qu'un seul bloc `server` pour les trois domaines. `/up` répond
@@ -38,8 +38,9 @@ et on lui ajoute les domaines du site :
 
 1. **Supprimer le site Forge de `vixeo_web`** (Forge refuse un domaine déjà utilisé par un autre
    site). Le site public est indisponible quelques minutes, jusqu'à l'étape 4.
-2. Sur le site de l'API : **Domains → Add domain** : `www.vixeo.app`, puis `vixeo.app`, comme
-   **alias** du site (pas de redirection Forge : Laravel s'en charge).
+2. Sur le site de l'API : **Domains → Add domain** : `www.vixeo.app` comme **alias** du site,
+   puis `vixeo.app` comme **redirection** vers `https://www.vixeo.app` (Laravel ne fait pas cette
+   redirection : sans elle, `vixeo.app` afficherait la page 404 du site).
 3. Compléter l'environnement (section 4), le script de déploiement (section 5) et le daemon SSR
    (section 6), puis **Deploy now**.
 4. SSL : nouveau certificat Let's Encrypt couvrant les trois domaines (section 3).
@@ -48,7 +49,8 @@ et on lui ajoute les domaines du site :
 
 **New site** :
 
-- Domaine principal : `api.vixeo.app` ; alias : `www.vixeo.app`, `vixeo.app`
+- Domaine principal : `api.vixeo.app` ; alias : `www.vixeo.app` ; redirection Forge de
+  `vixeo.app` vers `https://www.vixeo.app`
 - Type : **Laravel**, PHP **8.3** ou plus, dossier web **`/public`**
 - Dépôt `davybrieu/vixeo_backend`, branche `main`
 - **Push to deploy** et **Zero-downtime deployments** activés
@@ -90,7 +92,6 @@ APP_LOCALE=fr
 API_DOMAIN=api.vixeo.app
 SITE_DOMAIN=www.vixeo.app
 SITE_URL=https://www.vixeo.app
-SITE_REDIRECT_DOMAINS=vixeo.app
 
 # Appli web Flutter (vixeo_frontend) : sa page /tv valide la connexion d'une TV par QR code.
 # Elle n'est pas servie par ce projet : garder son adresse (ex. https://app.vixeo.app).
@@ -235,7 +236,7 @@ Un port déjà pris (`EADDRINUSE`) : souvent l'ancien daemon SSR d'un autre site
 ## 8. Vérifier après le déploiement
 
 ```bash
-curl -sI https://vixeo.app/faq               # 301 → https://www.vixeo.app/faq (puis /#faq)
+curl -sI https://vixeo.app/                  # 301 → https://www.vixeo.app/ (redirection Forge)
 curl -s  https://api.vixeo.app/              # {"name":"Vixeo","api":"https://api.vixeo.app/api/v1"}
 curl -s  https://api.vixeo.app/api/v1/avatars | head -c 200
 curl -s  https://api.vixeo.app/nexiste-pas    # {"message":"Ressource introuvable."} (404)

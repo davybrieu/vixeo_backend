@@ -78,8 +78,7 @@ class TvController extends Controller
     /**
      * One channel.
      *
-     * Its name, category and logo (the programme guide's when the provider has none): the
-     * channel page of the app.
+     * Its name, category and logo (null when the provider has none): the channel page of the app.
      */
     public function show(string $id): JsonResponse
     {
@@ -90,27 +89,6 @@ class TvController extends Controller
         }
 
         return response()->json(['data' => $channel]);
-    }
-
-    /**
-     * Programme guide of a channel.
-     *
-     * The programmes from the one on now, in order (36 hours at most, 30 programmes), with UTC
-     * times. `available` is false when the server has no guide; `data` is empty too when the guide
-     * doesn't know the channel.
-     */
-    public function epg(string $id): JsonResponse
-    {
-        try {
-            $programmes = $this->live->programmes($id);
-        } catch (RuntimeException $e) {
-            $this->rethrow($e);
-        }
-
-        return response()->json([
-            'data' => $programmes,
-            'available' => $this->live->hasGuide(),
-        ]);
     }
 
     /**

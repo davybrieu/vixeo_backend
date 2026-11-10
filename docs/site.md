@@ -13,7 +13,7 @@ Vue 3, Inertia 3 avec rendu côté serveur (SSR), Tailwind CSS 4. Pas de compte,
 ```
 routes/site.php                          pages du site (groupe de middleware `site`)
 routes/api-host.php                      racine et robots.txt de api.vixeo.app
-app/Support/Hosts.php                    quel hôte ? (API_DOMAIN, SITE_DOMAIN, SITE_REDIRECT_DOMAINS)
+app/Support/Hosts.php                    quel hôte ? (API_DOMAIN, SITE_DOMAIN)
 app/Http/Controllers/SiteController.php  pages (Inertia::render), sitemap, robots, redirection vixeo.app → www
 app/Http/Middleware/                     HandleInertiaRequests, SecurityHeaders
 app/Services/LatestAndroidRelease.php    dernière version Android (GitHubReleases, comme GET /app/update)
@@ -72,7 +72,6 @@ Vue (`resources/js/pages`), et `SiteController::PAGES` (sitemap). Chaque page po
 | Variable | Rôle |
 | - | - |
 | `SITE_DOMAIN`, `SITE_URL` | Domaine du site (`www.vixeo.app`) et son adresse publique (liens canoniques, sitemap) |
-| `SITE_REDIRECT_DOMAINS` | Domaines redirigés (301) vers le site : `vixeo.app` |
 | `WEB_URL` | Appli web Flutter (boutons « Ouvrir dans le navigateur », « Créer un compte ») |
 | `VIXEO_ANDROID_APK_URL`, `VIXEO_ANDROID_APK_SHA256` | Secours : APK et empreinte s'il n'y a pas de release GitHub |
 | `VIXEO_PUBLISHER_*`, `VIXEO_PUBLICATION_DIRECTOR`, `VIXEO_CONTACT_EMAIL`, `VIXEO_HOST_*` | Mentions légales (obligatoires avant la mise en ligne) |

@@ -192,11 +192,6 @@ it('publishes a sitemap and robots.txt with the site address', function () {
     $this->get(site('/robots.txt'))->assertOk()->assertSee('Sitemap: https://www.vixeo.test/sitemap.xml');
 });
 
-it('redirects the bare domain to www, keeping the path and query', function () {
-    $this->get('https://vixeo.test/')->assertStatus(301)->assertRedirect('https://www.vixeo.test/');
-    $this->get('https://vixeo.test/mentions-legales?ref=tv')->assertStatus(301)->assertRedirect('https://www.vixeo.test/mentions-legales?ref=tv');
-});
-
 it('answers the health check on both hosts', function () {
     $this->get(site('/up'))->assertOk();
     $this->get('/up')->assertOk();

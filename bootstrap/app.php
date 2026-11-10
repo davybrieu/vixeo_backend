@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\SiteController;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\Hosts;
@@ -38,11 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 Route::domain($api)->group(base_path('routes/api-host.php'));
             }
 
-            // vixeo.app → www.vixeo.app (same path and query).
-            foreach (Hosts::redirectDomains() as $domain) {
-                Route::domain($domain)->any('{path?}', [SiteController::class, 'redirectToSite'])->where('path', '.*');
-            }
-
+            // vixeo.app → www.vixeo.app is a redirect of the Forge site (docs/deploiement.md).
             Route::middleware('site')->domain(Hosts::siteDomain())->group(base_path('routes/site.php'));
         },
     )

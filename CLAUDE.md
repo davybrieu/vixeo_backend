@@ -7,8 +7,8 @@ cliente est dans le dépôt [`davybrieu/vixeo_frontend`](https://github.com/davy
 **Un seul projet, un seul site Forge, deux domaines** (décision du développeur) :
 `api.vixeo.app` → l'API (`routes/api.php` sous `/api/v1`, `routes/api-host.php`),
 `www.vixeo.app` → le site (`routes/site.php`, Vue + Inertia SSR, doc : `docs/site.md`),
-`vixeo.app` → 301 vers `www`. Routage par `Host` dans `bootstrap/app.php` (`App\Support\Hosts`,
-`config/vixeo.php` : `API_DOMAIN`, `SITE_DOMAIN`, `SITE_REDIRECT_DOMAINS`). Sans domaines (local,
+`vixeo.app` → 301 vers `www` (**redirection du site Forge**, pas de Laravel). Routage par `Host`
+dans `bootstrap/app.php` (`App\Support\Hosts`, `config/vixeo.php` : `API_DOMAIN`, `SITE_DOMAIN`). Sans domaines (local,
 vides) : un seul hôte, le site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
 de `phpunit.xml` (`api.vixeo.test`, `www.vixeo.test`) : URL relative = hôte de l'API, le site se
 teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Site/PagesTest.php`).
@@ -193,11 +193,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   bearer) et la playlist HLS est réécrite côté serveur. Certains fournisseurs ne publient qu'en
   HTTP clair : le proxy évite le contenu mixte (web HTTPS) et le blocage du trafic non chiffré
   (Android de production). La TV est facultative : sans fournisseur configuré, 503.
-  Guide des programmes (EPG) : un fichier **XMLTV** configuré (`TV_EPG_URL`), lu par
-  `App\Services\Tv\Epg` (index en cache 6 h ; chaîne retrouvée par `epg_channel_id` ou nom normalisé,
-  `Epg::normalize`) → `GET /tv/channels/{id}/epg` ; l'icône du guide sert de logo aux chaînes qui n'en
-  ont pas ; `GET /tv/channels/{id}` = une chaîne. Sans guide ou guide en panne : liste vide, jamais
-  d'erreur.
+  `GET /tv/channels/{id}` = une chaîne (page de la chaîne). **Pas de guide des programmes (EPG)** :
+  supprimé à la demande du développeur, ne pas le réintroduire.
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
