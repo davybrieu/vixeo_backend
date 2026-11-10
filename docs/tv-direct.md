@@ -49,9 +49,15 @@ TV_EPG_URLS="https://epg.pw/xmltv/epg_FR.xml.gz,https://i.mjh.nz/Plex/fr.xml.gz,
   **6 heures** (`routes/console.php`, il faut le planificateur de Forge) ; le guide reste en cache
   `TV_EPG_TTL` secondes (12 h par défaut). Sans guide en cache (premier lancement), la première
   demande le télécharge **après avoir répondu** (programme vide en attendant).
+- Le **nom affiché** d'une chaîne est nettoyé (`ChannelName::clean`) : sans le suffixe de miroir
+  du fournisseur (« 6TER .c » → « 6TER »), ni les mentions de qualité (« HD », « FHD »,
+  « (1080P) », « (BACKUP) ») : « 13 EME RUE HD .s » → « 13 EME RUE ».
 - Une chaîne du fournisseur est rattachée au guide par son identifiant de guide
-  (`epg_channel_id`, donné par un panneau) ou par son **nom** (`App\Services\Tv\ChannelName` :
-  « TF1 HD », « TF1.fr », « FR | TF1 » → `tf1` ; « Canal+ » → `canalplus` ; « BFMTV » → `bfm`).
+  (`epg_channel_id`, donné par un panneau) ou par son **nom** (`ChannelName::key`, sur le nom
+  nettoyé : « TF1 HD », « TF1.fr », « FR | TF1 » → `tf1` ; « Canal+ » → `canalplus` ;
+  « BFMTV » → `bfm` ; « BE: ELEVENSPORTS 1 » → `elevensports1` ; « 13 EME RUE », « 13ème Rue »
+  → `13erue` ; « beIN SPORTS 1 French » → `beinsports1`). Après un changement de ces règles,
+  relancer `php artisan tv:epg` (l'index du guide et des logos est calculé au téléchargement).
   **Le premier fichier qui a des programmes pour la chaîne l'emporte.**
 - Un fichier illisible est ignoré (les autres servent) ; si aucun ne l'est, le guide précédent
   est gardé. Sans `TV_EPG_URLS`, `available` vaut `false` : l'appli affiche « Le programme n'est

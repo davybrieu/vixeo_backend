@@ -39,7 +39,7 @@ it('gives a channel with its logo on our origin, or none', function () {
         ->assertJsonPath('data.logo', proxiedLogo('https://logo.test/arte.png'));
     $this->getJson('/api/v1/tv/channels/tf1')
         ->assertOk()
-        ->assertJsonPath('data.name', 'TF1 HD')
+        ->assertJsonPath('data.name', 'TF1')
         ->assertJsonPath('data.logo', null);
 });
 

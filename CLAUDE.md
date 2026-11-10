@@ -203,7 +203,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `GET /tv/channels/{id}/epg` (`{data, available}`), fichiers XMLTV de `TV_EPG_URLS` (virgules,
   le préféré d'abord ; `App\Services\Tv\Epg`), téléchargés par `php artisan tv:epg` toutes les
   6 h (hors requêtes), 48 h de programmes, une entrée de cache par chaîne ; rattachement par
-  `epg_channel_id` ou par nom (`ChannelName::key`), le premier fichier qui a des programmes
+  `epg_channel_id` ou par nom (`ChannelName::key`, sur le nom nettoyé par `ChannelName::clean` :
+  « 6TER .c », « TF1 FHD » → « 6TER », « TF1 », aussi le nom affiché), le premier fichier qui a des programmes
   l'emporte. **Logos** : candidats dans l'ordre bibliothèque `tv-logo/tv-logos`
   (`LogoLibrary`, API GitHub une fois par jour, `TV_LOGOS_DIRECTORIES`), icône du guide, logo du
   fournisseur ; jamais leur adresse, mais `GET /tv/logo/{hash}` sur notre domaine
