@@ -5037,6 +5037,136 @@
                 }
             }
         },
+        "/v1/tv/channels/{id}": {
+            "get": {
+                "operationId": "v1.tv.channels.show",
+                "description": "Its name, category and logo (the programme guide's when the provider has none): the\nchannel page of the app.",
+                "summary": "One channel",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "category_id": {
+                                                    "type": "string"
+                                                },
+                                                "logo": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "number": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "epg_channel_id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "category_id",
+                                                "logo",
+                                                "number",
+                                                "epg_channel_id"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/tv/channels/{id}/epg": {
+            "get": {
+                "operationId": "v1.tv.channels.epg",
+                "description": "The programmes from the one on now, in order (36 hours at most, 30 programmes), with UTC\ntimes. `available` is false when the server has no guide; `data` is empty too when the guide\ndoesn't know the channel.",
+                "summary": "Programme guide of a channel",
+                "tags": [
+                    "TV en direct",
+                    "Tv"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "available": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "available"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/tv/channels/{id}/stream": {
             "get": {
                 "operationId": "v1.tv.channels.stream",
@@ -6198,6 +6328,24 @@
                         ],
                         "format": "date-time"
                     },
+                    "is_liked": {
+                        "type": "boolean",
+                        "description": "In \"Favoris\" (\u2764), separate from \"Ma liste\" (is_favorite)."
+                    },
+                    "liked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "liked_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
                     "position_ms": {
                         "type": "integer",
                         "description": "Resume position in milliseconds."
@@ -6269,6 +6417,9 @@
                     "is_favorite",
                     "favorited_at",
                     "favorite_changed_at",
+                    "is_liked",
+                    "liked_at",
+                    "liked_changed_at",
                     "position_ms",
                     "duration_ms",
                     "progress",
@@ -7642,7 +7793,7 @@
                                 },
                                 "favorite": {
                                     "type": "object",
-                                    "description": "Favorite added or removed. At least one of favorite, progress, watched is required.",
+                                    "description": "\"Ma liste\": added or removed. At least one of favorite, liked, progress, watched is required.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"
@@ -7651,6 +7802,19 @@
                                             "type": "string",
                                             "format": "date-time",
                                             "description": "When the change happened on the device (ISO 8601)."
+                                        }
+                                    }
+                                },
+                                "liked": {
+                                    "type": "object",
+                                    "description": "\"Favoris\" (\u2764): added or removed (movies, TV shows, episodes, live channels).",
+                                    "properties": {
+                                        "value": {
+                                            "type": "boolean"
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time"
                                         }
                                     }
                                 },

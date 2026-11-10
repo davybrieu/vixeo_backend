@@ -1,6 +1,6 @@
 # Synchronisation par profil
 
-Favoris, progression de lecture (« Continuer à regarder », reprise) et contenus vus sont
+« Ma liste », « Favoris », progression de lecture (« Continuer à regarder », reprise) et contenus vus sont
 synchronisés **par profil** entre tous les appareils du compte. L'appli garde une copie
 locale (drift) et fonctionne hors ligne ; l'API sert de point de rendez-vous.
 
@@ -14,6 +14,7 @@ Un item est identifié par **`source` + `item_id`**, choisis par l'appli :
 | Série TMDb | `tmdb` | `tv:1399` | `tv` |
 | Épisode TMDb | `tmdb` | `episode:1399:1:3` (série:saison:épisode) | `episode` |
 | Élément Jellyfin | `jellyfin:<serverId>` | id Jellyfin | `movie`, `episode`… |
+| Chaîne de la TV en direct (`/tv/…`) | `tv` | `channel:<id de la chaîne>` (ex. `channel:tf1`) | `channel` |
 | Chaîne FAST | `fast:<fournisseur>` (ex. `fast:pluto`) | id de la chaîne chez le fournisseur | `channel` |
 | Vidéo locale | `local:<appareil>` | chemin ou id du fichier | `video` |
 
@@ -26,14 +27,18 @@ Chaque item porte un **instantané d'affichage** (`title`, `year`, `poster_url`,
 dans les URL d'images** (`api_key`, `token`… sont refusés) : pour Jellyfin/Plex, utiliser des
 URL d'images publiques ou laisser `poster_url` vide et la reconstruire localement.
 
-Et trois **groupes d'état**, chacun avec la date du dernier changement :
+Et quatre **groupes d'état**, chacun avec la date du dernier changement :
 
 | Groupe | Champs | Date du changement |
 | - | - | - |
-| Favori | `is_favorite`, `favorited_at` | `favorite_changed_at` |
+| Ma liste (« favori » historique) | `is_favorite`, `favorited_at` | `favorite_changed_at` |
+| Favoris (❤) | `is_liked`, `liked_at` | `liked_changed_at` |
 | Progression | `position_ms`, `duration_ms`, `last_engaged_at` | `progress_changed_at` |
 | Vu | `is_watched`, `watched_at` | `watched_changed_at` |
 
+- « Ma liste » (à regarder plus tard) et « Favoris » (ce que le profil aime : films, séries,
+  épisodes, chaînes) sont **indépendants** : un même contenu peut être dans les deux. Le nom
+  `favorite` du premier reste pour ne pas casser la v1.
 - « Continuer à regarder » = `last_engaged_at` non nul et `is_watched` faux, du plus récent
   au plus ancien.
 - `progress` (0 à 1) est calculé par l'API pour la barre de progression.
@@ -94,7 +99,8 @@ Actions de l'appui long :
 
 | Action | Changement |
 | - | - |
-| Ajouter / retirer des favoris | `favorite: { value: true/false, at }` |
+| Ajouter à / retirer de « Ma liste » | `favorite: { value: true/false, at }` |
+| Ajouter aux / retirer des « Favoris » | `liked: { value: true/false, at }` |
 | Marquer vu / non vu | `watched: { value: true/false, at }` |
 | Vu jusqu'ici (épisodes) | un changement `watched` par épisode précédent, dans le même envoi |
 | Retirer de « Continuer à regarder » | `progress: { position_ms: <inchangée>, continue_watching: false, at }` |
@@ -107,7 +113,7 @@ Pour un client sans copie locale (ex. version web) :
 | Route | Contenu |
 | - | - |
 | `GET /api/v1/profiles/{id}/continue-watching?type=` | Continuer à regarder (50 max) |
-| `GET /api/v1/profiles/{id}/favorites?type=&watched=&sort=recent\|title\|year&page=` | Favoris paginés |
+| `GET /api/v1/profiles/{id}/favorites?type=&watched=&sort=recent\|title\|year&page=` | « Ma liste » paginée |
 | `GET /api/v1/profiles/{id}/history?type=&page=` | Historique (contenus vus, du plus récent) |
 
 ## Limites

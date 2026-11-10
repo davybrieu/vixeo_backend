@@ -27,6 +27,11 @@ class ProfileItemResource extends JsonResource
             'favorited_at' => $this->favorited_at,
             'favorite_changed_at' => $this->favorite_changed_at,
 
+            /** In "Favoris" (❤), separate from "Ma liste" (is_favorite). */
+            'is_liked' => $this->is_liked,
+            'liked_at' => $this->liked_at,
+            'liked_changed_at' => $this->liked_changed_at,
+
             /** Resume position in milliseconds. */
             'position_ms' => $this->position_ms,
             'duration_ms' => $this->duration_ms,

@@ -73,6 +73,8 @@ class AccountExport
                     'episode_number' => $i->episode_number,
                     'is_favorite' => $i->is_favorite,
                     'favorited_at' => $i->favorited_at?->toIso8601String(),
+                    'is_liked' => $i->is_liked,
+                    'liked_at' => $i->liked_at?->toIso8601String(),
                     'position_ms' => $i->position_ms,
                     'duration_ms' => $i->duration_ms,
                     'last_engaged_at' => $i->last_engaged_at?->toIso8601String(),
