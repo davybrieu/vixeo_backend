@@ -57,7 +57,12 @@ TV_EPG_URLS="https://epg.pw/xmltv/epg_FR.xml.gz,https://i.mjh.nz/Plex/fr.xml.gz,
   nettoyé : « TF1 HD », « TF1.fr », « FR | TF1 » → `tf1` ; « Canal+ » → `canalplus` ;
   « BFMTV » → `bfm` ; « BE: ELEVENSPORTS 1 » → `elevensports1` ; « 13 EME RUE », « 13ème Rue »
   → `13erue` ; « beIN SPORTS 1 French » → `beinsport1` ; singulier = pluriel et « & », « et »
-  ignorés : « TF1 SERIES & FILM » = « TF1 Séries Films » = `tf1-series-films-fr.png`). Après un changement de ces règles,
+  ignorés : « TF1 SERIES & FILM » = « TF1 Séries Films » = `tf1-series-films-fr.png`). Si la clé exacte
+  ne suffit pas, le rapprochement tente ensuite une similarité de nom (petite faute ou variation) :
+  il faut au moins 6 caractères, un score d'au moins 86 % et une avance nette sur le deuxième résultat.
+  En cas d'ambiguïté, aucune correspondance approximative n'est retenue. Cette passe s'applique aussi
+  aux logos ; les logos gardent en plus leur passe de nom raccourci. Les programmes n'utilisent jamais
+  de nom raccourci pour éviter d'afficher le guide d'une autre chaîne. Après un changement de ces règles,
   relancer `php artisan tv:epg` (l'index du guide et des logos est calculé au téléchargement).
   **Le premier fichier qui a des programmes pour la chaîne l'emporte.**
 - Un fichier illisible est ignoré (les autres servent) ; si aucun ne l'est, le guide précédent
@@ -74,7 +79,9 @@ sans l'un ou l'autre avec leur clé de comparaison (entre crochets) : c'est la c
 dans le guide ou dans le nom de fichier de la bibliothèque.
 
 `php artisan tv:epg` affiche, pour chaque fichier, le nombre de chaînes et de programmes lus (ou
-l'erreur), puis le nombre de logos de la bibliothèque.
+l'erreur), puis le nombre de logos de la bibliothèque. Il termine par un bilan de correspondance
+sur le catalogue TV réel (chaînes avec logo et avec programme) et affiche les 10 premiers noms
+sans correspondance de chaque type.
 
 ## Logos des chaînes (relayés par notre domaine, jamais stockés)
 
