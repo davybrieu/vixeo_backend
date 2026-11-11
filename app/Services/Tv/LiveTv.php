@@ -117,6 +117,40 @@ class LiveTv
     }
 
     /**
+     * Matching report used after refreshing the EPG and logo sources.
+     *
+     * @return array{total: int, with_logo: int, with_programme: int, without_logo: list<string>, without_programme: list<string>}
+     */
+    public function matchReport(): array
+    {
+        $providerChannels = $this->providerChannels();
+        $channels = $this->channels();
+        $logoIds = array_fill_keys(array_column(
+            array_filter($channels, fn (array $channel) => $channel['logo'] !== null),
+            'id'
+        ), true);
+
+        $withoutLogo = [];
+        $withoutProgramme = [];
+        foreach ($providerChannels as $channel) {
+            if (! isset($logoIds[$channel['id']])) {
+                $withoutLogo[] = ChannelName::clean($channel['name']);
+            }
+            if ($this->epg->programmes($channel['epg_channel_id'], $channel['name'], 1) === []) {
+                $withoutProgramme[] = ChannelName::clean($channel['name']);
+            }
+        }
+
+        return [
+            'total' => count($providerChannels),
+            'with_logo' => count($providerChannels) - count($withoutLogo),
+            'with_programme' => count($providerChannels) - count($withoutProgramme),
+            'without_logo' => array_values(array_unique($withoutLogo)),
+            'without_programme' => array_values(array_unique($withoutProgramme)),
+        ];
+    }
+
+    /**
      * @return list<array{id: string, name: string, category_id: string, logo: string|null, number: int|null, epg_channel_id: string|null}>
      */
     private function providerChannels(): array
