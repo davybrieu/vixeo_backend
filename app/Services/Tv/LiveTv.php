@@ -151,6 +151,8 @@ class LiveTv
             'with_logo' => count($providerChannels) - count($withoutLogo),
             'with_programme' => count($providerChannels) - count($withoutProgramme),
             'epg_matches' => $epgMatches,
+            'without_logo_channels' => count($withoutLogo),
+            'without_programme_channels' => count($withoutProgramme),
             'without_logo' => array_values(array_unique($withoutLogo)),
             'without_programme' => array_values(array_unique($withoutProgramme)),
         ];
