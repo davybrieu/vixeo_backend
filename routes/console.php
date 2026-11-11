@@ -96,6 +96,14 @@ Artisan::command('tv:epg', function () {
             $matches['with_programme'],
         ));
 
+        $this->line(sprintf(
+            'EPG : %d identifiants exacts, %d noms normalisés, %d approximatifs sûrs, %d sans programme correspondant.',
+            $matches['epg_matches']['id'],
+            $matches['epg_matches']['name'],
+            $matches['epg_matches']['approximate'],
+            $matches['epg_matches']['unavailable'],
+        ));
+
         foreach (['Sans logo' => $matches['without_logo'], 'Sans programme' => $matches['without_programme']] as $title => $names) {
             if ($names === []) {
                 continue;
