@@ -71,10 +71,10 @@ it('returns the authenticated user', function () {
         ->assertJsonPath('data.id', $user->id);
 });
 
-it('requires authentication', function () {
+it('protects personal endpoints while allowing public catalog configuration', function () {
     $this->getJson('/api/v1/me')->assertUnauthorized();
     $this->getJson('/api/v1/profiles')->assertUnauthorized();
-    $this->getJson('/api/v1/catalog/home')->assertUnauthorized();
+    $this->getJson('/api/v1/catalog/config')->assertOk();
 });
 
 it('revokes the current token on logout', function () {
