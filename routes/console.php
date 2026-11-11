@@ -86,8 +86,31 @@ Artisan::command('tv:epg', function () {
             : 'Bibliothèque de logos : ÉCHEC, '.$logos['error']);
     }
 
+    // Verify the actual provider catalogue against the refreshed guide and logo sources.
+    try {
+        $matches = app(LiveTv::class)->matchReport();
+        $this->info(sprintf(
+            'Correspondance catalogue : %d chaînes, %d avec un logo, %d avec un programme.',
+            $matches['total'],
+            $matches['with_logo'],
+            $matches['with_programme'],
+        ));
+
+        foreach (['Sans logo' => $matches['without_logo'], 'Sans programme' => $matches['without_programme']] as $title => $names) {
+            if ($names === []) {
+                continue;
+            }
+            $this->line($title.' ('.count($names).' chaînes, 10 premières) :');
+            foreach (array_slice($names, 0, 10) as $name) {
+                $this->line('  '.$name.'  ['.ChannelName::key($name).']');
+            }
+        }
+    } catch (Throwable $e) {
+        $this->warn('Vérification du catalogue impossible : '.$e->getMessage());
+    }
+
     return 0;
-})->purpose('Download the live TV programme guide and the logo library');
+})->purpose('Download and verify the live TV programme guide and logo library');
 
 // Which channels have no logo or no programme? Counts them and lists their names with the key used
 // to match them (docs/tv-direct.md), to see which names to fix. Reads the cache only.
