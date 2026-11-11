@@ -60,7 +60,67 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('logo');
     });
 
+    // Public browsing and playback: no account or profile is required.
+    // Personal data and profile actions remain inside auth:sanctum below.
+    // Live TV, provider-neutral: the app calls /tv/… and never knows the provider
+    // (Vavoo, a personal Xtream panel…). Credentials, mirrors and signatures stay server-side.
+    Route::prefix('tv')->name('tv.')->middleware('throttle:catalog')->group(function () {
+    Route::get('categories', [TvController::class, 'categories'])->name('categories');
+    Route::get('channels', [TvController::class, 'channels'])->name('channels');
+    // Channel ids are strings on some providers (Vavoo "tf1"), digits on Xtream.
+    Route::get('channels/{id}', [TvController::class, 'show'])->name('channels.show');
+    Route::get('channels/{id}/epg', [TvController::class, 'epg'])->name('channels.epg');
+    Route::get('channels/{id}/stream', [TvController::class, 'stream'])->name('channels.stream');
+    });
+
+    // Catalog (TMDb metadata, cached).
+    Route::prefix('catalog')->name('catalog.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
+    Route::get('config', [CatalogController::class, 'config'])->name('config');
+    Route::get('home', [CatalogController::class, 'home'])->name('home');
+    Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
+    Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
+    Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
+    Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
+    Route::get('people/popular', [CatalogSearchController::class, 'popularPeople'])->name('people.popular');
+    Route::get('{type}/lists/{list}', [CatalogController::class, 'list'])->name('list');
+    Route::get('{type}/discover', [CatalogController::class, 'discover'])->name('discover');
+    Route::get('movie/{id}', [CatalogTitleController::class, 'movie'])->whereNumber('id')->name('movie');
+    Route::get('tv/{id}', [CatalogTitleController::class, 'show'])->whereNumber('id')->name('show');
+    Route::get('tv/{id}/season/{season}', [CatalogTitleController::class, 'season'])
+    ->whereNumber(['id', 'season'])->name('season');
+    Route::get('person/{id}', [CatalogTitleController::class, 'person'])->whereNumber('id')->name('person');
+    
+    // Player: moments to skip (TheIntroDB) and subtitles (OpenSubtitles), docs/lecture.md.
+    Route::get('movie/{id}/segments', [PlaybackController::class, 'movieSegments'])
+    ->whereNumber('id')->name('movie.segments');
+    Route::get('tv/{id}/season/{season}/episode/{episode}/segments', [PlaybackController::class, 'episodeSegments'])
+    ->whereNumber(['id', 'season', 'episode'])->name('episode.segments');
+    Route::get('movie/{id}/subtitles', [PlaybackController::class, 'movieSubtitles'])
+    ->whereNumber('id')->name('movie.subtitles');
+    Route::get('tv/{id}/season/{season}/episode/{episode}/subtitles', [PlaybackController::class, 'episodeSubtitles'])
+    ->whereNumber(['id', 'season', 'episode'])->name('episode.subtitles');
+    Route::get('subtitles/{file}', [PlaybackController::class, 'subtitleFile'])
+    ->whereNumber('file')->middleware('throttle:subtitles')->name('subtitles.file');
+    
+    // Stream sources (FrenchStream, Wiflix, Frembed via Node scraper).
+    Route::get('sources/providers', [StreamController::class, 'providers'])->name('sources.providers');
+    Route::get('movie/{id}/sources', [StreamController::class, 'movieSources'])
+    ->whereNumber('id')->name('movie.sources');
+    Route::get('tv/{id}/season/{season}/episode/{episode}/sources', [StreamController::class, 'episodeSources'])
+    ->whereNumber(['id', 'season', 'episode'])->name('episode.sources');
+    // Resolve a chosen player link into a playable stream (docs/lecture.md).
+    Route::post('resolve', [StreamController::class, 'resolve'])
+    ->middleware('throttle:resolve')->name('resolve');
+    
+    });
+
     Route::middleware('auth:sanctum')->group(function () {
+        // Reporting a dead stream changes shared catalogue data: keep it account-only.
+        Route::post('catalog/streams/dead', [DeadStreamController::class, 'store'])
+            ->middleware(['throttle:catalog', ResolveProfile::class])
+            ->name('catalog.streams.dead');
+
+
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::prefix('auth/device')->name('auth.device.')->middleware('throttle:device-approve')->group(function () {
             Route::post('lookup', [DeviceLoginController::class, 'lookup'])->name('lookup');
@@ -130,17 +190,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.rate');
             Route::delete('ratings/{type}/{id}', [TmdbRatingController::class, 'unrate'])
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.unrate');
-        });
-
-        // Live TV, provider-neutral: the app calls /tv/… and never knows the provider
-        // (Vavoo, a personal Xtream panel…). Credentials, mirrors and signatures stay server-side.
-        Route::prefix('tv')->name('tv.')->middleware('throttle:catalog')->group(function () {
-            Route::get('categories', [TvController::class, 'categories'])->name('categories');
-            Route::get('channels', [TvController::class, 'channels'])->name('channels');
-            // Channel ids are strings on some providers (Vavoo "tf1"), digits on Xtream.
-            Route::get('channels/{id}', [TvController::class, 'show'])->name('channels.show');
-            Route::get('channels/{id}/epg', [TvController::class, 'epg'])->name('channels.epg');
-            Route::get('channels/{id}/stream', [TvController::class, 'stream'])->name('channels.stream');
         });
 
         // Catalog (TMDb metadata, cached).
