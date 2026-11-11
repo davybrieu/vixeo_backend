@@ -119,7 +119,7 @@ class LiveTv
     /**
      * Matching report used after refreshing the EPG and logo sources.
      *
-     * @return array{total: int, with_logo: int, with_programme: int, epg_matches: array{id: int, name: int, approximate: int, unavailable: int}, without_logo: list<string>, without_programme: list<string>}
+     * @return array{total: int, with_logo: int, with_programme: int, epg_matches: array{id: int, name: int, approximate: int, unavailable: int}, without_logo_channels: int, without_programme_channels: int, without_logo: list<string>, without_programme: list<string>}
      */
     public function matchReport(): array
     {
