@@ -187,6 +187,8 @@ it('matches a slightly misspelled provider name to the unique EPG channel', func
     );
     app(Epg::class)->refresh();
 
+    expect(app(Epg::class)->matchMethod(null, 'BFM LILE'))->toBe('approximate');
+
     $this->getJson('/api/v1/tv/channels/bfm-lille/epg')
         ->assertOk()
         ->assertJsonPath('data.0.title', 'Le journal local');
@@ -252,6 +254,7 @@ it('downloads the guide and the logo library from the command line (php artisan 
         ->expectsOutputToContain('https://other.test/two.xml : 2 chaînes, 2 programmes')
         ->expectsOutputToContain('Bibliothèque de logos : 3 logos')
         ->expectsOutputToContain('Correspondance catalogue : 3 chaînes, 3 avec un logo, 2 avec un programme.')
+        ->expectsOutputToContain('EPG : 0 identifiants exacts, 2 noms normalisés, 0 approximatifs sûrs, 1 sans programme correspondant.')
         ->assertSuccessful();
 });
 
