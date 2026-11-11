@@ -116,7 +116,10 @@ it('gives one key per channel name', function (string $name, string $key) {
 it('finds only a unique and sufficiently close channel-name match', function () {
     expect(ChannelName::bestMatchKey('BFM LILE', ['bfmlille', 'bfmparis']))->toBe('bfmlille')
         ->and(ChannelName::bestMatchKey('BFM LILE', ['bfmlilex', 'bfmliles']))->toBeNull()
-        ->and(ChannelName::bestMatchKey('TF1', ['tf1channel']))->toBeNull();
+        ->and(ChannelName::bestMatchKey('TF1', ['tf1channel']))->toBeNull()
+        ->and(ChannelName::bestMatchKey('A LA CARTE 1', ['alacarte10']))->toBeNull()
+        ->and(ChannelName::bestMatchKey('AMAZON PRIME 2', ['amazonprime3']))->toBeNull()
+        ->and(ChannelName::bestMatchKey('BFM LILE', ['bfmlille']))->toBe('bfmlille');
 });
 
 it('cleans the provider names for display', function (string $name, string $clean) {
@@ -187,6 +190,25 @@ it('matches a slightly misspelled provider name to the unique EPG channel', func
     $this->getJson('/api/v1/tv/channels/bfm-lille/epg')
         ->assertOk()
         ->assertJsonPath('data.0.title', 'Le journal local');
+});
+
+it('never assigns a numbered channel the EPG of a different channel number', function () {
+    $guide = '<?xml version="1.0" encoding="UTF-8"?>
+<tv>
+  <channel id="a-la-carte-10"><display-name>A LA CARTE 10</display-name></channel>
+  <programme start="'.xmltvTime(-0.5).'" stop="'.xmltvTime(1).'" channel="a-la-carte-10"><title>Programme du canal 10</title></programme>
+</tv>';
+    fakeTv(
+        first: Http::response(gzencode($guide)),
+        items: [
+            ['type' => 'iptv', 'ids' => ['id' => 'a-la-carte-1'], 'name' => 'A LA CARTE 1', 'url' => 'https://vavoo.test/s/a-la-carte-1', 'group' => 'France', 'logo' => ''],
+        ],
+    );
+    app(Epg::class)->refresh();
+
+    $this->getJson('/api/v1/tv/channels/a-la-carte-1/epg')
+        ->assertOk()
+        ->assertJsonPath('data', []);
 });
 
 it('downloads the guide after the response when nothing is cached yet', function () {
