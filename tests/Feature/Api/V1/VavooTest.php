@@ -48,10 +48,12 @@ function fakeVavoo(array $items, ?string $resolveUrl = 'https://cdn.vavoo.test/t
     ]);
 }
 
-it('requires a signed-in account', function () {
+it('allows guests to browse the live TV catalogue', function () {
+    fakeVavoo([vavooChannel('tf1', 'TF1')]);
+
     $this->getJson('/api/v1/tv/channels')
-        ->assertUnauthorized()
-        ->assertExactJson(['message' => 'Non authentifié.']);
+        ->assertOk()
+        ->assertJsonPath('data.0.name', 'TF1');
 });
 
 it('lists the channel categories', function () {
