@@ -77,6 +77,22 @@ class Epg
     }
 
     /**
+     * How a channel with programmes matched the guide: id, name, approximate, or null.
+     */
+    public function matchMethod(?string $epgChannelId, string $name): ?string
+    {
+        $index = $this->index();
+        if ($index === null) {
+            return null;
+        }
+
+        $method = null;
+        $this->find($index['keys'], $epgChannelId, $name, $method);
+
+        return $method;
+    }
+
+    /**
      * The guide's icon of a channel (its address at the guide's source), or null. `$fallback`: the
      * icon of a shorter name instead ({@see ChannelName::fallbackKeys}).
      */
@@ -177,24 +193,35 @@ class Epg
      *
      * @param  array<string, string>  $map
      */
-    private function find(array $map, ?string $epgChannelId, string $name): ?string
+    private function find(array $map, ?string $epgChannelId, string $name, ?string &$method = null): ?string
     {
+        $method = null;
         if ($epgChannelId !== null && $epgChannelId !== '' && isset($map['id:'.$epgChannelId])) {
+            $method = 'id';
+
             return $map['id:'.$epgChannelId];
         }
         $candidates = array_values(array_filter([$epgChannelId, $name]));
         foreach ($candidates as $candidate) {
             $key = $map[ChannelName::key($candidate)] ?? null;
             if ($key !== null) {
+                $method = 'name';
+
                 return $key;
             }
         }
 
         // Last pass: tolerate a small spelling/spacing difference, but only when one guide
         // channel is clearly the closest match. Never use a shortened name for programmes.
+        $nameKeys = array_values(array_filter(
+            array_keys($map),
+            fn (string $key) => ! str_starts_with($key, 'id:')
+        ));
         foreach ($candidates as $candidate) {
-            $matched = ChannelName::bestMatchKey($candidate, array_keys($map));
+            $matched = ChannelName::bestMatchKey($candidate, $nameKeys);
             if ($matched !== null) {
+                $method = 'approximate';
+
                 return $map[$matched];
             }
         }
