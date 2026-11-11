@@ -207,21 +207,4 @@ const screens = [
         </div>
     </section>
 
-    <!-- What Vixeo is not -->
-    <section class="mx-auto max-w-6xl px-5 pb-20 sm:px-8" aria-labelledby="titre-pas">
-        <div class="grid gap-6 border-t border-line/60 pt-12 md:grid-cols-[1fr_2.2fr]">
-            <h2 id="titre-pas" class="text-lg font-bold">Ce que Vixeo n’est pas.</h2>
-            <div class="space-y-4 text-sm leading-relaxed text-text-muted">
-                <p>
-                    Vixeo organise des films et des séries. Il n’héberge, ne stocke et ne diffuse aucun film ni aucune
-                    série.
-                </p>
-                <p>
-                    Les informations et images des titres proviennent de TMDb. This product uses the TMDB API but is not
-                    endorsed or certified by TMDB.
-                </p>
-                <p>Les écrans de cette page sont des illustrations : les affiches y sont remplacées par des aplats de couleur.</p>
-            </div>
-        </div>
-    </section>
 </template>
