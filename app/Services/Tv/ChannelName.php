@@ -72,6 +72,49 @@ class ChannelName
     }
 
     /**
+     * Finds a unique, close channel key when an exact normalised key is absent.
+     *
+     * This is deliberately conservative: short names and ambiguous matches are never guessed.
+     * A result is accepted only when it is long enough, sufficiently close, and clearly better
+     * than the second candidate. This is suitable for logos and EPG names without confusing
+     * similarly named channels.
+     *
+     * @param  list<string>  $candidates
+     */
+    public static function bestMatchKey(string $name, array $candidates, float $threshold = 0.86): ?string
+    {
+        $key = self::key($name);
+        if (strlen($key) < 6 || $candidates === []) {
+            return null;
+        }
+
+        $scores = [];
+        foreach (array_unique($candidates) as $candidate) {
+            if (strlen($candidate) < 6) {
+                continue;
+            }
+            $distance = levenshtein($key, $candidate);
+            $similarity = 1 - ($distance / max(strlen($key), strlen($candidate)));
+            if ($similarity >= $threshold) {
+                $scores[$candidate] = $similarity;
+            }
+        }
+
+        if ($scores === []) {
+            return null;
+        }
+
+        arsort($scores);
+        $ranked = array_values($scores);
+        // Refuse ties or near-ties: a wrong programme is worse than no programme.
+        if (isset($ranked[1]) && ($ranked[0] - $ranked[1]) < 0.08) {
+            return null;
+        }
+
+        return (string) array_key_first($scores);
+    }
+
+    /**
      * The words that name the channel, normalised.
      *
      * @return list<string>
