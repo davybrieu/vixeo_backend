@@ -192,7 +192,5 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.unrate');
         });
 
-        // Catalog (TMDb metadata, cached).
-    
     });
 });
