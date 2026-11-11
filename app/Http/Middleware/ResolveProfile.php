@@ -23,7 +23,12 @@ class ResolveProfile
         if ($id !== null && $id !== '') {
             $profile = ctype_digit($id) ? Profile::find((int) $id) : null;
 
-            if ($profile === null || $profile->user_id !== $request->user()?->id) {
+            // Catalog routes are public for guests, so there is no auth:sanctum middleware
+            // to initialise Request::user(). Resolve Sanctum explicitly when a bearer token
+            // is present, preserving age filtering for signed-in profiles.
+            $user = $request->user('sanctum') ?? $request->user();
+
+            if ($profile === null || $profile->user_id !== $user?->id) {
                 throw new AccessDeniedHttpException;
             }
 
