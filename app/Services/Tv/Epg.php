@@ -182,10 +182,20 @@ class Epg
         if ($epgChannelId !== null && $epgChannelId !== '' && isset($map['id:'.$epgChannelId])) {
             return $map['id:'.$epgChannelId];
         }
-        foreach (array_filter([$epgChannelId, $name]) as $candidate) {
+        $candidates = array_values(array_filter([$epgChannelId, $name]));
+        foreach ($candidates as $candidate) {
             $key = $map[ChannelName::key($candidate)] ?? null;
             if ($key !== null) {
                 return $key;
+            }
+        }
+
+        // Last pass: tolerate a small spelling/spacing difference, but only when one guide
+        // channel is clearly the closest match. Never use a shortened name for programmes.
+        foreach ($candidates as $candidate) {
+            $matched = ChannelName::bestMatchKey($candidate, array_keys($map));
+            if ($matched !== null) {
+                return $map[$matched];
             }
         }
 
