@@ -150,11 +150,12 @@ Artisan::command('tv:match {--limit=50 : names listed per group}', function () {
     $total = count($channels);
     $this->info(sprintf('%d chaînes : %d avec un logo, %d avec un programme.', $total, $total - count($noLogo), $total - count($noGuide)));
     foreach (['Sans logo' => $noLogo, 'Sans programme' => $noGuide] as $title => $names) {
+        $channelCount = count($names);
         $names = array_values(array_unique($names));
         if ($names === []) {
             continue;
         }
-        $this->line(sprintf('%s : %d chaînes, %d noms distincts :', $title, count($names), count(array_unique($names))));
+        $this->line(sprintf('%s : %d chaînes, %d noms distincts :', $title, $channelCount, count($names)));
         foreach (array_slice($names, 0, (int) $this->option('limit')) as $name) {
             $this->line('  '.$name.'  ['.ChannelName::key($name).']');
         }
