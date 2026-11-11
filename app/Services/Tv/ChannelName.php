@@ -88,9 +88,17 @@ class ChannelName
             return null;
         }
 
+        $numbers = static function (string $value): array {
+            preg_match_all('/\\d+/', $value, $matches);
+
+            return $matches[0];
+        };
+
         $scores = [];
         foreach (array_unique($candidates) as $candidate) {
-            if (strlen($candidate) < 6) {
+            // XMLTV ids are not channel names, and channel numbers are part of the identity:
+            // "A LA CARTE 1" must never match "A LA CARTE 10" or "AMAZON PRIME 2".
+            if (str_starts_with($candidate, 'id:') || strlen($candidate) < 6 || $numbers($key) !== $numbers($candidate)) {
                 continue;
             }
             $distance = levenshtein($key, $candidate);
