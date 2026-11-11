@@ -60,7 +60,10 @@ TV_EPG_URLS="https://epg.pw/xmltv/epg_FR.xml.gz,https://i.mjh.nz/Plex/fr.xml.gz,
   ignorés : « TF1 SERIES & FILM » = « TF1 Séries Films » = `tf1-series-films-fr.png`). Si la clé exacte
   ne suffit pas, le rapprochement tente ensuite une similarité de nom (petite faute ou variation) :
   il faut au moins 6 caractères, un score d'au moins 86 % et une avance nette sur le deuxième résultat.
-  En cas d'ambiguïté, aucune correspondance approximative n'est retenue. Cette passe s'applique aussi
+  Les chiffres doivent aussi être strictement identiques : « A LA CARTE 1 » ne peut pas correspondre
+  à « A LA CARTE 10 », ni « AMAZON PRIME 2 » à « AMAZON PRIME 3 ». Les identifiants XMLTV synthétiques
+  ne participent pas à la recherche approximative. En cas d'ambiguïté, aucune correspondance
+  approximative n'est retenue. Cette passe s'applique aussi
   aux logos ; les logos gardent en plus leur passe de nom raccourci. Les programmes n'utilisent jamais
   de nom raccourci pour éviter d'afficher le guide d'une autre chaîne. Après un changement de ces règles,
   relancer `php artisan tv:epg` (l'index du guide et des logos est calculé au téléchargement).
@@ -80,8 +83,9 @@ dans le guide ou dans le nom de fichier de la bibliothèque.
 
 `php artisan tv:epg` affiche, pour chaque fichier, le nombre de chaînes et de programmes lus (ou
 l'erreur), puis le nombre de logos de la bibliothèque. Il termine par un bilan de correspondance
-sur le catalogue TV réel (chaînes avec logo et avec programme) et affiche les 10 premiers noms
-sans correspondance de chaque type.
+sur le catalogue TV réel (chaînes avec logo et avec programme), puis détaille les programmes EPG
+obtenus par identifiant exact, nom normalisé, rapprochement approximatif sûr ou indisponibles.
+Il affiche les 10 premiers noms sans correspondance de chaque type.
 
 ## Logos des chaînes (relayés par notre domaine, jamais stockés)
 
