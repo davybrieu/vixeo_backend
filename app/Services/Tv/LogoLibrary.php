@@ -42,7 +42,10 @@ class LogoLibrary
             }
         }
 
-        return null;
+        // Final pass: tolerate a minor typo only if one logo filename is a clear, unique match.
+        $matched = ChannelName::bestMatchKey($name, array_keys($map));
+
+        return $matched === null ? null : $map[$matched];
     }
 
     /**
