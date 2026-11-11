@@ -75,6 +75,10 @@ it('protects personal endpoints while allowing public catalog configuration', fu
     $this->getJson('/api/v1/me')->assertUnauthorized();
     $this->getJson('/api/v1/profiles')->assertUnauthorized();
     $this->getJson('/api/v1/catalog/config')->assertOk();
+    $this->withToken('invalid-token')
+        ->withHeader('X-Profile-Id', '1')
+        ->getJson('/api/v1/catalog/home')
+        ->assertUnauthorized();
 });
 
 it('revokes the current token on logout', function () {
