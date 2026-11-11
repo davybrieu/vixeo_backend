@@ -261,6 +261,7 @@ it('downloads the guide and the logo library from the command line (php artisan 
         ->expectsOutputToContain('Bibliothèque de logos : 3 logos')
         ->expectsOutputToContain('Correspondance catalogue : 3 chaînes, 3 avec un logo, 2 avec un programme.')
         ->expectsOutputToContain('EPG : 0 identifiants exacts, 2 noms normalisés, 0 approximatifs sûrs, 1 sans programme correspondant.')
+        ->expectsOutputToContain('Sans programme : 1 chaînes, 1 noms distincts (10 premiers noms) :')
         ->assertSuccessful();
 });
 
@@ -328,7 +329,7 @@ it('lists the channels without a logo or a programme (php artisan tv:match)', fu
 
     $this->artisan('tv:match')
         ->expectsOutputToContain('3 chaînes : 2 avec un logo, 2 avec un programme.')
-        ->expectsOutputToContain('Sans logo (1 noms) :')
+        ->expectsOutputToContain('Sans logo : 1 chaînes, 1 noms distincts :')
         ->expectsOutputToContain('  M6  [m6]')
         ->assertSuccessful();
 });
