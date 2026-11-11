@@ -87,9 +87,17 @@ class Epg
         }
 
         $method = null;
-        $this->find($index['keys'], $epgChannelId, $name, $method);
+        $key = $this->find($index['keys'], $epgChannelId, $name, $method);
+        if ($key === null) {
+            return null;
+        }
 
-        return $method;
+        $programmes = Cache::get($this->channelKey($index['generation'], $key));
+        $now = time();
+        $hasUpcomingProgramme = is_array($programmes)
+            && collect($programmes)->contains(fn (array $programme) => $programme['end'] > $now);
+
+        return $hasUpcomingProgramme ? $method : null;
     }
 
     /**
