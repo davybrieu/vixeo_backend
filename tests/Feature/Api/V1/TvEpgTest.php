@@ -229,7 +229,7 @@ it('downloads the guide and the logo library from the command line (php artisan 
         ->expectsOutputToContain('https://guide.test/one.xml.gz : 2 chaînes, 2 programmes')
         ->expectsOutputToContain('https://other.test/two.xml : 2 chaînes, 2 programmes')
         ->expectsOutputToContain('Bibliothèque de logos : 3 logos')
-        ->expectsOutputToContain('Correspondance catalogue : 3 chaînes, 2 avec un logo, 2 avec un programme.')
+        ->expectsOutputToContain('Correspondance catalogue : 3 chaînes, 3 avec un logo, 2 avec un programme.')
         ->assertSuccessful();
 });
 
