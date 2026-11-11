@@ -104,11 +104,14 @@ Artisan::command('tv:epg', function () {
             $matches['epg_matches']['unavailable'],
         ));
 
-        foreach (['Sans logo' => $matches['without_logo'], 'Sans programme' => $matches['without_programme']] as $title => $names) {
+        foreach ([
+            'Sans logo' => [$matches['without_logo_channels'], $matches['without_logo']],
+            'Sans programme' => [$matches['without_programme_channels'], $matches['without_programme']],
+        ] as $title => [$channelCount, $names]) {
             if ($names === []) {
                 continue;
             }
-            $this->line($title.' ('.count($names).' chaînes, 10 premières) :');
+            $this->line(sprintf('%s : %d chaînes, %d noms distincts (10 premiers noms) :', $title, $channelCount, count($names)));
             foreach (array_slice($names, 0, 10) as $name) {
                 $this->line('  '.$name.'  ['.ChannelName::key($name).']');
             }
@@ -151,7 +154,7 @@ Artisan::command('tv:match {--limit=50 : names listed per group}', function () {
         if ($names === []) {
             continue;
         }
-        $this->line($title.' ('.count($names).' noms) :');
+        $this->line(sprintf('%s : %d chaînes, %d noms distincts :', $title, count($names), count(array_unique($names))));
         foreach (array_slice($names, 0, (int) $this->option('limit')) as $name) {
             $this->line('  '.$name.'  ['.ChannelName::key($name).']');
         }
