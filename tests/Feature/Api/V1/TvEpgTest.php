@@ -113,6 +113,12 @@ it('gives one key per channel name', function (string $name, string $key) {
     ['Chasse et Pêche', 'chassepeche'],
 ]);
 
+it('finds only a unique and sufficiently close channel-name match', function () {
+    expect(ChannelName::bestMatchKey('BFM LILE', ['bfmlille', 'bfmparis']))->toBe('bfmlille')
+        ->and(ChannelName::bestMatchKey('BFM LILE', ['bfmlilex', 'bfmliles']))->toBeNull()
+        ->and(ChannelName::bestMatchKey('TF1', ['tf1channel']))->toBeNull();
+});
+
 it('cleans the provider names for display', function (string $name, string $clean) {
     expect(ChannelName::clean($name))->toBe($clean);
 })->with([
@@ -164,6 +170,25 @@ it('gives the programmes of a channel from the first guide that has them', funct
     $this->getJson('/api/v1/tv/channels/m6/epg')->assertOk()->assertJsonPath('data', [])->assertJsonPath('available', true);
 });
 
+it('matches a slightly misspelled provider name to the unique EPG channel', function () {
+    $guide = '<?xml version="1.0" encoding="UTF-8"?>
+<tv>
+  <channel id="bfm-lille"><display-name>BFM LILLE</display-name></channel>
+  <programme start="'.xmltvTime(-0.5).'" stop="'.xmltvTime(1).'" channel="bfm-lille"><title>Le journal local</title></programme>
+</tv>';
+    fakeTv(
+        first: Http::response(gzencode($guide)),
+        items: [
+            ['type' => 'iptv', 'ids' => ['id' => 'bfm-lille'], 'name' => 'BFM LILE', 'url' => 'https://vavoo.test/s/bfm-lille', 'group' => 'France', 'logo' => ''],
+        ],
+    );
+    app(Epg::class)->refresh();
+
+    $this->getJson('/api/v1/tv/channels/bfm-lille/epg')
+        ->assertOk()
+        ->assertJsonPath('data.0.title', 'Le journal local');
+});
+
 it('downloads the guide after the response when nothing is cached yet', function () {
     fakeTv();
 
@@ -204,6 +229,7 @@ it('downloads the guide and the logo library from the command line (php artisan 
         ->expectsOutputToContain('https://guide.test/one.xml.gz : 2 chaînes, 2 programmes')
         ->expectsOutputToContain('https://other.test/two.xml : 2 chaînes, 2 programmes')
         ->expectsOutputToContain('Bibliothèque de logos : 3 logos')
+        ->expectsOutputToContain('Correspondance catalogue : 3 chaînes, 2 avec un logo, 2 avec un programme.')
         ->assertSuccessful();
 });
 
