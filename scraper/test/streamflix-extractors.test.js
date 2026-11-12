@@ -54,6 +54,9 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vidnest.io/e/abc', 'vidnest'],
     ['https://vidnest.live/e/abc', 'vidnest'],
     ['https://turbovid.me/abc', 'turbovid'],
+    ['https://www.dailymotion.com/video/x8abcde', 'dailymotion'],
+    ['https://geo.dailymotion.com/player/xtv3w.html?video=x8abcde', 'dailymotion'],
+    ['https://www.amazon.com/clouddrive/shares/abc123', 'amazondrive'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
