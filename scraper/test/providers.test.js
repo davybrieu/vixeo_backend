@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 
 const {
   extractFrenchStreamId,
+  normalizeSearchTitle,
+  matchesRequestedTitle,
   normalizePlayerEntries,
   normalizeEpisodeEntries,
 } = require('../src/providers/frenchstream');
@@ -17,6 +19,30 @@ const {
 test('FrenchStream extracts the identifier from the Kotlin onclick format', () => {
   assert.equal(extractFrenchStreamId("open('/newsid=12345')"), 'newsid=12345');
   assert.equal(extractFrenchStreamId(''), '');
+});
+
+test('FrenchStream requires an exact normalized title match and checks an available year', () => {
+  assert.equal(normalizeSearchTitle("L’Odyssée (2026)"), 'odyssee');
+  assert.equal(matchesRequestedTitle("L’Odyssée (2026)", {
+    title: 'Odyssée',
+    originalTitle: 'The Odyssey',
+    year: 2026,
+  }), true);
+  assert.equal(matchesRequestedTitle("L’Odyssée (1997)", {
+    title: 'Odyssée',
+    originalTitle: 'The Odyssey',
+    year: 2026,
+  }), false);
+  assert.equal(matchesRequestedTitle("L’Odyssée d’un roi (2026)", {
+    title: 'Odyssée',
+    originalTitle: 'The Odyssey',
+    year: 2026,
+  }), false);
+  assert.equal(matchesRequestedTitle('Un autre film', {
+    title: 'Odyssée',
+    originalTitle: 'The Odyssey',
+    year: 2026,
+  }), false);
 });
 
 test('FrenchStream maps movie players, language labels and default links without duplicates', () => {
