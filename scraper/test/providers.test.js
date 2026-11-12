@@ -4,6 +4,7 @@ const { normalizeTitle, matchesTitle } = require('../src/providers/title-matcher
 
 const {
   extractFrenchStreamId,
+  isFrenchStreamSeries,
   normalizeSearchTitle,
   matchesRequestedTitle,
   normalizePlayerEntries,
@@ -21,7 +22,10 @@ test('FrenchStream extracts the identifier from the Kotlin onclick format', () =
   assert.equal(extractFrenchStreamId("open('/newsid=12345')"), '12345');
   assert.equal(extractFrenchStreamId("location.href='https://fs.example/index.php?newsid=98765&x=1'"), '98765');
   assert.equal(extractFrenchStreamId("open('/film-en-streaming/resident-evil.html')"), '');
+  assert.equal(extractFrenchStreamId("open('/newsid-54321.html')"), '54321');
   assert.equal(extractFrenchStreamId(''), '');
+  assert.equal(isFrenchStreamSeries('L’Odyssée - Saison 1'), true);
+  assert.equal(isFrenchStreamSeries('L’Odyssée (2026)'), false);
 });
 
 test('FrenchStream requires an exact normalized title match and checks an available year', () => {
