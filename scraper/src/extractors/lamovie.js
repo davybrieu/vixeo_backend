@@ -12,21 +12,21 @@ async function extractLamovie(url) {
   const response = await getText(url, { 'User-Agent': USER_AGENT, 'Accept-Language': 'en-US,en;q=0.9' });
   if (!response.ok) return null;
   const html = normalizeText(response.text);
-  const packedMatch = /eval\\s*\\(\\s*function\\s*\\(\\s*p\\s*,\\s*a\\s*,\\s*c\\s*,\\s*k\\s*,\\s*e\\s*,\\s*d\\s*\\)/i.exec(html);
+  const packedMatch = /eval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*d\s*\)/i.exec(html);
   let source = null;
   let subtitles = [];
   if (packedMatch) {
     const unpacked = unpackPackedJs(html.slice(packedMatch.index).split('</script>')[0]);
     if (unpacked) {
-      source = /\\bfile\\s*:\\s*['"]([^'"]+)['"]/i.exec(unpacked)?.[1] || null;
-      const tracks = /tracks\\s*:\\s*\\[([\\s\\S]*?)\\]/i.exec(unpacked)?.[1] || '';
-      subtitles = [...tracks.matchAll(/file\\s*:\\s*['"]([^'"]+)['"]\\s*,\\s*label\\s*:\\s*['"]([^'"]+)['"]/gi)]
+      source = /\bfile\s*:\s*['"]([^'"]+)['"]/i.exec(unpacked)?.[1] || null;
+      const tracks = /tracks\s*:\s*\[([\s\S]*?)\]/i.exec(unpacked)?.[1] || '';
+      subtitles = [...tracks.matchAll(/file\s*:\s*['"]([^'"]+)['"]\s*,\s*label\s*:\s*['"]([^'"]+)['"]/gi)]
         .filter(m => m[2] !== 'Upload captions')
         .map(m => ({ url: m[1], label: m[2] }));
     }
   } else {
-    source = /stream_urls["']?\\s*:\\s*\\[\\s*['"]([^'"]+)['"]/i.exec(html)?.[1] || null;
-    const rawSubs = /default_subs["']?\\s*:\\s*(\\[[\\s\\S]*?\\])/i.exec(html)?.[1];
+    source = /stream_urls["']?\s*:\s*\[\s*['"]([^'"]+)['"]/i.exec(html)?.[1] || null;
+    const rawSubs = /default_subs["']?\s*:\s*(\[[\s\S]*?\])/i.exec(html)?.[1];
     if (rawSubs) {
       try {
         subtitles = JSON.parse(rawSubs).filter(s => s?.url).map(s => ({ url: s.url, label: s.lang || s.code || '' }));
