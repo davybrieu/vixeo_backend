@@ -1,4 +1,6 @@
 const http = require('http');
+const { randomUUID } = require('crypto');
+const { getProviderErrorEvent } = require('./provider-errors');
 const { searchFrenchStream } = require('./providers/frenchstream');
 const { searchWiflix } = require('./providers/wiflix');
 const { searchFrembed } = require('./providers/frembed');
@@ -27,9 +29,10 @@ function searchContext(payload) {
   };
 }
 
-function logProviderEvent(level, event, provider, payload, details = {}) {
+function logProviderEvent(level, event, provider, payload, requestId, details = {}) {
   const entry = {
     timestamp: new Date().toISOString(),
+    requestId,
     event,
     provider: provider.id,
     providerName: provider.name,
@@ -42,21 +45,24 @@ function logProviderEvent(level, event, provider, payload, details = {}) {
   else console.log(output);
 }
 
-async function runProvider(provider, payload) {
+async function runProvider(provider, payload, requestId) {
   const startedAt = Date.now();
-  logProviderEvent('info', 'PROVIDER_SEARCH_STARTED', provider, payload);
+  logProviderEvent('info', 'PROVIDER_SEARCH_STARTED', provider, payload, requestId);
 
   try {
     const sources = await provider.run(payload);
+    if (!Array.isArray(sources)) {
+      throw new TypeError(`Provider ${provider.id} returned an invalid result (expected an array).`);
+    }
     const durationMs = Date.now() - startedAt;
 
     if (sources.length === 0) {
-      logProviderEvent('warn', 'PROVIDER_NO_SOURCE_FOUND', provider, payload, {
+      logProviderEvent('warn', 'PROVIDER_NO_SOURCE_FOUND', provider, payload, requestId, {
         durationMs,
         reason: 'Provider completed successfully but returned no source. The title, year, season or episode may not exist on this provider, or its page structure may have changed.',
       });
     } else {
-      logProviderEvent('info', 'PROVIDER_SOURCES_FOUND', provider, payload, {
+      logProviderEvent('info', 'PROVIDER_SOURCES_FOUND', provider, payload, requestId, {
         durationMs,
         sourceCount: sources.length,
       });
@@ -64,7 +70,8 @@ async function runProvider(provider, payload) {
 
     return { id: provider.id, name: provider.name, status: 'ok', count: sources.length, sources };
   } catch (e) {
-    logProviderEvent('error', 'PROVIDER_SEARCH_FAILED', provider, payload, {
+    const event = getProviderErrorEvent(e);
+    logProviderEvent('error', event, provider, payload, requestId, {
       durationMs: Date.now() - startedAt,
       error: e.message,
       stack: e.stack,
@@ -88,7 +95,16 @@ async function handleSources(body) {
     : PROVIDERS;
 
   const payload = { type, title, originalTitle, year, season, episode, tmdb_id };
-  const results = await Promise.all(selected.map((provider) => runProvider(provider, payload)));
+  const requestId = randomUUID();
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    event: 'SCRAPER_REQUEST_STARTED',
+    requestId,
+    scope: body.provider || 'all',
+    providerCount: selected.length,
+    search: searchContext(payload),
+  }));
+  const results = await Promise.all(selected.map((provider) => runProvider(provider, payload, requestId)));
 
   let sources = results.flatMap((r) => r.sources);
 
