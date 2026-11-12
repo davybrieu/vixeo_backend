@@ -4,6 +4,7 @@ use App\Models\MissingExtractor;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
@@ -135,7 +136,7 @@ it('keeps only the links an extractor can resolve', function () {
 
 
 it('accepts links handled by newly registered scraper extractors', function () {
-    \\Illuminate\\Support\\Facades\\Cache::forget('scraper.supported_domains');
+    Cache::forget('scraper.supported_domains');
 
     Http::fake([
         'scraper.test/extractors' => Http::response([
