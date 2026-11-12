@@ -23,6 +23,7 @@ const { patchVixsrcManifest } = require('../src/extractors/vixsrc');
 const { decryptVidzeeLink } = require('../src/extractors/vidzee');
 const { decryptRabbitstreamSource, generateRabbitstreamKey, getRabbitstreamToken, extractMegacloudRealKey } = require('../src/extractors/rabbitstream');
 const { decryptMagaSavor } = require('../src/extractors/magasavor');
+const { decodeVidxGoPayload } = require('../src/extractors/vidxgo');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -117,6 +118,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://magasavor.net/e/abc123', 'magasavor'],
     ['https://vidora.stream/e/abc123', 'vidora'],
     ['https://videm.xyz/api.php?a=play&ref=abc&t=xyz', 'videm'],
+    ['https://v.vidxgo.co/tt123456', 'vidxgo'],
+    ['https://v.vidxgo.co/t/tt123456', 'vidxgo'],
     ['https://ap.nupload.me/e/abc123', 'nuupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
@@ -281,4 +284,13 @@ test('MagaSavor reverses its ROT13/base64/character-shift encoding', () => {
   const shifted = [...first].reverse().map(char => String.fromCharCode(char.charCodeAt(0) + 3)).join('');
   const encoded = Buffer.from(shifted).toString('base64').replace(/[a-zA-Z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() <= 'm' ? 13 : -13)));
   assert.deepEqual(decryptMagaSavor(encoded), { source: 'https://cdn.example/video.m3u8' });
+});
+
+test('VidxGo decodes its XOR-obfuscated base64 player payload', () => {
+  const plain = 'currentSrc = "https://cdn.example/video.m3u8";';
+  const key = 'secret';
+  const bytes = Buffer.from(plain, 'utf8');
+  const encoded = Buffer.alloc(bytes.length);
+  for (let i = 0; i < bytes.length; i++) encoded[i] = bytes[i] ^ Buffer.from(key)[i % key.length];
+  assert.equal(decodeVidxGoPayload(encoded.toString('base64'), key), plain);
 });
