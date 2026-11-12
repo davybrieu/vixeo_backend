@@ -17,6 +17,7 @@ const { findUpzoneSource } = require('../src/extractors/upzone');
 const { decodeEncryptedEmbed } = require('../src/extractors/vidsrcto');
 const { encryptVidrockId } = require('../src/extractors/vidrock');
 const { decodeCloseloadArray } = require('../src/extractors/closeload');
+const { evpBytesToKey, decryptChillxPayload } = require('../src/extractors/chillx');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -99,6 +100,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://firestream.to/e/abc123', 'firestream'],
     ['https://firestream.site/e/abc123', 'firestream'],
     ['https://closeload.top/e/abc123', 'closeload'],
+    ['https://chillx.top/e/abc123', 'chillx'],
+    ['https://player.jeansaispasplus.homes/e/abc123', 'chillx'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -201,4 +204,16 @@ test('Closeload unmix decoder reconstructs an HLS URL', () => {
     acc = (acc + byte) % 256;
   }
   assert.equal(decodeCloseloadArray([encoded.toString('base64')], [], 2, 9), plain);
+});
+
+test('Chillx decrypts OpenSSL-compatible AES-256-CBC payloads', () => {
+  const crypto = require('node:crypto');
+  const password = 'test-chillx-password';
+  const salt = Buffer.from('0102030405060708', 'hex');
+  const { key, iv } = evpBytesToKey(Buffer.from(password), salt, 32, 16);
+  const plain = '{"file":"https://cdn.example/video.m3u8","tracks":[]}';
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]).toString('base64');
+  const payload = JSON.stringify({ ct: encrypted, iv: '0'.repeat(32), s: salt.toString('hex') });
+  assert.equal(decryptChillxPayload(payload, password), plain);
 });
