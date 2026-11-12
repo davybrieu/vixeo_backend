@@ -61,7 +61,7 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
       if (location) {
         const redirected = new URL(location, endpoint);
         activeBaseUrl = `${redirected.protocol}//${redirected.host}/`;
-        const retryUrl = new URL(endpoint.pathname.replace(/^\\//, '') + endpoint.search, activeBaseUrl);
+        const retryUrl = new URL(endpoint.pathname + endpoint.search, activeBaseUrl);
         response = await fetch(retryUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
