@@ -85,7 +85,7 @@ async function searchFrenchStream({ type, title, originalTitle, episode }) {
     let baseUrl = DEFAULT_BASE_URL;
     try {
       await page.goto(DEFAULT_PORTAL_URL, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      const currentUrl = await page.locator('div.url-card a').first().getAttribute('href', { timeout: 4000 });
+      const currentUrl = await page.locator('div.container > div.url-card a').first().getAttribute('href', { timeout: 4000 });
       baseUrl = normalizeBaseUrl(currentUrl) || baseUrl;
     } catch {
       // The portal may be unavailable; retain the Kotlin provider's default domain.
@@ -96,7 +96,7 @@ async function searchFrenchStream({ type, title, originalTitle, episode }) {
     for (const query of [...new Set([title, originalTitle].filter(Boolean))]) {
       const response = await page.request.post(new URL('engine/ajax/search.php', baseUrl).href, {
         form: { query, page: '1' },
-        headers: { 'X-Requested-With': 'XMLHttpRequest', Referer: baseUrl },
+        headers: { 'X-Requested-With': 'XMLHttpRequest', Cookie: 'fsschal=1', Referer: baseUrl },
         timeout: 20000,
       });
       if (!response.ok()) continue;
@@ -125,7 +125,7 @@ async function searchFrenchStream({ type, title, originalTitle, episode }) {
             const apiResponse = await page.request.get(new URL(endpoint, baseUrl).href, {
               params: { id: itemId },
               headers: {
-                Cookie: 'dle_skin=VFV1',
+                Cookie: 'dle_skin=VFV1; fsschal=1',
                 'X-Requested-With': 'XMLHttpRequest',
                 Referer: baseUrl,
               },
