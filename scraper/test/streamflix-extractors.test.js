@@ -64,6 +64,9 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vembed.net/e/abc', 'vidguard'],
     ['https://fsvid.lol/e/abc', 'fsvid'],
     ['https://turboembed.com/abc123', 'turbovio'],
+    ['https://vidplay.site/e/abc123', 'vidplay'],
+    ['https://mcloud.bz/e/abc123', 'vidplay'],
+    ['https://vidplay.online/e/abc123', 'vidplay'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -111,4 +114,14 @@ test('Turbovio AES encryption and decryption are symmetric', () => {
   assert.equal(decryptTurbovio(encrypted, 'https://turboembed.com', fixedTime), text);
   assert.equal(generateKey(fixedTime).length, 32);
   assert.equal(generateIV('https://turboembed.com').length, 32);
+});
+
+test('Vidplay RC4 encoder and decoder preserve the identifier and payload', () => {
+  const key = 'sample-secret-key';
+  const id = 'abc123xyz';
+  const encoded = encodeVidplayId(key, id);
+  const decoded = rc4(key, Buffer.from(encoded.replace(/_/g, '/').replace(/-/g, '+'), 'base64')).toString('utf8');
+  assert.equal(decoded, id);
+  const payload = encodeVidplayId(key, '{"sources":[{"file":"https://cdn.example/video.m3u8"}]}');
+  assert.equal(decodeVidplayResult(key, payload), '{"sources":[{"file":"https://cdn.example/video.m3u8"}]}');
 });
