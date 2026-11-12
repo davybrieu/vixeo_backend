@@ -85,6 +85,11 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://upzone.to/e/abc', 'upzone'],
     ['https://vidsrc.to/embed/movie/123', 'vidsrcto'],
     ['https://drive.google.com/file/d/abc123/view', 'googledrive'],
+    ['https://luluvdo.com/e/abc', 'luluvdo'],
+    ['https://luluvid.com/e/abc', 'luluvdo'],
+    ['https://ups2up.fun/e/abc', 'ustr'],
+    ['https://up4stream.com/e/abc', 'ustr'],
+    ['https://video.sibnet.ru/shell.php?videoid=123', 'videosibnet'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
