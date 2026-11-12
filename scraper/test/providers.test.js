@@ -1,13 +1,16 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { normalizeTitle, matchesTitle } = require('../src/providers/title-matcher');
 
 const {
   extractFrenchStreamId,
+  isFrenchStreamSeries,
   normalizeSearchTitle,
   matchesRequestedTitle,
   normalizePlayerEntries,
   normalizeEpisodeEntries,
 } = require('../src/providers/frenchstream');
+const { resolveFrembedLink } = require('../src/providers/frembed');
 const {
   normalizeBaseUrl,
   extractLoadVideoUrl,
@@ -17,8 +20,13 @@ const {
 } = require('../src/providers/wiflix');
 
 test('FrenchStream extracts the identifier from the Kotlin onclick format', () => {
-  assert.equal(extractFrenchStreamId("open('/newsid=12345')"), 'newsid=12345');
+  assert.equal(extractFrenchStreamId("open('/newsid=12345')"), '12345');
+  assert.equal(extractFrenchStreamId("location.href='https://fs.example/index.php?newsid=98765&x=1'"), '98765');
+  assert.equal(extractFrenchStreamId("open('/film-en-streaming/resident-evil.html')"), '');
+  assert.equal(extractFrenchStreamId("open('/newsid-54321.html')"), '54321');
   assert.equal(extractFrenchStreamId(''), '');
+  assert.equal(isFrenchStreamSeries('L’Odyssée - Saison 1'), true);
+  assert.equal(isFrenchStreamSeries('L’Odyssée (2026)'), false);
 });
 
 test('FrenchStream requires an exact normalized title match and checks an available year', () => {
@@ -104,4 +112,32 @@ test('Wiflix maps movie and episode servers and excludes ignored hosts', () => {
   }]);
   assert.equal(episodes.length, 1);
   assert.match(episodes[0].name, /Episode 2/);
+});
+
+
+test('Shared provider matcher rejects partial and unrelated movie titles', () => {
+  const requested = { title: 'L’Odyssée', originalTitle: 'The Odyssey', year: 2026 };
+  assert.equal(normalizeTitle('L’Odyssée (2026)'), 'odyssee');
+  assert.equal(matchesTitle('L’Odyssée (2026)', requested), true);
+  assert.equal(matchesTitle('The Odyssey (2026)', requested), true);
+  assert.equal(matchesTitle('L’Odyssée d’un roi (2026)', requested), false);
+  assert.equal(matchesTitle('Resident Evil (2021)', requested), false);
+  assert.equal(matchesTitle('Odyssée (1997)', requested), false);
+  assert.equal(matchesTitle('The Odysseys (2026)', requested), false);
+});
+
+test('Frembed resolves a player redirect to the actual extractor host', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({
+    status: 302,
+    headers: { get: (name) => name.toLowerCase() === 'location' ? 'https://voe.sx/e/abc123' : null },
+  });
+  try {
+    assert.equal(
+      await resolveFrembedLink('https://frembed.casa/player/123'),
+      'https://voe.sx/e/abc123',
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
