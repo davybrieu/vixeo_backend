@@ -5,6 +5,7 @@ const { findExtractor } = require('../src/extractors');
 const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
+const { decodeEscapes } = require('../src/extractors/upzur');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -34,6 +35,10 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://ok.ru/video/123456', 'okru'],
     ['https://myfilestorage.xyz/movie.mp4', 'myfilestorage'],
     ['https://moviesapi.club/movie/123', 'moviesapi'],
+    ['https://strmup.to/v/abc123', 'streamup'],
+    ['https://upzur.com/e/abc', 'upzur'],
+    ['https://vidflix.club/api/movie/123', 'vidflix'],
+    ['https://www.2embed.cc/embed/123', 'twoembed'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -54,3 +59,4 @@ test('decodes the Gupload legacy XOR payload', () => {
   const encoded = '~' + bytes.toString('base64');
   assert.equal(decodeXorPayload(encoded.split('~')[1], key), plain);
 });
+test('decodes UpZur hexadecimal and unicode escapes', () => { assert.equal(decodeEscapes('https:\\x2f\\x2fcdn.example\\u002fvideo.m3u8'), 'https://cdn.example/video.m3u8'); });
