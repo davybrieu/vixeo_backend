@@ -2,7 +2,7 @@ const crypto = require('node:crypto');
 const { getText } = require('../lib/http');
 
 const KEY_URL = 'https://raw.githubusercontent.com/Rowdy-Avocado/multi-keys/keys/index.html';
-const DOMAINS = ['chillx.top', 'player.jeansaispasplus.homes'];
+const DOMAINS = ['chillx.top', 'player.jeansaispasplus.homes', 'moviesapi.club'];
 
 function evpBytesToKey(password, salt, keyLength = 32, ivLength = 16) {
   const required = keyLength + ivLength;
