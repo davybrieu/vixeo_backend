@@ -58,13 +58,20 @@ function playlistUrl(token, url) {
   return '/nekostream/relay/' + token + '/' + route + '?url=' + encodeURIComponent(url);
 }
 
-function rewritePlaylist(body, base, token) {
+function decryptSegmentUrl(value, cryptoData) {
+  const token = /\\/segment\\/([A-Za-z0-9_-]+)/.exec(value)?.[1];
+  if (!token) return value;
+  const decoded = decodeAes(token, cryptoData);
+  return decoded && /^https?:\\/\\//i.test(decoded) ? decoded : value;
+}
+
+function rewritePlaylist(body, base, token, cryptoData) {
   return body.split(/\r?\n/).map(line => {
     if (!line.trim()) return line;
     if (line.trim().startsWith('#')) {
       return line.replace(/URI="([^"]+)"/g, (_m, raw) => 'URI="' + playlistUrl(token, new URL(raw, base).href) + '"');
     }
-    return playlistUrl(token, new URL(line.trim(), base).href);
+    return playlistUrl(token, decryptSegmentUrl(new URL(line.trim(), base).href, cryptoData));
   }).join('\n');
 }
 
@@ -133,7 +140,7 @@ async function handleNekostreamRelay(req, res, pathname, search) {
     if (kind !== 'media') {
       const body = await upstream.text();
       if (!body.includes('#EXTM3U')) { res.writeHead(502); res.end('Invalid playlist'); return true; }
-      const rewritten = rewritePlaylist(body, target.href, match[1]);
+      const rewritten = rewritePlaylist(body, target.href, match[1], session.crypto);
       res.writeHead(200, { 'Content-Type': 'application/vnd.apple.mpegurl', 'Content-Length': Buffer.byteLength(rewritten), 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-cache' });
       res.end(rewritten); return true;
     }
@@ -155,4 +162,4 @@ async function handleNekostreamRelay(req, res, pathname, search) {
   }
 }
 
-module.exports = { extractNekostream, handleNekostreamRelay, decodeAes, decryptSource, rewritePlaylist, safeUrl };
+module.exports = { extractNekostream, handleNekostreamRelay, decodeAes, decryptSource, decryptSegmentUrl, rewritePlaylist, safeUrl };
