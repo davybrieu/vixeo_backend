@@ -4,7 +4,6 @@ const { searchWiflix } = require('./providers/wiflix');
 const { searchFrembed } = require('./providers/frembed');
 const { searchUnJourUnFilm } = require('./providers/1jour1film');
 const { extract } = require('./extractors');
-const { handleNekostreamRelay } = require('./extractors/nekostream');
 
 const PORT = process.env.SCRAPER_PORT || 3100;
 
@@ -74,7 +73,6 @@ async function handleSources(body) {
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET') {
     const requestUrl = new URL(req.url, 'http://127.0.0.1');
-    if (await handleNekostreamRelay(req, res, requestUrl.pathname, requestUrl.searchParams)) return;
   }
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
