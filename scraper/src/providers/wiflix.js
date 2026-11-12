@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { matchesTitle } = require('./title-matcher');
 
 const PORTAL_URL = 'https://ww1.wiflix-adresses.fun/';
 const DEFAULT_BASE_URL = 'https://flemmix.team/';
@@ -66,7 +67,7 @@ function parseEpisodeServers(episodes) {
   return output;
 }
 
-async function searchWiflix({ type, title, originalTitle, episode }) {
+async function searchWiflix({ type, title, originalTitle, year, episode }) {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
@@ -111,13 +112,13 @@ async function searchWiflix({ type, title, originalTitle, episode }) {
           }))
         );
 
-        const results = parseWiflixResults(rawResults, baseUrl);
-        for (const result of results.slice(0, 5)) {
+        const results = parseWiflixResults(rawResults, baseUrl)
+          .filter((result) => result.type === type)
+          .filter((result) => matchesTitle(result.title, { title, originalTitle, year }));
+        for (const result of results.slice(0, 10)) {
           const key = result.url;
           if (resultsSeen.has(key)) continue;
           resultsSeen.add(key);
-
-          if (type && result.type !== type) continue;
 
           const detailPage = await context.newPage();
           try {
