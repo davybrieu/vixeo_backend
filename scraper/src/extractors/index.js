@@ -15,6 +15,12 @@ const { extractYourUpload } = require('./yourupload');
 const { extractZilla } = require('./zilla');
 const { extractVtube } = require('./vtube');
 const { extractVideoapp } = require('./videoapp');
+const { extractGxPlayer } = require('./gxplayer');
+const { extractHexload } = require('./hexload');
+const { extractMailRu } = require('./mailru');
+const { extractOkru } = require('./okru');
+const { extractMyFileStorage } = require('./myfilestorage');
+const { extractMoviesapi } = require('./moviesapi');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -49,6 +55,12 @@ const extractors = [
   { name: 'zilla', fn: extractZilla, domains: ['player.zilla-networks.com'] },
   { name: 'vtube', fn: extractVtube, domains: ['vtbe.to', 'vtube.to'] },
   { name: 'videoapp', fn: extractVideoapp, domains: ['videoapp.zip'] },
+  { name: 'gxplayer', fn: extractGxPlayer, domains: ['watch.gxplayer.xyz'] },
+  { name: 'hexload', fn: extractHexload, domains: ['hexload.com'] },
+  { name: 'mailru', fn: extractMailRu, domains: ['my.mail.ru'] },
+  { name: 'okru', fn: extractOkru, domains: ['ok.ru'] },
+  { name: 'myfilestorage', fn: extractMyFileStorage, domains: ['myfilestorage.xyz'] },
+  { name: 'moviesapi', fn: extractMoviesapi, domains: ['moviesapi.club'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
