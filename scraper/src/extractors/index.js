@@ -50,6 +50,7 @@ const { extractVidLink } = require('./vidlink');
 const { extractVidsrcRu } = require('./vidsrcru');
 const { extractUpzone } = require('./upzone');
 const { extractVidsrcTo } = require('./vidsrcto');
+const { extractGoogleDrive } = require('./googledrive');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -119,6 +120,7 @@ const extractors = [
   { name: 'vidsrcru', fn: extractVidsrcRu, domains: ['vidsrc.ru'] },
   { name: 'upzone', fn: extractUpzone, domains: ['upzone.cc', 'upzone.to', 'upzone.net', 'upzone.link'] },
   { name: 'vidsrcto', fn: extractVidsrcTo, domains: ['vidsrc.to'] },
+  { name: 'googledrive', fn: extractGoogleDrive, domains: ['drive.google.com'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
