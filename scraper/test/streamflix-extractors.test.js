@@ -16,6 +16,12 @@ test('registers the first additional Streamflix extractor batch', () => {
     ['https://gupload.xyz/e/abc', 'gupload'],
     ['https://hxfile.co/embed-abc.html', 'hxfile'],
     ['https://xshotcok.com/embed-abc.html', 'hxfile'],
+    ['https://oneupload.net/e/abc', 'oneupload'],
+    ['https://tipfly.xyz/e/abc', 'oneupload'],
+    ['https://pixeldrain.com/u/abc', 'pixeldrain'],
+    ['https://savefiles.com/e/abc', 'savefiles'],
+    ['https://streamhls.to/e/abc', 'savefiles'],
+    ['https://streamhub.to/d/abc', 'streamhub'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
