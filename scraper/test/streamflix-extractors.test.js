@@ -12,6 +12,7 @@ const { decodeVidGuardSignature } = require('../src/extractors/vidguard');
 const { encryptTurbovio, decryptTurbovio, generateKey, generateIV } = require('../src/extractors/turbovio');
 const { rc4, encodeVidplayId, decodeVidplayResult } = require('../src/extractors/vidplay');
 const { veevDecode, buildVeevArray, decodeVeevUrl } = require('../src/extractors/veev');
+const { decodeVidsrcNet, decodeVidsrcSubtitles } = require('../src/extractors/vidsrcnet');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -74,6 +75,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://poophq.com/e/abc123', 'veev'],
     ['https://moflix-stream.xyz/api/v1/videos/123/playback', 'moflix'],
     ['https://api.moviemaster.lat/video?tmdb=123&embed=abc', 'moviemaster'],
+    ['https://vidsrc-embed.ru/embed/movie?tmdb=123', 'vidsrcnet'],
+    ['https://vsembed.ru/embed/tv?tmdb=123', 'vidsrcnet'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -137,4 +140,13 @@ test('Veev decoding helpers preserve plain characters and decode operation array
   assert.equal(veevDecode('AB'), 'AB');
   assert.deepEqual(buildVeevArray('2120'), [[2, 1]]);
   assert.equal(decodeVeevUrl('68747470733a2f2f63646e2e6578616d706c652f766964656f2e6d337538', [0]), 'https://cdn.example/video.m3u8');
+});
+
+test('Vidsrc.net supports simple decoder variants and subtitle parsing', () => {
+  assert.equal(decodeVidsrcNet('NdonQLf1Tzyx7bMG', 'abcDEF'), 'DEFabc');
+  assert.equal(decodeVidsrcNet('o2VSUnjnZl', 'def'), 'abc');
+  assert.deepEqual(decodeVidsrcSubtitles('[French] /subs/fr.vtt,[English] /subs/en.vtt', 'https://player.example/e/1'), [
+    { label: 'French', url: 'https://player.example/subs/fr.vtt' },
+    { label: 'English', url: 'https://player.example/subs/en.vtt' },
+  ]);
 });
