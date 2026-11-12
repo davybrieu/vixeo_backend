@@ -10,6 +10,7 @@ const {
   normalizePlayerEntries,
   normalizeEpisodeEntries,
 } = require('../src/providers/frenchstream');
+const { resolveFrembedLink } = require('../src/providers/frembed');
 const {
   normalizeBaseUrl,
   extractLoadVideoUrl,
@@ -123,4 +124,20 @@ test('Shared provider matcher rejects partial and unrelated movie titles', () =>
   assert.equal(matchesTitle('Resident Evil (2021)', requested), false);
   assert.equal(matchesTitle('Odyssée (1997)', requested), false);
   assert.equal(matchesTitle('The Odysseys (2026)', requested), false);
+});
+
+test('Frembed resolves a player redirect to the actual extractor host', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({
+    status: 302,
+    headers: { get: (name) => name.toLowerCase() === 'location' ? 'https://voe.sx/e/abc123' : null },
+  });
+  try {
+    assert.equal(
+      await resolveFrembedLink('https://frembed.casa/player/123'),
+      'https://voe.sx/e/abc123',
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
