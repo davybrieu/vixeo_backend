@@ -4,6 +4,7 @@ use App\Models\MissingExtractor;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
@@ -133,6 +134,31 @@ it('keeps only the links an extractor can resolve', function () {
         ->assertJsonPath('data.0.url', 'https://voe.sx/e/known');
 });
 
+
+it('accepts links handled by newly registered scraper extractors', function () {
+    Cache::forget('scraper.supported_domains');
+
+    Http::fake([
+        'scraper.test/extractors' => Http::response([
+            'supported_domains' => ['fastream.to'],
+        ]),
+        'api.themoviedb.org/3/movie/550*' => Http::response(Tmdb::movie()),
+        'scraper.test/sources' => Http::response([
+            'sources' => [[
+                'provider' => 'frenchstream',
+                'name' => 'Fastream',
+                'url' => 'https://fastream.to/e/abc',
+            ]],
+        ]),
+    ]);
+
+    $this->getJson('/api/v1/catalog/movie/550/sources')
+        ->assertOk()
+        ->assertJsonPath('data.0.url', 'https://fastream.to/e/abc');
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/extractors'));
+});
+
 it('resolves a player link into a playable stream', function () {
     Http::fake([
         'scraper.test/extract' => Http::response([
@@ -180,13 +206,38 @@ it('says the service is unavailable when the scraper fails to resolve', function
         ->assertExactJson(['message' => 'Le service de sources est temporairement indisponible.']);
 });
 
-it('lists the providers the panel shows', function () {
+it('lists every provider declared by the scraper', function () {
+    Http::fake([
+        'scraper.test/providers' => Http::response(['providers' => [
+            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
+            ['id' => 'wiflix', 'name' => 'Wiflix'],
+            ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
+        ]]),
+    ]);
+
     $this->getJson('/api/v1/catalog/sources/providers')
         ->assertOk()
         ->assertExactJson(['data' => [
             ['id' => 'frenchstream', 'name' => 'FrenchStream'],
             ['id' => 'wiflix', 'name' => 'Wiflix'],
             ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
+        ]]);
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/providers'));
+});
+
+it('uses the complete configured provider list when the scraper registry is unavailable', function () {
+    Http::fake(['scraper.test/providers' => Http::response('Unavailable', 503)]);
+
+    $this->getJson('/api/v1/catalog/sources/providers')
+        ->assertOk()
+        ->assertExactJson(['data' => [
+            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
+            ['id' => 'wiflix', 'name' => 'Wiflix'],
+            ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
         ]]);
 });
 

@@ -5,6 +5,7 @@ namespace App\Services\Playback;
 use App\Models\MissingExtractor;
 use App\Services\Tmdb\TmdbClient;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -100,12 +101,36 @@ class StreamSources
      */
     public function providers(): array
     {
-        $providers = config('services.scraper.providers', []);
+        $fallback = config('services.scraper.providers', []);
+        $base = $this->scraperBase();
 
-        return array_values(array_map(fn (array $p) => [
-            'id' => (string) $p['id'],
-            'name' => (string) $p['name'],
-        ], is_array($providers) ? $providers : []));
+        if ($base !== '') {
+            try {
+                $response = Http::baseUrl($base)
+                    ->acceptJson()
+                    ->timeout(3)
+                    ->get('providers');
+
+                $providers = $response->successful() ? $response->json('providers') : null;
+                if (is_array($providers)) {
+                    return array_values(array_filter(array_map(
+                        fn ($provider) => is_array($provider) && isset($provider['id'], $provider['name'])
+                            ? ['id' => (string) $provider['id'], 'name' => (string) $provider['name']]
+                            : null,
+                        $providers
+                    )));
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Unable to retrieve scraper providers; using configured fallback', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return array_values(array_map(fn (array $provider) => [
+            'id' => (string) $provider['id'],
+            'name' => (string) $provider['name'],
+        ], is_array($fallback) ? $fallback : []));
     }
 
     public function movie(int $tmdbId, bool $extract = false, ?string $provider = null): array
@@ -290,6 +315,41 @@ class StreamSources
         }
     }
 
+    /**
+     * Domains are owned by the Node extractor registry. Cache them so source filtering
+     * stays in sync with every newly ported extractor without duplicating its host list here.
+     *
+     * @return list<string>
+     */
+    private function supportedDomains(): array
+    {
+        return Cache::remember('scraper.supported_domains', 600, function (): array {
+            $base = $this->scraperBase();
+            if ($base === '') {
+                return [];
+            }
+
+            try {
+                $response = Http::baseUrl($base)
+                    ->acceptJson()
+                    ->timeout(3)
+                    ->get('extractors');
+
+                $domains = $response->successful() ? $response->json('supported_domains') : null;
+
+                return is_array($domains)
+                    ? array_values(array_filter($domains, fn ($domain) => is_string($domain) && $domain !== ''))
+                    : [];
+            } catch (\Throwable $e) {
+                Log::warning('Unable to retrieve scraper extractor domains; using configured fallback', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                return [];
+            }
+        });
+    }
+
     private function hasExtractor(string $url): bool
     {
         $host = parse_url($url, PHP_URL_HOST);
@@ -298,7 +358,7 @@ class StreamSources
         }
         $host = strtolower(preg_replace('/^www\./', '', $host));
 
-        foreach (self::SUPPORTED_DOMAINS as $domain) {
+        foreach (array_unique([...self::SUPPORTED_DOMAINS, ...$this->supportedDomains()]) as $domain) {
             if ($host === $domain || str_ends_with($host, '.'.$domain)) {
                 return true;
             }

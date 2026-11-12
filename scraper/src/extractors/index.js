@@ -1,7 +1,78 @@
 // Extractor registry, ported from the ONYX extractor list: each entry maps a
 // set of host names to a function that turns a player URL into a stream.
 const { extractVoe } = require('./voe');
+const { extractJkPlayer } = require('./jkplayer');
+const { extractPlusPomla } = require('./pluspomla');
+const { extractMStreamDay } = require('./mstreamday');
 const { extractGoodstream } = require('./goodstream');
+const { extractBigWarp } = require('./bigwarp');
+const { extractDropload } = require('./dropload');
+const { extractFastream } = require('./fastream');
+const { extractGupload } = require('./gupload');
+const { extractHxfile } = require('./hxfile');
+const { extractOneupload } = require('./oneupload');
+const { extractPixeldrain } = require('./pixeldrain');
+const { extractSavefiles } = require('./savefiles');
+const { extractStreamhub } = require('./streamhub');
+const { extractYourUpload } = require('./yourupload');
+const { extractZilla } = require('./zilla');
+const { extractVtube } = require('./vtube');
+const { extractVideoapp } = require('./videoapp');
+const { extractGxPlayer } = require('./gxplayer');
+const { extractHexload } = require('./hexload');
+const { extractMailRu } = require('./mailru');
+const { extractOkru } = require('./okru');
+const { extractMyFileStorage } = require('./myfilestorage');
+const { extractMoviesapi } = require('./moviesapi');
+const { extractStreamUp } = require('./streamup');
+const { extractUpZur } = require('./upzur');
+const { extractVidflix } = require('./vidflix');
+const { extractTwoEmbed } = require('./twoembed');
+const { extractDeltaBit } = require('./deltabit');
+const { extractLamovie } = require('./lamovie');
+const { extractLoadX } = require('./loadx');
+const { extractEinschalten } = require('./einschalten');
+const { extractPcloud } = require('./pcloud');
+const { extractRidoo } = require('./ridoo');
+const { extractShareCloudy } = require('./sharecloudy');
+const { extractStreamix } = require('./streamix');
+const { extractVidPly } = require('./vidply');
+const { extractVidnest } = require('./vidnest');
+const { extractTurbovid } = require('./turbovid');
+const { extractDailymotion } = require('./dailymotion');
+const { extractAmazonDrive } = require('./amazondrive');
+const { extractVidGuard } = require('./vidguard');
+const { extractFsvid } = require('./fsvid');
+const { extractTurbovio } = require('./turbovio');
+const { extractVidplay } = require('./vidplay');
+const { extractVeev } = require('./veev');
+const { extractMoflix } = require('./moflix');
+const { extractMovieMaster } = require('./moviemaster');
+const { extractVidsrcNet } = require('./vidsrcnet');
+const { extractVidLink } = require('./vidlink');
+const { extractVidsrcRu } = require('./vidsrcru');
+const { extractUpzone } = require('./upzone');
+const { extractVidsrcTo } = require('./vidsrcto');
+const { extractGoogleDrive } = require('./googledrive');
+const { extractLuluVdo } = require('./luluvdo');
+const { extractUstr } = require('./ustr');
+const { extractVideoSibNet } = require('./videosibnet');
+const { extractPrimeSrc } = require('./primesrc');
+const { extractVidlove } = require('./vidlove');
+const { extractMaxstream } = require('./maxstream');
+const { extractVidrock } = require('./vidrock');
+const { extractFirestream } = require('./firestream');
+const { extractCloseload } = require('./closeload');
+const { extractChillx } = require('./chillx');
+const { extractNuupload } = require('./nupload');
+const { extractVixSrc } = require('./vixsrc');
+const { extractVidzee } = require('./vidzee');
+const { extractRabbitstream } = require('./rabbitstream');
+const { extractMagaSavor } = require('./magasavor');
+const { extractVidora } = require('./vidora');
+const { extractVidem } = require('./videm');
+const { extractVidxGo } = require('./vidxgo');
+const { extractVixcloud } = require('./vixcloud');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -22,7 +93,78 @@ const { extractSendvid } = require('./sendvid');
 const { extractGeneric } = require('./generic');
 
 const extractors = [
+  { name: 'mstreamday', fn: extractMStreamDay, domains: ['moflix-stream.day'] },
+  { name: 'jkplayer', fn: extractJkPlayer, domains: ['jkanime.net'] },
+  { name: 'pluspomla', fn: extractPlusPomla, domains: ['apu.animemovil2.com'] },
   { name: 'goodstream', fn: extractGoodstream, domains: ['goodstream.one'] },
+  { name: 'bigwarp', fn: extractBigWarp, domains: ['bigwarp.cc', 'bigwarp.io', 'bigwarp.pro'] },
+  { name: 'dropload', fn: extractDropload, domains: ['dropload.tv', 'dropload.io', 'dropload.pro', 'dr0pstream.com'] },
+  { name: 'fastream', fn: extractFastream, domains: ['fastream.to'] },
+  { name: 'gupload', fn: extractGupload, domains: ['gupload.xyz'] },
+  { name: 'hxfile', fn: extractHxfile, domains: ['hxfile.co', 'xshotcok.com'] },
+  { name: 'oneupload', fn: extractOneupload, domains: ['oneupload.net', 'tipfly.xyz'] },
+  { name: 'pixeldrain', fn: extractPixeldrain, domains: ['pixeldrain.com'] },
+  { name: 'savefiles', fn: extractSavefiles, domains: ['savefiles.com', 'streamhls.to'] },
+  { name: 'streamhub', fn: extractStreamhub, domains: ['streamhub.to'] },
+  { name: 'yourupload', fn: extractYourUpload, domains: ['yourupload.com', 'yucache.net'] },
+  { name: 'zilla', fn: extractZilla, domains: ['player.zilla-networks.com'] },
+  { name: 'vtube', fn: extractVtube, domains: ['vtbe.to', 'vtube.to'] },
+  { name: 'videoapp', fn: extractVideoapp, domains: ['videoapp.zip'] },
+  { name: 'gxplayer', fn: extractGxPlayer, domains: ['watch.gxplayer.xyz'] },
+  { name: 'hexload', fn: extractHexload, domains: ['hexload.com'] },
+  { name: 'mailru', fn: extractMailRu, domains: ['my.mail.ru'] },
+  { name: 'okru', fn: extractOkru, domains: ['ok.ru'] },
+  { name: 'myfilestorage', fn: extractMyFileStorage, domains: ['myfilestorage.xyz'] },
+  { name: 'moviesapi', fn: extractMoviesapi, domains: ['moviesapi.club'] },
+  { name: 'streamup', fn: extractStreamUp, domains: ['strmup.to'] },
+  { name: 'upzur', fn: extractUpZur, domains: ['upzur.com'] },
+  { name: 'vidflix', fn: extractVidflix, domains: ['vidflix.club'] },
+  { name: 'twoembed', fn: extractTwoEmbed, domains: ['2embed.cc'] },
+  { name: 'deltabit', fn: extractDeltaBit, domains: ['deltabit.co'] },
+  { name: 'lamovie', fn: extractLamovie, domains: ['lamovie.link', 'vimeos.net'] },
+  { name: 'loadx', fn: extractLoadX, domains: ['loadx.ws'] },
+  { name: 'einschalten', fn: extractEinschalten, domains: ['einschalten.in'] },
+  { name: 'pcloud', fn: extractPcloud, domains: ['u.pcloud.link'] },
+  { name: 'ridoo', fn: extractRidoo, domains: ['ridoo.net'] },
+  { name: 'sharecloudy', fn: extractShareCloudy, domains: ['sharecloudy.com'] },
+  { name: 'streamix', fn: extractStreamix, domains: ['streamix.so', 'stmix.io'] },
+  { name: 'vidply', fn: extractVidPly, domains: ['vidply.com'] },
+  { name: 'vidnest', fn: extractVidnest, domains: ['vidnest.io', 'vidnest.live'] },
+  { name: 'turbovid', fn: extractTurbovid, domains: ['turbovid.me'] },
+  { name: 'dailymotion', fn: extractDailymotion, domains: ['dailymotion.com', 'geo.dailymotion.com'] },
+  { name: 'amazondrive', fn: extractAmazonDrive, domains: ['amazon.com'] },
+  { name: 'vidguard', fn: extractVidGuard, domains: ['vidguard.to', 'vembed.net', 'bembed.cc', 'vgfplay.com', 'listeamed.net'] },
+  { name: 'fsvid', fn: extractFsvid, domains: ['fsvid.lol'] },
+  { name: 'turbovio', fn: extractTurbovio, domains: ['turboembed.com'] },
+  { name: 'vidplay', fn: extractVidplay, domains: ['vidplay.site', 'mcloud.bz', 'vidplay.online'] },
+  { name: 'veev', fn: extractVeev, domains: ['veev.to', 'kinoger.pw', 'poophq.com', 'doods.to', 'doods.com'] },
+  { name: 'moflix', fn: extractMoflix, domains: ['moflix-stream.xyz'] },
+  { name: 'moviemaster', fn: extractMovieMaster, domains: ['api.moviemaster.lat'] },
+  { name: 'vidsrcnet', fn: extractVidsrcNet, domains: ['vidsrc-embed.ru', 'vsembed.ru'] },
+  { name: 'vidlink', fn: extractVidLink, domains: ['vidlink.pro'] },
+  { name: 'vidsrcru', fn: extractVidsrcRu, domains: ['vidsrc.ru'] },
+  { name: 'upzone', fn: extractUpzone, domains: ['upzone.cc', 'upzone.to', 'upzone.net', 'upzone.link'] },
+  { name: 'vidsrcto', fn: extractVidsrcTo, domains: ['vidsrc.to'] },
+  { name: 'googledrive', fn: extractGoogleDrive, domains: ['drive.google.com'] },
+  { name: 'luluvdo', fn: extractLuluVdo, domains: ['luluvdo.com', 'luluvdoo.com', 'luluvid.com', 'lulust.com'] },
+  { name: 'ustr', fn: extractUstr, domains: ['ups2up.fun', 'up4stream.com', 'up4fun.top'] },
+  { name: 'videosibnet', fn: extractVideoSibNet, domains: ['video.sibnet.ru'] },
+  { name: 'primesrc', fn: extractPrimeSrc, domains: ['primesrc.me'] },
+  { name: 'vidlove', fn: extractVidlove, domains: ['api.vidlove.cc'] },
+  { name: 'maxstream', fn: extractMaxstream, domains: ['maxstream.video'] },
+  { name: 'vidrock', fn: extractVidrock, domains: ['vidrock.net'] },
+  { name: 'firestream', fn: extractFirestream, domains: ['firestream.to', 'firestream.site'] },
+  { name: 'closeload', fn: extractCloseload, domains: ['closeload.top'] },
+  { name: 'chillx', fn: extractChillx, domains: ['chillx.top', 'player.jeansaispasplus.homes'] },
+  { name: 'nuupload', fn: extractNuupload, domains: ['nupload.top', 'nupupload.top', 'ap.nupload.me', 'nupload.me'] },
+  { name: 'vixsrc', fn: extractVixSrc, domains: ['vixsrc.to'] },
+  { name: 'vidzee', fn: extractVidzee, domains: ['player.vidzee.wtf'] },
+  { name: 'rabbitstream', fn: extractRabbitstream, domains: ['rabbitstream.net', 'dokicloud.one', 'premiumembeding.cloud', 'megacloud.blog', 'videostr.net'] },
+  { name: 'magasavor', fn: extractMagaSavor, domains: ['magasavor.net'] },
+  { name: 'vidora', fn: extractVidora, domains: ['vidora.stream'] },
+  { name: 'videm', fn: extractVidem, domains: ['videm.xyz'] },
+  { name: 'vidxgo', fn: extractVidxGo, domains: ['v.vidxgo.co'] },
+  { name: 'vixcloud', fn: extractVixcloud, domains: ['vixcloud.co'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
@@ -59,7 +201,7 @@ const extractors = [
     fn: extractFilemoon,
     domains: [
       'filemoon.org', 'filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl',
-      'bysejikuar.com', '1day1movie.website', 'moflix-stream.link', 'bysezoxexe.com',
+      'bysejikuar.com', '1day1movie.website', 'bysezoxexe.com',
       'bysebuho.com', 'bysezejataos.com', 'bysekoze.com', 'bysesayeveum.com', 'lukefirst.lol',
       'weneverbeenfree.com', 'gn1r5n.org', 'mfw09.org', 'kaydendown.lol',
     ],
