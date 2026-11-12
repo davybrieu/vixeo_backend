@@ -121,7 +121,7 @@ async function getPlayerSources(page, detailUrl, type, season, episode) {
   );
 
   const sources = [];
-  let specialUrl = '';
+  const specialUrls = [];
   for (const option of options) {
     const form = new URLSearchParams({
       action: 'doo_player_ajax',
@@ -147,13 +147,13 @@ async function getPlayerSources(page, detailUrl, type, season, episode) {
     if (!embedUrl) continue;
 
     if (embedUrl.startsWith('https://api.voirfilm.cam') || embedUrl.startsWith('https://onregardeou.site')) {
-      specialUrl = embedUrl;
-      break;
+      specialUrls.push(embedUrl);
+      continue;
     }
     sources.push({ provider: '1jour1film', name: option.name, url: embedUrl });
   }
 
-  if (specialUrl) {
+  for (const specialUrl of specialUrls) {
     const expanded = await expandSpecialPlayer(page, specialUrl, targetUrl);
     for (const item of expanded) {
       sources.push({ provider: '1jour1film', name: item.name, url: item.url });
@@ -179,17 +179,20 @@ async function searchUnJourUnFilm({ type, title, originalTitle, year, season, ep
       const searchUrl = new URL('/', baseUrl);
       searchUrl.searchParams.set('s', query);
       await page.goto(searchUrl.href, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      const results = await page.locator('article.item a[itemprop="url"], article.item a[href]').evaluateAll((links) =>
-        links.map((link) => ({
-          title: link.textContent?.trim() || link.closest('article')?.querySelector('h2, .title')?.textContent?.trim() || '',
-          url: link.href,
-          classes: link.closest('article')?.className || '',
-        })).filter((item) => item.url)
+      const results = await page.locator('div.result-item > article').evaluateAll((articles) =>
+        articles.map((article) => {
+          const link = article.querySelector('div.title a[href]');
+          return {
+            title: link?.textContent?.trim() || '',
+            url: link?.href || '',
+          };
+        }).filter((item) => item.url)
       );
 
       for (const item of results) {
-        const isTv = /tvshows|tvshow|series/i.test(item.url + ' ' + item.classes);
-        if ((type === 'tv') !== isTv) continue;
+        const isTv = item.url.includes('/tvshows/');
+        const isMovie = item.url.includes('/films/');
+        if ((type === 'tv' && !isTv) || (type !== 'tv' && !isMovie)) continue;
         const score = Math.max(titleScore(item.title, title), titleScore(item.title, originalTitle));
         if (score > 0) candidates.set(item.url, { ...item, score });
       }
