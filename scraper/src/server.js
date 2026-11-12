@@ -3,7 +3,7 @@ const { searchFrenchStream } = require('./providers/frenchstream');
 const { searchWiflix } = require('./providers/wiflix');
 const { searchFrembed } = require('./providers/frembed');
 const { searchUnJourUnFilm } = require('./providers/1jour1film');
-const { extract } = require('./extractors');
+const { extract, supportedDomains } = require('./extractors');
 
 const PORT = process.env.SCRAPER_PORT || 3100;
 
@@ -79,6 +79,12 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({
       providers: PROVIDERS.map(({ id, name }) => ({ id, name })),
     }));
+    return;
+  }
+
+  if (req.method === 'GET' && req.url === '/extractors') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ supported_domains: supportedDomains }));
     return;
   }
 
