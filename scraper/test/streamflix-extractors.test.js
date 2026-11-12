@@ -15,6 +15,7 @@ const { veevDecode, buildVeevArray, decodeVeevUrl } = require('../src/extractors
 const { decodeVidsrcNet, decodeVidsrcSubtitles } = require('../src/extractors/vidsrcnet');
 const { findUpzoneSource } = require('../src/extractors/upzone');
 const { decodeEncryptedEmbed } = require('../src/extractors/vidsrcto');
+const { encryptVidrockId } = require('../src/extractors/vidrock');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -93,6 +94,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://primesrc.me/api/v1/l?key=abc123', 'primesrc'],
     ['https://api.vidlove.cc/api/v1/source?id=123', 'vidlove'],
     ['https://maxstream.video/e/abc123', 'maxstream'],
+    ['https://vidrock.net/api/movie/encoded#Nflix', 'vidrock'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -176,4 +178,10 @@ test('Vidsrc.to decrypts its RC4 URL payload', () => {
   const plain = 'https://vidplay.site/e/abc?token=1';
   const encrypted = rc4(key, plain).toString('base64').replace(/\//g, '_').replace(/\+/g, '-');
   assert.equal(decodeEncryptedEmbed(key, encrypted), plain);
+});
+
+test('Vidrock encrypts TMDB IDs into URL-safe base64', () => {
+  const encoded = encryptVidrockId('123456');
+  assert.match(encoded, /^[A-Za-z0-9_-]+$/);
+  assert.equal(Buffer.from(encoded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').length % 16, 0);
 });
