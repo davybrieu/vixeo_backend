@@ -6,6 +6,7 @@ const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
 const { decodeEscapes } = require('../src/extractors/upzur');
+const { createSource } = require('../src/extractors/vidply');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -44,6 +45,15 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vimeos.net/e/abc', 'lamovie'],
     ['https://loadx.ws/e/abc', 'loadx'],
     ['https://einschalten.in/api/movies/123/watch', 'einschalten'],
+    ['https://u.pcloud.link/publink/show?code=abc', 'pcloud'],
+    ['https://ridoo.net/e/abc', 'ridoo'],
+    ['https://sharecloudy.com/e/abc', 'sharecloudy'],
+    ['https://streamix.so/v/abc', 'streamix'],
+    ['https://stmix.io/v/abc', 'streamix'],
+    ['https://vidply.com/e/abc', 'vidply'],
+    ['https://vidnest.io/e/abc', 'vidnest'],
+    ['https://vidnest.live/e/abc', 'vidnest'],
+    ['https://turbovid.me/abc', 'turbovid'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -65,3 +75,5 @@ test('decodes the Gupload legacy XOR payload', () => {
   assert.equal(decodeXorPayload(encoded.split('~')[1], key), plain);
 });
 test('decodes UpZur hexadecimal and unicode escapes', () => { assert.equal(decodeEscapes('https:\\x2f\\x2fcdn.example\\u002fvideo.m3u8'), 'https://cdn.example/video.m3u8'); });
+
+test('VidPly appends a token to the pass_md5 prefix', () => { const url = createSource('https://cdn.example/video~', 'token'); assert.match(url, /^https:\/\/cdn\.example\/video~[A-Za-z0-9]{10}\?token=token&expiry=\d+$/); });
