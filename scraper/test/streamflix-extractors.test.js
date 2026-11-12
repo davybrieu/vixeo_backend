@@ -16,6 +16,7 @@ const { decodeVidsrcNet, decodeVidsrcSubtitles } = require('../src/extractors/vi
 const { findUpzoneSource } = require('../src/extractors/upzone');
 const { decodeEncryptedEmbed } = require('../src/extractors/vidsrcto');
 const { encryptVidrockId } = require('../src/extractors/vidrock');
+const { decodeCloseloadArray } = require('../src/extractors/closeload');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -97,6 +98,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vidrock.net/api/movie/encoded#Nflix', 'vidrock'],
     ['https://firestream.to/e/abc123', 'firestream'],
     ['https://firestream.site/e/abc123', 'firestream'],
+    ['https://closeload.top/e/abc123', 'closeload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -186,4 +188,17 @@ test('Vidrock encrypts TMDB IDs into URL-safe base64', () => {
   const encoded = encryptVidrockId('123456');
   assert.match(encoded, /^[A-Za-z0-9_-]+$/);
   assert.equal(Buffer.from(encoded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').length % 16, 0);
+});
+
+test('Closeload unmix decoder reconstructs an HLS URL', () => {
+  const plain = 'https://cdn.example/master.m3u8';
+  let acc = 2;
+  const encoded = Buffer.alloc(plain.length);
+  for (let i = 0; i < plain.length; i++) {
+    const byte = plain.charCodeAt(i) ^ ((acc + 9) % 256);
+    encoded[i] = byte;
+    acc = (acc + 9) % 256;
+    acc = (acc + byte) % 256;
+  }
+  assert.equal(decodeCloseloadArray([encoded.toString('base64')], [], 2, 9), plain);
 });
