@@ -46,6 +46,8 @@ const { extractVeev } = require('./veev');
 const { extractMoflix } = require('./moflix');
 const { extractMovieMaster } = require('./moviemaster');
 const { extractVidsrcNet } = require('./vidsrcnet');
+const { extractVidLink } = require('./vidlink');
+const { extractVidsrcRu } = require('./vidsrcru');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -111,6 +113,8 @@ const extractors = [
   { name: 'moflix', fn: extractMoflix, domains: ['moflix-stream.xyz'] },
   { name: 'moviemaster', fn: extractMovieMaster, domains: ['api.moviemaster.lat'] },
   { name: 'vidsrcnet', fn: extractVidsrcNet, domains: ['vidsrc-embed.ru', 'vsembed.ru'] },
+  { name: 'vidlink', fn: extractVidLink, domains: ['vidlink.pro'] },
+  { name: 'vidsrcru', fn: extractVidsrcRu, domains: ['vidsrc.ru'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
