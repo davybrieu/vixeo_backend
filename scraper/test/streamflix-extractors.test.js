@@ -77,6 +77,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://api.moviemaster.lat/video?tmdb=123&embed=abc', 'moviemaster'],
     ['https://vidsrc-embed.ru/embed/movie?tmdb=123', 'vidsrcnet'],
     ['https://vsembed.ru/embed/tv?tmdb=123', 'vidsrcnet'],
+    ['https://vidlink.pro/movie/123', 'vidlink'],
+    ['https://vidsrc.ru/movie/123', 'vidsrcru'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
