@@ -48,25 +48,32 @@ function normalizePlayerEntries(players = {}) {
   return output;
 }
 
-function normalizeEpisodeEntries(data, episodeNumber) {
+function normalizeEpisodeEntries(data, requestedEpisode = null) {
   const output = [];
   for (const [key, label] of [['vf', 'VF'], ['vostfr', 'VOSTFR'], ['vo', 'VO']]) {
-    const sources = data?.[key]?.[String(episodeNumber)];
-    if (!sources || typeof sources !== 'object') continue;
-    for (const [provider, url] of Object.entries(sources)) {
-      if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
-        output.push({
-          provider: 'frenchstream',
-          name: provider.charAt(0).toUpperCase() + provider.slice(1) + ' (' + label + ')',
-          url,
-        });
+    const episodes = data?.[key];
+    if (!episodes || typeof episodes !== 'object') continue;
+    const numbers = requestedEpisode
+      ? [String(requestedEpisode)]
+      : Object.keys(episodes).sort((a, b) => Number(a) - Number(b));
+    for (const number of numbers) {
+      const sources = episodes[number];
+      if (!sources || typeof sources !== 'object') continue;
+      for (const [provider, url] of Object.entries(sources)) {
+        if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+          output.push({
+            provider: 'frenchstream',
+            name: provider.charAt(0).toUpperCase() + provider.slice(1) + ' (Épisode ' + number + ', ' + label + ')',
+            url,
+          });
+        }
       }
     }
   }
   return output;
 }
 
-async function searchFrenchStream({ type, title, originalTitle }) {
+async function searchFrenchStream({ type, title, originalTitle, episode }) {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
@@ -110,6 +117,7 @@ async function searchFrenchStream({ type, title, originalTitle }) {
           seenResults.add(id);
 
           const isSeries = id.includes('-saison-') || result.title.includes(' - Saison ');
+          if ((type === 'tv' && !isSeries) || (type === 'movie' && isSeries)) continue;
           const itemId = id.includes('newsid=') ? id.substring(id.indexOf('newsid=') + 7) : id;
 
           try {
@@ -126,7 +134,7 @@ async function searchFrenchStream({ type, title, originalTitle }) {
             if (!apiResponse.ok()) continue;
             const data = await apiResponse.json();
             const found = isSeries
-              ? normalizeEpisodeEntries(data, 1)
+              ? normalizeEpisodeEntries(data, episode)
               : normalizePlayerEntries(data?.players);
             sources.push(...found);
           } catch {
