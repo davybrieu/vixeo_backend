@@ -7,6 +7,10 @@ const { extractDropload } = require('./dropload');
 const { extractFastream } = require('./fastream');
 const { extractGupload } = require('./gupload');
 const { extractHxfile } = require('./hxfile');
+const { extractOneupload } = require('./oneupload');
+const { extractPixeldrain } = require('./pixeldrain');
+const { extractSavefiles } = require('./savefiles');
+const { extractStreamhub } = require('./streamhub');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -33,6 +37,10 @@ const extractors = [
   { name: 'fastream', fn: extractFastream, domains: ['fastream.to'] },
   { name: 'gupload', fn: extractGupload, domains: ['gupload.xyz'] },
   { name: 'hxfile', fn: extractHxfile, domains: ['hxfile.co', 'xshotcok.com'] },
+  { name: 'oneupload', fn: extractOneupload, domains: ['oneupload.net', 'tipfly.xyz'] },
+  { name: 'pixeldrain', fn: extractPixeldrain, domains: ['pixeldrain.com'] },
+  { name: 'savefiles', fn: extractSavefiles, domains: ['savefiles.com', 'streamhls.to'] },
+  { name: 'streamhub', fn: extractStreamhub, domains: ['streamhub.to'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
