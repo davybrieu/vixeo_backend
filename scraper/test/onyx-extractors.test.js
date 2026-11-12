@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const { findExtractor, extractorNames } = require('../src/extractors');
 const { extractMazQuest } = require('../src/extractors/mazquest');
 const { extractYandexDisk, normalizePublicKey } = require('../src/extractors/yandexdisk');
-const { buildMazQuestEpisodeUrl, searchMazQuest } = require('../src/providers/onyx-tmdb-fr');
+const { buildMazQuestEpisodeUrl, searchMazQuest, buildFallbackSources } = require('../src/providers/onyx-tmdb-fr');
 
 test('Onyx TMDb FR uses the MazQuest TV endpoint with padded season and episode numbers', () => {
   assert.equal(
@@ -84,4 +84,12 @@ test('MazQuest resolves Yandex Disk upstream links through the Yandex extractor'
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('every Onyx TMDb movie fallback URL is handled by a registered Vixeo extractor', () => {
+  const sources = buildFallbackSources({ type: 'movie', tmdb_id: 1368337 });
+  assert.deepEqual(
+    sources.map((source) => findExtractor(source.url)?.name),
+    ['vixsrc', 'vidsrcnet', 'vidlink', 'vidsrcru', 'twoembed'],
+  );
 });
