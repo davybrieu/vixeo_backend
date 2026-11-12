@@ -25,6 +25,10 @@ const { extractStreamUp } = require('./streamup');
 const { extractUpZur } = require('./upzur');
 const { extractVidflix } = require('./vidflix');
 const { extractTwoEmbed } = require('./twoembed');
+const { extractDeltaBit } = require('./deltabit');
+const { extractLamovie } = require('./lamovie');
+const { extractLoadX } = require('./loadx');
+const { extractEinschalten } = require('./einschalten');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -69,6 +73,10 @@ const extractors = [
   { name: 'upzur', fn: extractUpZur, domains: ['upzur.com'] },
   { name: 'vidflix', fn: extractVidflix, domains: ['vidflix.club'] },
   { name: 'twoembed', fn: extractTwoEmbed, domains: ['2embed.cc'] },
+  { name: 'deltabit', fn: extractDeltaBit, domains: ['deltabit.co'] },
+  { name: 'lamovie', fn: extractLamovie, domains: ['lamovie.link', 'vimeos.net'] },
+  { name: 'loadx', fn: extractLoadX, domains: ['loadx.ws'] },
+  { name: 'einschalten', fn: extractEinschalten, domains: ['einschalten.in'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
