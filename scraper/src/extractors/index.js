@@ -54,6 +54,7 @@ const { extractGoogleDrive } = require('./googledrive');
 const { extractLuluVdo } = require('./luluvdo');
 const { extractUstr } = require('./ustr');
 const { extractVideoSibNet } = require('./videosibnet');
+const { extractPrimeSrc } = require('./primesrc');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -127,6 +128,7 @@ const extractors = [
   { name: 'luluvdo', fn: extractLuluVdo, domains: ['luluvdo.com', 'luluvdoo.com', 'luluvid.com', 'lulust.com'] },
   { name: 'ustr', fn: extractUstr, domains: ['ups2up.fun', 'up4stream.com', 'up4fun.top'] },
   { name: 'videosibnet', fn: extractVideoSibNet, domains: ['video.sibnet.ru'] },
+  { name: 'primesrc', fn: extractPrimeSrc, domains: ['primesrc.me'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
