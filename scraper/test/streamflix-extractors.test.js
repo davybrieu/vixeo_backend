@@ -28,6 +28,12 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vtbe.to/e/abc', 'vtube'],
     ['https://vtube.to/e/abc', 'vtube'],
     ['https://videoapp.zip/e/movie/123', 'videoapp'],
+    ['https://watch.gxplayer.xyz/e/abc', 'gxplayer'],
+    ['https://hexload.com/embed-abc.html', 'hexload'],
+    ['https://my.mail.ru/video/embed/123456', 'mailru'],
+    ['https://ok.ru/video/123456', 'okru'],
+    ['https://myfilestorage.xyz/movie.mp4', 'myfilestorage'],
+    ['https://moviesapi.club/movie/123', 'moviesapi'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
