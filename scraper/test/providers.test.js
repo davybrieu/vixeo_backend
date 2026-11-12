@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { normalizeTitle, matchesTitle } = require('../src/providers/title-matcher');
 
 const {
   extractFrenchStreamId,
@@ -104,4 +105,16 @@ test('Wiflix maps movie and episode servers and excludes ignored hosts', () => {
   }]);
   assert.equal(episodes.length, 1);
   assert.match(episodes[0].name, /Episode 2/);
+});
+
+
+test('Shared provider matcher rejects partial and unrelated movie titles', () => {
+  const requested = { title: 'L’Odyssée', originalTitle: 'The Odyssey', year: 2026 };
+  assert.equal(normalizeTitle('L’Odyssée (2026)'), 'odyssee');
+  assert.equal(matchesTitle('L’Odyssée (2026)', requested), true);
+  assert.equal(matchesTitle('The Odyssey (2026)', requested), true);
+  assert.equal(matchesTitle('L’Odyssée d’un roi (2026)', requested), false);
+  assert.equal(matchesTitle('Resident Evil (2021)', requested), false);
+  assert.equal(matchesTitle('Odyssée (1997)', requested), false);
+  assert.equal(matchesTitle('The Odysseys (2026)', requested), false);
 });
