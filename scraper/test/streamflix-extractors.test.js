@@ -90,6 +90,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://ups2up.fun/e/abc', 'ustr'],
     ['https://up4stream.com/e/abc', 'ustr'],
     ['https://video.sibnet.ru/shell.php?videoid=123', 'videosibnet'],
+    ['https://primesrc.me/api/v1/l?key=abc123', 'primesrc'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
