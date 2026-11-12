@@ -67,8 +67,9 @@ function decodeVidsrcSubtitles(raw, baseUrl) {
   if (!raw) return [];
   return raw.split(',').map(item => {
     const match = /^\[([^\]]+)\](.+)$/.exec(item.trim());
-    if (!match || !match[2].startsWith('/')) return null;
-    return { label: match[1].replace(/&amp;/g, '&'), url: new URL(match[2], baseUrl).href };
+    const subtitlePath = match?.[2]?.trim();
+    if (!match || !subtitlePath?.startsWith('/')) return null;
+    return { label: match[1].replace(/&amp;/g, '&'), url: new URL(subtitlePath, baseUrl).href };
   }).filter(Boolean);
 }
 
