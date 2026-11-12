@@ -100,12 +100,36 @@ class StreamSources
      */
     public function providers(): array
     {
-        $providers = config('services.scraper.providers', []);
+        $fallback = config('services.scraper.providers', []);
+        $base = $this->scraperBase();
 
-        return array_values(array_map(fn (array $p) => [
-            'id' => (string) $p['id'],
-            'name' => (string) $p['name'],
-        ], is_array($providers) ? $providers : []));
+        if ($base !== '') {
+            try {
+                $response = Http::baseUrl($base)
+                    ->acceptJson()
+                    ->timeout(3)
+                    ->get('providers');
+
+                $providers = $response->successful() ? $response->json('providers') : null;
+                if (is_array($providers)) {
+                    return array_values(array_filter(array_map(
+                        fn ($provider) => is_array($provider) && isset($provider['id'], $provider['name'])
+                            ? ['id' => (string) $provider['id'], 'name' => (string) $provider['name']]
+                            : null,
+                        $providers
+                    )));
+                }
+            } catch (\\Throwable $e) {
+                Log::warning('Unable to retrieve scraper providers; using configured fallback', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return array_values(array_map(fn (array $provider) => [
+            'id' => (string) $provider['id'],
+            'name' => (string) $provider['name'],
+        ], is_array($fallback) ? $fallback : []));
     }
 
     public function movie(int $tmdbId, bool $extract = false, ?string $provider = null): array
