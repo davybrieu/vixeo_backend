@@ -22,6 +22,7 @@ const { findNuuploadDirect, findNuuploadDelegated } = require('../src/extractors
 const { patchVixsrcManifest } = require('../src/extractors/vixsrc');
 const { decryptVidzeeLink } = require('../src/extractors/vidzee');
 const { decryptRabbitstreamSource, generateRabbitstreamKey, getRabbitstreamToken, extractMegacloudRealKey } = require('../src/extractors/rabbitstream');
+const { decryptMagaSavor } = require('../src/extractors/magasavor');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -113,6 +114,9 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://rabbitstream.net/embed-4/abc123', 'rabbitstream'],
     ['https://megacloud.blog/e/abc123', 'rabbitstream'],
     ['https://dokicloud.one/embed-4/abc123', 'rabbitstream'],
+    ['https://magasavor.net/e/abc123', 'magasavor'],
+    ['https://vidora.stream/e/abc123', 'vidora'],
+    ['https://videm.xyz/api.php?a=play&ref=abc&t=xyz', 'videm'],
     ['https://ap.nupload.me/e/abc123', 'nuupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
@@ -269,4 +273,12 @@ test('Rabbitstream decrypts its salted AES-CBC sources payload', () => {
 test('Megacloud key extraction removes indexed characters in order', () => {
   assert.deepEqual(extractMegacloudRealKey('0123456789abcdef', [[0, 2], [2, 2]]), { key: '0145', sources: '236789abcdef' });
   assert.equal(getRabbitstreamToken('var t={a:"abcdefghijk",b:"mnopqrstuvwx"};'), 'abcdefghijkmnopqrstuvwx');
+});
+
+test('MagaSavor reverses its ROT13/base64/character-shift encoding', () => {
+  const plain = JSON.stringify({ source: 'https://cdn.example/video.m3u8' });
+  const first = Buffer.from(plain).toString('base64');
+  const shifted = [...first].reverse().map(char => String.fromCharCode(char.charCodeAt(0) + 3)).join('');
+  const encoded = Buffer.from(shifted).toString('base64').replace(/[a-zA-Z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() <= 'm' ? 13 : -13)));
+  assert.deepEqual(decryptMagaSavor(encoded), { source: 'https://cdn.example/video.m3u8' });
 });
