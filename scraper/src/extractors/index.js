@@ -43,6 +43,8 @@ const { extractFsvid } = require('./fsvid');
 const { extractTurbovio } = require('./turbovio');
 const { extractVidplay } = require('./vidplay');
 const { extractVeev } = require('./veev');
+const { extractMoflix } = require('./moflix');
+const { extractMovieMaster } = require('./moviemaster');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -105,6 +107,8 @@ const extractors = [
   { name: 'turbovio', fn: extractTurbovio, domains: ['turboembed.com'] },
   { name: 'vidplay', fn: extractVidplay, domains: ['vidplay.site', 'mcloud.bz', 'vidplay.online'] },
   { name: 'veev', fn: extractVeev, domains: ['veev.to', 'kinoger.pw', 'poophq.com', 'doods.to', 'doods.com'] },
+  { name: 'moflix', fn: extractMoflix, domains: ['moflix-stream.xyz', 'moflix-stream.link'] },
+  { name: 'moviemaster', fn: extractMovieMaster, domains: ['api.moviemaster.lat'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
