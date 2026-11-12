@@ -1,65 +1,99 @@
-const BASE = 'https://frembed.casa';
+const DEFAULT_BASE_URL = 'https://frembed.casa/';
+
+function normalizeUrl(value, baseUrl) {
+  if (typeof value !== 'string' || !value.trim()) return '';
+  try {
+    const url = new URL(value, baseUrl);
+    return /^https?:$/.test(url.protocol) ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
+function languageLabel(value) {
+  const lang = String(value || '').toLowerCase();
+  if (lang === 'vf') return 'French';
+  if (lang === 'vostfr') return 'VOSTFR';
+  if (lang === 'vo') return 'VO';
+  return lang ? lang.toUpperCase() : 'Unknown';
+}
+
+function hostLabel(value, url) {
+  if (value?.host?.name) return value.host.name;
+  if (value?.label) return value.label;
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').split('.')[0];
+  } catch {
+    return 'Source';
+  }
+}
 
 async function searchFrembed({ type, tmdb_id, season, episode }) {
   if (!tmdb_id) return [];
 
-  const sources = [];
-  try {
-    let url;
-    if (type === 'movie') {
-      url = `${BASE}/api/films?id=${tmdb_id}&idType=tmdb`;
-    } else if (type === 'tv' && season && episode) {
-      url = `${BASE}/api/series?id=${tmdb_id}&sa=${season}&epi=${episode}&idType=tmdb`;
-    } else {
-      return [];
-    }
+  const endpoint = new URL(type === 'movie' ? 'api/films' : 'api/series', DEFAULT_BASE_URL);
+  endpoint.searchParams.set('id', String(tmdb_id));
+  endpoint.searchParams.set('idType', 'tmdb');
 
-    const res = await fetch(url, {
+  if (type === 'tv' && season != null && episode != null) {
+    endpoint.searchParams.set('sa', String(season));
+    endpoint.searchParams.set('epi', String(episode));
+  } else if (type !== 'movie') {
+    return [];
+  }
+
+  try {
+    const response = await fetch(endpoint, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
-        'Referer': BASE + '/',
+        'Referer': DEFAULT_BASE_URL,
       },
+      signal: AbortSignal.timeout(20000),
     });
 
-    if (!res.ok) return [];
-    const data = await res.json();
+    if (!response.ok) return [];
+    const data = await response.json();
+    const baseUrl = response.url ? new URL(response.url).origin + '/' : DEFAULT_BASE_URL;
+    const sources = [];
 
-    const add = (link, lang) => {
-      if (typeof link === 'string' && link.startsWith('http')) {
-        sources.push({
-          provider: 'frembed',
-          name: `Frembed (${lang})`,
-          url: link,
-        });
-      }
+    const add = (value, index, fallbackLang) => {
+      const rawUrl = typeof value === 'string' ? value : value?.url;
+      const url = normalizeUrl(rawUrl, baseUrl);
+      if (!url) return;
+
+      const lang = value?.lang || fallbackLang;
+      const name = hostLabel(value, url);
+      sources.push({
+        provider: 'frembed',
+        name: `${name} (${languageLabel(lang)})`,
+        url,
+      });
     };
 
-    // New format with links array
-    if (Array.isArray(data.links)) {
-      for (const l of data.links) {
-        if (l?.url) {
-          const lang = (l.lang || 'vf').toUpperCase();
-          add(l.url, lang);
-        }
-      }
+    if (Array.isArray(data.links) && data.links.length > 0) {
+      data.links.forEach((link, index) => add(link, index, 'vf'));
+    } else {
+      const legacyFields = [
+        ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}`, 'vf']),
+        ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}vostfr`, 'vostfr']),
+        ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}vo`, 'vo']),
+      ];
+      legacyFields.forEach(([key, lang], index) => {
+        if (data[key]) add(data[key], index, lang);
+      });
     }
 
-    // Legacy format
-    const langs = [
-      ['link1', 'VF'], ['link2', 'VF'], ['link3', 'VF'], ['link4', 'VF'], ['link5', 'VF'], ['link6', 'VF'], ['link7', 'VF'],
-      ['link1vostfr', 'VOSTFR'], ['link2vostfr', 'VOSTFR'], ['link3vostfr', 'VOSTFR'], ['link4vostfr', 'VOSTFR'],
-      ['link5vostfr', 'VOSTFR'], ['link6vostfr', 'VOSTFR'], ['link7vostfr', 'VOSTFR'],
-      ['link1vo', 'VO'], ['link2vo', 'VO'], ['link3vo', 'VO'], ['link4vo', 'VO'], ['link5vo', 'VO'], ['link6vo', 'VO'], ['link7vo', 'VO'],
-    ];
-    for (const [key, lang] of langs) {
-      add(data[key], lang);
-    }
-  } catch (e) {
-    console.error('Frembed error:', e.message);
+    const seen = new Set();
+    return sources.filter((source) => {
+      if (seen.has(source.url)) return false;
+      seen.add(source.url);
+      return true;
+    });
+  } catch (error) {
+    console.error('Frembed error:', error.message);
+    return [];
   }
-
-  return sources;
 }
 
 module.exports = { searchFrembed };
