@@ -18,7 +18,7 @@ async function extractVidPly(url) {
   const response = await getText(embedUrl, { Accept: 'text/html', 'User-Agent': USER_AGENT, Referer: parsed.origin });
   if (!response.ok) return null;
   const html = response.text;
-  const endpoint = /\$\.get\('(/pass_md5\/[^']*)'/i.exec(html)?.[1];
+  const endpoint = /\$\.get\('(\/pass_md5\/[^']*)'/i.exec(html)?.[1];
   const token = /return\s*[^?]+\?token=([^&]+)&expiry=/i.exec(html)?.[1];
   if (!endpoint || !token) return null;
   const pass = await getText(new URL(endpoint, 'https://vidply.com').href, { Referer: 'https://vidply.com/' });
