@@ -314,6 +314,41 @@ class StreamSources
         }
     }
 
+    /**
+     * Domains are owned by the Node extractor registry. Cache them so source filtering
+     * stays in sync with every newly ported extractor without duplicating its host list here.
+     *
+     * @return list<string>
+     */
+    private function supportedDomains(): array
+    {
+        return Cache::remember('scraper.supported_domains', 600, function (): array {
+            $base = $this->scraperBase();
+            if ($base === '') {
+                return [];
+            }
+
+            try {
+                $response = Http::baseUrl($base)
+                    ->acceptJson()
+                    ->timeout(3)
+                    ->get('extractors');
+
+                $domains = $response->successful() ? $response->json('supported_domains') : null;
+
+                return is_array($domains)
+                    ? array_values(array_filter($domains, fn ($domain) => is_string($domain) && $domain !== ''))
+                    : [];
+            } catch (\\Throwable $e) {
+                Log::warning('Unable to retrieve scraper extractor domains; using configured fallback', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                return [];
+            }
+        });
+    }
+
     private function hasExtractor(string $url): bool
     {
         $host = parse_url($url, PHP_URL_HOST);
@@ -322,7 +357,7 @@ class StreamSources
         }
         $host = strtolower(preg_replace('/^www\./', '', $host));
 
-        foreach (self::SUPPORTED_DOMAINS as $domain) {
+        foreach (array_unique([...self::SUPPORTED_DOMAINS, ...$this->supportedDomains()]) as $domain) {
             if ($host === $domain || str_ends_with($host, '.'.$domain)) {
                 return true;
             }
