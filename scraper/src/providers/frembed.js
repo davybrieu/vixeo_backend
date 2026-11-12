@@ -66,16 +66,15 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
     return [];
   }
 
-  try {
-    let response = await fetch(endpoint, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Referer': DEFAULT_BASE_URL,
-      },
-      signal: AbortSignal.timeout(20000),
-      redirect: 'manual',
-    });
+  let response = await fetch(endpoint, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Accept': 'application/json',
+      'Referer': DEFAULT_BASE_URL,
+    },
+    signal: AbortSignal.timeout(20000),
+    redirect: 'manual',
+  });
 
     // Frembed changes domains. The Android provider follows the API redirect,
     // stores the new origin, and retries the same endpoint there.
@@ -97,7 +96,9 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
       }
     }
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      throw new Error(`Frembed API returned HTTP ${response.status}`);
+    }
     const data = await response.json();
     const baseUrl = response.url ? new URL(response.url).origin + '/' : activeBaseUrl;
     const sources = [];
@@ -135,15 +136,11 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
     })));
 
     const seen = new Set();
-    return resolvedSources.filter((source) => {
-      if (seen.has(source.url)) return false;
-      seen.add(source.url);
-      return true;
-    });
-  } catch (error) {
-    console.error('Frembed error:', error.message);
-    return [];
-  }
+  return resolvedSources.filter((source) => {
+    if (seen.has(source.url)) return false;
+    seen.add(source.url);
+    return true;
+  });
 }
 
 module.exports = { searchFrembed, resolveFrembedLink };
