@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 
 const { findExtractor } = require('../src/extractors');
 const { buildDailymotionEndpoint } = require('../src/extractors/dailymotion');
+const { findJkPlayerSource } = require('../src/extractors/jkplayer');
+const { findPlusPomlaAjaxUrl, findPlusPomlaSource } = require('../src/extractors/pluspomla');
 const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
@@ -315,4 +317,16 @@ test('builds a deterministic Dailymotion API endpoint and rejects invalid IDs', 
   assert.equal(endpoint.searchParams.get('dmV1st'), 'visitor-token');
   assert.equal(endpoint.searchParams.get('dmTs'), '1762900000');
   assert.equal(buildDailymotionEndpoint('../invalid'), null);
+});
+
+test('JKPlayer decodes its base64 HLS URL and accepts a raw HLS fallback', () => {
+  const encoded = Buffer.from('https://cdn.example/master.m3u8').toString('base64');
+  assert.equal(findJkPlayerSource('<script>url: atob("' + encoded + '")</script>'), 'https://cdn.example/master.m3u8');
+  assert.equal(findJkPlayerSource('<script>loadSource("https://cdn.example/live.m3u8")</script>'), 'https://cdn.example/live.m3u8');
+});
+
+test('PlusPomla resolves protocol-relative AJAX URLs and JSON sources', () => {
+  assert.equal(findPlusPomlaAjaxUrl('<script>$.ajax({url: "//apu.animemovil2.com/api/video"})</script>'), 'https://apu.animemovil2.com/api/video');
+  assert.equal(findPlusPomlaSource(JSON.stringify({sources:[{file:'https://cdn.example/video.m3u8'}]})), 'https://cdn.example/video.m3u8');
+  assert.equal(findPlusPomlaSource('{broken'), null);
 });
