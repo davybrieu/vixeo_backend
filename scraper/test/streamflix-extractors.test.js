@@ -13,6 +13,7 @@ const { encryptTurbovio, decryptTurbovio, generateKey, generateIV } = require('.
 const { rc4, encodeVidplayId, decodeVidplayResult } = require('../src/extractors/vidplay');
 const { veevDecode, buildVeevArray, decodeVeevUrl } = require('../src/extractors/veev');
 const { decodeVidsrcNet, decodeVidsrcSubtitles } = require('../src/extractors/vidsrcnet');
+const { findUpzoneSource } = require('../src/extractors/upzone');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -79,6 +80,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vsembed.ru/embed/tv?tmdb=123', 'vidsrcnet'],
     ['https://vidlink.pro/movie/123', 'vidlink'],
     ['https://vidsrc.ru/movie/123', 'vidsrcru'],
+    ['https://upzone.cc/e/abc', 'upzone'],
+    ['https://upzone.to/e/abc', 'upzone'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -151,4 +154,8 @@ test('Vidsrc.net supports simple decoder variants and subtitle parsing', () => {
     { label: 'French', url: 'https://player.example/subs/fr.vtt' },
     { label: 'English', url: 'https://player.example/subs/en.vtt' },
   ]);
+});
+
+test('Upzone detects a direct HLS source in player markup', () => {
+  assert.equal(findUpzoneSource('<script>player = {file: "https://cdn.example/movie.m3u8"};</script>', 'https://upzone.cc/e/1'), 'https://cdn.example/movie.m3u8');
 });
