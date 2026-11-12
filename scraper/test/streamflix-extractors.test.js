@@ -18,6 +18,7 @@ const { decodeEncryptedEmbed } = require('../src/extractors/vidsrcto');
 const { encryptVidrockId } = require('../src/extractors/vidrock');
 const { decodeCloseloadArray } = require('../src/extractors/closeload');
 const { evpBytesToKey, decryptChillxPayload } = require('../src/extractors/chillx');
+const { findNuuploadDirect, findNuuploadDelegated } = require('../src/extractors/nupload');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -102,6 +103,9 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://closeload.top/e/abc123', 'closeload'],
     ['https://chillx.top/e/abc123', 'chillx'],
     ['https://player.jeansaispasplus.homes/e/abc123', 'chillx'],
+    ['https://nupload.top/e/abc123', 'nupload'],
+    ['https://nupupload.top/e/abc123', 'nupload'],
+    ['https://ap.nupload.me/e/abc123', 'nupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -216,4 +220,9 @@ test('Chillx decrypts OpenSSL-compatible AES-256-CBC payloads', () => {
   const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]).toString('base64');
   const payload = JSON.stringify({ ct: encrypted, iv: '0'.repeat(32), s: salt.toString('hex') });
   assert.equal(decryptChillxPayload(payload, password), plain);
+});
+
+test('Nuupload finds direct and delegated playable URLs', () => {
+  assert.equal(findNuuploadDirect('<script>jwplayer("x").setup({file:"https://cdn.example/video.m3u8"});</script>', 'https://nupload.top/watch/1'), 'https://cdn.example/video.m3u8');
+  assert.equal(findNuuploadDelegated('<iframe src="https://vidplay.site/e/abc"></iframe>', 'https://nupload.top/watch/1'), 'https://vidplay.site/e/abc');
 });
