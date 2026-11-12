@@ -67,6 +67,9 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vidplay.site/e/abc123', 'vidplay'],
     ['https://mcloud.bz/e/abc123', 'vidplay'],
     ['https://vidplay.online/e/abc123', 'vidplay'],
+    ['https://veev.to/e/abc123', 'veev'],
+    ['https://kinoger.pw/d/abc123', 'veev'],
+    ['https://poophq.com/e/abc123', 'veev'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -124,4 +127,10 @@ test('Vidplay RC4 encoder and decoder preserve the identifier and payload', () =
   assert.equal(decoded, id);
   const payload = encodeVidplayId(key, '{"sources":[{"file":"https://cdn.example/video.m3u8"}]}');
   assert.equal(decodeVidplayResult(key, payload), '{"sources":[{"file":"https://cdn.example/video.m3u8"}]}');
+});
+
+test('Veev decoding helpers preserve plain characters and decode operation arrays', () => {
+  assert.equal(veevDecode('AB'), 'AB');
+  assert.deepEqual(buildVeevArray('2120'), [[2, 1]]);
+  assert.equal(decodeVeevUrl('68747470733a2f2f63646e2e6578616d706c652f766964656f2e6d337538', [0]), 'https://cdn.example/video.m3u8');
 });
