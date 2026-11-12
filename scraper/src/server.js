@@ -16,12 +16,59 @@ const PROVIDERS = [
   { id: '1jour1film', name: '1Jour1Film', run: searchUnJourUnFilm },
 ];
 
+function searchContext(payload) {
+  return {
+    type: payload.type,
+    title: payload.title,
+    originalTitle: payload.originalTitle,
+    year: payload.year,
+    ...(payload.type === 'tv' ? { season: payload.season, episode: payload.episode } : {}),
+    tmdbId: payload.tmdb_id,
+  };
+}
+
+function logProviderEvent(level, event, provider, payload, details = {}) {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    event,
+    provider: provider.id,
+    providerName: provider.name,
+    search: searchContext(payload),
+    ...details,
+  };
+  const output = JSON.stringify(entry);
+  if (level === 'error') console.error(output);
+  else if (level === 'warn') console.warn(output);
+  else console.log(output);
+}
+
 async function runProvider(provider, payload) {
+  const startedAt = Date.now();
+  logProviderEvent('info', 'PROVIDER_SEARCH_STARTED', provider, payload);
+
   try {
     const sources = await provider.run(payload);
+    const durationMs = Date.now() - startedAt;
+
+    if (sources.length === 0) {
+      logProviderEvent('warn', 'PROVIDER_NO_SOURCE_FOUND', provider, payload, {
+        durationMs,
+        reason: 'Provider completed successfully but returned no source. The title, year, season or episode may not exist on this provider, or its page structure may have changed.',
+      });
+    } else {
+      logProviderEvent('info', 'PROVIDER_SOURCES_FOUND', provider, payload, {
+        durationMs,
+        sourceCount: sources.length,
+      });
+    }
+
     return { id: provider.id, name: provider.name, status: 'ok', count: sources.length, sources };
   } catch (e) {
-    console.error(`${provider.name}:`, e.message);
+    logProviderEvent('error', 'PROVIDER_SEARCH_FAILED', provider, payload, {
+      durationMs: Date.now() - startedAt,
+      error: e.message,
+      stack: e.stack,
+    });
     return { id: provider.id, name: provider.name, status: 'error', error: e.message, count: 0, sources: [] };
   }
 }
