@@ -31,7 +31,7 @@ async function extractMStreamDay(url) {
   return withBrowserPage(async page => {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForFunction(() => typeof window.svg?.stream === 'string' && window.svg.stream.length > 0, { timeout: 15000 });
+      await page.waitForFunction(() => typeof window.svg?.stream === 'string' && window.svg.stream.length > 0, undefined, { timeout: 15000 });
       const encodedSource = await page.evaluate(() => window.svg.stream);
       const source = decodeMStreamDaySignature(encodedSource);
       return source && /^https?:\/\//i.test(source)
