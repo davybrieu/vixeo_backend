@@ -133,6 +133,31 @@ it('keeps only the links an extractor can resolve', function () {
         ->assertJsonPath('data.0.url', 'https://voe.sx/e/known');
 });
 
+
+it('accepts links handled by newly registered scraper extractors', function () {
+    \\Illuminate\\Support\\Facades\\Cache::forget('scraper.supported_domains');
+
+    Http::fake([
+        'scraper.test/extractors' => Http::response([
+            'supported_domains' => ['fastream.to'],
+        ]),
+        'api.themoviedb.org/3/movie/550*' => Http::response(Tmdb::movie()),
+        'scraper.test/sources' => Http::response([
+            'sources' => [[
+                'provider' => 'frenchstream',
+                'name' => 'Fastream',
+                'url' => 'https://fastream.to/e/abc',
+            ]],
+        ]),
+    ]);
+
+    $this->getJson('/api/v1/catalog/movie/550/sources')
+        ->assertOk()
+        ->assertJsonPath('data.0.url', 'https://fastream.to/e/abc');
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/extractors'));
+});
+
 it('resolves a player link into a playable stream', function () {
     Http::fake([
         'scraper.test/extract' => Http::response([
