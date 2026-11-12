@@ -3,6 +3,7 @@ const { searchFrenchStream } = require('./providers/frenchstream');
 const { searchWiflix } = require('./providers/wiflix');
 const { searchFrembed } = require('./providers/frembed');
 const { searchUnJourUnFilm } = require('./providers/1jour1film');
+const { searchKidraz } = require('./providers/kidraz');
 const { extract } = require('./extractors');
 
 const PORT = process.env.SCRAPER_PORT || 3100;
@@ -14,6 +15,7 @@ const PROVIDERS = [
   { id: 'wiflix', name: 'Wiflix', run: searchWiflix },
   { id: 'frembed', name: 'Frembed', run: searchFrembed },
   { id: '1jour1film', name: '1Jour1Film', run: searchUnJourUnFilm },
+  { id: 'kidraz', name: 'Kidraz', run: searchKidraz },
 ];
 
 async function runProvider(provider, payload) {
