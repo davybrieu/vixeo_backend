@@ -2,10 +2,13 @@ const { searchFrenchStream } = require('./frenchstream');
 const { searchFrembed } = require('./frembed');
 const { searchUnJourUnFilm } = require('./1jour1film');
 
+const MAZQUEST_BASE_URL = 'https://embed.maz.quest';
+
 const SOURCE_PROVIDERS = [
   { id: '1jour1film', run: searchUnJourUnFilm },
   { id: 'frenchstream', run: searchFrenchStream },
   { id: 'frembed', run: searchFrembed },
+  { id: 'mazquest', run: searchMazQuest },
 ];
 
 function positiveInteger(value) {
@@ -17,6 +20,42 @@ function positiveInteger(value) {
  * The fallback servers are the same TMDB-ID based servers created by
  * Onyx's TmdbProvider when Frembed returns no links.
  */
+function buildMazQuestEpisodeUrl(payload = {}) {
+  const tmdbId = String(payload.tmdb_id ?? '').trim();
+  const season = positiveInteger(payload.season);
+  const episode = positiveInteger(payload.episode);
+  const isNumericId = tmdbId.length > 0 && [...tmdbId].every((char) => char >= '0' && char <= '9');
+
+  if (payload.type !== 'tv' || !isNumericId || !season || !episode) return null;
+
+  return `${MAZQUEST_BASE_URL}/tv/api/${tmdbId}/${String(season).padStart(2, '0')}/${String(episode).padStart(2, '0')}`;
+}
+
+async function searchMazQuest(payload = {}, fetchImpl = fetch) {
+  const url = buildMazQuestEpisodeUrl(payload);
+  if (!url) return [];
+
+  const response = await fetchImpl(url, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(12000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`MazQuest API returned HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (data?.error === true || !Array.isArray(data?.links) || data.links.length === 0) {
+    return [];
+  }
+
+  return [{
+    provider: 'mazquest',
+    name: 'Yandex VF (Maz)',
+    url,
+  }];
+}
+
 function buildFallbackSources(payload = {}) {
   const tmdbId = String(payload.tmdb_id ?? '').trim();
   if (!/^\d+$/.test(tmdbId)) return [];
@@ -196,5 +235,7 @@ async function searchOnyxTmdbFr(payload, requestId, sourceProviders = SOURCE_PRO
 module.exports = {
   searchOnyxTmdbFr,
   buildFallbackSources,
+  buildMazQuestEpisodeUrl,
+  searchMazQuest,
   normalizeAndSortSources,
 };

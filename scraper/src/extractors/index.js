@@ -51,6 +51,8 @@ const { extractMovieMaster } = require('./moviemaster');
 const { extractVidsrcNet } = require('./vidsrcnet');
 const { extractVidLink } = require('./vidlink');
 const { extractVidsrcRu } = require('./vidsrcru');
+const { extractMazQuest } = require('./mazquest');
+const { extractYandexDisk } = require('./yandexdisk');
 const { extractUpzone } = require('./upzone');
 const { extractVidsrcTo } = require('./vidsrcto');
 const { extractGoogleDrive } = require('./googledrive');
@@ -143,6 +145,8 @@ const extractors = [
   { name: 'vidsrcnet', fn: extractVidsrcNet, domains: ['vidsrc-embed.ru', 'vsembed.ru'] },
   { name: 'vidlink', fn: extractVidLink, domains: ['vidlink.pro'] },
   { name: 'vidsrcru', fn: extractVidsrcRu, domains: ['vidsrc.ru'] },
+  { name: 'mazquest', fn: extractMazQuest, domains: ['embed.maz.quest'] },
+  { name: 'yandexdisk', fn: extractYandexDisk, domains: ['yadi.sk', 'disk.yandex.ru', 'disk.yandex.com'] },
   { name: 'upzone', fn: extractUpzone, domains: ['upzone.cc', 'upzone.to', 'upzone.net', 'upzone.link'] },
   { name: 'vidsrcto', fn: extractVidsrcTo, domains: ['vidsrc.to'] },
   { name: 'googledrive', fn: extractGoogleDrive, domains: ['drive.google.com'] },
