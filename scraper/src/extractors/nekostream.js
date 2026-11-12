@@ -69,7 +69,7 @@ function rewritePlaylist(body, base, token, cryptoData) {
   return body.split(/\r?\n/).map(line => {
     if (!line.trim()) return line;
     if (line.trim().startsWith('#')) {
-      return line.replace(/URI="([^"]+)"/g, (_m, raw) => 'URI="' + playlistUrl(token, new URL(raw, base).href) + '"');
+      return line.replace(/URI="([^"]+)"/g, (_m, raw) => 'URI="' + playlistUrl(token, decryptSegmentUrl(new URL(raw, base).href, cryptoData)) + '"');
     }
     return playlistUrl(token, decryptSegmentUrl(new URL(line.trim(), base).href, cryptoData));
   }).join('\n');
