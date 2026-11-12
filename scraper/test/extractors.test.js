@@ -32,3 +32,10 @@ test('supported domains are exported as non-empty host names', () => {
   assert.ok(supportedDomains.length > 0);
   assert.ok(supportedDomains.every((domain) => typeof domain === 'string' && domain.length > 0));
 });
+
+\ntest('Streamflix Goodstream and VidMoLy extractors are registered', () => {
+  assert.equal(findExtractor('https://goodstream.one/e/example')?.name, 'goodstream');
+  assert.equal(findExtractor('https://vidmoly.me/embed/example')?.name, 'vidmoly');
+  assert.equal(findExtractor('https://vidmoly.org/embed/example')?.name, 'vidmoly');
+  assert.equal(findExtractor('https://vidmoly.to/embed/example')?.name, 'vidmoly');
+});
