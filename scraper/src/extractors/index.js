@@ -107,7 +107,7 @@ const extractors = [
   { name: 'turbovio', fn: extractTurbovio, domains: ['turboembed.com'] },
   { name: 'vidplay', fn: extractVidplay, domains: ['vidplay.site', 'mcloud.bz', 'vidplay.online'] },
   { name: 'veev', fn: extractVeev, domains: ['veev.to', 'kinoger.pw', 'poophq.com', 'doods.to', 'doods.com'] },
-  { name: 'moflix', fn: extractMoflix, domains: ['moflix-stream.xyz', 'moflix-stream.link'] },
+  { name: 'moflix', fn: extractMoflix, domains: ['moflix-stream.xyz'] },
   { name: 'moviemaster', fn: extractMovieMaster, domains: ['api.moviemaster.lat'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
@@ -145,7 +145,7 @@ const extractors = [
     fn: extractFilemoon,
     domains: [
       'filemoon.org', 'filemoon.sx', 'filemoon.to', 'filemoon.in', 'filemoon.nl',
-      'bysejikuar.com', '1day1movie.website', 'moflix-stream.link', 'bysezoxexe.com',
+      'bysejikuar.com', '1day1movie.website', 'bysezoxexe.com',
       'bysebuho.com', 'bysezejataos.com', 'bysekoze.com', 'bysesayeveum.com', 'lukefirst.lol',
       'weneverbeenfree.com', 'gn1r5n.org', 'mfw09.org', 'kaydendown.lol',
     ],
