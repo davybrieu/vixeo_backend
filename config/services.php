@@ -97,10 +97,12 @@ return [
 
         // Providers the app shows in the sources panel, in display order. Each is queried
         // on its own so the panel can report a per-provider state (loading, failed, links).
+        // Aligned with Onyx TMDB FR: Coflix + Aplouf (Cloudstream), no Wiflix.
         'providers' => [
             ['id' => 'tmdb-fr', 'name' => 'TMDB Français (Onyx)'],
+            ['id' => 'coflix', 'name' => 'Coflix'],
+            ['id' => 'aplouf', 'name' => 'Aplouf'],
             ['id' => 'frenchstream', 'name' => 'FrenchStream'],
-            ['id' => 'wiflix', 'name' => 'Wiflix'],
             ['id' => 'frembed', 'name' => 'Frembed'],
             ['id' => '1jour1film', 'name' => '1Jour1Film'],
         ],

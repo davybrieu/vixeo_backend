@@ -1,13 +1,21 @@
 const { searchFrenchStream } = require('./frenchstream');
 const { searchFrembed } = require('./frembed');
 const { searchUnJourUnFilm } = require('./1jour1film');
+const { searchCoflix } = require('./coflix');
+const { searchAplouf } = require('./aplouf');
 
 const MAZQUEST_BASE_URL = 'https://embed.maz.quest';
 
+/**
+ * Source providers used by Onyx TmdbProvider.getServers (language fr):
+ * Coflix, FrenchStream, 1Jour1Film, Frembed, Aplouf (+ Cloudstream backup inside Aplouf).
+ */
 const SOURCE_PROVIDERS = [
-  { id: '1jour1film', run: searchUnJourUnFilm },
+  { id: 'coflix', run: searchCoflix },
   { id: 'frenchstream', run: searchFrenchStream },
+  { id: '1jour1film', run: searchUnJourUnFilm },
   { id: 'frembed', run: searchFrembed },
+  { id: 'aplouf', run: searchAplouf },
   { id: 'mazquest', run: searchMazQuest },
 ];
 
@@ -152,10 +160,9 @@ function logSourceProvider(event, provider, payload, requestId, details = {}) {
 
 /**
  * Reproduces the TMDb (fr) source-selection flow from Onyx:
- * run its French catalogue providers in parallel, query Frembed with the
- * selected TMDB ID, and add Onyx's TMDB-ID fallback servers when Frembed
- * has no result. The normal Vixeo extractor registry resolves the returned
- * player URLs afterwards.
+ * run its French catalogue providers in parallel (Coflix, FrenchStream,
+ * 1Jour1Film, Frembed, Aplouf), query Frembed with the selected TMDB ID,
+ * and add Onyx's TMDB-ID fallback servers when Frembed has no result.
  */
 async function searchOnyxTmdbFr(payload, requestId, sourceProviders = SOURCE_PROVIDERS) {
   const outcomes = await Promise.all(sourceProviders.map(async (provider) => {
