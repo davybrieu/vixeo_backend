@@ -77,65 +77,66 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
   });
 
     // Frembed changes domains. The Android provider follows the API redirect,
-    // stores the new origin, and retries the same endpoint there.
-    if ([301, 302, 303, 307, 308].includes(response.status)) {
-      const location = response.headers.get('location');
-      if (location) {
-        const redirected = new URL(location, endpoint);
-        activeBaseUrl = `${redirected.protocol}//${redirected.host}/`;
-        const retryUrl = new URL(endpoint.pathname + endpoint.search, activeBaseUrl);
-        response = await fetch(retryUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json',
-            'Referer': activeBaseUrl,
-          },
-          signal: AbortSignal.timeout(20000),
-          redirect: 'manual',
-        });
-      }
-    }
-
-    if (!response.ok) {
-      throw new Error(`Frembed API returned HTTP ${response.status}`);
-    }
-    const data = await response.json();
-    const baseUrl = response.url ? new URL(response.url).origin + '/' : activeBaseUrl;
-    const sources = [];
-
-    const add = (value, index, fallbackLang) => {
-      const rawUrl = typeof value === 'string' ? value : value?.url;
-      const url = normalizeUrl(rawUrl, baseUrl);
-      if (!url) return;
-
-      const lang = value?.lang || fallbackLang;
-      const name = hostLabel(value, url);
-      sources.push({
-        provider: 'frembed',
-        name: `${name} (${languageLabel(lang)})`,
-        url,
-      });
-    };
-
-    if (Array.isArray(data.links) && data.links.length > 0) {
-      data.links.forEach((link, index) => add(link, index, 'vf'));
-    } else {
-      const legacyFields = [
-        ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}`, 'vf']),
-        ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}vostfr`, 'vostfr']),
-        ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}vo`, 'vo']),
-      ];
-      legacyFields.forEach(([key, lang], index) => {
-        if (data[key]) add(data[key], index, lang);
+  // stores the new origin, and retries the same endpoint there.
+  if ([301, 302, 303, 307, 308].includes(response.status)) {
+    const location = response.headers.get('location');
+    if (location) {
+      const redirected = new URL(location, endpoint);
+      activeBaseUrl = `${redirected.protocol}//${redirected.host}/`;
+      const retryUrl = new URL(endpoint.pathname + endpoint.search, activeBaseUrl);
+      response = await fetch(retryUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+          'Referer': activeBaseUrl,
+        },
+        signal: AbortSignal.timeout(20000),
+        redirect: 'manual',
       });
     }
+  }
 
-    const resolvedSources = await Promise.all(sources.map(async (source) => ({
-      ...source,
-      url: await resolveFrembedLink(source.url),
-    })));
+  if (!response.ok) {
+    throw new Error(`Frembed API returned HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  const baseUrl = response.url ? new URL(response.url).origin + '/' : activeBaseUrl;
+  const sources = [];
 
-    const seen = new Set();
+  const add = (value, index, fallbackLang) => {
+    const rawUrl = typeof value === 'string' ? value : value?.url;
+    const url = normalizeUrl(rawUrl, baseUrl);
+    if (!url) return;
+
+    const lang = value?.lang || fallbackLang;
+    const name = hostLabel(value, url);
+    sources.push({
+      provider: 'frembed',
+      name: `${name} (${languageLabel(lang)})`,
+      url,
+    });
+  };
+
+  if (Array.isArray(data.links) && data.links.length > 0) {
+    data.links.forEach((link, index) => add(link, index, 'vf'));
+  } else {
+    const legacyFields = [
+      ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}`, 'vf']),
+      ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}vostfr`, 'vostfr']),
+      ...Array.from({ length: 7 }, (_, i) => [`link${i + 1}vo`, 'vo']),
+    ];
+    legacyFields.forEach(([key, lang], index) => {
+      if (data[key]) add(data[key], index, lang);
+    });
+  }
+
+  const resolvedSources = await Promise.all(sources.map(async (source) => ({
+    ...source,
+    url: await resolveFrembedLink(source.url),
+  })));
+
+  const seen = new Set();
+
   return resolvedSources.filter((source) => {
     if (seen.has(source.url)) return false;
     seen.add(source.url);
