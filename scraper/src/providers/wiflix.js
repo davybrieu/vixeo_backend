@@ -133,7 +133,7 @@ async function searchWiflix({ type, title, originalTitle, year, episode }) {
               sources.push(...parseMovieServers(anchors));
             } else {
               const episodes = await detailPage.locator('div.blocvostfr ul.eplist li, div.blocfr ul.eplist li').evaluateAll((items, requestedEpisode) =>
-                items.filter(li => !requestedEpisode || Number((li.textContent || '').match(/Episode\\s+(\\d+)/i)?.[1]) === Number(requestedEpisode))
+                items.filter(li => !requestedEpisode || Number((li.textContent || '').match(/Episode\s+(\d+)/i)?.[1]) === Number(requestedEpisode))
                   .map(li => {
                     const rel = li.getAttribute('rel') || '';
                     const container = rel ? document.querySelector('div.' + CSS.escape(rel)) : null;
