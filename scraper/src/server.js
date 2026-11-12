@@ -74,6 +74,14 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET') {
     const requestUrl = new URL(req.url, 'http://127.0.0.1');
   }
+  if (req.method === 'GET' && req.url === '/providers') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      providers: PROVIDERS.map(({ id, name }) => ({ id, name })),
+    }));
+    return;
+  }
+
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true }));
