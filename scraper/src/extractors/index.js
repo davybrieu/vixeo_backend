@@ -40,6 +40,7 @@ const { extractDailymotion } = require('./dailymotion');
 const { extractAmazonDrive } = require('./amazondrive');
 const { extractVidGuard } = require('./vidguard');
 const { extractFsvid } = require('./fsvid');
+const { extractTurbovio } = require('./turbovio');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -99,6 +100,7 @@ const extractors = [
   { name: 'amazondrive', fn: extractAmazonDrive, domains: ['amazon.com'] },
   { name: 'vidguard', fn: extractVidGuard, domains: ['vidguard.to', 'vembed.net', 'bembed.cc', 'vgfplay.com', 'listeamed.net'] },
   { name: 'fsvid', fn: extractFsvid, domains: ['fsvid.lol'] },
+  { name: 'turbovio', fn: extractTurbovio, domains: ['turboembed.com'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
