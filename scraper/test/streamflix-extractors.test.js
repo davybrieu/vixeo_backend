@@ -20,6 +20,7 @@ const { decodeCloseloadArray } = require('../src/extractors/closeload');
 const { evpBytesToKey, decryptChillxPayload } = require('../src/extractors/chillx');
 const { findNuuploadDirect, findNuuploadDelegated } = require('../src/extractors/nupload');
 const { patchVixsrcManifest } = require('../src/extractors/vixsrc');
+const { decryptVidzeeLink } = require('../src/extractors/vidzee');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -107,6 +108,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://nupload.top/e/abc123', 'nuupload'],
     ['https://nupupload.top/e/abc123', 'nuupload'],
     ['https://vixsrc.to/api/movie/123', 'vixsrc'],
+    ['https://player.vidzee.wtf/api/server?id=123&sr=0', 'vidzee'],
     ['https://ap.nupload.me/e/abc123', 'nupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
@@ -235,4 +237,15 @@ test('VixSrc patches relative HLS segments and selects the requested audio langu
   assert.match(output, /NAME="French".*DEFAULT=YES.*AUTOSELECT=YES.*URI="https:\/\/cdn\.example\/audio\/fr\.m3u8"/);
   assert.match(output, /NAME="English".*DEFAULT=NO.*AUTOSELECT=NO/);
   assert.match(output, /https:\/\/cdn\.example\/video\.m3u8/);
+});
+
+test('Vidzee decrypts legacy AES-CBC stream links', () => {
+  const crypto = require('node:crypto');
+  const masterKey = '0123456789abcdef0123456789abcdef';
+  const iv = Buffer.from('00112233445566778899aabbccddeeff', 'hex');
+  const plain = 'https://cdn.example/video.m3u8';
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(masterKey), iv);
+  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  const raw = iv.toString('base64') + ':' + encrypted.toString('base64');
+  assert.equal(decryptVidzeeLink(Buffer.from(raw).toString('base64'), masterKey), plain);
 });
