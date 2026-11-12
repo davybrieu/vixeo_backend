@@ -355,6 +355,6 @@ test('Nekostream decrypts AES-256-CBC source JSON and rejects unsafe relay URLs'
 test('Nekostream rewrites HLS child playlists, segments and URI attributes through its relay', () => {
   const playlist = '#EXTM3U\\n#EXT-X-KEY:METHOD=AES-128,URI="key.bin"\\nsegment.ts\\nchild/index.m3u8';
   const output = rewritePlaylist(playlist, 'https://cdn.example/root/master.m3u8', 'a'.repeat(48));
-  assert.match(output, /\\/nekostream\\/relay\\/a{48}\\/media\\?url=/);
-  assert.match(output, /\\/nekostream\\/relay\\/a{48}\\/playlist\\?url=/);
+  assert.ok(output.includes('/nekostream/relay/' + 'a'.repeat(48) + '/media?url='));
+  assert.ok(output.includes('/nekostream/relay/' + 'a'.repeat(48) + '/playlist?url='));
 });
