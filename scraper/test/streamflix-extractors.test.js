@@ -72,6 +72,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://veev.to/e/abc123', 'veev'],
     ['https://kinoger.pw/d/abc123', 'veev'],
     ['https://poophq.com/e/abc123', 'veev'],
+    ['https://moflix-stream.xyz/api/v1/videos/123/playback', 'moflix'],
+    ['https://api.moviemaster.lat/video?tmdb=123&embed=abc', 'moviemaster'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
