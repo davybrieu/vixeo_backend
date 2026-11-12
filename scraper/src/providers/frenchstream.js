@@ -37,7 +37,7 @@ function extractFrenchStreamId(onclick = '') {
  * ignored, but additional title words are never treated as a match.
  */
 function isFrenchStreamSeries(title = '') {
-  return /(?:^|\\s)(?:-|–)?\\s*(?:saison|season)\\s*\\d+\\b/i.test(String(title));
+  return /(?:^|\s)(?:-|–)?\s*(?:saison|season)\s*\d+\b/i.test(String(title));
 }
 
 function normalizeSearchTitle(value = '') {
