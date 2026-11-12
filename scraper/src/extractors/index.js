@@ -4,6 +4,7 @@ const { extractVoe } = require('./voe');
 const { extractJkPlayer } = require('./jkplayer');
 const { extractPlusPomla } = require('./pluspomla');
 const { extractMStreamDay } = require('./mstreamday');
+const { extractNekostream } = require('./nekostream');
 const { extractGoodstream } = require('./goodstream');
 const { extractBigWarp } = require('./bigwarp');
 const { extractDropload } = require('./dropload');
@@ -93,6 +94,7 @@ const { extractSendvid } = require('./sendvid');
 const { extractGeneric } = require('./generic');
 
 const extractors = [
+  { name: 'nekostream', fn: extractNekostream, domains: ['vidtube.site', 'megaplay.buzz', 'vidwish.live'] },
   { name: 'mstreamday', fn: extractMStreamDay, domains: ['moflix-stream.day'] },
   { name: 'jkplayer', fn: extractJkPlayer, domains: ['jkanime.net'] },
   { name: 'pluspomla', fn: extractPlusPomla, domains: ['apu.animemovil2.com'] },
