@@ -29,6 +29,29 @@ function hostLabel(value, url) {
   }
 }
 
+async function resolveFrembedLink(url) {
+  try {
+    const parsed = new URL(url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': parsed.origin + '/',
+      },
+      signal: AbortSignal.timeout(12000),
+      redirect: 'manual',
+    });
+
+    const location = response.headers.get('location');
+    if ([301, 302, 303, 307, 308].includes(response.status) && location) {
+      return normalizeUrl(location, url) || url;
+    }
+  } catch {
+    // Keep the original player URL when a host blocks redirect probing.
+  }
+  return url;
+}
+
 async function searchFrembed({ type, tmdb_id, season, episode }) {
   if (!tmdb_id) return [];
 
@@ -106,8 +129,13 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
       });
     }
 
+    const resolvedSources = await Promise.all(sources.map(async (source) => ({
+      ...source,
+      url: await resolveFrembedLink(source.url),
+    })));
+
     const seen = new Set();
-    return sources.filter((source) => {
+    return resolvedSources.filter((source) => {
       if (seen.has(source.url)) return false;
       seen.add(source.url);
       return true;
@@ -118,4 +146,4 @@ async function searchFrembed({ type, tmdb_id, season, episode }) {
   }
 }
 
-module.exports = { searchFrembed };
+module.exports = { searchFrembed, resolveFrembedLink };
