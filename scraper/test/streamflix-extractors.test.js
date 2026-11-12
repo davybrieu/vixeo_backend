@@ -95,6 +95,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://api.vidlove.cc/api/v1/source?id=123', 'vidlove'],
     ['https://maxstream.video/e/abc123', 'maxstream'],
     ['https://vidrock.net/api/movie/encoded#Nflix', 'vidrock'],
+    ['https://firestream.to/e/abc123', 'firestream'],
+    ['https://firestream.site/e/abc123', 'firestream'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
