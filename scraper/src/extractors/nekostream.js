@@ -59,7 +59,8 @@ function playlistUrl(token, url) {
 }
 
 function decryptSegmentUrl(value, cryptoData) {
-  const token = /\\/segment\\/([A-Za-z0-9_-]+)/.exec(value)?.[1];
+  const token = value.split('/segment/')[1]?.split(/[/?#]/)[0];
+  if (token && !/^[A-Za-z0-9_-]+$/.test(token)) return value;
   if (!token) return value;
   const decoded = decodeAes(token, cryptoData);
   return decoded && /^https?:\\/\\//i.test(decoded) ? decoded : value;
