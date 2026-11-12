@@ -207,7 +207,7 @@ test('Closeload unmix decoder reconstructs an HLS URL', () => {
     acc = (acc + 9) % 256;
     acc = (acc + byte) % 256;
   }
-  assert.equal(decodeCloseloadArray([encoded.toString('base64')], [], 2, 9), plain);
+  assert.equal(decodeCloseloadArray([encoded.toString('base64')], [{ type: 'atob' }], 2, 9), plain);
 });
 
 test('Chillx decrypts OpenSSL-compatible AES-256-CBC payloads', () => {
