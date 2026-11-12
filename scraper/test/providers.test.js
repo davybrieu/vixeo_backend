@@ -1,0 +1,81 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const {
+  extractFrenchStreamId,
+  normalizePlayerEntries,
+  normalizeEpisodeEntries,
+} = require('../src/providers/frenchstream');
+const {
+  normalizeBaseUrl,
+  extractLoadVideoUrl,
+  parseWiflixResults,
+  parseMovieServers,
+  parseEpisodeServers,
+} = require('../src/providers/wiflix');
+
+test('FrenchStream extracts the identifier from the Kotlin onclick format', () => {
+  assert.equal(extractFrenchStreamId("open('/newsid=12345')"), 'newsid=12345');
+  assert.equal(extractFrenchStreamId(''), '');
+});
+
+test('FrenchStream maps movie players, language labels and default links without duplicates', () => {
+  const sources = normalizePlayerEntries({
+    voe: { vff: 'https://voe.example/a', vostfr: 'https://voe.example/a', default: 'https://voe.example/b' },
+    'Dood.Stream': { vfq: 'https://dood.example/bigwar5/skip' },
+    broken: { vo: 'not-a-url' },
+  });
+  assert.deepEqual(sources.map(source => source.url), [
+    'https://voe.example/a',
+    'https://voe.example/b',
+  ]);
+  assert.equal(sources[0].name, 'Voe (TrueFrench)');
+  assert.equal(sources[1].name, 'Voe');
+});
+
+test('FrenchStream maps requested episode sources and all episodes when no number is provided', () => {
+  const data = {
+    vf: { '1': { voe: 'https://voe.example/1' }, '2': { voe: 'https://voe.example/2' } },
+    vostfr: { '2': { filemoon: 'https://filemoon.example/2' } },
+  };
+  assert.deepEqual(
+    normalizeEpisodeEntries(data, 2).map(source => source.url),
+    ['https://voe.example/2', 'https://filemoon.example/2'],
+  );
+  assert.equal(normalizeEpisodeEntries(data).length, 3);
+});
+
+test('Wiflix normalizes its active domain and extracts loadVideo URLs', () => {
+  assert.equal(normalizeBaseUrl('https://example.test/path'), 'https://example.test/path/');
+  assert.equal(normalizeBaseUrl('javascript:alert(1)'), null);
+  assert.equal(extractLoadVideoUrl("loadVideo('https://player.example/embed/1')"), 'https://player.example/embed/1');
+});
+
+test('Wiflix classifies only Kotlin-supported movie and series result paths', () => {
+  const results = parseWiflixResults([
+    { href: '/film-en-streaming/movie-one/', title: 'Movie' },
+    { href: '/serie-en-streaming/show-one/', title: 'Show' },
+    { href: '/other/unrelated/', title: 'Other' },
+  ], 'https://flemmix.team/');
+  assert.deepEqual(results.map(result => result.type), ['movie', 'tv']);
+  assert.equal(results[0].id, 'movie-one');
+});
+
+test('Wiflix maps movie and episode servers and excludes ignored hosts', () => {
+  const movies = parseMovieServers([
+    { name: 'VOE', onclick: "loadVideo('https://voe.example/embed/1')" },
+    { name: 'Netu', onclick: "loadVideo('https://netu.example/embed/1')" },
+  ]);
+  assert.equal(movies.length, 1);
+  assert.equal(movies[0].url, 'https://voe.example/embed/1');
+
+  const episodes = parseEpisodeServers([{
+    label: 'Episode 2',
+    anchors: [
+      { name: 'Vudeo', onclick: "loadVideo('https://vudeo.example/1')" },
+      { name: 'VOE', onclick: "loadVideo('https://voe.example/2')" },
+    ],
+  }]);
+  assert.equal(episodes.length, 1);
+  assert.match(episodes[0].name, /Episode 2/);
+});
