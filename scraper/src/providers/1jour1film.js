@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { matchesTitle } = require('./title-matcher');
 
 const PORTAL_URL = 'https://1jour1film-officiel.site/';
 const DEFAULT_BASE_URL = 'https://1jour1film0126b.site/';
@@ -13,19 +14,6 @@ function normalizeUrl(url, base = DEFAULT_BASE_URL) {
   }
 }
 
-function titleScore(candidate, expected) {
-  const clean = (value) => String(value || '').toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ').trim();
-  const a = clean(candidate);
-  const b = clean(expected);
-  if (!a || !b) return 0;
-  if (a === b) return 3;
-  if (a.includes(b) || b.includes(a)) return 2;
-  const words = b.split(' ').filter(Boolean);
-  const overlap = words.filter((word) => a.split(' ').includes(word)).length;
-  return overlap >= Math.ceil(words.length * 0.7) ? 1 : 0;
-}
 
 async function resolvePortal(page) {
   try {
@@ -197,12 +185,13 @@ async function searchUnJourUnFilm({ type, title, originalTitle, year, season, ep
         const isTv = item.url.includes('/tvshows/');
         const isMovie = item.url.includes('/films/');
         if ((type === 'tv' && !isTv) || (type !== 'tv' && !isMovie)) continue;
-        const score = Math.max(titleScore(item.title, title), titleScore(item.title, originalTitle));
-        if (score > 0) candidates.set(item.url, { ...item, score });
+        if (matchesTitle(item.title, { title, originalTitle, year })) {
+          candidates.set(item.url, { ...item });
+        }
       }
     }
 
-    const ranked = [...candidates.values()].sort((a, b) => b.score - a.score).slice(0, 3);
+    const ranked = [...candidates.values()].slice(0, 5);
     const sources = [];
     for (const item of ranked) {
       const found = await getPlayerSources(page, item.url, type, season, episode);
