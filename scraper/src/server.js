@@ -5,6 +5,7 @@ const { searchFrenchStream } = require('./providers/frenchstream');
 const { searchWiflix } = require('./providers/wiflix');
 const { searchFrembed } = require('./providers/frembed');
 const { searchUnJourUnFilm } = require('./providers/1jour1film');
+const { searchOnyxTmdbFr } = require('./providers/onyx-tmdb-fr');
 const { extract, supportedDomains } = require('./extractors');
 
 const PORT = process.env.SCRAPER_PORT || 3100;
@@ -12,6 +13,7 @@ const PORT = process.env.SCRAPER_PORT || 3100;
 // The providers the app can show. Each runs on its own so the UI can report a
 // per-provider state (loading, failed, links found) instead of one global wait.
 const PROVIDERS = [
+  { id: 'tmdb-fr', name: 'TMDB Français (Onyx)', run: searchOnyxTmdbFr },
   { id: 'frenchstream', name: 'FrenchStream', run: searchFrenchStream },
   { id: 'wiflix', name: 'Wiflix', run: searchWiflix },
   { id: 'frembed', name: 'Frembed', run: searchFrembed },
@@ -50,7 +52,7 @@ async function runProvider(provider, payload, requestId) {
   logProviderEvent('info', 'PROVIDER_SEARCH_STARTED', provider, payload, requestId);
 
   try {
-    const sources = await provider.run(payload);
+    const sources = await provider.run(payload, requestId);
     if (!Array.isArray(sources)) {
       throw new TypeError(`Provider ${provider.id} returned an invalid result (expected an array).`);
     }
@@ -90,9 +92,11 @@ async function handleSources(body) {
   const tmdb_id = body.tmdb_id || null;
   const doExtract = body.extract === true;
 
-  const selected = body.provider
-    ? PROVIDERS.filter((p) => p.id === body.provider)
-    : PROVIDERS;
+  const selected = body.provider === 'all'
+    ? PROVIDERS
+    : body.provider
+      ? PROVIDERS.filter((p) => p.id === body.provider)
+      : PROVIDERS.filter((p) => p.id === 'tmdb-fr');
 
   const payload = { type, title, originalTitle, year, season, episode, tmdb_id };
   const requestId = randomUUID();
@@ -100,13 +104,25 @@ async function handleSources(body) {
     timestamp: new Date().toISOString(),
     event: 'SCRAPER_REQUEST_STARTED',
     requestId,
-    scope: body.provider || 'all',
+    scope: body.provider || 'tmdb-fr',
     providerCount: selected.length,
     search: searchContext(payload),
   }));
   const results = await Promise.all(selected.map((provider) => runProvider(provider, payload, requestId)));
 
-  let sources = results.flatMap((r) => r.sources);
+  const seenSources = new Set();
+  let sources = results.flatMap((r) => r.sources).filter((source) => {
+    try {
+      const parsed = new URL(source.url);
+      parsed.hash = '';
+      const key = parsed.href.toLowerCase();
+      if (seenSources.has(key)) return false;
+      seenSources.add(key);
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   if (doExtract) {
     sources = await Promise.all(sources.map(async (s) => {
