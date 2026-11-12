@@ -5,6 +5,7 @@ namespace App\Services\Playback;
 use App\Models\MissingExtractor;
 use App\Services\Tmdb\TmdbClient;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -119,7 +120,7 @@ class StreamSources
                         $providers
                     )));
                 }
-            } catch (\\Throwable $e) {
+            } catch (\Throwable $e) {
                 Log::warning('Unable to retrieve scraper providers; using configured fallback', [
                     'error' => $e->getMessage(),
                 ]);
@@ -339,7 +340,7 @@ class StreamSources
                 return is_array($domains)
                     ? array_values(array_filter($domains, fn ($domain) => is_string($domain) && $domain !== ''))
                     : [];
-            } catch (\\Throwable $e) {
+            } catch (\Throwable $e) {
                 Log::warning('Unable to retrieve scraper extractor domains; using configured fallback', [
                     'error' => $e->getMessage(),
                 ]);
