@@ -61,6 +61,7 @@ const { extractVidrock } = require('./vidrock');
 const { extractFirestream } = require('./firestream');
 const { extractCloseload } = require('./closeload');
 const { extractChillx } = require('./chillx');
+const { extractNuupload } = require('./nupload');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -141,6 +142,7 @@ const extractors = [
   { name: 'firestream', fn: extractFirestream, domains: ['firestream.to', 'firestream.site'] },
   { name: 'closeload', fn: extractCloseload, domains: ['closeload.top'] },
   { name: 'chillx', fn: extractChillx, domains: ['chillx.top', 'player.jeansaispasplus.homes'] },
+  { name: 'nuupload', fn: extractNuupload, domains: ['nupload.top', 'nupupload.top', 'ap.nupload.me', 'nupload.me'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
