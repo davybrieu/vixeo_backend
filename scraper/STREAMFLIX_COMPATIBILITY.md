@@ -23,6 +23,11 @@ already present in Vixeo's registry.
   aliases, Rpmvid host-family matching, malformed URLs and lookalike domains.
 - Added `npm test` using Node's built-in test runner; no runtime dependency
   was added.
+- Reworked FrenchStream and Wiflix adapters to follow the request methods,
+  selectors, language mapping and player extraction flows used by their Kotlin
+  counterparts. Added focused parser tests for both providers.
+- Added the initial 1Jour1Film adapter and aligned Frembed with its Kotlin API
+  endpoints; both remain unverified against live provider responses.
 
 ## Extractors ported from the current mirror
 
@@ -66,8 +71,10 @@ The release notes identify provider updates (including CB01, Cinecalidad,
 AnimeSaturn and live-TV sources), but release notes alone do not contain enough
 implementation detail to reproduce those providers reliably.
 
-Vixeo's existing provider adapters remain unchanged: FrenchStream, Wiflix and
-Frembed. No non-functional provider placeholders have been added.
+FrenchStream and Wiflix have now been revised against their Kotlin source
+implementations. Frembed and 1Jour1Film are initial ports, not production-
+verified integrations. These adapters still require runtime tests and live
+response validation; no production compatibility is claimed.
 
 ## Scope
 
