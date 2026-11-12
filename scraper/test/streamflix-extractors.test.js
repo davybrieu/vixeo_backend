@@ -109,7 +109,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://nupupload.top/e/abc123', 'nuupload'],
     ['https://vixsrc.to/api/movie/123', 'vixsrc'],
     ['https://player.vidzee.wtf/api/server?id=123&sr=0', 'vidzee'],
-    ['https://ap.nupload.me/e/abc123', 'nupload'],
+    ['https://ap.nupload.me/e/abc123', 'nuupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
