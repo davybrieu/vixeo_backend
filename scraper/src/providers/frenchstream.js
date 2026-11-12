@@ -20,13 +20,13 @@ function extractFrenchStreamId(onclick = '') {
   // The search result may contain a relative or absolute URL. Extract the
   // numeric DLE newsid only; passing the rest of the URL/query string as the
   // film API id can make the provider return an unrelated/default player set.
-  const newsId = value.match(/newsid=(\\d+)/i);
+  const newsId = value.match(/newsid=(\d+)/i);
   if (newsId) return newsId[1];
 
   const quotedPath = value.match(/['"]([^'"]+)['"]/);
   if (!quotedPath) return '';
   const path = quotedPath[1].trim();
-  const pathId = path.match(/(?:^|\\/)newsid-(\\d+)(?:\\D|$)/i);
+  const pathId = path.match(/(?:^|\/)newsid-(\d+)(?:\D|$)/i);
   return pathId ? pathId[1] : '';
 }
 
