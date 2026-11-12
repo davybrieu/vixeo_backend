@@ -29,6 +29,13 @@ const { extractDeltaBit } = require('./deltabit');
 const { extractLamovie } = require('./lamovie');
 const { extractLoadX } = require('./loadx');
 const { extractEinschalten } = require('./einschalten');
+const { extractPcloud } = require('./pcloud');
+const { extractRidoo } = require('./ridoo');
+const { extractShareCloudy } = require('./sharecloudy');
+const { extractStreamix } = require('./streamix');
+const { extractVidPly } = require('./vidply');
+const { extractVidnest } = require('./vidnest');
+const { extractTurbovid } = require('./turbovid');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -77,6 +84,13 @@ const extractors = [
   { name: 'lamovie', fn: extractLamovie, domains: ['lamovie.link', 'vimeos.net'] },
   { name: 'loadx', fn: extractLoadX, domains: ['loadx.ws'] },
   { name: 'einschalten', fn: extractEinschalten, domains: ['einschalten.in'] },
+  { name: 'pcloud', fn: extractPcloud, domains: ['u.pcloud.link'] },
+  { name: 'ridoo', fn: extractRidoo, domains: ['ridoo.net'] },
+  { name: 'sharecloudy', fn: extractShareCloudy, domains: ['sharecloudy.com'] },
+  { name: 'streamix', fn: extractStreamix, domains: ['streamix.so', 'stmix.io'] },
+  { name: 'vidply', fn: extractVidPly, domains: ['vidply.com'] },
+  { name: 'vidnest', fn: extractVidnest, domains: ['vidnest.io', 'vidnest.live'] },
+  { name: 'turbovid', fn: extractTurbovid, domains: ['turbovid.me'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
