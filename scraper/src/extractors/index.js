@@ -2,6 +2,11 @@
 // set of host names to a function that turns a player URL into a stream.
 const { extractVoe } = require('./voe');
 const { extractGoodstream } = require('./goodstream');
+const { extractBigWarp } = require('./bigwarp');
+const { extractDropload } = require('./dropload');
+const { extractFastream } = require('./fastream');
+const { extractGupload } = require('./gupload');
+const { extractHxfile } = require('./hxfile');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -23,6 +28,11 @@ const { extractGeneric } = require('./generic');
 
 const extractors = [
   { name: 'goodstream', fn: extractGoodstream, domains: ['goodstream.one'] },
+  { name: 'bigwarp', fn: extractBigWarp, domains: ['bigwarp.cc', 'bigwarp.io', 'bigwarp.pro'] },
+  { name: 'dropload', fn: extractDropload, domains: ['dropload.tv', 'dropload.io', 'dropload.pro', 'dr0pstream.com'] },
+  { name: 'fastream', fn: extractFastream, domains: ['fastream.to'] },
+  { name: 'gupload', fn: extractGupload, domains: ['gupload.xyz'] },
+  { name: 'hxfile', fn: extractHxfile, domains: ['hxfile.co', 'xshotcok.com'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
