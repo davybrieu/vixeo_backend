@@ -92,6 +92,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://video.sibnet.ru/shell.php?videoid=123', 'videosibnet'],
     ['https://primesrc.me/api/v1/l?key=abc123', 'primesrc'],
     ['https://api.vidlove.cc/api/v1/source?id=123', 'vidlove'],
+    ['https://maxstream.video/e/abc123', 'maxstream'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
