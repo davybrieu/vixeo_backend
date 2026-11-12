@@ -16,12 +16,12 @@ async function extractGoodstream(url) {
   if (!response.ok) return null;
 
   const html = normalizeText(response.text);
-  const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)].map((m) => m[1]);
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
   let source = null;
 
   for (const script of scripts) {
     if (!/jwplayer/i.test(script) || !/sources/i.test(script)) continue;
-    const match = /\\bfile\\s*:\\s*(['"])(https?:\\/\\/[^'"]+|\\/[^'"]+)\\1/i.exec(script);
+    const match = /\bfile\s*:\s*(['"])(https?:\/\/[^'"]+|\/[^'"]+)\1/i.exec(script);
     if (match) {
       source = new URL(match[2], origin).toString();
       break;
