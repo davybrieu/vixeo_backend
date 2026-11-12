@@ -30,6 +30,7 @@ const extractors = [
       'dianaavoidthey.com', 'jefferycontrolmodel.com', 'sandratableother.com',
       'marissasharecareer.com', 'ralphysuccessfull.org', 'charlestoughrace.com',
       'timmaybealready.com', 'maryspecialwatch.com', 'rebeccacostthousand.com',
+      'rebeccapracticeloss.com', 'johnbeyondnation.com',
       'bryantenunder.com',
     ],
   },
