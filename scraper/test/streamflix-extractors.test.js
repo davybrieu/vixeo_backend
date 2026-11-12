@@ -21,6 +21,7 @@ const { evpBytesToKey, decryptChillxPayload } = require('../src/extractors/chill
 const { findNuuploadDirect, findNuuploadDelegated } = require('../src/extractors/nupload');
 const { patchVixsrcManifest } = require('../src/extractors/vixsrc');
 const { decryptVidzeeLink } = require('../src/extractors/vidzee');
+const { decryptRabbitstreamSource, generateRabbitstreamKey, getRabbitstreamToken, extractMegacloudRealKey } = require('../src/extractors/rabbitstream');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -109,6 +110,9 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://nupupload.top/e/abc123', 'nuupload'],
     ['https://vixsrc.to/api/movie/123', 'vixsrc'],
     ['https://player.vidzee.wtf/api/server?id=123&sr=0', 'vidzee'],
+    ['https://rabbitstream.net/embed-4/abc123', 'rabbitstream'],
+    ['https://megacloud.blog/e/abc123', 'rabbitstream'],
+    ['https://dokicloud.one/embed-4/abc123', 'rabbitstream'],
     ['https://ap.nupload.me/e/abc123', 'nuupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
@@ -248,4 +252,21 @@ test('Vidzee decrypts legacy AES-CBC stream links', () => {
   const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
   const raw = iv.toString('base64') + ':' + encrypted.toString('base64');
   assert.equal(decryptVidzeeLink(Buffer.from(raw).toString('base64'), masterKey), plain);
+});
+
+test('Rabbitstream decrypts its salted AES-CBC sources payload', () => {
+  const crypto = require('node:crypto');
+  const secret = 'rabbitstream-test-secret';
+  const salt = Buffer.from('0102030405060708', 'hex');
+  const keyIv = generateRabbitstreamKey(salt, Buffer.from(secret));
+  const plain = JSON.stringify([{ file: 'https://cdn.example/video.m3u8', type: 'hls' }]);
+  const cipher = crypto.createCipheriv('aes-256-cbc', keyIv.subarray(0, 32), keyIv.subarray(32, 48));
+  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  const payload = Buffer.concat([Buffer.alloc(8), salt, encrypted]).toString('base64');
+  assert.deepEqual(decryptRabbitstreamSource(payload, secret), [{ file: 'https://cdn.example/video.m3u8', type: 'hls' }]);
+});
+
+test('Megacloud key extraction removes indexed characters in order', () => {
+  assert.deepEqual(extractMegacloudRealKey('0123456789abcdef', [[0, 2], [2, 2]]), { key: '0145', sources: '236789abcdef' });
+  assert.equal(getRabbitstreamToken('var t={a:"abcdefghijk",b:"mnopqrstuvwx"};'), 'abcdefghijklmnopqrstuvwx');
 });
