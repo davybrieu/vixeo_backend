@@ -8,7 +8,8 @@ const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 function normalizeUrl(url, base = DEFAULT_BASE_URL) {
   if (!url) return '';
   try {
-    return new URL(url, base).href;
+    const parsed = new URL(url, base);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
   } catch {
     return '';
   }
