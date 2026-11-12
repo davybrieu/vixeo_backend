@@ -1,5 +1,7 @@
 const { chromium } = require('playwright');
 const { matchesTitle } = require('./title-matcher');
+const { expandApiVoirFilm } = require('../extractors/api-voirfilm');
+const { expandOnRegardeOu } = require('../extractors/onregardeou');
 
 const PORTAL_URL = 'https://1jour1film-officiel.site/';
 const DEFAULT_BASE_URL = 'https://1jour1film0126b.site/';
@@ -32,50 +34,13 @@ async function resolvePortal(page) {
 }
 
 async function expandSpecialPlayer(page, url, referer) {
-  const result = [];
   if (url.startsWith('https://api.voirfilm.cam')) {
-    try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
-      const links = await page.locator('div.top ul.content > li[data-url]').evaluateAll((items) =>
-        items.map((item, index) => ({
-          name: item.innerText?.trim() || `Server ${index + 1}`,
-          url: item.getAttribute('data-url') || '',
-        })).filter((item) => item.url)
-      );
-      return links.map((item) => ({ ...item, url: normalizeUrl(item.url, url) }));
-    } catch {
-      return result;
-    }
+    return expandApiVoirFilm(page, url, referer, 'FR ');
   }
-
   if (url.startsWith('https://onregardeou.site')) {
-    try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
-      const servers = await page.locator('script').evaluateAll((scripts) => {
-        const script = scripts.find((item) => item.textContent.includes('videoData'));
-        if (!script) return [];
-        const marker = 'const videoData=';
-        const start = script.textContent.indexOf(marker);
-        if (start < 0) return [];
-        const end = script.textContent.indexOf('};', start);
-        if (end < 0) return [];
-        const raw = script.textContent.slice(start + marker.length, end + 1);
-        try {
-          const data = JSON.parse(raw);
-          return Array.isArray(data.servers) ? data.servers.map((server, index) => ({
-            name: server.name || `Server ${index + 1}`,
-            url: String(server.url || '').replace(/\\\//g, '/'),
-          })).filter((server) => server.url) : [];
-        } catch {
-          return [];
-        }
-      });
-      return servers.map((item) => ({ ...item, url: normalizeUrl(item.url, url) }));
-    } catch {
-      return result;
-    }
+    return expandOnRegardeOu(page, url, referer, 'FR ');
   }
-  return result;
+  return [];
 }
 
 async function getPlayerSources(page, detailUrl, type, season, episode) {
