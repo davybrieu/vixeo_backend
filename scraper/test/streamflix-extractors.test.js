@@ -10,6 +10,8 @@ const { createSource } = require('../src/extractors/vidply');
 const { decryptFsvidSource } = require('../src/extractors/fsvid');
 const { decodeVidGuardSignature } = require('../src/extractors/vidguard');
 const { encryptTurbovio, decryptTurbovio, generateKey, generateIV } = require('../src/extractors/turbovio');
+const { encodeVidplayId, decodeVidplayResult } = require('../src/extractors/vidplay');
+const { veevDecode, buildVeevArray, decodeVeevUrl } = require('../src/extractors/veev');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
