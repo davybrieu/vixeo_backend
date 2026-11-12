@@ -9,6 +9,7 @@ const { decodeEscapes } = require('../src/extractors/upzur');
 const { createSource } = require('../src/extractors/vidply');
 const { decryptFsvidSource } = require('../src/extractors/fsvid');
 const { decodeVidGuardSignature } = require('../src/extractors/vidguard');
+const { encryptTurbovio, decryptTurbovio, generateKey, generateIV } = require('../src/extractors/turbovio');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -62,6 +63,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vidguard.to/e/abc', 'vidguard'],
     ['https://vembed.net/e/abc', 'vidguard'],
     ['https://fsvid.lol/e/abc', 'fsvid'],
+    ['https://turboembed.com/abc123', 'turbovio'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -100,4 +102,13 @@ test('FSVid reverses and XOR-decodes its encoded source', () => {
 
 test('VidGuard rejects malformed signature data safely', () => {
   assert.equal(decodeVidGuardSignature('https://cdn.example/video.m3u8?sig=xyz'), null);
+});
+
+test('Turbovio AES encryption and decryption are symmetric', () => {
+  const fixedTime = 1762900000000;
+  const text = '{"stream":{"hls":"https://cdn.example/video.m3u8"}}';
+  const encrypted = encryptTurbovio(text, 'https://turboembed.com', fixedTime);
+  assert.equal(decryptTurbovio(encrypted, 'https://turboembed.com', fixedTime), text);
+  assert.equal(generateKey(fixedTime).length, 32);
+  assert.equal(generateIV('https://turboembed.com').length, 32);
 });
