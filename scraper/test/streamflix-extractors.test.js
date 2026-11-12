@@ -5,6 +5,7 @@ const { findExtractor } = require('../src/extractors');
 const { buildDailymotionEndpoint } = require('../src/extractors/dailymotion');
 const { findJkPlayerSource } = require('../src/extractors/jkplayer');
 const { findPlusPomlaAjaxUrl, findPlusPomlaSource } = require('../src/extractors/pluspomla');
+const { decodeMStreamDaySignature } = require('../src/extractors/mstreamday');
 const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
@@ -329,4 +330,9 @@ test('PlusPomla resolves protocol-relative AJAX URLs and JSON sources', () => {
   assert.equal(findPlusPomlaAjaxUrl('<script>$.ajax({url: "//apu.animemovil2.com/api/video"})</script>'), 'https://apu.animemovil2.com/api/video');
   assert.equal(findPlusPomlaSource(JSON.stringify({sources:[{file:'https://cdn.example/video.m3u8'}]})), 'https://cdn.example/video.m3u8');
   assert.equal(findPlusPomlaSource('{broken'), null);
+});
+
+test('MStreamDay signature decoder safely rejects missing or malformed signatures', () => {
+  assert.equal(decodeMStreamDaySignature('https://cdn.example/master.m3u8'), null);
+  assert.equal(decodeMStreamDaySignature('https://cdn.example/master.m3u8?sig=xyz'), null);
 });
