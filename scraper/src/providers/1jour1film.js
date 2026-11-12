@@ -65,10 +65,14 @@ async function expandSpecialPlayer(page, url, referer) {
       const servers = await page.locator('script').evaluateAll((scripts) => {
         const script = scripts.find((item) => item.textContent.includes('videoData'));
         if (!script) return [];
-        const match = script.textContent.match(/const\s+videoData\s*=\s*(\{[\s\S]*?\})\s*;?/);
-        if (!match) return [];
+        const marker = 'const videoData=';
+        const start = script.textContent.indexOf(marker);
+        if (start < 0) return [];
+        const end = script.textContent.indexOf('};', start);
+        if (end < 0) return [];
+        const raw = script.textContent.slice(start + marker.length, end + 1);
         try {
-          const data = JSON.parse(match[1]);
+          const data = JSON.parse(raw);
           return Array.isArray(data.servers) ? data.servers.map((server, index) => ({
             name: server.name || `Server ${index + 1}`,
             url: String(server.url || '').replace(/\\\//g, '/'),
