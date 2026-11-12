@@ -6,6 +6,7 @@ const { buildDailymotionEndpoint } = require('../src/extractors/dailymotion');
 const { findJkPlayerSource } = require('../src/extractors/jkplayer');
 const { findPlusPomlaAjaxUrl, findPlusPomlaSource } = require('../src/extractors/pluspomla');
 const { decodeMStreamDaySignature } = require('../src/extractors/mstreamday');
+const { decodeAes, decryptSource, rewritePlaylist, safeUrl } = require('../src/extractors/nekostream');
 const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
@@ -335,4 +336,25 @@ test('PlusPomla resolves protocol-relative AJAX URLs and JSON sources', () => {
 test('MStreamDay signature decoder safely rejects missing or malformed signatures', () => {
   assert.equal(decodeMStreamDaySignature('https://cdn.example/master.m3u8'), null);
   assert.equal(decodeMStreamDaySignature('https://cdn.example/master.m3u8?sig=xyz'), null);
+});
+
+test('Nekostream decrypts AES-256-CBC source JSON and rejects unsafe relay URLs', () => {
+  const crypto = require('node:crypto');
+  const key = Buffer.from('0123456789abcdef0123456789abcdef');
+  const iv = Buffer.from('00112233445566778899aabbccddeeff', 'hex');
+  const plain = JSON.stringify({ file: 'https://cdn.example/master.m3u8' });
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]).toString('base64url');
+  const cryptoData = { key, iv };
+  assert.equal(decryptSource(encrypted, cryptoData), 'https://cdn.example/master.m3u8');
+  assert.equal(decodeAes('malformed', cryptoData), null);
+  assert.equal(safeUrl('http://127.0.0.1/private'), null);
+  assert.equal(safeUrl('file:///etc/passwd'), null);
+});
+
+test('Nekostream rewrites HLS child playlists, segments and URI attributes through its relay', () => {
+  const playlist = '#EXTM3U\\n#EXT-X-KEY:METHOD=AES-128,URI="key.bin"\\nsegment.ts\\nchild/index.m3u8';
+  const output = rewritePlaylist(playlist, 'https://cdn.example/root/master.m3u8', 'a'.repeat(48));
+  assert.match(output, /\\/nekostream\\/relay\\/a{48}\\/media\\?url=/);
+  assert.match(output, /\\/nekostream\\/relay\\/a{48}\\/playlist\\?url=/);
 });
