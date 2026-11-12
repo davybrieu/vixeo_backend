@@ -57,6 +57,7 @@ const { extractVideoSibNet } = require('./videosibnet');
 const { extractPrimeSrc } = require('./primesrc');
 const { extractVidlove } = require('./vidlove');
 const { extractMaxstream } = require('./maxstream');
+const { extractVidrock } = require('./vidrock');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -133,6 +134,7 @@ const extractors = [
   { name: 'primesrc', fn: extractPrimeSrc, domains: ['primesrc.me'] },
   { name: 'vidlove', fn: extractVidlove, domains: ['api.vidlove.cc'] },
   { name: 'maxstream', fn: extractMaxstream, domains: ['maxstream.video'] },
+  { name: 'vidrock', fn: extractVidrock, domains: ['vidrock.net'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
