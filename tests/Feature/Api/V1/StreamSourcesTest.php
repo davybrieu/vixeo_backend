@@ -180,13 +180,38 @@ it('says the service is unavailable when the scraper fails to resolve', function
         ->assertExactJson(['message' => 'Le service de sources est temporairement indisponible.']);
 });
 
-it('lists the providers the panel shows', function () {
+it('lists every provider declared by the scraper', function () {
+    Http::fake([
+        'scraper.test/providers' => Http::response(['providers' => [
+            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
+            ['id' => 'wiflix', 'name' => 'Wiflix'],
+            ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
+        ]]),
+    ]);
+
     $this->getJson('/api/v1/catalog/sources/providers')
         ->assertOk()
         ->assertExactJson(['data' => [
             ['id' => 'frenchstream', 'name' => 'FrenchStream'],
             ['id' => 'wiflix', 'name' => 'Wiflix'],
             ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
+        ]]);
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/providers'));
+});
+
+it('uses the complete configured provider list when the scraper registry is unavailable', function () {
+    Http::fake(['scraper.test/providers' => Http::response('Unavailable', 503)]);
+
+    $this->getJson('/api/v1/catalog/sources/providers')
+        ->assertOk()
+        ->assertExactJson(['data' => [
+            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
+            ['id' => 'wiflix', 'name' => 'Wiflix'],
+            ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
         ]]);
 });
 
