@@ -89,7 +89,7 @@ return [
     ],
 
     /*
-    | Node.js scraper worker (Playwright) that returns stream source URLs from FrenchStream, Wiflix, Frembed.
+    | Node.js scraper worker (Playwright) that searches the French-language film and series providers.
     */
     'scraper' => [
         'base_url' => env('SCRAPER_URL', 'http://127.0.0.1:3100'),
@@ -101,6 +101,7 @@ return [
             ['id' => 'frenchstream', 'name' => 'FrenchStream'],
             ['id' => 'wiflix', 'name' => 'Wiflix'],
             ['id' => 'frembed', 'name' => 'Frembed'],
+            ['id' => '1jour1film', 'name' => '1Jour1Film'],
         ],
     ],
 
