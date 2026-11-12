@@ -71,6 +71,7 @@ async function searchWiflix({ type, title, originalTitle, episode }) {
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     locale: 'fr-FR',
+    extraHTTPHeaders: { Cookie: 'h_check=25' },
   });
   const page = await context.newPage();
 
@@ -95,7 +96,7 @@ async function searchWiflix({ type, title, originalTitle, episode }) {
           search_start: '1',
           full_search: '1',
         },
-        headers: { 'X-Requested-With': 'XMLHttpRequest', Referer: baseUrl },
+        headers: { 'X-Requested-With': 'XMLHttpRequest', Cookie: 'h_check=25', Referer: baseUrl },
         timeout: 20000,
       });
       if (!response.ok()) continue;
