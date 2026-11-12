@@ -6,7 +6,7 @@ const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
 
-test('registers the first additional Streamflix extractor batch', () => {
+test('registers the additional Streamflix extractor batch', () => {
   const cases = [
     ['https://bigwarp.cc/e/abc', 'bigwarp'],
     ['https://bigwarp.io/e/abc', 'bigwarp'],
@@ -31,7 +31,7 @@ test('extracts a direct Gupload videoUrl config', () => {
 });
 
 test('decodes a basic Dean Edwards packed payload', () => {
-  const packed = 'eval(function(p,a,c,k,e,d){e=function(c){return c.toString(a)};while(c--){if(k[c])p=p.replace(new RegExp("\\\\b"+e(c)+"\\\\b","g"),k[c])}return p}(\\'0 1 2\\',3,3,\\'file|:|https://cdn.example/video.m3u8\\'.split(\\'|\\'),0,{}))';
+  const packed = "eval(function(p,a,c,k,e,d){return p}('0 1 2',3,3,'file|:|https://cdn.example/video.m3u8'.split('|'),0,{}))";
   assert.equal(unpackPackedJs(packed), 'file : https://cdn.example/video.m3u8');
 });
 
