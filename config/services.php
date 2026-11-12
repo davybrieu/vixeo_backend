@@ -98,6 +98,7 @@ return [
         // Providers the app shows in the sources panel, in display order. Each is queried
         // on its own so the panel can report a per-provider state (loading, failed, links).
         'providers' => [
+            ['id' => 'tmdb-fr', 'name' => 'TMDB Français (Onyx)'],
             ['id' => 'frenchstream', 'name' => 'FrenchStream'],
             ['id' => 'wiflix', 'name' => 'Wiflix'],
             ['id' => 'frembed', 'name' => 'Frembed'],
