@@ -48,6 +48,7 @@ const { extractMovieMaster } = require('./moviemaster');
 const { extractVidsrcNet } = require('./vidsrcnet');
 const { extractVidLink } = require('./vidlink');
 const { extractVidsrcRu } = require('./vidsrcru');
+const { extractUpzone } = require('./upzone');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -115,6 +116,7 @@ const extractors = [
   { name: 'vidsrcnet', fn: extractVidsrcNet, domains: ['vidsrc-embed.ru', 'vsembed.ru'] },
   { name: 'vidlink', fn: extractVidLink, domains: ['vidlink.pro'] },
   { name: 'vidsrcru', fn: extractVidsrcRu, domains: ['vidsrc.ru'] },
+  { name: 'upzone', fn: extractUpzone, domains: ['upzone.cc', 'upzone.to', 'upzone.net', 'upzone.link'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
