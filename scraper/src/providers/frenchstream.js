@@ -1,90 +1,161 @@
 const { chromium } = require('playwright');
 
-async function searchFrenchStream({ type, title, originalTitle, year }) {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-blink-features=AutomationControlled'],
-  });
+const DEFAULT_PORTAL_URL = 'https://fstream.info/';
+const DEFAULT_BASE_URL = 'https://fs16.lol/';
 
+function normalizeBaseUrl(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    return parsed.href.endsWith('/') ? parsed.href : parsed.href + '/';
+  } catch {
+    return null;
+  }
+}
+
+function extractFrenchStreamId(onclick = '') {
+  const slash = onclick.indexOf('/');
+  if (slash < 0) return '';
+  return onclick.slice(slash + 1).split("'")[0].trim();
+}
+
+function normalizePlayerEntries(players = {}) {
+  const labels = { vff: 'TrueFrench', vfq: 'French', vostfr: 'VOSTFR', vo: 'VO' };
+  const output = [];
+  for (const [provider, languages] of Object.entries(players || {})) {
+    if (!languages || typeof languages !== 'object') continue;
+    const seen = new Set();
+    for (const lang of ['vff', 'vfq', 'vostfr', 'vo', ...Object.keys(languages)]) {
+      if (lang === 'default' || !(lang in languages)) continue;
+      const url = languages[lang];
+      if (typeof url !== 'string' || !/^https?:\/\//i.test(url) || seen.has(url)) continue;
+      if (provider.trim().toLowerCase() === 'dood.stream' && url.includes('/bigwar5/')) continue;
+      seen.add(url);
+      output.push({
+        provider: 'frenchstream',
+        name: provider.charAt(0).toUpperCase() + provider.slice(1) + (labels[lang] ? ' (' + labels[lang] + ')' : ''),
+        url,
+      });
+    }
+    const fallback = languages.default;
+    if (typeof fallback === 'string' && /^https?:\/\//i.test(fallback) && !seen.has(fallback)) {
+      if (!(provider.trim().toLowerCase() === 'dood.stream' && fallback.includes('/bigwar5/'))) {
+        output.push({ provider: 'frenchstream', name: provider.charAt(0).toUpperCase() + provider.slice(1), url: fallback });
+      }
+    }
+  }
+  return output;
+}
+
+function normalizeEpisodeEntries(data, requestedEpisode = null) {
+  const output = [];
+  for (const [key, label] of [['vf', 'VF'], ['vostfr', 'VOSTFR'], ['vo', 'VO']]) {
+    const episodes = data?.[key];
+    if (!episodes || typeof episodes !== 'object') continue;
+    const numbers = requestedEpisode
+      ? [String(requestedEpisode)]
+      : Object.keys(episodes).sort((a, b) => Number(a) - Number(b));
+    for (const number of numbers) {
+      const sources = episodes[number];
+      if (!sources || typeof sources !== 'object') continue;
+      for (const [provider, url] of Object.entries(sources)) {
+        if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+          output.push({
+            provider: 'frenchstream',
+            name: provider.charAt(0).toUpperCase() + provider.slice(1) + ' (Épisode ' + number + ', ' + label + ')',
+            url,
+          });
+        }
+      }
+    }
+  }
+  return output;
+}
+
+async function searchFrenchStream({ type, title, originalTitle, episode }) {
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     locale: 'fr-FR',
   });
-
-  await context.addInitScript(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-  });
-
   const page = await context.newPage();
 
   try {
-    await page.goto('https://fstream.info/', { waitUntil: 'domcontentloaded', timeout: 20000 });
-    let baseUrl = 'https://fs26.lol/';
+    let baseUrl = DEFAULT_BASE_URL;
     try {
-      const link = await page.locator('div.url-card a').first().getAttribute('href');
-      if (link) baseUrl = link.endsWith('/') ? link : link + '/';
-    } catch (e) {}
+      await page.goto(DEFAULT_PORTAL_URL, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      const currentUrl = await page.locator('div.container > div.url-card a').first().getAttribute('href', { timeout: 4000 });
+      baseUrl = normalizeBaseUrl(currentUrl) || baseUrl;
+    } catch {
+      // The portal may be unavailable; retain the Kotlin provider's default domain.
+    }
 
-    const queries = [title, originalTitle].filter(Boolean);
-    const seen = new Set();
     const sources = [];
-
-    for (const q of queries) {
-      const searchUrl = baseUrl + 'index.php?do=search&subaction=search&full_search=1&titleonly=3&story=' + encodeURIComponent(q);
-      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      await page.waitForTimeout(1500);
-
-      const results = await page.evaluate(() => {
-        return [...document.querySelectorAll('div.short')].map(el => {
-          const a = el.querySelector('a.short-poster');
-          const titleEl = el.querySelector('div.short-title');
-          return {
-            title: titleEl?.innerText?.trim() || '',
-            url: a?.href || '',
-          };
-        }).filter(r => r.url);
+    const seenResults = new Set();
+    for (const query of [...new Set([title, originalTitle].filter(Boolean))]) {
+      const response = await page.request.post(new URL('engine/ajax/search.php', baseUrl).href, {
+        form: { query, page: '1' },
+        headers: { 'X-Requested-With': 'XMLHttpRequest', Cookie: 'fsschal=1', Referer: baseUrl },
+        timeout: 20000,
       });
+      if (!response.ok()) continue;
+      const html = await response.text();
+      const resultsPage = await context.newPage();
+      try {
+        await resultsPage.setContent(html, { waitUntil: 'domcontentloaded' });
+        const results = await resultsPage.locator('div.search-item').evaluateAll(items =>
+          items.map(item => ({
+            id: item.getAttribute('onclick') || '',
+            title: item.querySelector('div.search-title')?.textContent?.trim() || '',
+          }))
+        );
 
-      for (const r of results.slice(0, 3)) {
-        if (seen.has(r.url)) continue;
-        seen.add(r.url);
+        for (const result of results) {
+          const id = extractFrenchStreamId(result.id);
+          if (!id || seenResults.has(id)) continue;
+          seenResults.add(id);
 
-        await page.goto(r.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
-        const content = await page.content();
-        const newsIdMatch = content.match(/newsid=(\d+)/) || r.url.match(/newsid=(\d+)/);
-        const newsId = newsIdMatch?.[1];
-        if (!newsId) continue;
+          const isSeries = id.includes('-saison-') || result.title.includes(' - Saison ');
+          if ((type === 'tv' && !isSeries) || (type === 'movie' && isSeries)) continue;
+          const itemId = id.includes('newsid=') ? id.substring(id.indexOf('newsid=') + 7) : id;
 
-        const apiUrl = baseUrl + 'engine/ajax/film_api.php?id=' + newsId;
-        const apiData = await page.evaluate(async (url) => {
           try {
-            const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            return await res.json();
-          } catch (e) {
-            return null;
-          }
-        }, apiUrl);
-
-        if (apiData?.players) {
-          for (const [provider, langs] of Object.entries(apiData.players)) {
-            for (const [lang, url] of Object.entries(langs)) {
-              if (typeof url === 'string' && url.startsWith('http')) {
-                sources.push({
-                  provider: 'frenchstream',
-                  name: provider.charAt(0).toUpperCase() + provider.slice(1) + ' (' + lang + ')',
-                  url,
-                });
-              }
-            }
+            const endpoint = isSeries ? 'engine/ajax/sx.php' : 'engine/ajax/film_api.php';
+            const apiResponse = await page.request.get(new URL(endpoint, baseUrl).href, {
+              params: { id: itemId },
+              headers: {
+                Cookie: 'dle_skin=VFV1; fsschal=1',
+                'X-Requested-With': 'XMLHttpRequest',
+                Referer: baseUrl,
+              },
+              timeout: 20000,
+            });
+            if (!apiResponse.ok()) continue;
+            const data = await apiResponse.json();
+            const found = isSeries
+              ? normalizeEpisodeEntries(data, episode)
+              : normalizePlayerEntries(data?.players);
+            sources.push(...found);
+          } catch {
+            // A single unavailable item must not abort the other search results.
           }
         }
+      } finally {
+        await resultsPage.close();
       }
     }
 
     return sources;
   } finally {
+    await context.close();
     await browser.close();
   }
 }
 
-module.exports = { searchFrenchStream };
+module.exports = {
+  searchFrenchStream,
+  extractFrenchStreamId,
+  normalizePlayerEntries,
+  normalizeEpisodeEntries,
+};

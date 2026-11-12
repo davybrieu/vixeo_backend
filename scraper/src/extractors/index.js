@@ -1,6 +1,8 @@
 // Extractor registry, ported from the ONYX extractor list: each entry maps a
 // set of host names to a function that turns a player URL into a stream.
 const { extractVoe } = require('./voe');
+const { extractGoodstream } = require('./goodstream');
+const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
 const { extractVidHide } = require('./vidhide');
@@ -20,6 +22,8 @@ const { extractSendvid } = require('./sendvid');
 const { extractGeneric } = require('./generic');
 
 const extractors = [
+  { name: 'goodstream', fn: extractGoodstream, domains: ['goodstream.one'] },
+  { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
     fn: extractVoe,
