@@ -11,6 +11,10 @@ const { extractOneupload } = require('./oneupload');
 const { extractPixeldrain } = require('./pixeldrain');
 const { extractSavefiles } = require('./savefiles');
 const { extractStreamhub } = require('./streamhub');
+const { extractYourUpload } = require('./yourupload');
+const { extractZilla } = require('./zilla');
+const { extractVtube } = require('./vtube');
+const { extractVideoapp } = require('./videoapp');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -41,6 +45,10 @@ const extractors = [
   { name: 'pixeldrain', fn: extractPixeldrain, domains: ['pixeldrain.com'] },
   { name: 'savefiles', fn: extractSavefiles, domains: ['savefiles.com', 'streamhls.to'] },
   { name: 'streamhub', fn: extractStreamhub, domains: ['streamhub.to'] },
+  { name: 'yourupload', fn: extractYourUpload, domains: ['yourupload.com', 'yucache.net'] },
+  { name: 'zilla', fn: extractZilla, domains: ['player.zilla-networks.com'] },
+  { name: 'vtube', fn: extractVtube, domains: ['vtbe.to', 'vtube.to'] },
+  { name: 'videoapp', fn: extractVideoapp, domains: ['videoapp.zip'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
