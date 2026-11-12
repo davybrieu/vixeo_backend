@@ -104,7 +104,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://closeload.top/e/abc123', 'closeload'],
     ['https://chillx.top/e/abc123', 'chillx'],
     ['https://player.jeansaispasplus.homes/e/abc123', 'chillx'],
-    ['https://nupload.top/e/abc123', 'nupload'],
+    ['https://nupload.top/e/abc123', 'nuupload'],
     ['https://nupupload.top/e/abc123', 'nuupload'],
     ['https://vixsrc.to/api/movie/123', 'vixsrc'],
     ['https://ap.nupload.me/e/abc123', 'nupload'],
