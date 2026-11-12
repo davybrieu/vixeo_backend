@@ -10,7 +10,8 @@ const {
   normalizePlayerEntries,
   normalizeEpisodeEntries,
 } = require('../src/providers/frenchstream');
-const { resolveFrembedLink } = require('../src/providers/frembed');
+const { resolveFrembedLink, searchFrembed } = require('../src/providers/frembed');
+const { getProviderErrorEvent } = require('../src/provider-errors');
 const {
   normalizeBaseUrl,
   extractLoadVideoUrl,
@@ -140,4 +141,27 @@ test('Frembed resolves a player redirect to the actual extractor host', async ()
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+
+test('Frembed propagates API timeouts so the server reports a provider failure', async () => {
+  const originalFetch = global.fetch;
+  const timeout = new Error('The operation was aborted due to timeout');
+  timeout.name = 'TimeoutError';
+  global.fetch = async () => { throw timeout; };
+
+  try {
+    await assert.rejects(
+      searchFrembed({ type: 'movie', tmdb_id: 1368337 }),
+      (error) => error === timeout,
+    );
+    assert.equal(getProviderErrorEvent(timeout), 'PROVIDER_TIMEOUT');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('provider errors are classified as timeouts only when the error indicates a timeout', () => {
+  assert.equal(getProviderErrorEvent(Object.assign(new Error('page.goto: Timeout 20000ms exceeded'), { name: 'Error' })), 'PROVIDER_TIMEOUT');
+  assert.equal(getProviderErrorEvent(Object.assign(new Error('Connection reset'), { code: 'ECONNRESET' })), 'PROVIDER_SEARCH_FAILED');
 });
