@@ -10,10 +10,10 @@ async function extractDeltaBit(url) {
   const first = await getText(url, { 'User-Agent': USER_AGENT, 'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7' });
   if (!first.ok) return null;
   const html = normalizeText(first.text);
-  const read = name => new RegExp('name=["\\\\']' + name + '["\\\\']\\\\s+value=["\\\\']([^"\\\\']+)["\\\\']', 'i').exec(html)?.[1] || '';
+  const read = name => new RegExp("name=[\\"']" + name + "[\\"']\\s+value=[\\"']([^\\"']+)[\\"']", 'i').exec(html)?.[1] || '';
   const hash = read('hash');
   if (!hash) return null;
-  const id = read('id') || new URL(first.url).pathname.replace(/\\/$/, '').split('/').pop();
+  const id = read('id') || new URL(first.url).pathname.replace(/\/$/, '').split('/').pop();
   const fname = read('fname');
   const fileId = hash.split('-')[0];
   await new Promise(resolve => setTimeout(resolve, 5500));
@@ -29,7 +29,7 @@ async function extractDeltaBit(url) {
     Cookie: cookie,
   });
   if (!second.ok) return null;
-  const source = /sources\\s*:\\s*\\[\\s*["']([^"']+)["']/i.exec(normalizeText(second.text))?.[1];
+  const source = /sources\s*:\s*\[\s*["']([^"']+)["']/i.exec(normalizeText(second.text))?.[1];
   return source ? { url: new URL(source, second.url).href, headers: { 'User-Agent': USER_AGENT, Referer: 'https://deltabit.co/' } } : null;
 }
 module.exports = { extractDeltaBit };
