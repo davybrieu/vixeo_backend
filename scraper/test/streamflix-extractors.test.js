@@ -14,6 +14,7 @@ const { rc4, encodeVidplayId, decodeVidplayResult } = require('../src/extractors
 const { veevDecode, buildVeevArray, decodeVeevUrl } = require('../src/extractors/veev');
 const { decodeVidsrcNet, decodeVidsrcSubtitles } = require('../src/extractors/vidsrcnet');
 const { findUpzoneSource } = require('../src/extractors/upzone');
+const { decodeEncryptedEmbed } = require('../src/extractors/vidsrcto');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -82,6 +83,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://vidsrc.ru/movie/123', 'vidsrcru'],
     ['https://upzone.cc/e/abc', 'upzone'],
     ['https://upzone.to/e/abc', 'upzone'],
+    ['https://vidsrc.to/embed/movie/123', 'vidsrcto'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
@@ -158,4 +160,11 @@ test('Vidsrc.net supports simple decoder variants and subtitle parsing', () => {
 
 test('Upzone detects a direct HLS source in player markup', () => {
   assert.equal(findUpzoneSource('<script>player = {file: "https://cdn.example/movie.m3u8"};</script>', 'https://upzone.cc/e/1'), 'https://cdn.example/movie.m3u8');
+});
+
+test('Vidsrc.to decrypts its RC4 URL payload', () => {
+  const key = 'test-key';
+  const plain = 'https://vidplay.site/e/abc?token=1';
+  const encrypted = rc4(key, plain).toString('base64').replace(/\//g, '_').replace(/\+/g, '-');
+  assert.equal(decodeEncryptedEmbed(key, encrypted), plain);
 });
