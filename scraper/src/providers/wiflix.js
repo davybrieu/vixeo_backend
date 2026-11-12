@@ -66,7 +66,7 @@ function parseEpisodeServers(episodes) {
   return output;
 }
 
-async function searchWiflix({ type, title, originalTitle }) {
+async function searchWiflix({ type, title, originalTitle, episode }) {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
@@ -116,7 +116,7 @@ async function searchWiflix({ type, title, originalTitle }) {
           if (resultsSeen.has(key)) continue;
           resultsSeen.add(key);
 
-          if (result.type === 'movie' && type && !String(type).toLowerCase().includes('movie')) continue;
+          if (type && result.type !== type) continue;
 
           const detailPage = await context.newPage();
           try {
@@ -130,16 +130,17 @@ async function searchWiflix({ type, title, originalTitle }) {
               );
               sources.push(...parseMovieServers(anchors));
             } else {
-              const episodes = await detailPage.locator('div.blocvostfr ul.eplist li, div.blocfr ul.eplist li').evaluateAll(items =>
-                items.map(li => {
-                  const rel = li.getAttribute('rel') || '';
-                  const container = rel ? document.querySelector('div.' + CSS.escape(rel)) : null;
-                  const anchors = container ? [...container.querySelectorAll('a')].map(a => ({
-                    name: a.querySelector('span')?.textContent?.trim() || '',
-                    onclick: a.getAttribute('onclick') || '',
-                  })) : [];
-                  return { label: li.textContent?.trim() || '', anchors };
-                })
+              const episodes = await detailPage.locator('div.blocvostfr ul.eplist li, div.blocfr ul.eplist li').evaluateAll((items, requestedEpisode) =>
+                items.filter(li => !requestedEpisode || Number((li.textContent || '').match(/Episode\\s+(\\d+)/i)?.[1]) === Number(requestedEpisode))
+                  .map(li => {
+                    const rel = li.getAttribute('rel') || '';
+                    const container = rel ? document.querySelector('div.' + CSS.escape(rel)) : null;
+                    const anchors = container ? [...container.querySelectorAll('a')].map(a => ({
+                      name: a.querySelector('span')?.textContent?.trim() || '',
+                      onclick: a.getAttribute('onclick') || '',
+                    })) : [];
+                    return { label: li.textContent?.trim() || '', anchors };
+                  }), episode
               );
               sources.push(...parseEpisodeServers(episodes));
             }
