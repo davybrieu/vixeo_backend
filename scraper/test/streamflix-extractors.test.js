@@ -39,6 +39,11 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://upzur.com/e/abc', 'upzur'],
     ['https://vidflix.club/api/movie/123', 'vidflix'],
     ['https://www.2embed.cc/embed/123', 'twoembed'],
+    ['https://deltabit.co/abc123', 'deltabit'],
+    ['https://lamovie.link/e/abc', 'lamovie'],
+    ['https://vimeos.net/e/abc', 'lamovie'],
+    ['https://loadx.ws/e/abc', 'loadx'],
+    ['https://einschalten.in/api/movies/123/watch', 'einschalten'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
