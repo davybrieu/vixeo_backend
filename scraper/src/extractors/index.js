@@ -21,6 +21,10 @@ const { extractMailRu } = require('./mailru');
 const { extractOkru } = require('./okru');
 const { extractMyFileStorage } = require('./myfilestorage');
 const { extractMoviesapi } = require('./moviesapi');
+const { extractStreamUp } = require('./streamup');
+const { extractUpZur } = require('./upzur');
+const { extractVidflix } = require('./vidflix');
+const { extractTwoEmbed } = require('./twoembed');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -61,6 +65,10 @@ const extractors = [
   { name: 'okru', fn: extractOkru, domains: ['ok.ru'] },
   { name: 'myfilestorage', fn: extractMyFileStorage, domains: ['myfilestorage.xyz'] },
   { name: 'moviesapi', fn: extractMoviesapi, domains: ['moviesapi.club'] },
+  { name: 'streamup', fn: extractStreamUp, domains: ['strmup.to'] },
+  { name: 'upzur', fn: extractUpZur, domains: ['upzur.com'] },
+  { name: 'vidflix', fn: extractVidflix, domains: ['vidflix.club'] },
+  { name: 'twoembed', fn: extractTwoEmbed, domains: ['2embed.cc'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
