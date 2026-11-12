@@ -36,6 +36,8 @@ const { extractStreamix } = require('./streamix');
 const { extractVidPly } = require('./vidply');
 const { extractVidnest } = require('./vidnest');
 const { extractTurbovid } = require('./turbovid');
+const { extractDailymotion } = require('./dailymotion');
+const { extractAmazonDrive } = require('./amazondrive');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -91,6 +93,8 @@ const extractors = [
   { name: 'vidply', fn: extractVidPly, domains: ['vidply.com'] },
   { name: 'vidnest', fn: extractVidnest, domains: ['vidnest.io', 'vidnest.live'] },
   { name: 'turbovid', fn: extractTurbovid, domains: ['turbovid.me'] },
+  { name: 'dailymotion', fn: extractDailymotion, domains: ['dailymotion.com', 'geo.dailymotion.com'] },
+  { name: 'amazondrive', fn: extractAmazonDrive, domains: ['amazon.com'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
