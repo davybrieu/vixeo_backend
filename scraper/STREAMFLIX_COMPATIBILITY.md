@@ -81,3 +81,10 @@ response validation; no production compatibility is claimed.
 This update adds no DRM handling, CAPTCHA solving, access-control bypasses or
 credential harvesting. New integrations must be used only with content and
 endpoints Vixeo is authorized to access.
+
+
+## Additional French provider and extractor ports
+
+- Added **Kidraz** as a French-language movie provider. Its dynamic portal URL is resolved before querying the provider JSON search endpoint. Candidate titles and years are checked against the requested TMDB metadata before detail pages are opened. The source provider currently exposes movies only, so the Node adapter does not report TV results.
+- Ported the dedicated **ApiVoirFilm** and **OnRegardeOu** expanders into reusable Node.js helpers and wired them into 1Jour1Film.
+- Added unit tests for strict title matching, Kidraz API path derivation, and both special server expanders.
