@@ -1,6 +1,6 @@
 const { getText } = require('../lib/http');
 
-const DOMAINS = ['moflix-stream.xyz', 'moflix-stream.link'];
+const DOMAINS = ['moflix-stream.xyz'];
 
 async function extractMoflix(url) {
   let parsed;
