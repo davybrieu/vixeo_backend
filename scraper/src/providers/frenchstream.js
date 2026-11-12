@@ -20,6 +20,42 @@ function extractFrenchStreamId(onclick = '') {
   return onclick.slice(slash + 1).split("'")[0].trim();
 }
 
+/**
+ * FrenchStream's search endpoint can return broad/partial matches.
+ * Compare normalized full titles instead of accepting any result returned
+ * by the search engine. Leading articles and a trailing release year are
+ * ignored, but additional title words are never treated as a match.
+ */
+function normalizeSearchTitle(value = '') {
+  return String(value)
+    .replace(/\s*[-–—:]\s*(?:saison|season)\s*\d+.*$/i, '')
+    .replace(/\b(?:19|20)\d{2}\b/g, ' ')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’']/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/^(?:the|a|an|le|la|les|l|un|une)\s+/, '')
+    .replace(/\s+/g, ' ');
+}
+
+function matchesRequestedTitle(candidate, { title, originalTitle, year } = {}) {
+  const candidateTitle = normalizeSearchTitle(candidate);
+  if (!candidateTitle) return false;
+
+  const expectedTitles = [...new Set([title, originalTitle]
+    .map(normalizeSearchTitle)
+    .filter(Boolean))];
+  if (!expectedTitles.includes(candidateTitle)) return false;
+
+  const candidateYears = [...String(candidate || '').matchAll(/\b((?:19|20)\d{2})\b/g)]
+    .map(match => Number(match[1]));
+  if (year && candidateYears.length && !candidateYears.includes(Number(year))) return false;
+
+  return true;
+}
+
 function normalizePlayerEntries(players = {}) {
   const labels = { vff: 'TrueFrench', vfq: 'French', vostfr: 'VOSTFR', vo: 'VO' };
   const output = [];
@@ -73,7 +109,7 @@ function normalizeEpisodeEntries(data, requestedEpisode = null) {
   return output;
 }
 
-async function searchFrenchStream({ type, title, originalTitle, episode }) {
+async function searchFrenchStream({ type, title, originalTitle, year, episode }) {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
@@ -116,8 +152,10 @@ async function searchFrenchStream({ type, title, originalTitle, episode }) {
           if (!id || seenResults.has(id)) continue;
           seenResults.add(id);
 
-          const isSeries = id.includes('-saison-') || result.title.includes(' - Saison ');
+          const isSeries = id.includes('-saison-') || /\s-\sSaison\s/i.test(result.title);
           if ((type === 'tv' && !isSeries) || (type === 'movie' && isSeries)) continue;
+          if (!matchesRequestedTitle(result.title, { title, originalTitle, year })) continue;
+
           const itemId = id.includes('newsid=') ? id.substring(id.indexOf('newsid=') + 7) : id;
 
           try {
@@ -156,6 +194,8 @@ async function searchFrenchStream({ type, title, originalTitle, episode }) {
 module.exports = {
   searchFrenchStream,
   extractFrenchStreamId,
+  normalizeSearchTitle,
+  matchesRequestedTitle,
   normalizePlayerEntries,
   normalizeEpisodeEntries,
 };
