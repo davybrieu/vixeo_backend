@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { normalizeTitle, matchesTitle } = require('./title-matcher');
 
 const DEFAULT_PORTAL_URL = 'https://fstream.info/';
 const DEFAULT_BASE_URL = 'https://fs16.lol/';
@@ -27,33 +28,11 @@ function extractFrenchStreamId(onclick = '') {
  * ignored, but additional title words are never treated as a match.
  */
 function normalizeSearchTitle(value = '') {
-  return String(value)
-    .replace(/\s*[-–—:]\s*(?:saison|season)\s*\d+.*$/i, '')
-    .replace(/\b(?:19|20)\d{2}\b/g, ' ')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[’']/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/^(?:the|a|an|le|la|les|l|un|une)\s+/, '')
-    .replace(/\s+/g, ' ');
+  return normalizeTitle(value);
 }
 
-function matchesRequestedTitle(candidate, { title, originalTitle, year } = {}) {
-  const candidateTitle = normalizeSearchTitle(candidate);
-  if (!candidateTitle) return false;
-
-  const expectedTitles = [...new Set([title, originalTitle]
-    .map(normalizeSearchTitle)
-    .filter(Boolean))];
-  if (!expectedTitles.includes(candidateTitle)) return false;
-
-  const candidateYears = [...String(candidate || '').matchAll(/\b((?:19|20)\d{2})\b/g)]
-    .map(match => Number(match[1]));
-  if (year && candidateYears.length && !candidateYears.includes(Number(year))) return false;
-
-  return true;
+function matchesRequestedTitle(candidate, options = {}) {
+  return matchesTitle(candidate, options);
 }
 
 function normalizePlayerEntries(players = {}) {
@@ -150,11 +129,11 @@ async function searchFrenchStream({ type, title, originalTitle, year, episode })
         for (const result of results) {
           const id = extractFrenchStreamId(result.id);
           if (!id || seenResults.has(id)) continue;
-          seenResults.add(id);
 
           const isSeries = id.includes('-saison-') || /\s-\sSaison\s/i.test(result.title);
           if ((type === 'tv' && !isSeries) || (type === 'movie' && isSeries)) continue;
           if (!matchesRequestedTitle(result.title, { title, originalTitle, year })) continue;
+          seenResults.add(id);
 
           const itemId = id.includes('newsid=') ? id.substring(id.indexOf('newsid=') + 7) : id;
 
