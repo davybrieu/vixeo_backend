@@ -1,6 +1,8 @@
 // Extractor registry, ported from the ONYX extractor list: each entry maps a
 // set of host names to a function that turns a player URL into a stream.
 const { extractVoe } = require('./voe');
+const { extractJkPlayer } = require('./jkplayer');
+const { extractPlusPomla } = require('./pluspomla');
 const { extractGoodstream } = require('./goodstream');
 const { extractBigWarp } = require('./bigwarp');
 const { extractDropload } = require('./dropload');
@@ -90,6 +92,8 @@ const { extractSendvid } = require('./sendvid');
 const { extractGeneric } = require('./generic');
 
 const extractors = [
+  { name: 'jkplayer', fn: extractJkPlayer, domains: ['jkanime.net'] },
+  { name: 'pluspomla', fn: extractPlusPomla, domains: ['apu.animemovil2.com'] },
   { name: 'goodstream', fn: extractGoodstream, domains: ['goodstream.one'] },
   { name: 'bigwarp', fn: extractBigWarp, domains: ['bigwarp.cc', 'bigwarp.io', 'bigwarp.pro'] },
   { name: 'dropload', fn: extractDropload, domains: ['dropload.tv', 'dropload.io', 'dropload.pro', 'dr0pstream.com'] },
