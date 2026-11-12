@@ -268,5 +268,5 @@ test('Rabbitstream decrypts its salted AES-CBC sources payload', () => {
 
 test('Megacloud key extraction removes indexed characters in order', () => {
   assert.deepEqual(extractMegacloudRealKey('0123456789abcdef', [[0, 2], [2, 2]]), { key: '0145', sources: '236789abcdef' });
-  assert.equal(getRabbitstreamToken('var t={a:"abcdefghijk",b:"mnopqrstuvwx"};'), 'abcdefghijklmnopqrstuvwx');
+  assert.equal(getRabbitstreamToken('var t={a:"abcdefghijk",b:"mnopqrstuvwx"};'), 'abcdefghijkmnopqrstuvwx');
 });
