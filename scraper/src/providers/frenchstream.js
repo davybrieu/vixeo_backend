@@ -36,6 +36,10 @@ function extractFrenchStreamId(onclick = '') {
  * by the search engine. Leading articles and a trailing release year are
  * ignored, but additional title words are never treated as a match.
  */
+function isFrenchStreamSeries(title = '') {
+  return /(?:^|\\s)(?:-|–)?\\s*(?:saison|season)\\s*\\d+\\b/i.test(String(title));
+}
+
 function normalizeSearchTitle(value = '') {
   return normalizeTitle(value);
 }
@@ -182,6 +186,7 @@ async function searchFrenchStream({ type, title, originalTitle, year, episode })
 module.exports = {
   searchFrenchStream,
   extractFrenchStreamId,
+  isFrenchStreamSeries,
   normalizeSearchTitle,
   matchesRequestedTitle,
   normalizePlayerEntries,
