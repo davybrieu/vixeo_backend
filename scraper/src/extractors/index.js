@@ -64,6 +64,7 @@ const { extractChillx } = require('./chillx');
 const { extractNuupload } = require('./nupload');
 const { extractVixSrc } = require('./vixsrc');
 const { extractVidzee } = require('./vidzee');
+const { extractRabbitstream } = require('./rabbitstream');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -147,6 +148,7 @@ const extractors = [
   { name: 'nuupload', fn: extractNuupload, domains: ['nupload.top', 'nupupload.top', 'ap.nupload.me', 'nupload.me'] },
   { name: 'vixsrc', fn: extractVixSrc, domains: ['vixsrc.to'] },
   { name: 'vidzee', fn: extractVidzee, domains: ['player.vidzee.wtf'] },
+  { name: 'rabbitstream', fn: extractRabbitstream, domains: ['rabbitstream.net', 'dokicloud.one', 'premiumembeding.cloud', 'megacloud.blog', 'videostr.net'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
