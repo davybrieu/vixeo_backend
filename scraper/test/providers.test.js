@@ -18,7 +18,9 @@ const {
 } = require('../src/providers/wiflix');
 
 test('FrenchStream extracts the identifier from the Kotlin onclick format', () => {
-  assert.equal(extractFrenchStreamId("open('/newsid=12345')"), 'newsid=12345');
+  assert.equal(extractFrenchStreamId("open('/newsid=12345')"), '12345');
+  assert.equal(extractFrenchStreamId("location.href='https://fs.example/index.php?newsid=98765&x=1'"), '98765');
+  assert.equal(extractFrenchStreamId("open('/film-en-streaming/resident-evil.html')"), '');
   assert.equal(extractFrenchStreamId(''), '');
 });
 
