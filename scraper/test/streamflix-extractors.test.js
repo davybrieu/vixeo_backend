@@ -84,6 +84,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://upzone.cc/e/abc', 'upzone'],
     ['https://upzone.to/e/abc', 'upzone'],
     ['https://vidsrc.to/embed/movie/123', 'vidsrcto'],
+    ['https://drive.google.com/file/d/abc123/view', 'googledrive'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
 });
