@@ -63,7 +63,7 @@ function decryptSegmentUrl(value, cryptoData) {
   if (token && !/^[A-Za-z0-9_-]+$/.test(token)) return value;
   if (!token) return value;
   const decoded = decodeAes(token, cryptoData);
-  return decoded && /^https?:\\/\\//i.test(decoded) ? decoded : value;
+  return decoded && (decoded.startsWith('http://') || decoded.startsWith('https://')) ? decoded : value;
 }
 
 function rewritePlaylist(body, base, token, cryptoData) {
