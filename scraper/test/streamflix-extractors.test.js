@@ -19,6 +19,7 @@ const { encryptVidrockId } = require('../src/extractors/vidrock');
 const { decodeCloseloadArray } = require('../src/extractors/closeload');
 const { evpBytesToKey, decryptChillxPayload } = require('../src/extractors/chillx');
 const { findNuuploadDirect, findNuuploadDelegated } = require('../src/extractors/nupload');
+const { patchVixsrcManifest } = require('../src/extractors/vixsrc');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -104,7 +105,8 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://chillx.top/e/abc123', 'chillx'],
     ['https://player.jeansaispasplus.homes/e/abc123', 'chillx'],
     ['https://nupload.top/e/abc123', 'nupload'],
-    ['https://nupupload.top/e/abc123', 'nupload'],
+    ['https://nupupload.top/e/abc123', 'nuupload'],
+    ['https://vixsrc.to/api/movie/123', 'vixsrc'],
     ['https://ap.nupload.me/e/abc123', 'nupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
@@ -225,4 +227,12 @@ test('Chillx decrypts OpenSSL-compatible AES-256-CBC payloads', () => {
 test('Nuupload finds direct and delegated playable URLs', () => {
   assert.equal(findNuuploadDirect('<script>jwplayer("x").setup({file:"https://cdn.example/video.m3u8"});</script>', 'https://nupload.top/watch/1'), 'https://cdn.example/video.m3u8');
   assert.equal(findNuuploadDelegated('<iframe src="https://vidplay.site/e/abc"></iframe>', 'https://nupload.top/watch/1'), 'https://vidplay.site/e/abc');
+});
+
+test('VixSrc patches relative HLS segments and selects the requested audio language', () => {
+  const input = '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="French",LANGUAGE="fr",DEFAULT=NO,AUTOSELECT=NO,URI="audio/fr.m3u8"\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",DEFAULT=YES,AUTOSELECT=YES,URI="audio/en.m3u8"\nvideo.m3u8';
+  const output = patchVixsrcManifest(input, 'https://cdn.example/master.m3u8', 'fr');
+  assert.match(output, /NAME="French".*DEFAULT=YES.*AUTOSELECT=YES.*URI="https:\/\/cdn\.example\/audio\/fr\.m3u8"/);
+  assert.match(output, /NAME="English".*DEFAULT=NO.*AUTOSELECT=NO/);
+  assert.match(output, /https:\/\/cdn\.example\/video\.m3u8/);
 });
