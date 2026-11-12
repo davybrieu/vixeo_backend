@@ -24,6 +24,7 @@ const { decryptVidzeeLink } = require('../src/extractors/vidzee');
 const { decryptRabbitstreamSource, generateRabbitstreamKey, getRabbitstreamToken, extractMegacloudRealKey } = require('../src/extractors/rabbitstream');
 const { decryptMagaSavor } = require('../src/extractors/magasavor');
 const { decodeVidxGoPayload } = require('../src/extractors/vidxgo');
+const { sanitizeVixcloudObject } = require('../src/extractors/vixcloud');
 
 test('registers the additional Streamflix extractor batch', () => {
   const cases = [
@@ -120,6 +121,7 @@ test('registers the additional Streamflix extractor batch', () => {
     ['https://videm.xyz/api.php?a=play&ref=abc&t=xyz', 'videm'],
     ['https://v.vidxgo.co/tt123456', 'vidxgo'],
     ['https://v.vidxgo.co/t/tt123456', 'vidxgo'],
+    ['https://vixcloud.co/e/abc123', 'vixcloud'],
     ['https://ap.nupload.me/e/abc123', 'nuupload'],
   ];
   for (const [url, name] of cases) assert.equal(findExtractor(url)?.name, name, url);
@@ -293,4 +295,8 @@ test('VidxGo decodes its XOR-obfuscated base64 player payload', () => {
   const encoded = Buffer.alloc(bytes.length);
   for (let i = 0; i < bytes.length; i++) encoded[i] = bytes[i] ^ Buffer.from(key)[i % key.length];
   assert.equal(decodeVidxGoPayload(encoded.toString('base64'), key), plain);
+});
+
+test('Vixcloud sanitizes JavaScript object literals into JSON', () => {
+  assert.equal(sanitizeVixcloudObject("{id: 123, filename: 'movie.mp4', token: 'abc',}"), '{"id": 123, "filename": "movie.mp4", "token": "abc"}');
 });
