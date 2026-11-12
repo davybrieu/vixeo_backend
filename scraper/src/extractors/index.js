@@ -69,6 +69,7 @@ const { extractMagaSavor } = require('./magasavor');
 const { extractVidora } = require('./vidora');
 const { extractVidem } = require('./videm');
 const { extractVidxGo } = require('./vidxgo');
+const { extractVixcloud } = require('./vixcloud');
 const { extractVidmoly } = require('./vidmoly');
 const { extractStreamWish } = require('./streamwish');
 const { extractFilemoon } = require('./filemoon');
@@ -157,6 +158,7 @@ const extractors = [
   { name: 'vidora', fn: extractVidora, domains: ['vidora.stream'] },
   { name: 'videm', fn: extractVidem, domains: ['videm.xyz'] },
   { name: 'vidxgo', fn: extractVidxGo, domains: ['v.vidxgo.co'] },
+  { name: 'vixcloud', fn: extractVixcloud, domains: ['vixcloud.co'] },
   { name: 'vidmoly', fn: extractVidmoly, domains: ['vidmoly.me', 'vidmoly.net', 'vidmoly.org', 'vidmoly.to'] },
   {
     name: 'voe',
