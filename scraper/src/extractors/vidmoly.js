@@ -24,8 +24,8 @@ async function extractVidmoly(url) {
 
   const html = normalizeText(response.text);
   const patterns = [
-    /sources\\s*:\\s*\\[\\s*\\{\\s*file\\s*:\\s*['"]([^'"]+)['"]/i,
-    /\\bfile\\s*:\\s*['"](https?:\\/\\/[^'"]+\\.m3u8[^'"]*)['"]/i,
+    /sources\s*:\s*\[\s*\{\s*file\s*:\s*['"]([^'"]+)['"]/i,
+    /\bfile\s*:\s*['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/i,
   ];
   let source = null;
   for (const pattern of patterns) {
