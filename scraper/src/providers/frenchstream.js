@@ -16,9 +16,18 @@ function normalizeBaseUrl(url) {
 }
 
 function extractFrenchStreamId(onclick = '') {
-  const slash = onclick.indexOf('/');
-  if (slash < 0) return '';
-  return onclick.slice(slash + 1).split("'")[0].trim();
+  const value = String(onclick || '');
+  // The search result may contain a relative or absolute URL. Extract the
+  // numeric DLE newsid only; passing the rest of the URL/query string as the
+  // film API id can make the provider return an unrelated/default player set.
+  const newsId = value.match(/newsid=(\\d+)/i);
+  if (newsId) return newsId[1];
+
+  const quotedPath = value.match(/['"]([^'"]+)['"]/);
+  if (!quotedPath) return '';
+  const path = quotedPath[1].trim();
+  const pathId = path.match(/(?:^|\\/)newsid-(\\d+)(?:\\D|$)/i);
+  return pathId ? pathId[1] : '';
 }
 
 /**
@@ -135,7 +144,7 @@ async function searchFrenchStream({ type, title, originalTitle, year, episode })
           if (!matchesRequestedTitle(result.title, { title, originalTitle, year })) continue;
           seenResults.add(id);
 
-          const itemId = id.includes('newsid=') ? id.substring(id.indexOf('newsid=') + 7) : id;
+          const itemId = id;
 
           try {
             const endpoint = isSeries ? 'engine/ajax/sx.php' : 'engine/ajax/film_api.php';
