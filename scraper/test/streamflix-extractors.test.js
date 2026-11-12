@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { findExtractor } = require('../src/extractors');
+const { buildDailymotionEndpoint } = require('../src/extractors/dailymotion');
 const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
@@ -299,4 +300,19 @@ test('VidxGo decodes its XOR-obfuscated base64 player payload', () => {
 
 test('Vixcloud sanitizes JavaScript object literals into JSON', () => {
   assert.equal(sanitizeVixcloudObject("{id: 123, filename: 'movie.mp4', token: 'abc',}"), '{"id": 123, "filename": "movie.mp4", "token": "abc"}');
+});
+
+test('builds a deterministic Dailymotion API endpoint and rejects invalid IDs', () => {
+  const endpoint = buildDailymotionEndpoint('x8abcde', {
+    viewId: 'abcdefghijklmnopqrs',
+    visitorId: 'visitor-token',
+    timestamp: 1762900000,
+    locale: 'fr-FR',
+  });
+  assert.equal(endpoint.origin, 'https://geo.dailymotion.com');
+  assert.equal(endpoint.pathname, '/video/x8abcde.json');
+  assert.equal(endpoint.searchParams.get('dmViewId'), 'abcdefghijklmnopqrs');
+  assert.equal(endpoint.searchParams.get('dmV1st'), 'visitor-token');
+  assert.equal(endpoint.searchParams.get('dmTs'), '1762900000');
+  assert.equal(buildDailymotionEndpoint('../invalid'), null);
 });
