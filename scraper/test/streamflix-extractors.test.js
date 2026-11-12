@@ -6,7 +6,7 @@ const { buildDailymotionEndpoint } = require('../src/extractors/dailymotion');
 const { findJkPlayerSource } = require('../src/extractors/jkplayer');
 const { findPlusPomlaAjaxUrl, findPlusPomlaSource } = require('../src/extractors/pluspomla');
 const { decodeMStreamDaySignature } = require('../src/extractors/mstreamday');
-const { decodeAes, decryptSource, rewritePlaylist, safeUrl } = require('../src/extractors/nekostream');
+const { decodeAes, decryptSource, decryptSegmentUrl, rewritePlaylist, safeUrl } = require('../src/extractors/nekostream');
 const { unpackPackedJs } = require('../src/lib/packed');
 const { findVideoUrl } = require('../src/extractors/gupload');
 const { decodeXorPayload } = require('../src/extractors/hxfile');
@@ -347,6 +347,9 @@ test('Nekostream decrypts AES-256-CBC source JSON and rejects unsafe relay URLs'
   const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]).toString('base64url');
   const cryptoData = { key, iv };
   assert.equal(decryptSource(encrypted, cryptoData), 'https://cdn.example/master.m3u8');
+  const segmentCipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const segmentToken = Buffer.concat([segmentCipher.update('https://cdn.example/segment-1.ts', 'utf8'), segmentCipher.final()]).toString('base64url');
+  assert.equal(decryptSegmentUrl('https://cdn.example/segment/' + segmentToken, cryptoData), 'https://cdn.example/segment-1.ts');
   assert.equal(decodeAes('malformed', cryptoData), null);
   assert.equal(safeUrl('http://127.0.0.1/private'), null);
   assert.equal(safeUrl('file:///etc/passwd'), null);
