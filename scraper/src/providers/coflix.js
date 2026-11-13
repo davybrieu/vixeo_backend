@@ -2,10 +2,10 @@ const { chromium } = require('playwright');
 const { matchesTitle } = require('./title-matcher');
 
 const DISCOVERY_URL = 'https://coflix.domains/';
-const FALLBACK_MIRRORS = ['https://coflix.ac', 'https://coflix.esq', 'https://coflix.cloud', 'https://coflix.red'];
+const FALLBACK_MIRRORS = ['https://coflix.ac', 'https://coflix.esq', 'https://coflix.cloud'];
 const EXCLUDED = new Set(['https://coflix.domains', 'https://coflix.blog', 'https://coflix.plus']);
 const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36';
 
 let cachedMirror = null;
 let cachedAtMs = 0;

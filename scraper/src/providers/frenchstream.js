@@ -104,7 +104,7 @@ function normalizeEpisodeEntries(data, requestedEpisode = null) {
 async function searchFrenchStream({ type, title, originalTitle, year, episode }) {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     locale: 'fr-FR',
   });
   const page = await context.newPage();

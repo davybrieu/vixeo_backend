@@ -3,7 +3,7 @@ const { matchesTitle } = require('./title-matcher');
 
 const PORTAL_URL = 'https://1jour1film-officiel.site/';
 const DEFAULT_BASE_URL = 'https://1jour1film0126b.site/';
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36';
+const USER_AGENT = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36';
 
 function normalizeUrl(url, base = DEFAULT_BASE_URL) {
   if (!url) return '';
