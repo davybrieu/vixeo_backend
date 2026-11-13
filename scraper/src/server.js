@@ -6,6 +6,7 @@ const { searchFrembed } = require('./providers/frembed');
 const { searchUnJourUnFilm } = require('./providers/1jour1film');
 const { searchCoflix } = require('./providers/coflix');
 const { searchAplouf } = require('./providers/aplouf');
+const { searchWiflix } = require('./providers/wiflix');
 const { searchOnyxTmdbFr } = require('./providers/onyx-tmdb-fr');
 const { extract, supportedDomains } = require('./extractors');
 
@@ -13,7 +14,7 @@ const PORT = process.env.SCRAPER_PORT || 3100;
 
 // The providers the app can show. Each runs on its own so the UI can report a
 // per-provider state (loading, failed, links found) instead of one global wait.
-// Aligned with Onyx TMDB FR: Coflix, Aplouf (Cloudstream), FrenchStream, Frembed, 1Jour1Film.
+// Aligned with Onyx TMDB FR: Coflix, Aplouf (Cloudstream), FrenchStream, Frembed, 1Jour1Film, Wiflix.
 const PROVIDERS = [
   { id: 'tmdb-fr', name: 'TMDB Français (Onyx)', run: searchOnyxTmdbFr },
   { id: 'coflix', name: 'Coflix', run: searchCoflix },
@@ -21,6 +22,7 @@ const PROVIDERS = [
   { id: 'frenchstream', name: 'FrenchStream', run: searchFrenchStream },
   { id: 'frembed', name: 'Frembed', run: searchFrembed },
   { id: '1jour1film', name: '1Jour1Film', run: searchUnJourUnFilm },
+  { id: 'wiflix', name: 'Wiflix', run: searchWiflix },
 ];
 
 function searchContext(payload) {
