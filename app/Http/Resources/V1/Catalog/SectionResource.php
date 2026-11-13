@@ -2,13 +2,12 @@
 
 namespace App\Http\Resources\V1\Catalog;
 
-use App\Enums\CatalogList;
 use App\Enums\MediaType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Home row. "Voir tout": GET /catalog/{type}/lists/{list}.
+ * Home row. "Voir tout": GET /catalog/{type}/lists/{list}, with the row's `type` and `list`.
  *
  * @property array<string, mixed> $resource TMDb data
  */
@@ -23,7 +22,8 @@ class SectionResource extends JsonResource
             /** Display title, in French. */
             'title' => (string) $r['title'],
             'type' => self::type($r['type']),
-            'list' => self::list($r['list']),
+            /** Name of the row for its "see all" page (`trending`, `popular`, `platform_netflix`…). */
+            'list' => (string) $r['list'],
             'items' => MediaItemResource::collection((array) $r['items']),
         ];
     }
@@ -31,10 +31,5 @@ class SectionResource extends JsonResource
     private static function type(mixed $value): MediaType
     {
         return MediaType::from((string) $value);
-    }
-
-    private static function list(mixed $value): CatalogList
-    {
-        return CatalogList::from((string) $value);
     }
 }

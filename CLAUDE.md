@@ -135,6 +135,20 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
     plus, `TitleSummaries::titles`, même cache) donne plusieurs titres d'un coup avec ces champs :
     « Ma liste » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
+  - **Rangées de l'accueil** (demande du développeur) : après les listes de TMDb
+    (`CatalogList`, `TmdbCatalog::COMBINED_HOME`) viennent les rangées de `CatalogRows` :
+    tendances du jour (juste après celles de la semaine), puis plateformes (`platform_netflix`… :
+    fournisseurs de streaming de TMDb pour `TMDB_REGION`, films et séries), chaînes
+    (`network_hbo`… : séries), licences / studios (`studio_marvel`… : films) et langues
+    (`language_fr`, `anime`…). Presque toutes passent par `discover` ; les identifiants TMDb sont
+    dans `CatalogRows` (une ligne par rangée). Leurs premières pages sont demandées ensemble
+    (`TmdbClient::getEach`), une rangée que TMDb ne donne pas ou vide est omise. Elles sont
+    **légères** (`light`) : pas de logo ni de `summary` par titre (`TitleSummaries` coûterait un
+    appel par titre), l'appli lit la fiche. `list` d'une rangée (`SectionResource`) = son nom
+    pour « Voir tout » : `GET /catalog/{type}/lists/{list}` accepte les listes de TMDb et celles
+    de `CatalogRows`. **Ne jamais renommer un `list` publié** : les applis gardent l'ordre et les
+    rangées masquées par clé (`{type}_{list}`). L'accueil d'un seul type (`?type=`, anciennes
+    applis) reste inchangé.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`

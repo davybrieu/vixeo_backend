@@ -818,9 +818,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -828,7 +825,7 @@
         "/v1/catalog/home": {
             "get": {
                 "operationId": "v1.catalog.home",
-                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`) and a textless poster, unlike other lists.",
+                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`) and a textless poster, unlike other lists.\n\nAfter TMDb's curated lists come the trends of the day, then rows by streaming platform, TV\nnetwork, studio and language (`list`: `trending_day`, `platform_netflix`, `network_hbo`,\n`studio_marvel`, `language_fr`\u2026). Their items carry no logo nor summary. Every row has its\n\"see all\" page: `GET /catalog/{type}/lists/{list}`.",
                 "summary": "Home",
                 "tags": [
                     "Catalogue",
@@ -881,9 +878,6 @@
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -926,9 +920,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -984,9 +975,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -1145,9 +1133,6 @@
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -1297,9 +1282,6 @@
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -1369,9 +1351,6 @@
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -1381,7 +1360,7 @@
         "/v1/catalog/{type}/lists/{list}": {
             "get": {
                 "operationId": "v1.catalog.list",
-                "description": "`now_playing` and `upcoming` exist for movies only, `on_the_air` and `airing_today`\nfor TV shows only.",
+                "description": "`list` is the `list` of a home row: a curated list (`trending`, `popular`, `top_rated`,\n`now_playing`, `upcoming`, `on_the_air`, `airing_today`) or another row of the home\n(`trending_day`, `platform_netflix`, `network_hbo`, `studio_marvel`, `language_fr`\u2026).\n`now_playing` and `upcoming` exist for movies only, `on_the_air` and `airing_today`\nfor TV shows only; 404 for a list that does not exist for the type.",
                 "summary": "List (\"Voir tout\" of a home row)",
                 "tags": [
                     "Catalogue",
@@ -1401,9 +1380,8 @@
                         "name": "list",
                         "in": "path",
                         "required": true,
-                        "description": "The list ID",
                         "schema": {
-                            "$ref": "#/components/schemas/CatalogList"
+                            "type": "string"
                         }
                     },
                     {
@@ -1469,9 +1447,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -1603,9 +1578,6 @@
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -1657,9 +1629,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -1709,9 +1678,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -1769,9 +1735,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -1821,9 +1784,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -2917,6 +2877,319 @@
                 }
             }
         },
+        "/v1/catalog/movie/{id}/segments": {
+            "get": {
+                "operationId": "v1.catalog.movie.segments",
+                "description": "From TheIntroDB. The profile's `skip_*` settings tell whether the player skips them by\nitself or shows a \"Passer\" button.",
+                "summary": "Moments to skip in a movie",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SkipSegmentsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SkipSegmentsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/segments": {
+            "get": {
+                "operationId": "v1.catalog.episode.segments",
+                "summary": "Moments to skip in a TV episode",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SkipSegmentsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SkipSegmentsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/catalog/movie/{id}/subtitles": {
+            "get": {
+                "operationId": "v1.catalog.movie.subtitles",
+                "description": "From OpenSubtitles, preferred language first, then the most downloaded (30 max).",
+                "summary": "Subtitles of a movie",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "languages",
+                        "in": "query",
+                        "description": "Comma-separated languages, preferred first (\"fr,en\"). Default: the profile's subtitle language, else French.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `SubtitleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubtitleResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/subtitles": {
+            "get": {
+                "operationId": "v1.catalog.episode.subtitles",
+                "summary": "Subtitles of a TV episode",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "languages",
+                        "in": "query",
+                        "description": "Comma-separated languages, preferred first (\"fr,en\"). Default: the profile's subtitle language, else French.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `SubtitleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubtitleResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/subtitles/{file}": {
+            "get": {
+                "operationId": "v1.catalog.subtitles.file",
+                "description": "The text of a subtitle found with the subtitle search, as `text/vtt` (UTF-8). Each file is\nfetched from OpenSubtitles once, then served from our cache.",
+                "summary": "Subtitle file (WebVTT)",
+                "tags": [
+                    "Lecture",
+                    "Playback"
+                ],
+                "parameters": [
+                    {
+                        "name": "file",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/vtt; charset=utf-8": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "private, max-age=86400"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/catalog/streams/dead": {
+            "post": {
+                "operationId": "v1.catalog.streams.dead",
+                "description": "No content and no profile: a dead link is dead for everyone. Kept 24 h.",
+                "summary": "Report a stream as dead",
+                "tags": [
+                    "Lecture",
+                    "DeadStream"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeadStreamRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Le flux a \u00e9t\u00e9 signal\u00e9 comme mort."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/profiles/{profile}/streams": {
             "get": {
                 "operationId": "v1.profiles.streams.index",
@@ -3112,334 +3385,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/v1/catalog/movie/{id}/segments": {
-            "get": {
-                "operationId": "v1.catalog.movie.segments",
-                "description": "From TheIntroDB. The profile's `skip_*` settings tell whether the player skips them by\nitself or shows a \"Passer\" button.",
-                "summary": "Moments to skip in a movie",
-                "tags": [
-                    "Lecture",
-                    "Playback"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`SkipSegmentsResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/SkipSegmentsResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/segments": {
-            "get": {
-                "operationId": "v1.catalog.episode.segments",
-                "summary": "Moments to skip in a TV episode",
-                "tags": [
-                    "Lecture",
-                    "Playback"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "season",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "episode",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`SkipSegmentsResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/SkipSegmentsResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/catalog/movie/{id}/subtitles": {
-            "get": {
-                "operationId": "v1.catalog.movie.subtitles",
-                "description": "From OpenSubtitles, preferred language first, then the most downloaded (30 max).",
-                "summary": "Subtitles of a movie",
-                "tags": [
-                    "Lecture",
-                    "Playback"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "languages",
-                        "in": "query",
-                        "description": "Comma-separated languages, preferred first (\"fr,en\"). Default: the profile's subtitle language, else French.",
-                        "schema": {
-                            "type": "string",
-                            "maxLength": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Array of `SubtitleResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/SubtitleResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/subtitles": {
-            "get": {
-                "operationId": "v1.catalog.episode.subtitles",
-                "summary": "Subtitles of a TV episode",
-                "tags": [
-                    "Lecture",
-                    "Playback"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "season",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "episode",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "languages",
-                        "in": "query",
-                        "description": "Comma-separated languages, preferred first (\"fr,en\"). Default: the profile's subtitle language, else French.",
-                        "schema": {
-                            "type": "string",
-                            "maxLength": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Array of `SubtitleResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/SubtitleResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/v1/catalog/subtitles/{file}": {
-            "get": {
-                "operationId": "v1.catalog.subtitles.file",
-                "description": "The text of a subtitle found with the subtitle search, as `text/vtt` (UTF-8). Each file is\nfetched from OpenSubtitles once, then served from our cache.",
-                "summary": "Subtitle file (WebVTT)",
-                "tags": [
-                    "Lecture",
-                    "Playback"
-                ],
-                "parameters": [
-                    {
-                        "name": "file",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "text/vtt; charset=utf-8": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "headers": {
-                            "Cache-Control": {
-                                "schema": {
-                                    "type": "string",
-                                    "const": "private, max-age=86400"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/catalog/streams/dead": {
-            "post": {
-                "operationId": "v1.catalog.streams.dead",
-                "description": "No content and no profile: a dead link is dead for everyone. Kept 24 h.",
-                "summary": "Report a stream as dead",
-                "tags": [
-                    "Lecture",
-                    "DeadStream"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/DeadStreamRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Le flux a \u00e9t\u00e9 signal\u00e9 comme mort."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -3996,9 +3941,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4060,9 +4002,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -4144,9 +4083,6 @@
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -4208,9 +4144,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -5025,9 +4958,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -5086,9 +5016,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -5163,9 +5090,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -5258,9 +5182,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -5323,9 +5244,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -5464,20 +5382,6 @@
                     "profile_url"
                 ],
                 "title": "CastResource"
-            },
-            "CatalogList": {
-                "type": "string",
-                "description": "Curated TMDb lists, used as home rows and \"see all\" pages.\n",
-                "enum": [
-                    "trending",
-                    "popular",
-                    "top_rated",
-                    "now_playing",
-                    "upcoming",
-                    "on_the_air",
-                    "airing_today"
-                ],
-                "title": "CatalogList"
             },
             "CrewResource": {
                 "type": "object",
@@ -7250,7 +7154,8 @@
                         "$ref": "#/components/schemas/MediaType"
                     },
                     "list": {
-                        "$ref": "#/components/schemas/CatalogList"
+                        "type": "string",
+                        "description": "Name of the row for its \"see all\" page (`trending`, `popular`, `platform_netflix`\u2026)."
                     },
                     "items": {
                         "type": "array",

@@ -102,6 +102,63 @@ class TmdbClient
     }
 
     /**
+     * Several requests at once, each with its own query (cache first, missing ones fetched
+     * concurrently, no retry), under the same cache keys as `get`. A request that fails maps to
+     * null.
+     *
+     * @param  array<string, array{string, array<string, scalar>}>  $requests  name => [path, query]
+     * @return array<string, array<string, mixed>|null>
+     */
+    public function getEach(array $requests, string $ttl = 'details', int $concurrency = 10): array
+    {
+        $keys = [];
+        $queries = [];
+        $results = [];
+
+        foreach ($requests as $name => [$path, $query]) {
+            $query = ['language' => config('services.tmdb.language')] + $query;
+            ksort($query);
+            $queries[$name] = $query;
+            $keys[$name] = 'tmdb:'.sha1($path.'?'.http_build_query($query));
+            $results[$name] = $this->cache->get($keys[$name]);
+        }
+
+        $missing = array_keys(array_filter($results, fn ($value) => $value === null));
+
+        if ($missing === []) {
+            return $results;
+        }
+
+        $this->ensureConfigured();
+
+        try {
+            $responses = Http::pool(fn (Pool $pool) => array_map(
+                fn (string $name) => $this->configure($pool->as($name))
+                    ->get(ltrim($requests[$name][0], '/'), $this->withApiKey($queries[$name])),
+                $missing,
+            ), $concurrency);
+        } catch (ConnectionException) {
+            $responses = [];
+        }
+
+        foreach ($missing as $name) {
+            $response = $responses[$name] ?? null;
+
+            if ($response instanceof Response && $response->successful()) {
+                $results[$name] = $response->json() ?? [];
+                $this->cache->put($keys[$name], $results[$name], (int) config("services.tmdb.ttl.{$ttl}", 3600));
+            } else {
+                Log::warning('TMDb batch request failed', [
+                    'path' => $requests[$name][0],
+                    'status' => $response instanceof Response ? $response->status() : null,
+                ]);
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * One uncached call, for a person's TMDb account (session_id in `$query`, as TMDb v3 wants).
      * The caller reads the status: nothing is thrown except when TMDb can't be reached. Only
      * the path is ever logged, never the query (it holds the session).

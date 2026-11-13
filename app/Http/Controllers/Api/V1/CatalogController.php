@@ -14,6 +14,7 @@ use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
 use App\Services\Tmdb\AgeGate;
+use App\Services\Tmdb\CatalogRows;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
@@ -53,16 +54,30 @@ class CatalogController extends Controller
      * Featured carousel (titles with a backdrop) and themed rows.
      *
      * Items carry their title logo (`logo_url`) and a textless poster, unlike other lists.
+     *
+     * After TMDb's curated lists come the trends of the day, then rows by streaming platform, TV
+     * network, studio and language (`list`: `trending_day`, `platform_netflix`, `network_hbo`,
+     * `studio_marvel`, `language_fr`…). Their items carry no logo nor summary. Every row has its
+     * "see all" page: `GET /catalog/{type}/lists/{list}`.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function home(CatalogHomeRequest $request): JsonResponse
     {
         $home = $this->catalog->home($request->enum('type', MediaType::class));
 
-        $filtered = $this->summaries->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
             'featured' => $home['featured'],
             ...array_map(fn (array $section) => $section['items'], $home['sections']),
-        ]));
+        ]);
+
+        // Logo and summary for the carousel and the curated rows only: the many other rows
+        // (platforms, networks, studios, languages) are `light`, the app reads the title page.
+        $rich = array_filter(
+            $filtered,
+            fn (int|string $index) => $index === 'featured' || empty($home['sections'][$index]['light']),
+            ARRAY_FILTER_USE_KEY,
+        );
+        $filtered = $this->summaries->addMany($rich) + $filtered;
 
         $home['featured'] = $filtered['featured'];
         foreach ($home['sections'] as $index => $section) {
@@ -107,15 +122,26 @@ class CatalogController extends Controller
     /**
      * List ("Voir tout" of a home row).
      *
+     * `list` is the `list` of a home row: a curated list (`trending`, `popular`, `top_rated`,
+     * `now_playing`, `upcoming`, `on_the_air`, `airing_today`) or another row of the home
+     * (`trending_day`, `platform_netflix`, `network_hbo`, `studio_marvel`, `language_fr`…).
      * `now_playing` and `upcoming` exist for movies only, `on_the_air` and `airing_today`
-     * for TV shows only.
+     * for TV shows only; 404 for a list that does not exist for the type.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
-    public function list(CatalogPageRequest $request, MediaType $type, CatalogList $list): JsonResponse
+    public function list(CatalogPageRequest $request, MediaType $type, string $list): JsonResponse
     {
-        abort_unless($list->supports($type), 404);
+        $curated = CatalogList::tryFrom($list);
 
-        $page = $this->catalog->list($type, $list, $request->page());
+        if ($curated?->supports($type)) {
+            $page = $this->catalog->list($type, $curated, $request->page());
+        } else {
+            $row = CatalogRows::find($type, $list);
+            abort_if($row === null, 404);
+
+            $page = $this->catalog->row($row, $request->page());
+        }
+
         $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
 
         return response()->json([

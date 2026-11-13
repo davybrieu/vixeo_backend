@@ -62,6 +62,10 @@ class TmdbCatalog
             }
         }
 
+        if ($type === null) {
+            $sections = $this->withExtraRows($sections);
+        }
+
         $trending = $type
             ? ($sections[0]['items'] ?? [])
             : $this->items($this->tmdb->get('trending/all/week', [], 'lists')['results'] ?? []);
@@ -80,6 +84,67 @@ class TmdbCatalog
         $query = ['page' => $page, 'region' => config('services.tmdb.region')];
 
         return $this->page($this->tmdb->get($list->path($type), $query, 'lists'), $type->value);
+    }
+
+    /**
+     * A page of a home row that is not a curated list (platform, network, studio, language…).
+     *
+     * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
+     */
+    public function row(CatalogRow $row, int $page = 1): array
+    {
+        return $this->page($this->tmdb->get($row->path, ['page' => $page] + $row->query, 'lists'), $row->type->value);
+    }
+
+    /**
+     * Adds the rows of CatalogRows to the home: the trends of the day right after the trends of
+     * the week, the others at the end. Their first pages are asked together; a row TMDb can't
+     * give, or an empty one, is left out. They are `light`: their items carry no logo nor summary
+     * (one TMDb call per title would be too many for this number of rows).
+     *
+     * @param  list<array<string, mixed>>  $sections
+     * @return list<array<string, mixed>>
+     */
+    private function withExtraRows(array $sections): array
+    {
+        $rows = [];
+        foreach (CatalogRows::all() as $row) {
+            $rows[$row->key()] = $row;
+        }
+
+        $pages = $this->tmdb->getEach(
+            array_map(fn (CatalogRow $row) => [$row->path, ['page' => 1] + $row->query], $rows),
+            'lists',
+        );
+
+        $trends = [];
+        $others = [];
+        foreach ($rows as $key => $row) {
+            $items = $this->items($pages[$key]['results'] ?? [], $row->type->value);
+
+            if ($items === []) {
+                continue;
+            }
+
+            $section = [
+                'key' => $key,
+                'title' => $row->title,
+                'type' => $row->type->value,
+                'list' => $row->list,
+                'items' => $items,
+                'light' => true,
+            ];
+
+            if ($row->list === 'trending_day') {
+                $trends[] = $section;
+            } else {
+                $others[] = $section;
+            }
+        }
+
+        $afterTrending = count(array_filter($sections, fn (array $section) => $section['list'] === 'trending'));
+
+        return [...array_slice($sections, 0, $afterTrending), ...$trends, ...array_slice($sections, $afterTrending), ...$others];
     }
 
     /** @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>} */

@@ -39,6 +39,9 @@ it('builds the mixed home with featured items and French row titles', function (
         'api.themoviedb.org/3/movie/now_playing*' => Http::response(Tmdb::page([])),
         'api.themoviedb.org/3/movie/top_rated*' => Http::response(Tmdb::page([Tmdb::movie(12)])),
         'api.themoviedb.org/3/tv/top_rated*' => Http::response(Tmdb::page([Tmdb::show(22)])),
+        // The other rows (trends of the day, platforms…) have their own test: none here.
+        'api.themoviedb.org/3/trending/*/day*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/discover/*' => Http::response(Tmdb::page([])),
     ]);
 
     $response = $this->getJson('/api/v1/catalog/home')->assertOk();
@@ -346,3 +349,100 @@ it('can use a v3 API key instead of a token', function () {
 
     Http::assertSent(fn (Request $request) => $request['api_key'] === 'v3-key' && ! $request->hasHeader('Authorization'));
 });
+
+it('adds the trends of the day, platforms, networks, studios and languages to the mixed home', function () {
+    Http::fake([
+        'api.themoviedb.org/3/trending/all/week*' => Http::response(Tmdb::page([Tmdb::movie(1, ['media_type' => 'movie'])])),
+        'api.themoviedb.org/3/trending/movie/week*' => Http::response(Tmdb::page([Tmdb::movie(10)])),
+        'api.themoviedb.org/3/trending/tv/week*' => Http::response(Tmdb::page([Tmdb::show(20)])),
+        'api.themoviedb.org/3/trending/movie/day*' => Http::response(Tmdb::page([Tmdb::movie(30)])),
+        'api.themoviedb.org/3/trending/tv/day*' => Http::response(Tmdb::page([Tmdb::show(40)])),
+        'api.themoviedb.org/3/movie/popular*' => Http::response(Tmdb::page([Tmdb::movie(11)])),
+        'api.themoviedb.org/3/tv/popular*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/movie/now_playing*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/movie/top_rated*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/tv/top_rated*' => Http::response(Tmdb::page([])),
+        // One title per discover row, except Canal+ (the platform), which TMDb fails to give.
+        'api.themoviedb.org/3/discover/*' => fn (Request $request) => ($request['with_watch_providers'] ?? null) == 381
+            ? Http::response([], 500)
+            : Http::response(Tmdb::page([str_contains($request->url(), '/discover/tv') ? Tmdb::show(50) : Tmdb::movie(60)])),
+        // Logo and summary of the carousel and of the curated rows.
+        'api.themoviedb.org/3/movie/*' => Http::response(Tmdb::movieDetails()),
+        'api.themoviedb.org/3/tv/*' => Http::response(Tmdb::showDetails()),
+    ]);
+
+    $response = $this->getJson('/api/v1/catalog/home')->assertOk();
+    $sections = collect($response->json('sections'))->keyBy('key');
+
+    // The trends of the day come right after the trends of the week; the other rows at the end.
+    expect(array_slice($response->json('sections.*.key'), 0, 6))->toBe([
+        'movie_trending', 'tv_trending', 'movie_trending_day', 'tv_trending_day', 'movie_popular', 'movie_platform_netflix',
+    ])->and($sections['movie_trending_day']['title'])->toBe('Films tendance du jour')
+        ->and($sections['tv_trending_day']['list'])->toBe('trending_day')
+        ->and($sections['tv_platform_netflix'])->toMatchArray(['title' => 'Séries Netflix', 'type' => 'tv', 'list' => 'platform_netflix'])
+        ->and($sections['movie_platform_prime_video']['title'])->toBe('Films Prime Video')
+        ->and($sections['tv_network_hbo']['title'])->toBe('Séries HBO')
+        ->and($sections['movie_studio_marvel']['title'])->toBe('Films Marvel')
+        ->and($sections['movie_language_fr']['title'])->toBe('Films français')
+        ->and($sections['tv_language_ko']['title'])->toBe('Séries coréennes')
+        ->and($sections['tv_anime']['title'])->toBe('Animation japonaise')
+        ->and($sections['tv_anime']['items'][0])->toMatchArray(['id' => 50, 'type' => 'tv'])
+        // A row TMDb could not give is left out: the home still answers.
+        ->and($sections->has('movie_platform_canal_plus'))->toBeFalse()
+        ->and($sections->has('tv_platform_canal_plus'))->toBeFalse();
+
+    // Only the curated rows cost a title lookup (logo, summary): the other rows are light.
+    expect($sections['movie_trending']['items'][0]['summary'])->not->toBeNull()
+        ->and($sections['movie_platform_netflix']['items'][0]['summary'])->toBeNull()
+        ->and($sections['movie_platform_netflix']['items'][0]['logo_url'])->toBeNull();
+    $lookups = collect(Http::recorded())->filter(fn ($pair) => preg_match('#/3/(movie|tv)/\d+\?#', $pair[0]->url()));
+    expect($lookups->map(fn ($pair) => parse_url($pair[0]->url(), PHP_URL_PATH))->unique()->sort()->values()->all())
+        ->toBe(['/3/movie/1', '/3/movie/10', '/3/movie/11', '/3/tv/20']);
+
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/discover/tv')
+        && ($request['with_watch_providers'] ?? null) == 8 && $request['watch_region'] === 'FR'
+        && $request['sort_by'] === 'popularity.desc' && $request['include_adult'] === 'false');
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/discover/tv') && ($request['with_networks'] ?? null) == 49);
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/discover/movie') && ($request['with_companies'] ?? null) === '420');
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/discover/tv')
+        && ($request['with_original_language'] ?? null) === 'ja' && ($request['with_genres'] ?? null) == 16);
+});
+
+it('keeps the home of one type as it was', function () {
+    Http::fake([
+        'api.themoviedb.org/3/trending/movie/week*' => Http::response(Tmdb::page([Tmdb::movie(10)])),
+        'api.themoviedb.org/3/movie/popular*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/movie/top_rated*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/movie/now_playing*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/movie/upcoming*' => Http::response(Tmdb::page([])),
+        'api.themoviedb.org/3/movie/10*' => Http::response(Tmdb::movieDetails()),
+    ]);
+
+    expect($this->getJson('/api/v1/catalog/home?type=movie')->assertOk()->json('sections.*.key'))->toBe(['movie_trending']);
+    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/discover/') || str_contains($request->url(), '/day'));
+});
+
+it('lists the "see all" page of a home row that is not a curated list', function () {
+    Http::fake([
+        'api.themoviedb.org/3/discover/tv*' => Http::response(Tmdb::page([Tmdb::show(1)], totalPages: 900, page: 3)),
+        'api.themoviedb.org/3/trending/movie/day*' => Http::response(Tmdb::page([Tmdb::movie(2)])),
+    ]);
+
+    $this->getJson('/api/v1/catalog/tv/lists/network_hbo?page=3')
+        ->assertOk()
+        ->assertJsonPath('data.0.type', 'tv')
+        ->assertJsonPath('meta.page', 3)
+        ->assertJsonPath('meta.total_pages', 500);
+    Http::assertSent(fn (Request $request) => $request['page'] == 3 && ($request['with_networks'] ?? null) == 49);
+
+    $this->getJson('/api/v1/catalog/movie/lists/trending_day')->assertOk()->assertJsonPath('data.0.id', 2);
+});
+
+it('rejects rows that do not exist for a type', function (string $url) {
+    $this->getJson($url)->assertNotFound()->assertExactJson(['message' => 'Ressource introuvable.']);
+})->with([
+    // Networks are for TV shows, studios for movies.
+    '/api/v1/catalog/movie/lists/network_hbo',
+    '/api/v1/catalog/tv/lists/studio_marvel',
+    '/api/v1/catalog/tv/lists/platform_nope',
+]);
