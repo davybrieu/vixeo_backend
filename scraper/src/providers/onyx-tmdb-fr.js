@@ -3,12 +3,13 @@ const { searchFrembed } = require('./frembed');
 const { searchUnJourUnFilm } = require('./1jour1film');
 const { searchCoflix } = require('./coflix');
 const { searchAplouf } = require('./aplouf');
+const { searchWiflix } = require('./wiflix');
 
 const MAZQUEST_BASE_URL = 'https://embed.maz.quest';
 
 /**
  * Source providers used by Onyx TmdbProvider.getServers (language fr):
- * Coflix, FrenchStream, 1Jour1Film, Frembed, Aplouf (+ Cloudstream backup inside Aplouf).
+ * Coflix, FrenchStream, 1Jour1Film, Frembed, Aplouf, Wiflix (+ Cloudstream backup inside Aplouf).
  */
 const SOURCE_PROVIDERS = [
   { id: 'coflix', run: searchCoflix },
@@ -16,6 +17,7 @@ const SOURCE_PROVIDERS = [
   { id: '1jour1film', run: searchUnJourUnFilm },
   { id: 'frembed', run: searchFrembed },
   { id: 'aplouf', run: searchAplouf },
+  { id: 'wiflix', run: searchWiflix },
   { id: 'mazquest', run: searchMazQuest },
 ];
 

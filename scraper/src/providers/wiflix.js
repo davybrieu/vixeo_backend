@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const { matchesTitle } = require('./title-matcher');
 
 const PORTAL_URL = 'https://ww1.wiflix-adresses.fun/';
-const DEFAULT_BASE_URL = 'https://flemmix.team/';
+const DEFAULT_BASE_URL = 'https://flemmix.studio/';
 
 function normalizeBaseUrl(url) {
   if (!url) return null;
