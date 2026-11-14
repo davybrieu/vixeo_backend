@@ -138,7 +138,7 @@ class SocialProfileController extends Controller
 
     private function activeProfile(Request $request): Profile
     {
-        $profile = $request->attributes->get('active_profile');
+        $profile = ResolveProfile::profile($request);
         abort_unless($profile instanceof Profile, 422, 'Sélectionnez un profil.');
         abort_if($profile->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
         return $profile;
