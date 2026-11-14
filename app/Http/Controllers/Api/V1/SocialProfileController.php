@@ -33,7 +33,7 @@ class SocialProfileController extends Controller
     public function show(Request $request, string $username): JsonResponse
     {
         $profile = $this->publicProfile($username);
-        $viewer = $request->attributes->get('active_profile');
+        $viewer = ResolveProfile::profile($request);
         return response()->json(['data' => [
             ...$this->summary($profile),
             'bio' => $profile->bio,
