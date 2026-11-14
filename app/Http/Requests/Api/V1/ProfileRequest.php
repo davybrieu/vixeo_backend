@@ -88,7 +88,11 @@ class ProfileRequest extends FormRequest
     /** Profile attributes to save (PINs used for authorization are not stored). */
     public function profileData(): array
     {
-        return $this->safe()->except(['parental_pin', 'current_pin']);
+        $data = $this->safe()->except(['parental_pin', 'current_pin']);
+        if (isset($data['username'])) {
+            $data['username'] = mb_strtolower($data['username']);
+        }
+        return $data;
     }
 
     private function authorizeSensitiveChanges(): void
