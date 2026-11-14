@@ -35,7 +35,11 @@ class AuthController extends Controller
         $user = DB::transaction(function () use ($request, $avatars) {
             $user = User::create($request->safe()->only(['name', 'email', 'password']));
             // The first profile gets an avatar of the catalog, at random.
-            $user->profiles()->create([\n                'name' => $user->name,\n                'username' => $request->validated('username') ?? $this->uniqueUsername($user->name),\n                'avatar' => $avatars->randomId(),\n            ]);
+            $user->profiles()->create([
+                'name' => $user->name,
+                'username' => $request->validated('username') ?? $this->uniqueUsername($user->name),
+                'avatar' => $avatars->randomId(),
+            ]);
 
             return $user;
         });
