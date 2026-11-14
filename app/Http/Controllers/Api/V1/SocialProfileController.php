@@ -147,7 +147,15 @@ class SocialProfileController extends Controller
     private function publicProfile(string $username): Profile
     {
         return Profile::query()->where('username', mb_strtolower(ltrim($username, '@')))
-            ->where('is_kid', false)->withCount(['followers', 'following'])->firstOrFail();
+            ->where('is_kid', false)
+            ->withCount([
+                'followers',
+                'following',
+                'tmdbRatings as reviews_count',
+                'items as watched_count' => fn ($query) => $query->where('is_watched', true)->whereIn('type', ['movie', 'tv']),
+                'items as list_count' => fn ($query) => $query->where('is_favorite', true)->whereIn('type', ['movie', 'tv']),
+            ])
+            ->firstOrFail();
     }
 
     private function summary(Profile $profile): array
@@ -157,6 +165,9 @@ class SocialProfileController extends Controller
             'avatar' => $profile->avatar, 'bio' => $profile->bio,
             'followers_count' => $profile->followers_count ?? $profile->followers()->count(),
             'following_count' => $profile->following_count ?? $profile->following()->count(),
+            'reviews_count' => $profile->reviews_count ?? $profile->tmdbRatings()->count(),
+            'watched_count' => $profile->watched_count ?? $profile->items()->where('is_watched', true)->whereIn('type', ['movie', 'tv'])->count(),
+            'list_count' => $profile->list_count ?? $profile->items()->where('is_favorite', true)->whereIn('type', ['movie', 'tv'])->count(),
         ];
     }
 }
