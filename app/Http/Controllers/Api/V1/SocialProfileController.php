@@ -103,7 +103,7 @@ class SocialProfileController extends Controller
         ]]);
     }
 
-    public function list(string $username): JsonResponse
+    public function favoritesList(string $username): JsonResponse
     {
         $profile = $this->publicProfile($username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
