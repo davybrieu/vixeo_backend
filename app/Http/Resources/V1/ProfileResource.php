@@ -13,7 +13,7 @@ class ProfileResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'name' => $this->name,\n            'username' => $this->username,\n            'bio' => $this->bio,
             /** Avatar id (GET /avatars), null = initial letter. */
             'avatar' => $this->avatar,
             'poster_format' => $this->poster_format,
