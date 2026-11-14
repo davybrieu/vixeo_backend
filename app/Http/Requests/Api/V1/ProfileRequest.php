@@ -26,6 +26,11 @@ class ProfileRequest extends FormRequest
                     ->where('user_id', $this->user()->id)
                     ->ignore($profile?->id),
             ],
+            'username' => [
+                $required, 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
+                Rule::unique('profiles', 'username')->ignore($profile?->id),
+            ],
+            'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
             /** Avatar id from GET /avatars. Null = initial letter. */
             'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
             /** How titles are drawn in rows and grids. Default `portrait`. */
