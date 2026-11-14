@@ -165,9 +165,9 @@ class SocialProfileController extends Controller
             'avatar' => $profile->avatar, 'bio' => $profile->bio,
             'followers_count' => $profile->followers_count ?? $profile->followers()->count(),
             'following_count' => $profile->following_count ?? $profile->following()->count(),
-            'reviews_count' => $profile->reviews_count ?? $profile->tmdbRatings()->count(),
-            'watched_count' => $profile->watched_count ?? $profile->items()->where('is_watched', true)->whereIn('type', ['movie', 'tv'])->count(),
-            'list_count' => $profile->list_count ?? $profile->items()->where('is_favorite', true)->whereIn('type', ['movie', 'tv'])->count(),
+            'reviews_count' => $profile->reviews_count ?? 0,
+            'watched_count' => $profile->watched_count ?? 0,
+            'list_count' => $profile->list_count ?? 0,
         ];
     }
 }
