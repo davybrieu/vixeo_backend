@@ -7,12 +7,14 @@ use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Resources\V1\UserResource;
 use App\Models\User;
+use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -33,7 +35,7 @@ class AuthController extends Controller
         $user = DB::transaction(function () use ($request, $avatars) {
             $user = User::create($request->safe()->only(['name', 'email', 'password']));
             // The first profile gets an avatar of the catalog, at random.
-            $user->profiles()->create([\n                'name' => $user->name,\n                'username' => $request->validated('username'),\n                'avatar' => $avatars->randomId(),\n            ]);
+            $user->profiles()->create([\n                'name' => $user->name,\n                'username' => $request->validated('username') ?? $this->uniqueUsername($user->name),\n                'avatar' => $avatars->randomId(),\n            ]);
 
             return $user;
         });
@@ -75,6 +77,16 @@ class AuthController extends Controller
     public function me(Request $request): UserResource
     {
         return new UserResource($request->user());
+    }
+
+    private function uniqueUsername(string $name): string
+    {
+        $base = Str::limit(Str::lower(Str::slug($name, '_')) ?: 'membre', 22, '');
+        do {
+            $username = $base.'_'.Str::lower(Str::random(6));
+        } while (Profile::query()->where('username', $username)->exists());
+
+        return $username;
     }
 
     private function tokenResponse(User $user, string $deviceName, int $status = Response::HTTP_OK): JsonResponse
