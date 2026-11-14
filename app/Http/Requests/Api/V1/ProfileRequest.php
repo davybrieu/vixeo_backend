@@ -14,6 +14,13 @@ use Illuminate\Validation\Validator;
 
 class ProfileRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('username')) {
+            $this->merge(['username' => mb_strtolower((string) $this->input('username'))]);
+        }
+    }
+
     public function rules(): array
     {
         $profile = $this->route('profile');
