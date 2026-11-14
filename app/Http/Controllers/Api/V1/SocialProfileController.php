@@ -9,14 +9,12 @@ use App\Models\TmdbRating;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class SocialProfileController extends Controller
 {
     public function search(Request $request): JsonResponse
     {
-        $query = trim((string) $request->query('query', ''));
+        $query = ltrim(trim((string) $request->query('query', '')), '@');
         abort_if(mb_strlen($query) < 2, 422, 'Saisissez au moins deux caractères.');
 
         $profiles = Profile::query()
@@ -96,7 +94,11 @@ class SocialProfileController extends Controller
     {
         $profile = $this->publicProfile($username);
         $items = TmdbRating::query()->where('profile_id', $profile->id)->latest('rated_at')->paginate(20);
-        return response()->json(['data' => $items->items(), 'meta' => [
+        return response()->json(['data' => collect($items->items())->map(fn (TmdbRating $rating) => [
+            'type' => $rating->type, 'id' => $rating->tmdb_id, 'title' => $rating->title,
+            'value' => $rating->value, 'comment' => $rating->comment, 'rated_at' => $rating->rated_at,
+            'poster_path' => $rating->poster_path,
+        ]), 'meta' => [
             'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
         ]]);
     }
@@ -106,7 +108,10 @@ class SocialProfileController extends Controller
         $profile = $this->publicProfile($username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_favorite', true)->latest('favorited_at')->paginate(30);
-        return response()->json(['data' => $items->items(), 'meta' => [
+        return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
+            'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
+            'year' => $item->year, 'poster_url' => $item->poster_url,
+        ]), 'meta' => [
             'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
         ]]);
     }
