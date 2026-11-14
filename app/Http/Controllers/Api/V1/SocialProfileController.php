@@ -14,6 +14,7 @@ class SocialProfileController extends Controller
 {
     public function search(Request $request): JsonResponse
     {
+        $this->assertAdultViewer($request);
         $query = ltrim(trim((string) $request->query('query', '')), '@');
         abort_if(mb_strlen($query) < 2, 422, 'Saisissez au moins deux caractères.');
 
@@ -31,6 +32,7 @@ class SocialProfileController extends Controller
 
     public function show(Request $request, string $username): JsonResponse
     {
+        $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $viewer = ResolveProfile::profile($request);
         return response()->json(['data' => [
@@ -90,8 +92,9 @@ class SocialProfileController extends Controller
         return $this->connections($request, $username, 'following');
     }
 
-    public function reviews(string $username): JsonResponse
+    public function reviews(Request $request, string $username): JsonResponse
     {
+        $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $items = TmdbRating::query()->where('profile_id', $profile->id)->latest('rated_at')->paginate(20);
         return response()->json(['data' => collect($items->items())->map(fn (TmdbRating $rating) => [
@@ -103,8 +106,9 @@ class SocialProfileController extends Controller
         ]]);
     }
 
-    public function favoritesList(string $username): JsonResponse
+    public function favoritesList(Request $request, string $username): JsonResponse
     {
+        $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_favorite', true)->latest('favorited_at')->paginate(30);
@@ -118,11 +122,18 @@ class SocialProfileController extends Controller
 
     private function connections(Request $request, string $username, string $direction): JsonResponse
     {
+        $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $relation = $direction === 'followers' ? $profile->followers() : $profile->following();
         $items = $relation->where('is_kid', false)->withCount(['followers', 'following'])->paginate(30);
         return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->summary($p)),
             'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage()]]);
+    }
+
+    private function assertAdultViewer(Request $request): void
+    {
+        $viewer = ResolveProfile::profile($request);
+        abort_if($viewer?->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
     }
 
     private function activeProfile(Request $request): Profile
