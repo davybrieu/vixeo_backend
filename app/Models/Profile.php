@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Hash;
  * positions will be attached to a profile, not to the account.
  */
 #[Fillable([
-    'name', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
+    'name', 'username', 'bio', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
 ])]
 #[Hidden(['pin', 'sync_revision'])]
@@ -72,6 +72,18 @@ class Profile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Profiles this profile follows. */
+    public function following()
+    {
+        return $this->belongsToMany(self::class, 'profile_follows', 'follower_profile_id', 'followed_profile_id')->withTimestamps();
+    }
+
+    /** Profiles following this profile. */
+    public function followers()
+    {
+        return $this->belongsToMany(self::class, 'profile_follows', 'followed_profile_id', 'follower_profile_id')->withTimestamps();
     }
 
     /** @return HasMany<ProfileItem, $this> */
