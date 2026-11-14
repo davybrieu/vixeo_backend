@@ -34,7 +34,7 @@ class ProfileRequest extends FormRequest
                     ->ignore($profile?->id),
             ],
             'username' => [
-                $required, 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
+                'sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
                 Rule::unique('profiles', 'username')->ignore($profile?->id),
             ],
             'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
