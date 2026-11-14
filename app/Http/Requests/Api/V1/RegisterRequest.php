@@ -7,6 +7,13 @@ use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('username')) {
+            $this->merge(['username' => mb_strtolower((string) $this->input('username'))]);
+        }
+    }
+
     public function rules(): array
     {
         return [
