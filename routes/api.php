@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\StreamController;
 use App\Http\Controllers\Api\V1\StreamPreferenceController;
+use App\Http\Controllers\Api\V1\SocialProfileController;
 use App\Http\Controllers\Api\V1\TmdbAccountController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
@@ -58,6 +59,16 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->where('hash', '[0-9a-f]{32}')
             ->middleware('throttle:tv-logos')
             ->name('logo');
+    });
+
+    // Public social profile discovery (child profiles are excluded by the controller).
+    Route::prefix('social')->name('social.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
+        Route::get('search', [SocialProfileController::class, 'search'])->name('search');
+        Route::get('profiles/{username}', [SocialProfileController::class, 'show'])->name('profiles.show');
+        Route::get('profiles/{username}/followers', [SocialProfileController::class, 'followers'])->name('profiles.followers');
+        Route::get('profiles/{username}/following', [SocialProfileController::class, 'following'])->name('profiles.following');
+        Route::get('profiles/{username}/reviews', [SocialProfileController::class, 'reviews'])->name('profiles.reviews');
+        Route::get('profiles/{username}/list', [SocialProfileController::class, 'favoritesList'])->name('profiles.list');
     });
 
     // Public browsing and playback: no account or profile is required.
@@ -121,6 +132,11 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
 
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+        Route::middleware(ResolveProfile::class)->prefix('social')->name('social.')->group(function () {
+            Route::patch('profile', [SocialProfileController::class, 'update'])->name('profile.update');
+            Route::post('profiles/{username}/follow', [SocialProfileController::class, 'follow'])->name('profiles.follow');
+            Route::delete('profiles/{username}/follow', [SocialProfileController::class, 'unfollow'])->name('profiles.unfollow');
+        });
         Route::prefix('auth/device')->name('auth.device.')->middleware('throttle:device-approve')->group(function () {
             Route::post('lookup', [DeviceLoginController::class, 'lookup'])->name('lookup');
             Route::post('approve', [DeviceLoginController::class, 'approve'])->name('approve');

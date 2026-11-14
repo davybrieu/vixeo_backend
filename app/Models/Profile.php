@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Hash;
  * positions will be attached to a profile, not to the account.
  */
 #[Fillable([
-    'name', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
+    'name', 'username', 'bio', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
 ])]
 #[Hidden(['pin', 'sync_revision'])]
@@ -72,6 +73,20 @@ class Profile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Profiles this profile follows. */
+    /** @return BelongsToMany<Profile, $this> */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'profile_follows', 'follower_profile_id', 'followed_profile_id')->withTimestamps();
+    }
+
+    /** Profiles following this profile. */
+    /** @return BelongsToMany<Profile, $this> */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'profile_follows', 'followed_profile_id', 'follower_profile_id')->withTimestamps();
     }
 
     /** @return HasMany<ProfileItem, $this> */

@@ -14,6 +14,13 @@ use Illuminate\Validation\Validator;
 
 class ProfileRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('username')) {
+            $this->merge(['username' => mb_strtolower((string) $this->input('username'))]);
+        }
+    }
+
     public function rules(): array
     {
         $profile = $this->route('profile');
@@ -26,6 +33,11 @@ class ProfileRequest extends FormRequest
                     ->where('user_id', $this->user()->id)
                     ->ignore($profile?->id),
             ],
+            'username' => [
+                'sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
+                Rule::unique('profiles', 'username')->ignore($profile?->id),
+            ],
+            'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
             /** Avatar id from GET /avatars. Null = initial letter. */
             'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
             /** How titles are drawn in rows and grids. Default `portrait`. */
@@ -83,7 +95,11 @@ class ProfileRequest extends FormRequest
     /** Profile attributes to save (PINs used for authorization are not stored). */
     public function profileData(): array
     {
-        return $this->safe()->except(['parental_pin', 'current_pin']);
+        $data = $this->safe()->except(['parental_pin', 'current_pin']);
+        if (isset($data['username'])) {
+            $data['username'] = mb_strtolower($data['username']);
+        }
+        return $data;
     }
 
     private function authorizeSensitiveChanges(): void
