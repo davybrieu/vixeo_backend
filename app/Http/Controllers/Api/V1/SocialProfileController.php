@@ -1,15 +1,16 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api\\V1;
+namespace App\Http\Controllers\Api\V1;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Profile;
-use App\\Models\\ProfileItem;
-use App\\Models\\TmdbRating;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Models\Profile;
+use App\Models\ProfileItem;
+use App\Models\TmdbRating;
+use App\Http\Middleware\ResolveProfile;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SocialProfileController extends Controller
 {
@@ -21,7 +22,7 @@ class SocialProfileController extends Controller
         $profiles = Profile::query()
             ->where('is_kid', false)
             ->whereNotNull('username')
-            ->where('username', 'like', '%'.addcslashes($query, '%_\\\\').'%')
+            ->where('username', 'like', '%'.addcslashes($query, '%_\\').'%')
             ->withCount(['followers', 'following'])
             ->orderByRaw('username = ? desc', [mb_strtolower(ltrim($query, '@'))])
             ->limit(30)
@@ -46,7 +47,7 @@ class SocialProfileController extends Controller
     public function update(Request $request): JsonResponse
     {
         /** @var Profile|null $profile */
-        $profile = $request->attributes->get('active_profile');
+        $profile = ResolveProfile::profile($request);
         abort_unless($profile, 422, 'Sélectionnez un profil.');
         abort_if($profile->is_kid, 403, 'Les profils enfants ne disposent pas de profil public.');
 
