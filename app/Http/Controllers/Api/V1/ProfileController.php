@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -41,6 +42,7 @@ class ProfileController extends Controller
         Gate::authorize('create', Profile::class);
 
         $data = $request->profileData();
+        $data['username'] ??= $this->uniqueUsername($data['name']);
         // No avatar chosen: one of the catalog, at random.
         $data['avatar'] ??= $avatars->randomId();
         $profile = $request->user()->profiles()->create($data);
@@ -90,6 +92,16 @@ class ProfileController extends Controller
         $profile->delete();
 
         return response()->noContent();
+    }
+
+    private function uniqueUsername(string $name): string
+    {
+        $base = Str::limit(Str::lower(Str::slug($name, '_')) ?: 'membre', 22, '');
+        do {
+            $username = $base.'_'.Str::lower(Str::random(6));
+        } while (Profile::query()->where('username', $username)->exists());
+
+        return $username;
     }
 
     /**
