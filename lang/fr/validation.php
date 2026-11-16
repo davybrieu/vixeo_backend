@@ -206,6 +206,7 @@ return [
         'locked_sources.*' => 'source verrouillée',
         'parental_pin' => 'code PIN parental',
         'current_pin' => 'code PIN actuel',
+        'current_password' => 'mot de passe actuel',
         'query' => 'recherche',
         'page' => 'page',
         'genre' => 'genre',

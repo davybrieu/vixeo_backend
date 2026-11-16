@@ -1,4 +1,4 @@
-# Compte : mot de passe oublié, appareils, suppression et export
+# Compte : adresse e-mail, mot de passe, appareils, suppression et export
 
 Ces routes répondent aux exigences du RGPD (accès, portabilité, effacement) et à celles de la
 distribution d'Apple (transparence et contrôle des données ; voir `APPLE_NOTARIZATION.md` dans
@@ -24,6 +24,20 @@ Règles du code :
 - il est valable 15 minutes et ne sert qu'une fois ;
 - un nouveau code remplace le précédent ;
 - 5 codes faux l'invalident (« Trop de codes incorrects. Demandez un nouveau code. »).
+
+## Changer d'adresse e-mail ou de mot de passe
+
+Depuis « Paramètres » → « Compte » dans l'appli. Toujours confirmé par le mot de passe, envoyé dans
+le corps de la requête (jamais dans une URL). Au plus 5 essais par minute (`throttle:account`).
+
+- `POST /api/v1/me/email` avec `{email, password}` → l'utilisateur (`UserResource`) avec la nouvelle
+  adresse. Adresse déjà utilisée ou invalide : 422 sur `email` ; mot de passe faux : 422
+  « Mot de passe incorrect. » sur `password`. Un code « mot de passe oublié » en cours pour
+  l'ancienne adresse est annulé ; `email_verified` repasse à faux.
+- `POST /api/v1/me/password` avec `{current_password, password}` → 204. Le nouveau mot de passe
+  suit les mêmes règles qu'à l'inscription (8 caractères au moins). **Les autres appareils sont
+  déconnectés** ; celui qui fait la demande reste connecté. Mot de passe actuel faux : 422
+  « Mot de passe incorrect. » sur `current_password`.
 
 ## Appareils connectés
 

@@ -4,6 +4,8 @@ use App\Models\DeviceLogin;
 use App\Models\ProfileItem;
 use App\Models\User;
 use App\Notifications\AccountDataExport;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -128,4 +130,62 @@ it('expires tokens after 180 days', function () {
     $this->travel(2)->days();
     app('auth')->forgetGuards();
     $this->withToken($this->token)->getJson('/api/v1/me')->assertUnauthorized();
+});
+
+it('changes the e-mail address with the password', function () {
+    DB::table('password_reset_tokens')->insert(['email' => 'davy@example.com', 'token' => 'x', 'created_at' => now()]);
+
+    $this->withToken($this->token)->postJson('/api/v1/me/email', ['email' => 'nouveau@example.com', 'password' => 'secret-password'])
+        ->assertOk()
+        ->assertJsonPath('data.email', 'nouveau@example.com');
+
+    expect($this->user->fresh()->email)->toBe('nouveau@example.com');
+    $this->assertDatabaseCount('password_reset_tokens', 0);
+
+    // The new address signs in.
+    $this->postJson('/api/v1/auth/login', ['email' => 'nouveau@example.com', 'password' => 'secret-password', 'device_name' => 'Pixel'])
+        ->assertOk();
+});
+
+it('keeps the e-mail address with a wrong password, or one already used', function () {
+    User::factory()->create(['email' => 'pris@example.com']);
+
+    $this->withToken($this->token)->postJson('/api/v1/me/email', ['email' => 'nouveau@example.com', 'password' => 'wrong'])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.password.0', 'Mot de passe incorrect.');
+    $this->withToken($this->token)->postJson('/api/v1/me/email', ['email' => 'pris@example.com', 'password' => 'secret-password'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('email');
+    $this->withToken($this->token)->postJson('/api/v1/me/email', ['email' => 'pas-une-adresse', 'password' => 'secret-password'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('email');
+
+    expect($this->user->fresh()->email)->toBe('davy@example.com');
+});
+
+it('changes the password, and signs out the other devices', function () {
+    $tv = $this->user->createToken('Salon TV');
+
+    $this->withToken($this->token)->postJson('/api/v1/me/password', [
+        'current_password' => 'secret-password',
+        'password' => 'un-nouveau-mot-de-passe',
+    ])->assertNoContent();
+
+    expect(Hash::check('un-nouveau-mot-de-passe', $this->user->fresh()->password))->toBeTrue();
+    app('auth')->forgetGuards();
+    // This device stays signed in, the TV is signed out.
+    $this->withToken($this->token)->getJson('/api/v1/me')->assertOk();
+    app('auth')->forgetGuards();
+    $this->withToken($tv->plainTextToken)->getJson('/api/v1/me')->assertUnauthorized();
+});
+
+it('keeps the password with a wrong current password, or a too short new one', function () {
+    $this->withToken($this->token)->postJson('/api/v1/me/password', ['current_password' => 'wrong', 'password' => 'un-nouveau-mot-de-passe'])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.current_password.0', 'Mot de passe incorrect.');
+    $this->withToken($this->token)->postJson('/api/v1/me/password', ['current_password' => 'secret-password', 'password' => 'court'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('password');
+
+    expect(Hash::check('secret-password', $this->user->fresh()->password))->toBeTrue();
 });

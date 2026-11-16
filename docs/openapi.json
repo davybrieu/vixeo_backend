@@ -1820,6 +1820,85 @@
                 }
             }
         },
+        "/v1/me/email": {
+            "post": {
+                "operationId": "v1.me.email",
+                "description": "Confirmed with the account password. The address is used to sign in and to receive the\npassword reset codes; a pending reset code for the old address is cancelled. 5 tries per\nminute (wrong password: 422).",
+                "summary": "Change the e-mail address",
+                "tags": [
+                    "Compte",
+                    "Account"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateEmailRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/me/password": {
+            "post": {
+                "operationId": "v1.me.password",
+                "description": "Confirmed with the current password. Every other device is signed out; this one stays\nsigned in. 5 tries per minute (wrong password: 422).",
+                "summary": "Change the password",
+                "tags": [
+                    "Compte",
+                    "Account"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/me/export": {
             "post": {
                 "operationId": "v1.me.export",
@@ -9030,6 +9109,44 @@
                     "linked_at"
                 ],
                 "title": "TmdbAccountResource"
+            },
+            "UpdateEmailRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The new address.",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "The account password, to confirm."
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "UpdateEmailRequest"
+            },
+            "UpdatePasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "description": "The password in use, to confirm."
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "The new password."
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "password"
+                ],
+                "title": "UpdatePasswordRequest"
             },
             "UserResource": {
                 "type": "object",

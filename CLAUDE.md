@@ -180,6 +180,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Compte** (doc : `docs/compte.md`) : « mot de passe oublié » par code à 6 chiffres envoyé par
   e-mail (`App\Services\PasswordResets` : haché, 15 min, usage unique, 5 essais ; la réponse ne
   révèle pas si l'adresse a un compte ; la réinitialisation déconnecte tous les appareils),
+  changement d'adresse e-mail (`POST /me/email`) et de mot de passe (`POST /me/password`,
+  déconnecte les autres appareils), tous deux confirmés par le mot de passe,
   appareils connectés (jetons Sanctum de 180 jours, `SANCTUM_EXPIRATION`), suppression du compte
   (`POST /me/delete` avec mot de passe) et export des données par e-mail
   (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
