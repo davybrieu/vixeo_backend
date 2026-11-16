@@ -46,9 +46,14 @@ Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est d
 
 - Laravel 13, PHP 8.3+, Sanctum (jetons Bearer), Scramble (OpenAPI), Pest 4, Pint.
 - Site : Vue 3, Inertia 3 (SSR, `php artisan inertia:start-ssr`), Tailwind CSS 4, Vite.
-- PostgreSQL en production, Redis pour cache et files d'attente.
-- Les tests tournent sur SQLite en mémoire (`phpunit.xml`) ; les relancer aussi sur PostgreSQL
-  avant un push qui touche aux migrations ou aux requêtes.
+- Redis pour cache et files d'attente. Base de production : **MySQL** sur le serveur Forge actuel
+  (constaté au déploiement du 16/11/2026 ; prévu PostgreSQL au départ). Une migration doit passer
+  sur MySQL, PostgreSQL et SQLite, et pouvoir être relancée après un échec (MySQL n'annule pas les
+  `ALTER` déjà faits) ; MySQL refuse de supprimer le dernier index utilisable par une clé
+  étrangère (erreur 1553) : ajouter le nouvel index avant de supprimer l'ancien
+  (`Schema::hasIndex`).
+- Les tests tournent sur SQLite en mémoire (`phpunit.xml`) ; les relancer aussi sur MySQL /
+  MariaDB et PostgreSQL avant un push qui touche aux migrations ou aux requêtes.
 
 ## Commandes
 
@@ -67,7 +72,8 @@ php artisan serve                 # http://localhost:8000 (site sur /, API sur /
 ```
 
 Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par défaut :
-`service postgresql start`, `service redis-server start`. Pour tester sur PostgreSQL :
+`service postgresql start`, `service redis-server start` ; MariaDB (pour MySQL) :
+`apt-get install -y mariadb-server && service mariadb start`. Pour tester sur PostgreSQL :
 `DB_CONNECTION=pgsql DB_DATABASE=... DB_USERNAME=... DB_PASSWORD=... ./vendor/bin/pest`.
 
 ## Conventions
