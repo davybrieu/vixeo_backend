@@ -58,7 +58,9 @@ class TmdbAccountController extends Controller
      * Finish linking a TMDb account.
      *
      * 202 `{"status":"pending"}` until the person approved Vixeo on TMDb, then 200 with the
-     * account. 410 when the approval page expired: start again.
+     * account: the profile's reviews are sent to it (Vixeo wins), its other ratings come in. 410
+     * when the approval page expired: start again. 409 `{"status":"taken"}` when this TMDb account
+     * is already linked to another Vixeo profile (one profile per TMDb account).
      */
     public function complete(Profile $profile): JsonResponse
     {
@@ -73,6 +75,13 @@ class TmdbAccountController extends Controller
             return response()->json(['status' => 'pending'], Response::HTTP_ACCEPTED);
         }
 
+        if ($result['status'] === 'taken') {
+            return response()->json([
+                'status' => 'taken',
+                'message' => __('This TMDb account is already linked to another Vixeo profile: unlink it there first.'),
+            ], Response::HTTP_CONFLICT);
+        }
+
         return response()->json([
             'status' => 'expired',
             'message' => __('The TMDb approval page has expired: start again.'),
@@ -82,7 +91,7 @@ class TmdbAccountController extends Controller
     /**
      * Unlink the TMDb account.
      *
-     * The ratings stay on TMDb; Vixeo's session on the account is ended.
+     * The reviews stay in Vixeo and the ratings on TMDb; Vixeo's session on the account is ended.
      */
     public function destroy(Profile $profile): Response
     {

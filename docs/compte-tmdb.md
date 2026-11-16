@@ -1,16 +1,22 @@
-# Compte TMDb d'un profil et notes
+# Avis d'un profil et compte TMDb
 
-Chaque profil peut être lié à un compte [TMDb](https://www.themoviedb.org). Une fois lié, le profil
-**note** des films, des séries et des épisodes, et retrouve ses notes dans « Mes notes ».
+Chaque profil **note** des films, des séries et des épisodes, avec un **commentaire** facultatif,
+et retrouve ses avis dans « Mes avis ». **Vixeo est propriétaire des avis** (décision du
+développeur) : on note, modifie et supprime un avis **sans compte TMDb**.
 
-- Les notes sont **enregistrées sur TMDb**, pas chez Vixeo. Elles sont donc identiques sur tous les
-  appareils, sur tous les profils liés au même compte TMDb et sur themoviedb.org (synchronisation
-  dans les deux sens, sans copie à tenir à jour).
-- Le **même compte TMDb** peut être lié à plusieurs profils, y compris de comptes Vixeo différents
-  (pas d'index unique sur `account_id`). Chaque liaison a **sa propre session** TMDb.
-- L'API de TMDb ne permet que des **notes** (de 0,5 à 10, par demi-points). Les avis écrits ne
-  peuvent pas être publiés par l'API : un **commentaire** facultatif accompagne la note, mais il
-  est gardé par **Vixeo seulement** (table `tmdb_ratings`), jamais envoyé à TMDb.
+Un profil peut aussi lier un compte [TMDb](https://www.themoviedb.org). La liaison ne sert qu'à
+**synchroniser** les avis avec ce compte :
+
+- **Un compte TMDb ne peut être lié qu'à un seul profil Vixeo** (décision du développeur) : lier un
+  compte déjà lié ailleurs répond 409 (`status: taken`).
+- **TMDb suit Vixeo** : chaque avis écrit dans Vixeo est envoyé à TMDb (la note seulement) ; à la
+  liaison, **tous les avis de Vixeo sont envoyés**, et une note différente sur TMDb pour le même
+  titre est **remplacée par celle de Vixeo**. Les notes que TMDb a et que Vixeo n'a pas
+  (données sur themoviedb.org) sont **ajoutées** aux avis.
+- Une note modifiée ou supprimée sur themoviedb.org **ne change pas** l'avis de Vixeo.
+- L'API de TMDb ne permet que des **notes** (de 0,5 à 10, par demi-points) : le commentaire reste
+  chez **Vixeo seulement** (table `tmdb_ratings`), jamais envoyé à TMDb.
+- Délier le compte **garde les avis** (ils sont à Vixeo) ; les notes restent sur TMDb.
 
 ## Liaison
 
@@ -35,51 +41,61 @@ d'autorisation de TMDb :
    - `200 {"status":"linked","data":{…compte…}}` : lié ;
    - `410 {"status":"expired"}` : page expirée (ou rien de commencé) → recommencer à l'étape 1.
 
+   - `409 {"status":"taken"}` : ce compte TMDb est déjà lié à un autre profil Vixeo (la session
+     tout juste créée est fermée) ; le délier d'abord de cet autre profil.
+
    L'API crée la session (`POST /3/authentication/session/new`), lit le compte (`GET /3/account`)
    et l'enregistre dans `tmdb_links`. Un seul essai à la fois par profil (verrou). Une liaison
-   refaite remplace la précédente et met fin à son ancienne session.
+   refaite remplace la précédente et met fin à son ancienne session. Puis elle **synchronise** les
+   avis (`TmdbRatings::sync(all: true)`) : tous les avis de Vixeo partent sur TMDb (Vixeo gagne),
+   les autres notes de TMDb arrivent ; TMDb injoignable : fait à la synchronisation suivante.
 3. `GET /api/v1/profiles/{profile}/tmdb` → `linked`, `account_id`, `username`, `name`,
    `avatar_url`, `linked_at` (tout à `null` quand aucun compte n'est lié).
 4. `DELETE /api/v1/profiles/{profile}/tmdb` → 204 : la liaison est supprimée et sa session est
-   fermée sur TMDb (`DELETE /3/authentication/session`). Les notes restent sur TMDb.
+   fermée sur TMDb (`DELETE /3/authentication/session`). Les avis restent dans Vixeo, les notes
+   sur TMDb.
 
-## Notes et commentaires (« Mes avis »)
+## Avis (« Mes avis »)
+
+Routes sous `/api/v1/profiles/{profile}/tmdb/…` (nom historique) ; **aucune n'exige de compte
+TMDb lié**.
 
 | Méthode | Route (`/api/v1/profiles/{profile}/tmdb/…`) | Rôle |
 | --- | --- | --- |
-| GET | `ratings?type=movie\|tv\|episode&sort=recent\|oldest\|highest\|lowest&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, avec les commentaires (`per_page` jusqu'à 500). Tri `sort` : `recent` (par défaut, notés le plus récemment d'abord), `oldest` (les plus anciens d'abord), `highest` (mieux notés d'abord), `lowest` (moins bien notés d'abord) ; à note égale, le plus récent d'abord. Le tri est fait avant la pagination |
+| GET | `ratings?type=movie\|tv\|episode&sort=recent\|oldest\|highest\|lowest&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, avec les commentaires (`per_page` jusqu'à 500). Tri `sort` : `recent` (par défaut, notés le plus récemment d'abord), `oldest`, `highest`, `lowest` ; à note égale, le plus récent d'abord. Le tri est fait avant la pagination |
 | GET | `ratings/{movie\|tv}/{id}` | note et commentaire du profil pour un film / une série (`value` : `null` si aucune) |
 | GET | `ratings/tv/{id}/season/{season}` | notes et commentaires des épisodes d'une saison (seulement ceux notés) |
 | PUT | `ratings/{movie\|tv}/{id}` | noter ou modifier (`value` : 0,5 à 10, multiple de 0,5 ; `comment` facultatif, 2000 caractères) |
-| DELETE | `ratings/{movie\|tv}/{id}` | supprimer la note et son commentaire |
+| DELETE | `ratings/{movie\|tv}/{id}` | supprimer l'avis (note et commentaire) |
 | PUT / DELETE | `ratings/tv/{id}/season/{season}/episode/{episode}` | idem pour un épisode |
 
-- **Copie locale** (`App\Services\TmdbRatings`, table `tmdb_ratings`, une ligne par profil, compte
-  TMDb et titre) : note, commentaire, date de la note, titre, affiche, image de l'épisode. Elle
-  permet le commentaire, « Tout » trié par date et la recherche dans « Mes avis ».
-  - Une note donnée dans Vixeo est copiée tout de suite (`rated_at` = maintenant ; titre et images
-    lus sur TMDb, en cache).
-  - La liste relit les trois listes de TMDb (`/account/{id}/rated/…`, 50 pages au plus par type)
-    au plus toutes les 10 minutes (`STALE_AFTER`) : les notes données sur themoviedb.org
-    apparaissent (TMDb ne donne pas leur date : elles gardent l'ordre de TMDb), celles qui y ont
-    été supprimées disparaissent avec leur commentaire. TMDb injoignable : la copie est affichée
-    telle quelle.
-  - La note d'une fiche est lue en direct sur TMDb (`account_states`) ; si TMDb dit « pas de
-    note » alors que la copie en a une, la copie et son commentaire sont supprimés.
+- **Les avis** (`App\Services\TmdbRatings`, table `tmdb_ratings`, une ligne par profil et
+  titre) : note, commentaire, date, titre, affiche, image de l'épisode (lus sur TMDb avec la clé
+  Vixeo, en cache) et `account_id`, le compte TMDb auquel la note a été envoyée (`null` : pas
+  encore). Toutes les lectures (fiche, saison, « Mes avis ») lisent Vixeo, plus TMDb.
+- **Avec un compte lié** :
+  - un avis écrit est enregistré, puis sa note envoyée à TMDb ; TMDb injoignable (ou session
+    refusée) : l'avis est quand même enregistré (`account_id` à `null`) et envoyé à la
+    synchronisation suivante ; une suppression qui n'a pas pu partir est retenue 30 jours et
+    renvoyée ;
+  - « Mes avis » synchronise au plus toutes les 10 minutes (`STALE_AFTER`, `syncIfStale`) : avis
+    pas encore envoyés à ce compte → envoyés ; notes de TMDb (`/account/{id}/rated/…`, 50 pages au
+    plus par type) absentes de Vixeo → ajoutées (TMDb ne donne pas leur date : elles gardent
+    l'ordre de TMDb). TMDb injoignable : les avis sont affichés tels quels.
 - `comment` absent du PUT : le commentaire est gardé ; `null` ou vide : il est supprimé.
 - La liste filtre selon l'âge maximum du profil (`AgeGate`) ; pour un épisode, c'est sa série qui
   compte.
-- Supprimer une note qui n'existe pas répond 204.
-- Délier le compte supprime la copie et les commentaires ; lier un autre compte TMDb supprime la
-  copie de l'ancien.
+- Supprimer un avis qui n'existe pas répond 204.
+- La page publique d'un membre (`/social/profiles/{username}/reviews`) montre ses avis.
 
 ## Erreurs
 
-- `409` « Liez d'abord un compte TMDb à ce profil. » : aucun compte lié.
-- `409` « Votre compte TMDb n'est plus lié à ce profil : liez-le à nouveau. » : TMDb refuse la
-  session (accès retiré sur themoviedb.org). La liaison est supprimée ; l'appli propose de relier.
-- `422` : note hors de l'échelle de TMDb (validation), ou demande refusée par TMDb.
-- `503` : TMDb injoignable ou clé Vixeo refusée.
+- `409` `{"status":"taken"}` (liaison) : « Ce compte TMDb est déjà lié à un autre profil Vixeo :
+  déliez-le d'abord de ce profil. »
+- Session refusée par TMDb (accès retiré sur themoviedb.org) : la liaison est supprimée, l'avis
+  est quand même enregistré ; l'appli voit « non lié » et propose de relier.
+- `422` : note hors de l'échelle (validation).
+- `503` (liaison seulement) : TMDb injoignable ou clé Vixeo refusée.
 - Limite : `throttle:tmdb-account`, 120 requêtes par minute et par compte Vixeo.
 
 ## Sécurité

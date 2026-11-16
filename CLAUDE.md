@@ -158,17 +158,18 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   24 h). Sous-titres : OpenSubtitles avec la clé Vixeo commune (`Playback\OpenSubtitles`), fichiers
   servis en WebVTT depuis notre cache (quota quotidien d'OpenSubtitles). Les applis ne parlent
   jamais à ces services.
-- **Compte TMDb du profil et notes** (doc : `docs/compte-tmdb.md`) : liaison par la page
-  d'autorisation de TMDb (`App\Services\TmdbLinks` : jeton de requête en cache, l'appli interroge
-  `link/complete`), table `tmdb_links` (une par profil ; le même compte TMDb peut être lié à
-  plusieurs profils, de comptes Vixeo différents ; session TMDb **chiffrée**, jamais envoyée aux
-  applis). Notes de films, séries et épisodes (0,5 à 10) lues et écrites **sur TMDb**
-  (`Tmdb\TmdbAccount`, sans cache) : TMDb est la source, donc elles sont synchronisées partout.
-  L'API de TMDb n'accepte pas d'avis écrits : le commentaire facultatif est gardé par Vixeo
-  (`tmdb_ratings`, copie des notes par profil tenue par `App\Services\TmdbRatings` : copiée tout de
-  suite quand on note dans Vixeo, relue sur TMDb au plus toutes les 10 min, supprimée en déliant).
-  Session refusée par TMDb → liaison supprimée, 409.
-  `TmdbClient::send` : appels sans cache pour un compte, ne journalise que le chemin.
+- **Avis et compte TMDb du profil** (doc : `docs/compte-tmdb.md`) : **Vixeo est propriétaire
+  des avis** (demande du développeur) : note (0,5 à 10) et commentaire facultatif par profil
+  (`tmdb_ratings`, `App\Services\TmdbRatings`), écrits, modifiés et supprimés **sans compte
+  TMDb**. Liaison par la page d'autorisation de TMDb (`App\Services\TmdbLinks` : jeton de requête
+  en cache, l'appli interroge `link/complete`), table `tmdb_links` (une par profil ; **un compte
+  TMDb n'est lié qu'à un seul profil Vixeo**, sinon 409 `taken` ; session TMDb **chiffrée**,
+  jamais envoyée aux applis). La liaison ne sert qu'à synchroniser : **TMDb suit Vixeo** (chaque
+  avis écrit part sur TMDb ; à la liaison, tous les avis partent et remplacent une note
+  différente sur TMDb ; les notes de TMDb absentes de Vixeo arrivent, au plus toutes les 10 min ;
+  une note changée ou supprimée sur themoviedb.org ne change pas Vixeo). TMDb injoignable : l'avis
+  est enregistré et envoyé plus tard. Délier garde les avis. `TmdbClient::send` : appels sans
+  cache pour un compte, ne journalise que le chemin.
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (« Ma liste » =

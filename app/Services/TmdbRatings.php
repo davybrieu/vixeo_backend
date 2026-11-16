@@ -11,56 +11,66 @@ use App\Services\Tmdb\RatingTarget;
 use App\Services\Tmdb\TmdbAccount;
 use App\Services\Tmdb\TmdbClient;
 use App\Services\Tmdb\TmdbFormat as F;
+use App\Services\Tmdb\TmdbLinkRevoked;
 use App\Services\Tmdb\TmdbUnavailableException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
 /**
- * The profile's copy of its TMDb ratings (docs/compte-tmdb.md), with its comments: TMDb keeps the
- * ratings (the same on every profile linked to the account and on themoviedb.org), Vixeo keeps the
- * comments, the date of each rating and what "Mes avis" shows. Ratings given in Vixeo are copied
- * at once; the others (themoviedb.org…) when the copy is refreshed, at most every 10 minutes.
+ * The profile's reviews (« Mes avis », docs/compte-tmdb.md): Vixeo owns them, with or without a
+ * TMDb account. When one is linked, TMDb follows Vixeo: each review written here is sent there,
+ * and linking the account sends every review (Vixeo wins when TMDb has another rating for the same
+ * title). Ratings given on themoviedb.org that Vixeo doesn't have are brought in, at most every 10
+ * minutes; a rating changed or removed there doesn't change Vixeo's review.
  */
 class TmdbRatings
 {
-    /** Seconds before the copy is read again from TMDb. */
+    /** Seconds before the account is read again from TMDb. */
     public const STALE_AFTER = 600;
 
     /** Pages of 20 ratings read per type, at most. */
     private const MAX_PAGES = 50;
 
+    /** Days a removal that could not reach TMDb is retried. */
+    private const REMOVALS_TTL_DAYS = 30;
+
     public function __construct(private TmdbAccount $account, private TmdbClient $tmdb) {}
 
     /**
-     * Every rating of the linked account, the most recent first.
+     * Every review of the profile, the most recent first. With a linked account, synced first
+     * (at most every 10 minutes).
      *
      * @return Collection<int, TmdbRating>
      */
-    public function all(Profile $profile, TmdbLink $link): Collection
+    public function all(Profile $profile, ?TmdbLink $link): Collection
     {
-        $this->refreshIfStale($profile, $link);
+        if ($link !== null) {
+            $this->syncIfStale($profile, $link);
+        }
 
-        return $this->query($profile, $link)->latest('rated_at')->latest('id')->get();
+        return $this->query($profile)->latest('rated_at')->latest('id')->get();
     }
 
-    /** The copy of one rating, null when there is none. */
-    public function find(Profile $profile, TmdbLink $link, RatingTarget $target): ?TmdbRating
+    /** The review of one title or episode, null when there is none. */
+    public function find(Profile $profile, RatingTarget $target): ?TmdbRating
     {
-        return $this->query($profile, $link)->where('target', $target->path)->first();
+        return $this->query($profile)->where('target', $target->path)->first();
     }
 
     /**
-     * The copies of a season's episode ratings, by episode number.
+     * The reviews of a season's episodes, by episode number.
      *
      * @return Collection<int, TmdbRating>
      */
-    public function season(Profile $profile, TmdbLink $link, int $showId, int $season): Collection
+    public function season(Profile $profile, int $showId, int $season): Collection
     {
-        return $this->query($profile, $link)
+        return $this->query($profile)
             ->where('type', RatedType::Episode)
             ->where('tmdb_id', $showId)
             ->where('season_number', $season)
@@ -69,17 +79,19 @@ class TmdbRatings
     }
 
     /**
-     * A rating given in Vixeo (already saved on TMDb). [$comment] is only changed when given
-     * (null removes it).
+     * Saves a review written in Vixeo, then sends its rating to the linked TMDb account, if any.
+     * [$comment] is only changed when given (null removes it). TMDb unreachable: the review is
+     * saved and sent at the next sync.
      */
-    public function saved(Profile $profile, TmdbLink $link, RatingTarget $target, float $value, bool $withComment, ?string $comment): TmdbRating
+    public function save(Profile $profile, ?TmdbLink $link, RatingTarget $target, float $value, bool $withComment, ?string $comment): TmdbRating
     {
-        $row = $this->query($profile, $link)->firstOrNew(['target' => $target->path]);
+        $row = $this->query($profile)->firstOrNew(['target' => $target->path]);
         if (! $row->exists || $row->value !== $value) {
             $row->rated_at = now();
         }
         $row->fill([
-            'account_id' => $link->account_id,
+            // Not on TMDb yet.
+            'account_id' => null,
             'type' => $target->type,
             'tmdb_id' => $target->id,
             'season_number' => $target->season,
@@ -95,23 +107,37 @@ class TmdbRatings
         $row->profile()->associate($profile);
         $row->save();
 
+        if ($link !== null && $this->send(fn () => $this->account->rate($link, $target, $value))) {
+            $row->forceFill(['account_id' => $link->account_id])->save();
+        }
+
         return $row;
     }
 
-    /** A rating removed in Vixeo (or found removed on TMDb): its comment goes with it. */
-    public function removed(Profile $profile, TmdbLink $link, RatingTarget $target): void
+    /**
+     * Removes a review (and its comment), and its rating from the linked TMDb account, if any.
+     * TMDb unreachable: the removal is retried at the next syncs.
+     */
+    public function remove(Profile $profile, ?TmdbLink $link, RatingTarget $target): void
     {
-        $this->query($profile, $link)->where('target', $target->path)->delete();
+        $this->query($profile)->where('target', $target->path)->delete();
+
+        if ($link !== null && ! $this->send(fn () => $this->account->unrate($link, $target))) {
+            $removals = $this->removals($profile);
+            $removals[$target->path] = true;
+            Cache::put(self::removalsKey($profile), $removals, now()->addDays(self::REMOVALS_TTL_DAYS));
+        }
     }
 
-    /** The profile no longer has this TMDb account (unlinked, another one linked). */
-    public function forget(Profile $profile, ?int $keepAccountId = null): void
+    /** The account was unlinked: the reviews stay, they are no longer on any account. */
+    public function unlinked(Profile $profile): void
     {
-        $profile->tmdbRatings()->when($keepAccountId !== null, fn ($q) => $q->where('account_id', '!=', $keepAccountId))->delete();
+        $this->query($profile)->update(['account_id' => null]);
+        Cache::forget(self::removalsKey($profile));
     }
 
-    /** Reads the account's ratings again, unless done in the last 10 minutes. */
-    public function refreshIfStale(Profile $profile, TmdbLink $link): void
+    /** Syncs with the account, unless done in the last 10 minutes. */
+    public function syncIfStale(Profile $profile, TmdbLink $link): void
     {
         $key = "tmdb-ratings:{$profile->id}:{$link->account_id}";
         if (Cache::has($key)) {
@@ -119,16 +145,23 @@ class TmdbRatings
         }
 
         try {
-            $this->refresh($profile, $link);
+            $this->sync($profile, $link);
             Cache::put($key, true, self::STALE_AFTER);
-        } catch (TmdbUnavailableException) {
-            // TMDb down: the copy is shown as it is, and read again next time.
-            Log::warning('TMDb ratings not refreshed');
+        } catch (Throwable $e) {
+            // TMDb down, the account no longer linked…: the reviews are shown as they are.
+            Log::warning('TMDb ratings not synced', ['error' => $e::class]);
         }
     }
 
-    /** Copies every rating of the account: new ones added, changed ones updated, removed ones deleted. */
-    public function refresh(Profile $profile, TmdbLink $link): void
+    /**
+     * Syncs the reviews with the TMDb account. TMDb follows Vixeo: the reviews not sent to this
+     * account yet are sent (all of them that differ, [$all], when the account was just linked);
+     * the removals that could not reach TMDb are sent again. Ratings TMDb has and Vixeo doesn't
+     * (given on themoviedb.org) are brought in.
+     *
+     * @throws TmdbUnavailableException|TmdbLinkRevoked
+     */
+    public function sync(Profile $profile, TmdbLink $link, bool $all = false): void
     {
         $remote = [];
         foreach (RatedType::cases() as $type) {
@@ -142,29 +175,84 @@ class TmdbRatings
             }
         }
 
-        DB::transaction(function () use ($profile, $link, $remote) {
-            $existing = $this->query($profile, $link)->get()->keyBy('target');
-            // TMDb gives no date: a rating seen for the first time keeps TMDb's order (newest first).
-            $at = now();
-            foreach ($remote as $target => $attributes) {
-                $row = $existing->pull($target);
-                if ($row instanceof TmdbRating) {
-                    $row->fill($attributes)->save();
-                } else {
-                    $row = new TmdbRating($attributes + ['account_id' => $link->account_id, 'rated_at' => $at]);
-                    $row->profile()->associate($profile)->save();
-                    $at = $at->copy()->subSecond();
-                }
+        // Removed in Vixeo while TMDb was unreachable.
+        $removals = $this->removals($profile);
+        foreach (array_keys($removals) as $path) {
+            if (! isset($remote[$path]) || $this->send(fn () => $this->account->unrate($link, RatingTarget::fromPath($path)))) {
+                unset($removals[$path]);
             }
-            // Removed on TMDb (themoviedb.org…): removed here, with the comment.
-            $existing->each->delete();
+            unset($remote[$path]);
+        }
+        $removals === []
+            ? Cache::forget(self::removalsKey($profile))
+            : Cache::put(self::removalsKey($profile), $removals, now()->addDays(self::REMOVALS_TTL_DAYS));
+
+        // Vixeo's reviews: sent to TMDb when it doesn't have them yet (Vixeo wins).
+        $local = $this->query($profile)->get()->keyBy('target');
+        foreach ($local as $path => $row) {
+            $theirs = $remote[$path]['value'] ?? null;
+            $send = $all ? $theirs === null || (float) $theirs !== (float) $row->value : $row->account_id !== $link->account_id;
+            if ($send && ! $this->send(fn () => $this->account->rate($link, RatingTarget::fromPath($path), (float) $row->value))) {
+                continue;
+            }
+            if ($row->account_id !== $link->account_id) {
+                $row->forceFill(['account_id' => $link->account_id]);
+            }
+            // Saved while TMDb was unreachable: what « Mes avis » shows of the title.
+            if ($row->title === '') {
+                $row->fill(isset($remote[$path]) ? Arr::except($remote[$path], ['target', 'value']) : $this->describe(RatingTarget::fromPath($path)));
+            }
+            $row->save();
+        }
+
+        // Given on themoviedb.org: brought in. TMDb gives no date: they keep TMDb's order.
+        DB::transaction(function () use ($profile, $link, $remote, $local) {
+            $at = now();
+            foreach ($remote as $path => $attributes) {
+                if ($local->has($path)) {
+                    continue;
+                }
+                $row = new TmdbRating($attributes + ['account_id' => $link->account_id, 'rated_at' => $at]);
+                $row->profile()->associate($profile)->save();
+                $at = $at->copy()->subSecond();
+            }
         });
     }
 
-    /** @return Builder<TmdbRating> */
-    private function query(Profile $profile, TmdbLink $link): Builder
+    /**
+     * Runs a call to the TMDb account: false when TMDb is unreachable, refuses it or no longer
+     * accepts the account (then unlinked by TmdbAccount).
+     */
+    private function send(callable $call): bool
     {
-        return TmdbRating::query()->where('profile_id', $profile->id)->where('account_id', $link->account_id);
+        try {
+            $call();
+
+            return true;
+        } catch (TmdbUnavailableException|TmdbLinkRevoked|HttpException $e) {
+            Log::warning('TMDb rating not sent', ['error' => $e::class]);
+
+            return false;
+        }
+    }
+
+    /** @return array<string, true> paths of the reviews removed while TMDb was unreachable */
+    private function removals(Profile $profile): array
+    {
+        $removals = Cache::get(self::removalsKey($profile));
+
+        return is_array($removals) ? $removals : [];
+    }
+
+    private static function removalsKey(Profile $profile): string
+    {
+        return "tmdb-ratings:{$profile->id}:removals";
+    }
+
+    /** @return Builder<TmdbRating> */
+    private function query(Profile $profile): Builder
+    {
+        return TmdbRating::query()->where('profile_id', $profile->id);
     }
 
     /** @return list<array<string, mixed>> */

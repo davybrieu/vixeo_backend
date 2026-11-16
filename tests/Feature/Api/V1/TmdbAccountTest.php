@@ -89,11 +89,13 @@ it('asks to start again when the approval page expired', function () {
     expect($this->profile->tmdbLink()->exists())->toBeFalse();
 });
 
-it('links the same TMDb account to profiles of other Vixeo accounts', function () {
+it('links a TMDb account to one Vixeo profile only', function () {
     Http::fake([
         TMDB.'authentication/token/new*' => Http::response(['success' => true, 'expires_at' => now()->addHour()->format('Y-m-d H:i:s').' UTC', 'request_token' => 'tok']),
         TMDB.'authentication/session/new*' => Http::sequence()->push(['success' => true, 'session_id' => 'sess-a'])->push(['success' => true, 'session_id' => 'sess-b']),
         TMDB.'account?*' => Http::response(tmdbAccount()),
+        TMDB.'account/42/rated/*' => Http::response(Tmdb::page([])),
+        TMDB.'authentication/session?*' => Http::response(['success' => true]),
     ]);
     $this->postJson("{$this->url}/link");
     $this->postJson("{$this->url}/link/complete")->assertOk();
@@ -102,10 +104,15 @@ it('links the same TMDb account to profiles of other Vixeo accounts', function (
     $otherProfile = Profile::factory()->for($other)->create();
     Sanctum::actingAs($other);
     $this->postJson("/api/v1/profiles/{$otherProfile->id}/tmdb/link");
-    $this->postJson("/api/v1/profiles/{$otherProfile->id}/tmdb/link/complete")->assertOk()->assertJsonPath('data.account_id', 42);
+    $this->postJson("/api/v1/profiles/{$otherProfile->id}/tmdb/link/complete")->assertConflict()
+        ->assertJsonPath('status', 'taken')
+        ->assertJsonPath('message', 'Ce compte TMDb est déjà lié à un autre profil Vixeo : déliez-le d’abord de ce profil.');
 
-    expect(TmdbLink::where('account_id', 42)->count())->toBe(2)
-        ->and($otherProfile->tmdbLink->session_id)->toBe('sess-b');
+    // The new session is ended; the first profile keeps the account.
+    expect(TmdbLink::where('account_id', 42)->count())->toBe(1)
+        ->and($otherProfile->tmdbLink()->exists())->toBeFalse()
+        ->and($this->profile->tmdbLink->session_id)->toBe('sess-a');
+    Http::assertSent(fn (Request $r) => $r->method() === 'DELETE' && $r['session_id'] === 'sess-b');
 });
 
 it('replaces the account when linking again, and ends the old session', function () {
@@ -177,19 +184,15 @@ it('removing a rating that does not exist changes nothing', function () {
     $this->deleteJson("{$this->url}/ratings/movie/550")->assertNoContent();
 });
 
-it('reads my rating of a title and of the episodes of a season', function () {
-    linkProfile($this->profile);
-    Http::fake([
-        TMDB.'movie/550/account_states*' => Http::response(['id' => 550, 'favorite' => false, 'rated' => ['value' => 8.0], 'watchlist' => false]),
-        TMDB.'tv/1399/account_states*' => Http::response(['id' => 1399, 'rated' => false]),
-        TMDB.'tv/1399/season/1/account_states*' => Http::response(['id' => 1, 'results' => [
-            ['id' => 11, 'episode_number' => 3, 'rated' => ['value' => 9.5]],
-            ['id' => 12, 'episode_number' => 1, 'rated' => ['value' => 7.0]],
-            ['id' => 13, 'episode_number' => 2, 'rated' => false],
-        ]]),
-    ]);
+it('reads my rating of a title and of the episodes of a season, from Vixeo', function () {
+    Http::fake([TMDB.'*' => Http::response([], 404)]);
+    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 8, 'comment' => 'Revu.'])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/3", ['value' => 9.5])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/1", ['value' => 7])->assertOk();
 
-    $this->getJson("{$this->url}/ratings/movie/550")->assertOk()->assertJsonPath('data.value', 8);
+    $this->getJson("{$this->url}/ratings/movie/550")->assertOk()
+        ->assertJsonPath('data.value', 8)
+        ->assertJsonPath('data.comment', 'Revu.');
     $this->getJson("{$this->url}/ratings/tv/1399")->assertOk()->assertJsonPath('data.value', null);
     $this->getJson("{$this->url}/ratings/tv/1399/season/1")->assertOk()->assertExactJson(['data' => [
         ['episode_number' => 1, 'value' => 7, 'comment' => null],
@@ -246,32 +249,55 @@ it('hides the ratings a kid profile may not see', function () {
     $this->getJson("/api/v1/profiles/{$kid->id}/tmdb/ratings?type=movie")->assertOk()->assertJsonPath('data.*.id', [1]);
 });
 
-it('asks to link again when TMDb no longer accepts the session', function () {
+it('keeps the review when TMDb no longer accepts the session, and unlinks the account', function () {
     linkProfile($this->profile);
     Http::fake([TMDB.'*' => Http::response(['success' => false, 'status_code' => 3, 'status_message' => 'Authentication failed'], 401)]);
 
-    $this->getJson("{$this->url}/ratings/movie/550")->assertConflict()
-        ->assertJsonPath('message', 'Votre compte TMDb n’est plus lié à ce profil : liez-le à nouveau.');
-    expect($this->profile->tmdbLink()->exists())->toBeFalse();
+    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 7])->assertOk()->assertJsonPath('data.value', 7);
+
+    expect($this->profile->tmdbLink()->exists())->toBeFalse()
+        ->and($this->profile->tmdbRatings()->value('account_id'))->toBeNull();
+    $this->getJson($this->url)->assertOk()->assertJsonPath('data.linked', false);
 });
 
-it('refuses ratings without a linked account, and other accounts\' profiles', function () {
-    $this->getJson("{$this->url}/ratings/movie/550")->assertConflict()
-        ->assertJsonPath('message', 'Liez d’abord un compte TMDb à ce profil.');
+it('reviews without a TMDb account, and refuses other accounts\' profiles', function () {
+    Http::fake([TMDB.'*' => Http::response([], 404)]);
+
+    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 8, 'comment' => 'Une claque.'])->assertOk()
+        ->assertJsonPath('data.value', 8)
+        ->assertJsonPath('data.comment', 'Une claque.');
+    $this->getJson("{$this->url}/ratings")->assertOk()->assertJsonPath('data.0.value', 8);
+    $this->deleteJson("{$this->url}/ratings/movie/550")->assertNoContent();
+    expect($this->profile->tmdbRatings()->count())->toBe(0);
+    // Nothing sent to a TMDb account.
+    Http::assertNotSent(fn (Request $r) => str_contains($r->url(), '/rating'));
 
     $stranger = Profile::factory()->create();
     linkProfile($stranger);
     $this->getJson("/api/v1/profiles/{$stranger->id}/tmdb")->assertForbidden();
     $this->putJson("/api/v1/profiles/{$stranger->id}/tmdb/ratings/movie/550", ['value' => 5])->assertForbidden();
     $this->deleteJson("/api/v1/profiles/{$stranger->id}/tmdb")->assertForbidden();
-    Http::assertNothingSent();
 });
 
-it('answers 503 when TMDb is down', function () {
+it('keeps the review when TMDb is down, and sends it at the next sync', function () {
     linkProfile($this->profile);
-    Http::fake([TMDB.'*' => Http::response('', 502)]);
+    $tmdb = ratedState();
+    $tmdb->down = true;
+    fakeRatedAccount($tmdb);
 
-    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 5])->assertServiceUnavailable();
+    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 5])->assertOk()->assertJsonPath('data.value', 5);
+    expect($this->profile->tmdbRatings()->value('account_id'))->toBeNull();
+
+    // Removed while TMDb is down: removed on TMDb at the next sync.
+    $this->putJson("{$this->url}/ratings/tv/1399", ['value' => 9])->assertOk();
+    $this->deleteJson("{$this->url}/ratings/tv/1399")->assertNoContent();
+
+    $tmdb->down = false;
+    $tmdb->shows = [Tmdb::show(1399, ['rating' => 9.0])];
+    $this->getJson("{$this->url}/ratings")->assertOk()->assertJsonPath('data.*.title', ['Fight Club']);
+    Http::assertSent(fn (Request $r) => $r->method() === 'POST' && str_contains($r->url(), 'movie/550/rating') && $r['value'] == 5);
+    Http::assertSent(fn (Request $r) => $r->method() === 'DELETE' && str_contains($r->url(), 'tv/1399/rating'));
+    expect($this->profile->tmdbRatings()->value('account_id'))->toBe(42);
 });
 
 /**
@@ -373,7 +399,7 @@ it('sorts my ratings by date or by rating, equal ratings the most recent first',
         ->assertJsonPath('errors.sort.0', 'La valeur sélectionnée pour tri n\'est pas valide.');
 });
 
-it('follows ratings given or removed on themoviedb.org, at most every 10 minutes', function () {
+it('brings in the ratings given on themoviedb.org, at most every 10 minutes; Vixeo keeps its reviews', function () {
     linkProfile($this->profile);
     $tmdb = ratedState(movies: [Tmdb::movie(550, ['rating' => 8.0])]);
     fakeRatedAccount($tmdb);
@@ -382,17 +408,17 @@ it('follows ratings given or removed on themoviedb.org, at most every 10 minutes
     $reads = fn () => collect(Http::recorded())->filter(fn ($pair) => str_contains($pair[0]->url(), '/rated/'))->count();
     expect($reads())->toBe(3);
 
-    // Within 10 minutes: the copy, without asking TMDb.
+    // Within 10 minutes: Vixeo's reviews, without asking TMDb.
     $this->getJson("{$this->url}/ratings")->assertOk();
     expect($reads())->toBe(3);
 
-    // Later, the rating was removed on themoviedb.org and another one given.
+    // Later, the rating was removed on themoviedb.org and another one given: the new one comes in,
+    // Vixeo's review stays (Vixeo owns it).
     $this->travel(11)->minutes();
     $tmdb->movies = [Tmdb::movie(551, ['title' => 'Dune', 'rating' => 7.0])];
     $this->getJson("{$this->url}/ratings")->assertOk()
-        ->assertJsonPath('data.*.title', ['Dune'])
-        ->assertJsonPath('data.0.comment', null);
-    expect(TmdbRating::where('target', 'movie/550')->exists())->toBeFalse();
+        ->assertJsonPath('data.*.title', ['Dune', 'Fight Club'])
+        ->assertJsonPath('data.1.comment', 'Revu.');
 });
 
 it('shows the copy when TMDb is down', function () {
@@ -407,28 +433,39 @@ it('shows the copy when TMDb is down', function () {
         ->assertJsonPath('data.0.comment', 'Revu.');
 });
 
-it('forgets the copy and the comments when the account is unlinked or replaced', function () {
+it('keeps the reviews when the account is unlinked, and sends them all to the account linked next', function () {
     linkProfile($this->profile);
     fakeRatedAccount(ratedState());
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 8, 'comment' => 'Revu.'])->assertOk();
-    expect($this->profile->tmdbRatings()->count())->toBe(1);
+    Http::fake([TMDB.'authentication/session?*' => Http::response(['success' => true])]);
 
     $this->deleteJson($this->url)->assertNoContent();
-    expect($this->profile->tmdbRatings()->count())->toBe(0);
+    expect($this->profile->tmdbRatings()->count())->toBe(1)
+        ->and($this->profile->tmdbRatings()->value('comment'))->toBe('Revu.');
 
-    // Another TMDb account replaces the first one: the first one's copy goes.
-    TmdbRating::forceCreate([
-        'profile_id' => $this->profile->id, 'account_id' => 42, 'target' => 'movie/1', 'type' => 'movie', 'tmdb_id' => 1,
-        'value' => 5, 'title' => 'Ancien', 'rated_at' => now(),
-    ]);
+    // Without an account: still reviewed in Vixeo.
+    $this->putJson("{$this->url}/ratings/tv/1399", ['value' => 9])->assertOk();
+
+    // Another TMDb account, which rated Fight Club 3 and Dune 7: Vixeo's ratings win, Dune comes in.
     Http::fake([
         TMDB.'authentication/token/new*' => Http::response(['success' => true, 'expires_at' => now()->addHour()->format('Y-m-d H:i:s').' UTC', 'request_token' => 'tok']),
         TMDB.'authentication/session/new*' => Http::response(['success' => true, 'session_id' => 'sess-2']),
         TMDB.'account?*' => Http::response(tmdbAccount(77)),
+        TMDB.'account/77/rated/movies*' => Http::response(Tmdb::page([
+            Tmdb::movie(550, ['rating' => 3.0]), Tmdb::movie(551, ['title' => 'Dune', 'rating' => 7.0]),
+        ])),
+        TMDB.'account/77/rated/tv*' => Http::response(Tmdb::page([])),
+        TMDB.'*/rating*' => Http::response(['success' => true, 'status_code' => 1]),
     ]);
     $this->postJson("{$this->url}/link");
     $this->postJson("{$this->url}/link/complete")->assertOk();
-    expect($this->profile->tmdbRatings()->count())->toBe(0);
+
+    Http::assertSent(fn (Request $r) => $r->method() === 'POST' && str_contains($r->url(), 'movie/550/rating') && $r['value'] == 8);
+    Http::assertSent(fn (Request $r) => $r->method() === 'POST' && str_contains($r->url(), 'tv/1399/rating') && $r['value'] == 9);
+    Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'movie/551/rating'));
+    expect($this->profile->tmdbRatings()->orderBy('target')->pluck('value', 'target')->all())
+        ->toBe(['movie/550' => 8.0, 'movie/551' => 7.0, 'tv/1399' => 9.0])
+        ->and($this->profile->tmdbRatings()->pluck('account_id')->unique()->all())->toBe([77]);
 });
 
 it('exports the linked account without its session, and deletes it with the profile', function () {

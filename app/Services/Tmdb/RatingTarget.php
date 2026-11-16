@@ -32,4 +32,14 @@ final readonly class RatingTarget
     {
         return new self(RatedType::Episode, $showId, $season, $episode);
     }
+
+    /** The target of a path ("movie/550", "tv/1399/season/1/episode/2"). */
+    public static function fromPath(string $path): self
+    {
+        $parts = explode('/', $path);
+
+        return count($parts) === 6
+            ? self::episode((int) $parts[1], (int) $parts[3], (int) $parts[5])
+            : self::title($parts[0] === 'movie' ? MediaType::Movie : MediaType::Tv, (int) ($parts[1] ?? 0));
+    }
 }

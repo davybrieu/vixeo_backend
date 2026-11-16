@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A rating of the profile's TMDb account, copied by App\Services\TmdbRatings, with the
- * profile's comment (kept by Vixeo only: TMDb's API takes no written review).
+ * A review of the profile (« Mes avis », App\Services\TmdbRatings): its rating and its comment.
+ * Vixeo owns it; when a TMDb account is linked, the rating is sent there (`account_id`: the TMDb
+ * account it was last sent to, null when not yet). The comment stays in Vixeo (TMDb's API takes
+ * no written review).
  */
 #[Fillable([
     'account_id', 'target', 'type', 'tmdb_id', 'season_number', 'episode_number', 'value', 'comment',
