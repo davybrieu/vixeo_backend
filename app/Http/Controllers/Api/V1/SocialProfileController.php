@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\ResolveProfile;
+use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\TmdbRating;
-use App\Http\Middleware\ResolveProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -35,6 +36,7 @@ class SocialProfileController extends Controller
         $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $viewer = ResolveProfile::profile($request);
+
         return response()->json(['data' => [
             ...$this->summary($profile),
             'bio' => $profile->bio,
@@ -92,14 +94,18 @@ class SocialProfileController extends Controller
         return $this->connections($request, $username, 'following');
     }
 
+    /**
+     * A member's reviews, the most recently rated first: the fields of « Mes avis »
+     * (`RatedItemResource` : images, episode, year…), plus `poster_path` for older apps.
+     */
     public function reviews(Request $request, string $username): JsonResponse
     {
         $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $items = TmdbRating::query()->where('profile_id', $profile->id)->latest('rated_at')->paginate(20);
+
         return response()->json(['data' => collect($items->items())->map(fn (TmdbRating $rating) => [
-            'type' => $rating->type, 'id' => $rating->tmdb_id, 'title' => $rating->title,
-            'value' => $rating->value, 'comment' => $rating->comment, 'rated_at' => $rating->rated_at,
+            ...(new RatedItemResource($rating))->toArray($request),
             'poster_path' => $rating->poster_path,
         ]), 'meta' => [
             'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
@@ -112,6 +118,7 @@ class SocialProfileController extends Controller
         $profile = $this->publicProfile($username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_favorite', true)->latest('favorited_at')->paginate(30);
+
         return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
             'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
             'year' => $item->year, 'poster_url' => $item->poster_url,
@@ -126,6 +133,7 @@ class SocialProfileController extends Controller
         $profile = $this->publicProfile($username);
         $relation = $direction === 'followers' ? $profile->followers() : $profile->following();
         $items = $relation->where('is_kid', false)->withCount(['followers', 'following'])->paginate(30);
+
         return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->summary($p)),
             'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage()]]);
     }
@@ -141,6 +149,7 @@ class SocialProfileController extends Controller
         $profile = ResolveProfile::profile($request);
         abort_unless($profile instanceof Profile, 422, 'Sélectionnez un profil.');
         abort_if($profile->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
+
         return $profile;
     }
 
