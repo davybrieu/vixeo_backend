@@ -3578,6 +3578,211 @@
                 }
             }
         },
+        "/v1/push/device": {
+            "get": {
+                "operationId": "v1.push.device.show",
+                "description": "`available`: false when the server sends no notification (not configured); `data` is null\nwhen the app is not registered.",
+                "summary": "This app's registration",
+                "tags": [
+                    "Notifications",
+                    "PushDevice"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/PushDeviceResource"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        },
+                                        "available": {
+                                            "type": "boolean",
+                                            "description": "Notifications sent by the server."
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "available"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.push.device.update",
+                "description": "At sign-in, at launch, when the token changes, when the profile in use changes and when\nthe new-episode alerts are turned on or off. Episodes out before the alerts are turned on\n(or before the profile is used on the app) are not announced. 201 the first time, 200 after.",
+                "summary": "Register this app",
+                "tags": [
+                    "Notifications",
+                    "PushDevice"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterPushDeviceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PushDeviceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PushDeviceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.push.device.destroy",
+                "summary": "Unregister this app",
+                "tags": [
+                    "Notifications",
+                    "PushDevice"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/push/device/test": {
+            "post": {
+                "operationId": "v1.push.device.test",
+                "description": "409 when the app is not registered (or no longer known by FCM), 503 when the server sends\nno notification or FCM refuses.",
+                "summary": "Send a test notification to this app",
+                "tags": [
+                    "Notifications",
+                    "PushDevice"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Notification de test envoy\u00e9e."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "An error\n\nAn error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "description": "Error overview.",
+                                                    "examples": [
+                                                        "Les notifications ne sont pas disponibles pour le moment."
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "description": "Error overview.",
+                                                    "examples": [
+                                                        "La notification n\u2019a pas pu \u00eatre envoy\u00e9e."
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                "Cet appareil n\u2019est pas inscrit aux notifications."
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/avatars": {
             "get": {
                 "operationId": "v1.avatars",
@@ -7997,6 +8202,44 @@
                 ],
                 "title": "ProfileSearchResource"
             },
+            "PushDeviceResource": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "type": "string"
+                    },
+                    "profile_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Profile whose new episodes come to this app."
+                    },
+                    "new_episodes": {
+                        "type": "boolean"
+                    },
+                    "registered_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_seen_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "platform",
+                    "profile_id",
+                    "new_episodes",
+                    "registered_at",
+                    "last_seen_at"
+                ],
+                "title": "PushDeviceResource"
+            },
             "RateRequest": {
                 "type": "object",
                 "properties": {
@@ -8145,6 +8388,39 @@
                     "episode"
                 ],
                 "title": "RatedType"
+            },
+            "RegisterPushDeviceRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "description": "Firebase Cloud Messaging registration token of the app. Kept encrypted, never sent back.",
+                        "maxLength": 4096
+                    },
+                    "platform": {
+                        "type": "string",
+                        "enum": [
+                            "android",
+                            "ios"
+                        ]
+                    },
+                    "new_episodes": {
+                        "type": "boolean",
+                        "description": "New episodes of the \u00ab Ma liste \u00bb TV shows of the active profile (X-Profile-Id)."
+                    },
+                    "utc_offset": {
+                        "type": "integer",
+                        "description": "Device time minus UTC, in minutes (Paris in winter: 60): no episode notification at night.",
+                        "minimum": -720,
+                        "maximum": 840
+                    }
+                },
+                "required": [
+                    "token",
+                    "platform",
+                    "new_episodes"
+                ],
+                "title": "RegisterPushDeviceRequest"
             },
             "RegisterRequest": {
                 "type": "object",

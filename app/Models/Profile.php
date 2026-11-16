@@ -113,6 +113,18 @@ class Profile extends Model
         return $this->hasOne(TmdbLink::class);
     }
 
+    /** Apps where this profile is in use, for push notifications. @return HasMany<PushDevice, $this> */
+    public function pushDevices(): HasMany
+    {
+        return $this->hasMany(PushDevice::class);
+    }
+
+    /** Episodes already announced to this profile. @return HasMany<EpisodeNotification, $this> */
+    public function episodeNotifications(): HasMany
+    {
+        return $this->hasMany(EpisodeNotification::class);
+    }
+
     /** Copy of the linked TMDb account's ratings, with comments. @return HasMany<TmdbRating, $this> */
     public function tmdbRatings(): HasMany
     {

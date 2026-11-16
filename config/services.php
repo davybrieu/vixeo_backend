@@ -89,6 +89,15 @@ return [
     ],
 
     /*
+    | Push notifications through Firebase Cloud Messaging (docs/notifications.md): the service
+    | account key of the Firebase project, as a path to its JSON file (outside the repository),
+    | or the JSON itself encoded in base64 ("base64:…"). Empty: no push notification.
+    */
+    'fcm' => [
+        'credentials' => env('FCM_CREDENTIALS'),
+    ],
+
+    /*
     | Node.js scraper worker (Playwright) that searches the French-language film and series providers.
     */
     'scraper' => [

@@ -231,7 +231,9 @@ Un port déjà pris (`EADDRINUSE`) : souvent l'ancien daemon SSR d'un autre site
 - **Queue** : connexion `redis`.
 - **Scheduler** : `php artisan schedule:run` chaque minute (supprime chaque jour les codes TV et
   les jetons expirés ; toutes les 6 h, `tv:epg` télécharge le guide des programmes et la
-  bibliothèque de logos de la TV en direct).
+  bibliothèque de logos de la TV en direct ; toutes les 15 minutes, `vixeo:push-episodes` envoie
+  les notifications des nouveaux épisodes, si `FCM_CREDENTIALS` est rempli : voir
+  `docs/notifications.md`).
 
 ## 8. Vérifier après le déploiement
 

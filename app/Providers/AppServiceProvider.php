@@ -64,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
         // TMDb account: the link page polls every 5 s, title pages read the ratings.
         RateLimiter::for('tmdb-account', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 
+        // Apps register for push notifications at launch and when the profile changes.
+        RateLimiter::for('push', fn (Request $request) => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));
+
         // Players save progress regularly; pulls are paginated.
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 

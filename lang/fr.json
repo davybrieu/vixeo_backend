@@ -64,5 +64,18 @@
     "Link a TMDb account to this profile first.": "Liez d’abord un compte TMDb à ce profil.",
     "The TMDb approval page has expired: start again.": "La page d’autorisation TMDb a expiré : recommencez.",
     "This TMDb account is already linked to another Vixeo profile: unlink it there first.": "Ce compte TMDb est déjà lié à un autre profil Vixeo : déliez-le d’abord de ce profil.",
-    "TMDb refused this request.": "TMDb a refusé cette demande."
+    "TMDb refused this request.": "TMDb a refusé cette demande.",
+    "Notifications are not available right now.": "Les notifications ne sont pas disponibles pour le moment.",
+    "This device is not registered for notifications.": "Cet appareil n’est pas inscrit aux notifications.",
+    "Test notification": "Notification de test",
+    "Vixeo notifications work on this device.": "Les notifications de Vixeo fonctionnent sur cet appareil.",
+    "The notification could not be sent.": "La notification n’a pas pu être envoyée.",
+    "Test notification sent.": "Notification de test envoyée.",
+    "Notifications need an app signed in with a token.": "Les notifications demandent une appli connectée.",
+    "S:season · E:episode": "S:season · É:episode",
+    ":code is available.": ":code est disponible.",
+    ":code “:title” is available.": ":code « :title » est disponible.",
+    ":count new episodes of season :season are available.": ":count nouveaux épisodes de la saison :season sont disponibles.",
+    ":count new episodes are available.": ":count nouveaux épisodes sont disponibles.",
+    "New episode": "Nouvel épisode"
 }

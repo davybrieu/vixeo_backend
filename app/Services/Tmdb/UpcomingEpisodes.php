@@ -101,6 +101,77 @@ class UpcomingEpisodes
     }
 
     /**
+     * Episodes of these TV shows available between [$from] and [$to], by show (the push of new
+     * episodes, App\Services\Push\EpisodePush). Reads the season of the last episode out and
+     * of the next one: TMDb moves an episode from `next_episode_to_air` to `last_episode_to_air`
+     * once it is out, and the show details are cached a day. Age limits are left to the caller.
+     *
+     * @param  list<int>  $showIds
+     * @return array<int, array{show: array<string, mixed>, episodes: list<array{episode: array<string, mixed>, available_at: CarbonImmutable}>}>
+     */
+    public function availableBetween(array $showIds, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $shows = [];
+        $seasons = [];
+        $known = [];
+        foreach ($this->summaries->shows($showIds) as $id => $show) {
+            if ($show === null) {
+                continue;
+            }
+            foreach (['last_episode_to_air', 'next_episode_to_air'] as $key) {
+                $episode = $show[$key] ?? null;
+                $at = is_array($episode) ? self::availableAt($show, TmdbFormat::string($episode, 'air_date')) : null;
+                if ($at === null || $at->lt($from) || $at->gt($to)) {
+                    continue;
+                }
+                $shows[$id] = $show;
+                $known[$id][] = $episode;
+                $path = "tv/{$id}/season/".(int) ($episode['season_number'] ?? 0);
+                $seasons[$path] = $id;
+            }
+        }
+        $responses = $seasons === [] ? [] : $this->tmdb->getMany(array_keys($seasons));
+
+        $episodes = [];
+        foreach ($seasons as $path => $id) {
+            $list = TmdbFormat::array($responses[$path] ?? [], 'episodes');
+            foreach ($list as $episode) {
+                if (is_array($episode)) {
+                    $episodes[$id][self::key($episode)] = $episode;
+                }
+            }
+        }
+
+        $result = [];
+        foreach ($shows as $id => $show) {
+            // Season unavailable: at least the episodes the show's details give.
+            $list = $episodes[$id] ?? [];
+            foreach ($known[$id] ?? [] as $episode) {
+                $list[self::key($episode)] ??= $episode;
+            }
+            $available = [];
+            foreach ($list as $episode) {
+                $at = self::availableAt($show, TmdbFormat::string($episode, 'air_date'));
+                if ($at !== null && $at->gte($from) && $at->lte($to)) {
+                    $available[] = ['episode' => $episode, 'available_at' => $at];
+                }
+            }
+            usort($available, fn (array $a, array $b) => self::key($a['episode']) <=> self::key($b['episode']));
+            if ($available !== []) {
+                $result[$id] = ['show' => $show, 'episodes' => $available];
+            }
+        }
+
+        return $result;
+    }
+
+    /** Season and number, to sort and to find an episode again. @param  array<string, mixed>  $episode */
+    private static function key(array $episode): string
+    {
+        return sprintf('%04d-%05d', (int) ($episode['season_number'] ?? 0), (int) ($episode['episode_number'] ?? 0));
+    }
+
+    /**
      * When an episode aired on that date should be available (see the class).
      *
      * @param  array<string, mixed>  $show  TMDb details

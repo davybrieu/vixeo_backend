@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
+use App\Http\Controllers\Api\V1\PushDeviceController;
 use App\Http\Controllers\Api\V1\SocialProfileController;
 use App\Http\Controllers\Api\V1\StreamController;
 use App\Http\Controllers\Api\V1\StreamPreferenceController;
@@ -159,6 +160,14 @@ Route::prefix('v1')->name('v1.')->group(function () {
             // POST, not DELETE: the PIN / password must travel in the body, never in the URL.
             Route::post('disable', [ParentalControlController::class, 'destroy'])->name('disable');
             Route::post('verify', [ParentalControlController::class, 'verify'])->name('verify');
+        });
+
+        // Push notifications of this app (docs/notifications.md).
+        Route::prefix('push/device')->name('push.device.')->middleware(['throttle:push', ResolveProfile::class])->group(function () {
+            Route::get('/', [PushDeviceController::class, 'show'])->name('show');
+            Route::put('/', [PushDeviceController::class, 'update'])->name('update');
+            Route::delete('/', [PushDeviceController::class, 'destroy'])->name('destroy');
+            Route::post('test', [PushDeviceController::class, 'test'])->name('test');
         });
 
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');

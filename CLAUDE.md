@@ -230,12 +230,21 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   qui donne une image ; l'image est **relayée, jamais stockée** sur le serveur (décision du
   développeur), vérifiée, gardée 7 jours par l'appli et le navigateur (`Cache-Control`) ; publique,
   CORS ; sans logo : `null`).
-- **Nouveaux épisodes** (doc : `docs/notifications.md`) : `GET /catalog/episodes/upcoming?ids=`
-  (séries de « Ma liste », 100 au plus, `AgeGate`) : épisodes des 60 prochains jours
-  (`App\Services\Tmdb\UpcomingEpisodes` : fiche TMDb en cache + saison du prochain épisode),
-  avec `available_at` estimé pour ne jamais prévenir trop tôt (streaming 08:00 UTC, sinon 21:00
-  dans le fuseau du pays de la série). Les applis en font des **notifications locales** : pas de
-  push ni de jeton d'appareil côté API.
+- **Notifications push** (doc : `docs/notifications.md`, demande du développeur : un serveur de
+  push, pas de notifications programmées par l'appli) : **Firebase Cloud Messaging**, API HTTP v1
+  (`App\Services\Push\Fcm`, compte de service `FCM_CREDENTIALS` hors du dépôt : chemin du JSON
+  ou `base64:…` ; vide = aucune notification). L'appli s'inscrit (`PUT /push/device` : jeton FCM,
+  plateforme, `new_episodes`, `utc_offset`, profil de `X-Profile-Id` ; `GET`, `DELETE`,
+  `POST /push/device/test`) ; table `push_devices` (**une ligne par jeton Sanctum**, supprimée à
+  la déconnexion ; jeton FCM **chiffré**, retrouvé par son SHA-256, jamais renvoyé ; oubliée quand
+  FCM ne la connaît plus). `vixeo:push-episodes` (planifiée toutes les 15 min, aussi à la main,
+  `--user=`, `--dry-run`) : `EpisodePush` annonce les épisodes sortis depuis moins de 48 h des
+  séries de « Ma liste » (`UpcomingEpisodes::availableBetween`), jamais avant l'ajout de la série
+  ni l'activation des alertes, jamais deux fois (`episode_notifications`), pas la nuit sur
+  l'appareil (23 h – 8 h), une notification par série (canal Android `episodes`, `data.path` =
+  fiche). `vixeo:push "texte" --all | --user=…` (`SendPush`) : un message écrit à la main
+  (canal `general`). `GET /catalog/episodes/upcoming` reste (heure de sortie estimée, jamais trop
+  tôt : streaming 08:00 UTC, sinon 21:00 dans le pays de la série).
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
@@ -282,7 +291,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
-- Fait aussi : épisodes à venir des séries de « Ma liste » (notifications locales des applis).
+- Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
+  (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
   les serveurs de Vixeo.

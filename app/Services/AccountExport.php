@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\EpisodeNotification;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\ProfileSearch;
 use App\Models\ProfileStream;
+use App\Models\PushDevice;
 use App\Models\TmdbRating;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -28,7 +30,7 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with(['items', 'streams', 'searches', 'tmdbLink', 'tmdbRatings'])->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'streams', 'searches', 'tmdbLink', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
@@ -62,6 +64,13 @@ class AccountExport
                     'comment' => $r->comment,
                     'rated_at' => $r->rated_at?->toIso8601String(),
                 ])->values()->all(),
+                // New episodes already announced by a notification.
+                'episode_notifications' => $p->episodeNotifications->sortByDesc('sent_at')->map(fn (EpisodeNotification $n) => [
+                    'show_id' => $n->show_id,
+                    'season_number' => $n->season_number,
+                    'episode_number' => $n->episode_number,
+                    'sent_at' => $n->sent_at?->toIso8601String(),
+                ])->values()->all(),
                 'has_pin' => $p->pin !== null,
                 'created_at' => $p->created_at?->toIso8601String(),
                 'library' => $p->items->map(fn (ProfileItem $i) => [
@@ -91,6 +100,14 @@ class AccountExport
                     'favorited_at' => $s->favorited_at?->toIso8601String(),
                     'last_worked_at' => $s->last_worked_at?->toIso8601String(),
                 ])->values()->all(),
+            ])->values()->all(),
+            // Apps registered for push notifications (their Firebase token is left out).
+            'notification_devices' => $user->pushDevices()->with('profile')->get()->map(fn (PushDevice $d) => [
+                'platform' => $d->platform,
+                'profile' => $d->profile?->name,
+                'new_episodes' => $d->new_episodes,
+                'registered_at' => $d->created_at?->toIso8601String(),
+                'last_seen_at' => $d->last_seen_at?->toIso8601String(),
             ])->values()->all(),
             'devices' => $user->tokens()->get()->map(fn (PersonalAccessToken $t) => [
                 'name' => $t->name,

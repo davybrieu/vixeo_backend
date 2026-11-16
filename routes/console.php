@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Push\Fcm;
 use App\Services\Tv\ChannelLogos;
 use App\Services\Tv\ChannelName;
 use App\Services\Tv\Epg;
@@ -16,6 +17,10 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 // Live TV programme guide and logo library (docs/tv-direct.md): downloaded outside requests.
 Schedule::command('tv:epg')->everySixHours()->withoutOverlapping(60)->runInBackground()
     ->when(fn () => app(Epg::class)->configured() || app(LogoLibrary::class)->configured());
+
+// New-episode push notifications (docs/notifications.md); `vixeo:push` sends one by hand.
+Schedule::command('vixeo:push-episodes')->everyFifteenMinutes()->withoutOverlapping(30)->runInBackground()
+    ->when(fn () => app(Fcm::class)->configured());
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
