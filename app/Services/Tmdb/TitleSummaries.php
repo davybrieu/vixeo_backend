@@ -101,6 +101,30 @@ class TitleSummaries
     }
 
     /**
+     * TMDb details of TV shows by id, from the same cache as the summaries (with images and
+     * certifications). Null for a show TMDb doesn't know or could not give.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, array<string, mixed>|null>
+     */
+    public function shows(array $ids): array
+    {
+        $paths = [];
+        foreach ($ids as $id) {
+            $paths["tv/{$id}"] = true;
+        }
+        $details = $this->fetch(['movie' => [], 'tv' => $paths]);
+
+        $shows = [];
+        foreach ($ids as $id) {
+            $show = $details["tv/{$id}"] ?? null;
+            $shows[$id] = is_array($show) && isset($show['id']) ? $show : null;
+        }
+
+        return $shows;
+    }
+
+    /**
      * TMDb details (with images and certifications) of each path, null when TMDb fails.
      *
      * @param  array{movie: array<string, true>, tv: array<string, true>}  $paths

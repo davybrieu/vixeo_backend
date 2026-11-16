@@ -16,9 +16,9 @@ use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
+use App\Http\Controllers\Api\V1\SocialProfileController;
 use App\Http\Controllers\Api\V1\StreamController;
 use App\Http\Controllers\Api\V1\StreamPreferenceController;
-use App\Http\Controllers\Api\V1\SocialProfileController;
 use App\Http\Controllers\Api\V1\TmdbAccountController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
@@ -90,6 +90,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
+        Route::get('episodes/upcoming', [CatalogTitleController::class, 'upcomingEpisodes'])->name('episodes.upcoming');
         Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
         Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
         Route::get('people/popular', [CatalogSearchController::class, 'popularPeople'])->name('people.popular');
@@ -129,7 +130,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('catalog/streams/dead', [DeadStreamController::class, 'store'])
             ->middleware(['throttle:catalog', ResolveProfile::class])
             ->name('catalog.streams.dead');
-
 
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::middleware(ResolveProfile::class)->prefix('social')->name('social.')->group(function () {

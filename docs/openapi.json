@@ -982,6 +982,64 @@
                 }
             }
         },
+        "/v1/catalog/episodes/upcoming": {
+            "get": {
+                "operationId": "v1.catalog.episodes.upcoming",
+                "description": "Episodes of the TV shows asked (\u00ab Ma liste \u00bb) available in the next 60 days, the soonest\nfirst (200 at most): what the apps' \"nouvel \u00e9pisode\" notifications announce. TMDb only\ngives a date: `available_at` is a guess made not to be early (streaming platforms at\n08:00 UTC, other channels at 21:00 in the show's country). Respects the active profile's\nage limit; shows TMDb doesn't know are left out.",
+                "summary": "Upcoming episodes",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "description": "TMDb ids of TV shows, comma-separated: `1399,66732` (100 at most).",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{1,9}(,\\d{1,9}){0,99}$",
+                            "maxLength": 1000
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UpcomingEpisodeResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/search": {
             "get": {
                 "operationId": "v1.catalog.search",
@@ -9109,6 +9167,63 @@
                     "linked_at"
                 ],
                 "title": "TmdbAccountResource"
+            },
+            "UpcomingEpisodeResource": {
+                "type": "object",
+                "properties": {
+                    "show_id": {
+                        "type": "integer"
+                    },
+                    "show_name": {
+                        "type": "string"
+                    },
+                    "poster_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "TV show poster, w342."
+                    },
+                    "season_number": {
+                        "type": "integer"
+                    },
+                    "episode_number": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "air_date": {
+                        "type": "string",
+                        "description": "Date given by TMDb (the show's country)."
+                    },
+                    "available_at": {
+                        "type": "string",
+                        "description": "When the episode should be available, ISO 8601 in UTC: a guess, never early on purpose (docs/notifications.md)."
+                    },
+                    "still_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Episode image, w300."
+                    }
+                },
+                "required": [
+                    "show_id",
+                    "show_name",
+                    "poster_url",
+                    "season_number",
+                    "episode_number",
+                    "name",
+                    "air_date",
+                    "available_at",
+                    "still_url"
+                ],
+                "title": "UpcomingEpisodeResource"
             },
             "UpdateEmailRequest": {
                 "type": "object",

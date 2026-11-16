@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
+use App\Http\Requests\Api\V1\UpcomingEpisodesRequest;
 use App\Http\Resources\V1\Catalog\MovieResource;
 use App\Http\Resources\V1\Catalog\PersonResource;
 use App\Http\Resources\V1\Catalog\SeasonResource;
 use App\Http\Resources\V1\Catalog\ShowResource;
+use App\Http\Resources\V1\Catalog\UpcomingEpisodeResource;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
+use App\Services\Tmdb\UpcomingEpisodes;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -19,7 +23,12 @@ use Illuminate\Http\Request;
  */
 class CatalogTitleController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleSummaries $summaries) {}
+    public function __construct(
+        private TmdbCatalog $catalog,
+        private AgeGate $ageGate,
+        private TitleSummaries $summaries,
+        private UpcomingEpisodes $upcoming,
+    ) {}
 
     /**
      * Movie.
@@ -43,6 +52,23 @@ class CatalogTitleController extends Controller
     public function show(Request $request, int $id): ShowResource
     {
         return new ShowResource($this->restricted($request, $this->catalog->show($id)));
+    }
+
+    /**
+     * Upcoming episodes.
+     *
+     * Episodes of the TV shows asked (« Ma liste ») available in the next 60 days, the soonest
+     * first (200 at most): what the apps' "nouvel épisode" notifications announce. TMDb only
+     * gives a date: `available_at` is a guess made not to be early (streaming platforms at
+     * 08:00 UTC, other channels at 21:00 in the show's country). Respects the active profile's
+     * age limit; shows TMDb doesn't know are left out.
+     */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
+    public function upcomingEpisodes(UpcomingEpisodesRequest $request): JsonResponse
+    {
+        $episodes = $this->upcoming->for(ResolveProfile::profile($request), $request->showIds());
+
+        return response()->json(['data' => UpcomingEpisodeResource::collection($episodes)]);
     }
 
     /**

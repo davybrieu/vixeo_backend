@@ -23,9 +23,20 @@ class AgeGate
      */
     public function authorizeTitle(?Profile $profile, array $title): void
     {
-        if ($profile?->isRestricted() && ! $profile->allowsAge(TmdbFormat::ageRating(TmdbFormat::certification($title)))) {
+        if (! $this->allows($profile, $title)) {
             throw new AccessDeniedHttpException(__('This content is not available on this profile.'));
         }
+    }
+
+    /**
+     * Whether the profile may see a movie / TV show (TMDb data with release_dates or
+     * content_ratings).
+     *
+     * @param  array<string, mixed>  $title
+     */
+    public function allows(?Profile $profile, array $title): bool
+    {
+        return ! $profile?->isRestricted() || $profile->allowsAge(TmdbFormat::ageRating(TmdbFormat::certification($title)));
     }
 
     /** Deny pages of a TV show (seasons) the profile may not see. */

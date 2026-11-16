@@ -230,6 +230,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   qui donne une image ; l'image est **relayée, jamais stockée** sur le serveur (décision du
   développeur), vérifiée, gardée 7 jours par l'appli et le navigateur (`Cache-Control`) ; publique,
   CORS ; sans logo : `null`).
+- **Nouveaux épisodes** (doc : `docs/notifications.md`) : `GET /catalog/episodes/upcoming?ids=`
+  (séries de « Ma liste », 100 au plus, `AgeGate`) : épisodes des 60 prochains jours
+  (`App\Services\Tmdb\UpcomingEpisodes` : fiche TMDb en cache + saison du prochain épisode),
+  avec `available_at` estimé pour ne jamais prévenir trop tôt (streaming 08:00 UTC, sinon 21:00
+  dans le fuseau du pays de la série). Les applis en font des **notifications locales** : pas de
+  push ni de jeton d'appareil côté API.
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
@@ -276,6 +282,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
+- Fait aussi : épisodes à venir des séries de « Ma liste » (notifications locales des applis).
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
   les serveurs de Vixeo.
