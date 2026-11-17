@@ -4,7 +4,6 @@ namespace App\Services\Addons;
 
 use App\Enums\MediaType;
 use App\Models\Addon;
-use App\Models\Profile;
 use App\Models\User;
 use App\Services\Playback\DeadStreams;
 use App\Services\Playback\PlaybackServiceUnavailable;
@@ -14,27 +13,21 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * The plug-ins of an account (docs/plugins.md), the only place that reads and writes them:
+ * The plug-ins of an account (docs/plugins.md), the only place that reads and writes them.
+ * Plug-ins only add **sources**: their streams are providers of the sources panel
+ * (`streamProviders`, `streams`). The catalog (home, lists, details, search) is TMDb's and
+ * plug-ins never change it.
  *
- * - the Vixeo catalog first, built in ([VixeoCatalogAddon]), then those installed for every
- *   account (`user_id` null), then the account's own, each in their order;
- * - their catalogs as rows of the home (`sections`) and "see all" pages (`catalogPage`);
- * - their streams as providers of the sources panel (`streamProviders`, `streams`).
- *
- * A plug-in that fails never breaks a page: its rows are left out, its provider says it is
- * unavailable.
+ * Order: those installed for every account (`user_id` null), then the account's own. A plug-in
+ * that fails never breaks a page: its provider says it is unavailable.
  */
 class Addons
 {
     /** Provider ids of the sources panel: "addon:12". */
     public const PROVIDER_PREFIX = 'addon:';
 
-    /** List names of a plug-in catalog: "addon:12:top" (route `/catalog/{type}/lists/{list}`). */
-    public const LIST_PREFIX = 'addon:';
-
     public function __construct(
         private AddonHttp $http,
-        private VixeoCatalogAddon $vixeo,
         private TitleIds $ids,
         private DeadStreams $dead,
     ) {}
@@ -43,13 +36,13 @@ class Addons
     // Installed plug-ins
 
     /**
-     * Every plug-in an account sees, the Vixeo catalog first.
+     * Every plug-in an account sees: those of every account, then its own.
      *
-     * @return list<array{key: string, manifest: AddonManifest, addon: Addon|null}>
+     * @return list<array{key: string, manifest: AddonManifest, addon: Addon}>
      */
     public function installed(?User $user, bool $enabledOnly = false): array
     {
-        $list = [['key' => VixeoCatalogAddon::KEY, 'manifest' => $this->vixeo->parsedManifest(), 'addon' => null]];
+        $list = [];
 
         $addons = Addon::query()->visibleTo($user)->when($enabledOnly, fn ($q) => $q->where('enabled', true))->get();
         foreach ($addons as $addon) {
@@ -86,14 +79,11 @@ class Addons
         }
 
         $manifest = AddonManifest::fromArray($this->http->getJson($url));
-        if ($manifest->id === VixeoCatalogAddon::ID) {
-            throw new InvalidAddon(__('This plug-in is already installed.'));
-        }
         if ($manifest->configurationRequired) {
             throw new InvalidAddon(__('This plug-in must be configured on its website first: paste the address it gives you then.'));
         }
-        if (! $manifest->isUseful()) {
-            throw new InvalidAddon(__('This plug-in offers no catalog nor streams of movies or TV shows.'));
+        if (! $manifest->servesStreams()) {
+            throw new InvalidAddon(__('This plug-in offers no sources for movies or TV shows.'));
         }
 
         return DB::transaction(function () use ($user, $url, $hash, $manifest) {
@@ -112,7 +102,7 @@ class Addons
         });
     }
 
-    /** An account's own plug-in (those of every account and the Vixeo catalog are not its to change). */
+    /** An account's own plug-in (those of every account are not its to change). */
     public function owned(User $user, string $key): Addon
     {
         $addon = ctype_digit($key) ? $user->addons()->whereKey((int) $key)->first() : null;
@@ -141,7 +131,7 @@ class Addons
     }
 
     /**
-     * Reads again the manifests not read for a day (name, catalogs, version may change). Quietly:
+     * Reads again the manifests not read for a day (name, version, ids may change). Quietly:
      * a plug-in that does not answer keeps its manifest.
      */
     public function refreshStale(?User $user): void
@@ -168,113 +158,6 @@ class Addons
     }
 
     // ---------------------------------------------------------------------------------------
-    // Catalogs
-
-    /**
-     * Rows of the home from the catalogs of the account's plug-ins (not the Vixeo catalog, whose
-     * rows are the home itself): `{key, title, type, list, items, light}`, items as TMDb titles.
-     *
-     * @return list<array{key: string, title: string, type: string, list: string, items: list<array<string, mixed>>, light: bool}>
-     */
-    public function sections(?User $user, ?Profile $profile): array
-    {
-        $rows = [];
-        $urls = [];
-        foreach ($this->installed($user, enabledOnly: true) as $entry) {
-            $addon = $entry['addon'];
-            $manifest = $entry['manifest'];
-            if ($addon === null || ($manifest->adult && $profile?->isRestricted())) {
-                continue;
-            }
-            $catalogs = [...$manifest->catalogsFor('movie'), ...$manifest->catalogsFor('series')];
-            foreach (array_slice($catalogs, 0, (int) config('services.addons.home_catalogs', 6)) as $catalog) {
-                $type = AddonManifest::mediaType($catalog['type']);
-                $key = "{$addon->id}:{$catalog['type']}:{$catalog['id']}";
-                $urls[$key] = $this->resourceUrl($addon, 'catalog', $catalog['type'], $catalog['id']);
-                $rows[$key] = [
-                    'key' => "{$type->value}_".self::LIST_PREFIX."{$addon->id}:{$catalog['id']}",
-                    'title' => "{$catalog['name']} · {$manifest->name}",
-                    'type' => $type->value,
-                    'list' => self::LIST_PREFIX."{$addon->id}:{$catalog['id']}",
-                    'light' => true,
-                    'stremio_type' => $catalog['type'],
-                ];
-            }
-        }
-        if ($rows === []) {
-            return [];
-        }
-
-        $answers = $this->fetchCached($urls, 'catalog');
-        $refs = [];
-        foreach ($rows as $key => $row) {
-            foreach (self::metaIds($answers[$key] ?? null) as $index => $id) {
-                $refs["{$key}#{$index}"] = [MediaType::from($row['type']), $id];
-            }
-        }
-        $items = $this->ids->items($refs);
-
-        $sections = [];
-        foreach ($rows as $key => $row) {
-            $rowItems = [];
-            foreach ($items as $ref => $item) {
-                if ($item !== null && str_starts_with($ref, "{$key}#")) {
-                    $rowItems[] = $item;
-                }
-            }
-            unset($row['stremio_type']);
-            if ($rowItems !== []) {
-                $sections[] = ['items' => self::unique($rowItems)] + $row;
-            }
-        }
-
-        return $sections;
-    }
-
-    /**
-     * A page of a plug-in catalog ("see all"), in the shape of TmdbCatalog pages. Pages after the
-     * first only when the catalog supports `skip`; their size is that of the first page.
-     *
-     * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
-     */
-    public function catalogPage(?User $user, MediaType $type, string $list, int $page): array
-    {
-        [$addon, $catalogId] = $this->listTarget($user, $list);
-        $stremioType = AddonManifest::stremioType($type);
-        $catalog = $addon->parsedManifest()->catalog($stremioType, $catalogId);
-        if ($catalog === null) {
-            throw new NotFoundHttpException;
-        }
-
-        $firstUrl = $this->resourceUrl($addon, 'catalog', $stremioType, $catalogId);
-        $first = $this->fetchCached(['first' => $firstUrl], 'catalog')['first'];
-        $pageSize = count(self::metaIds($first));
-
-        $answer = $first;
-        if ($page > 1) {
-            $answer = $catalog['skip'] && $pageSize > 0
-                ? $this->fetchCached(['page' => $this->resourceUrl($addon, 'catalog', $stremioType, $catalogId, ['skip' => (string) (($page - 1) * $pageSize)])], 'catalog')['page']
-                : null;
-        }
-
-        $ids = self::metaIds($answer);
-        $results = array_values(array_filter($this->ids->items(array_map(fn (string $id) => [$type, $id], $ids))));
-        $more = $catalog['skip'] && $pageSize > 0 && count($ids) >= $pageSize;
-
-        return [
-            'page' => $page,
-            'total_pages' => $more ? $page + 1 : $page,
-            'total_results' => ($page - 1) * $pageSize + count($ids),
-            'results' => self::unique($results),
-        ];
-    }
-
-    public static function isAddonList(string $list): bool
-    {
-        return str_starts_with($list, self::LIST_PREFIX);
-    }
-
-    // ---------------------------------------------------------------------------------------
     // Streams
 
     /**
@@ -287,7 +170,7 @@ class Addons
         $providers = [];
         foreach ($this->installed($user, enabledOnly: true) as $entry) {
             $manifest = $entry['manifest'];
-            if ($entry['addon'] !== null && ($manifest->supports('stream', 'movie') || $manifest->supports('stream', 'series'))) {
+            if ($manifest->servesStreams()) {
                 $providers[] = ['id' => self::PROVIDER_PREFIX.$entry['key'], 'name' => $manifest->name];
             }
         }
@@ -406,32 +289,15 @@ class Addons
         return $addon;
     }
 
-    /** @return array{Addon, string} */
-    private function listTarget(?User $user, string $list): array
-    {
-        $parts = explode(':', substr($list, strlen(self::LIST_PREFIX)), 2);
-        if (count($parts) !== 2 || $parts[1] === '') {
-            throw new NotFoundHttpException;
-        }
-
-        return [$this->visible($user, $parts[0]), $parts[1]];
-    }
-
     /**
-     * `{base}/{resource}/{type}/{id}[/{extra}].json`. Ids keep their colons (`tt0944947:1:2`), as
-     * Stremio sends them.
-     *
-     * @param  array<string, string>  $extra
+     * `{base}/{resource}/{type}/{id}.json`. Ids keep their colons (`tt0944947:1:2`), as Stremio
+     * sends them.
      */
-    private function resourceUrl(Addon $addon, string $resource, string $type, string $id, array $extra = []): string
+    private function resourceUrl(Addon $addon, string $resource, string $type, string $id): string
     {
         $encode = fn (string $part) => str_replace('%3A', ':', rawurlencode($part));
-        $path = $addon->baseUrl()."/{$resource}/".$encode($type).'/'.$encode($id);
-        if ($extra !== []) {
-            $path .= '/'.implode('&', array_map(fn ($k, $v) => rawurlencode($k).'='.rawurlencode($v), array_keys($extra), $extra));
-        }
 
-        return $path.'.json';
+        return $addon->baseUrl()."/{$resource}/".$encode($type).'/'.$encode($id).'.json';
     }
 
     /**
@@ -461,40 +327,5 @@ class Addons
         }
 
         return $answers;
-    }
-
-    /**
-     * Ids of a catalog answer (`{metas: [{id}]}`), in order.
-     *
-     * @param  array<mixed>|null  $answer
-     * @return list<string>
-     */
-    private static function metaIds(?array $answer): array
-    {
-        $ids = [];
-        foreach (is_array($answer['metas'] ?? null) ? $answer['metas'] : [] as $meta) {
-            if (is_array($meta) && is_string($meta['id'] ?? null) && $meta['id'] !== '') {
-                $ids[] = $meta['id'];
-            }
-        }
-
-        return array_slice($ids, 0, 100);
-    }
-
-    /**
-     * Titles once each (two ids of a plug-in may be the same TMDb title).
-     *
-     * @param  list<array<string, mixed>>  $items
-     * @return list<array<string, mixed>>
-     */
-    private static function unique(array $items): array
-    {
-        $seen = [];
-
-        return array_values(array_filter($items, function (array $item) use (&$seen) {
-            $key = ($item['media_type'] ?? '').':'.($item['id'] ?? '');
-
-            return isset($seen[$key]) ? false : ($seen[$key] = true);
-        }));
     }
 }

@@ -87,9 +87,7 @@
     "You have reached the maximum number of plug-ins.": "Vous avez atteint le nombre maximum de plug-ins.",
     "This plug-in is already installed.": "Ce plug-in est déjà installé.",
     "This plug-in must be configured on its website first: paste the address it gives you then.": "Ce plug-in doit d’abord être configuré sur son site : collez ensuite l’adresse qu’il vous donne.",
-    "This plug-in offers no catalog nor streams of movies or TV shows.": "Ce plug-in ne propose ni catalogue ni flux de films ou de séries.",
+    "This plug-in offers no sources for movies or TV shows.": "Ce plug-in ne propose pas de sources de films ou de séries.",
     "This plug-in is not installed.": "Ce plug-in n’est pas installé.",
-    "This plug-in is temporarily unavailable.": "Ce plug-in est momentanément indisponible.",
-    "The Vixeo catalog: movies and TV shows, with their details, from TMDb.": "Le catalogue de Vixeo : films et séries, avec leurs fiches, d’après TMDb.",
-    "Search": "Recherche"
+    "This plug-in is temporarily unavailable.": "Ce plug-in est momentanément indisponible."
 }

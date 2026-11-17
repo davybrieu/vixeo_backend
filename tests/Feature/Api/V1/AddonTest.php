@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Addon;
-use App\Models\Profile;
 use App\Models\User;
 use App\Services\AccountExport;
 use App\Services\Addons\HostResolver;
@@ -10,7 +9,6 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
-use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
 /** A plug-in manifest in the Stremio format. */
 function addonManifest(array $overrides = []): array
@@ -77,119 +75,36 @@ beforeEach(function () {
 });
 
 // -------------------------------------------------------------------------------------------
-// The Vixeo catalog, in the Stremio format
-
-it('serves the manifest of the Vixeo catalog, publicly, to any website', function () {
-    $this->app['auth']->forgetGuards();
-
-    $response = $this->getJson('/api/v1/addons/vixeo/manifest.json')
-        ->assertOk()
-        ->assertHeader('Access-Control-Allow-Origin', '*')
-        ->assertJsonPath('id', 'app.vixeo.catalog')
-        ->assertJsonPath('name', 'Vixeo')
-        ->assertJsonPath('resources', ['catalog', 'meta'])
-        ->assertJsonPath('types', ['movie', 'series'])
-        ->assertJsonPath('idPrefixes', ['tmdb:']);
-
-    $catalogs = collect($response->json('catalogs'));
-    expect($catalogs->where('type', 'movie')->pluck('id'))->toContain('vixeo.trending', 'vixeo.popular', 'vixeo.search')
-        ->and($catalogs->where('type', 'series')->pluck('id'))->toContain('vixeo.trending', 'vixeo.on_the_air')
-        ->and($catalogs->firstWhere('id', 'vixeo.search')['extra'][0])->toBe(['name' => 'search', 'isRequired' => true]);
-});
-
-it('serves a catalog of the Vixeo plug-in as Stremio metas, and its next pages through skip', function () {
-    Http::fake([
-        'api.themoviedb.org/3/trending/movie/week*' => Http::response(Tmdb::page([Tmdb::movie(550)], 3)),
-    ]);
-
-    $this->getJson('/api/v1/addons/vixeo/catalog/movie/vixeo.trending.json')
-        ->assertOk()
-        ->assertJsonPath('metas.0', [
-            'id' => 'tmdb:550',
-            'type' => 'movie',
-            'name' => 'Fight Club',
-            'poster' => 'https://image.tmdb.org/t/p/w342/poster.jpg',
-            'posterShape' => 'poster',
-            'background' => 'https://image.tmdb.org/t/p/w1280/backdrop.jpg',
-            'description' => 'Le narrateur, sans identité précise…',
-            'releaseInfo' => '1999',
-            'imdbRating' => '8.4',
-        ]);
-
-    $this->getJson('/api/v1/addons/vixeo/catalog/movie/vixeo.trending/skip=40.json')->assertOk();
-    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'trending/movie/week') && $request['page'] === 3);
-});
-
-it('searches through the Vixeo plug-in, and gives nothing for an unknown catalog', function () {
-    Http::fake([
-        'api.themoviedb.org/3/search/tv*' => Http::response(Tmdb::page([Tmdb::show(1399)])),
-    ]);
-
-    $this->getJson('/api/v1/addons/vixeo/catalog/series/vixeo.search/search=game%20of%20thrones.json')
-        ->assertOk()
-        ->assertJsonPath('metas.0.id', 'tmdb:1399')
-        ->assertJsonPath('metas.0.type', 'series');
-    Http::assertSent(fn (Request $request) => $request['query'] === 'game of thrones');
-
-    $this->getJson('/api/v1/addons/vixeo/catalog/movie/other.json')->assertOk()->assertExactJson(['metas' => []]);
-    $this->getJson('/api/v1/addons/vixeo/catalog/channel/vixeo.trending.json')->assertOk()->assertExactJson(['metas' => []]);
-});
-
-it('serves the meta of a series with its episodes', function () {
-    Http::fake([
-        'api.themoviedb.org/3/tv/1399/season/0*' => Http::response(['episodes' => []]),
-        'api.themoviedb.org/3/tv/1399/season/1*' => Http::response(['episodes' => [
-            ['season_number' => 1, 'episode_number' => 1, 'name' => "L'hiver vient", 'air_date' => '2011-04-17', 'overview' => 'Début.', 'still_path' => '/e1.jpg'],
-        ]]),
-        'api.themoviedb.org/3/tv/1399*' => Http::response(Tmdb::showDetails()),
-    ]);
-
-    $this->getJson('/api/v1/addons/vixeo/meta/series/tmdb:1399.json')
-        ->assertOk()
-        ->assertJsonPath('meta.id', 'tmdb:1399')
-        ->assertJsonPath('meta.imdb_id', 'tt0944947')
-        ->assertJsonPath('meta.releaseInfo', '2011-2019')
-        ->assertJsonPath('meta.runtime', '60 min')
-        ->assertJsonPath('meta.cast', ['Peter Dinklage'])
-        ->assertJsonPath('meta.videos', [[
-            'id' => 'tmdb:1399:1:1',
-            'title' => "L'hiver vient",
-            'season' => 1,
-            'episode' => 1,
-            'released' => '2011-04-17T00:00:00.000Z',
-            'overview' => 'Début.',
-            'thumbnail' => 'https://image.tmdb.org/t/p/w300/e1.jpg',
-        ]]);
-
-    $this->getJson('/api/v1/addons/vixeo/meta/series/tt0944947.json')->assertNotFound();
-});
-
-// -------------------------------------------------------------------------------------------
 // Installed plug-ins
 
-it('lists the Vixeo catalog first, built in, then those of everyone and the account’s own', function () {
+it('lists the plug-ins of everyone, then the account’s own, without a built-in one', function () {
     installAddon(null, ['id' => 'org.example.shared', 'name' => 'Pour tous'], 'shared.test');
     installAddon($this->user);
+    installAddon($this->user, ['id' => 'catalog-only', 'name' => 'Catalogue seul', 'resources' => ['catalog']], 'catalog.test')
+        ->update(['position' => 2]);
     installAddon(User::factory()->create(), ['name' => 'Pas le mien'], 'other.test');
 
     $this->getJson('/api/v1/addons')
         ->assertOk()
         ->assertJsonCount(3, 'data')
-        ->assertJsonPath('data.0.id', 'vixeo')
-        ->assertJsonPath('data.0.built_in', true)
-        ->assertJsonPath('data.0.enabled', true)
-        ->assertJsonPath('data.0.host', null)
-        ->assertJsonPath('data.0.manifest_url', route('v1.addons.vixeo.manifest'))
-        ->assertJsonPath('data.1.name', 'Pour tous')
-        ->assertJsonPath('data.1.shared', true)
-        ->assertJsonPath('data.2.name', 'Films libres')
-        ->assertJsonPath('data.2.shared', false)
-        ->assertJsonPath('data.2.host', 'addon.test')
-        ->assertJsonPath('data.2.version', '2.1.0')
-        ->assertJsonPath('data.2.resources', ['catalog', 'stream'])
-        ->assertJsonPath('data.2.types', ['movie', 'tv'])
-        ->assertJsonPath('data.2.catalogs', 1)
-        ->assertJsonPath('data.2.logo_url', 'https://addon.test/logo.png');
+        ->assertJsonPath('data.0.name', 'Pour tous')
+        ->assertJsonPath('data.0.shared', true)
+        ->assertJsonPath('data.1.name', 'Films libres')
+        ->assertJsonPath('data.1.shared', false)
+        ->assertJsonPath('data.1.host', 'addon.test')
+        ->assertJsonPath('data.1.version', '2.1.0')
+        ->assertJsonPath('data.1.resources', ['catalog', 'stream'])
+        ->assertJsonPath('data.1.types', ['movie', 'tv'])
+        ->assertJsonPath('data.1.streams', true)
+        ->assertJsonPath('data.1.enabled', true)
+        ->assertJsonPath('data.1.logo_url', 'https://addon.test/logo.png')
+        // Kept for the apps installed before, with the values of a plug-in that only gives sources.
+        ->assertJsonPath('data.1.catalogs', 0)
+        ->assertJsonPath('data.1.built_in', false)
+        ->assertJsonPath('data.1.manifest_url', null)
+        // Installed before plug-ins were sources only: listed, so that it can be removed.
+        ->assertJsonPath('data.2.name', 'Catalogue seul')
+        ->assertJsonPath('data.2.streams', false);
 });
 
 it('installs a plug-in from its address, keeps the address encrypted and never sends it back', function () {
@@ -248,9 +163,12 @@ it('refuses what is not a usable plug-in', function (mixed $answer, string $mess
     ],
     'nothing for movies or series' => [
         fn () => Http::response(addonManifest(['types' => ['tv'], 'resources' => ['stream'], 'catalogs' => []])),
-        'Ce plug-in ne propose ni catalogue ni flux de films ou de séries.',
+        'Ce plug-in ne propose pas de sources de films ou de séries.',
     ],
-    'the Vixeo catalog itself' => [fn () => Http::response(addonManifest(['id' => 'app.vixeo.catalog'])), 'Ce plug-in est déjà installé.'],
+    'a catalog only' => [
+        fn () => Http::response(addonManifest(['resources' => ['catalog', 'meta']])),
+        'Ce plug-in ne propose pas de sources de films ou de séries.',
+    ],
 ]);
 
 it('refuses a plug-in installed twice, and more plug-ins than allowed', function () {
@@ -297,82 +215,20 @@ it('needs an account to manage plug-ins', function () {
 });
 
 // -------------------------------------------------------------------------------------------
-// Catalogs of plug-ins: rows of the home and "see all"
+// The catalog stays TMDb's
 
-it('shows the catalogs of the plug-ins as rows of TMDb titles, after the home', function () {
+it('never changes the catalog: no rows, no lists and no Vixeo plug-in', function () {
     $addon = installAddon($this->user);
-    Http::fake([
-        'addon.test/catalog/movie/top.json' => Http::response(['metas' => [
-            ['id' => 'tt0137523', 'type' => 'movie', 'name' => 'Fight Club'],
-            ['id' => 'tmdb:551', 'type' => 'movie', 'name' => 'Autre'],
-            ['id' => 'kitsu:1', 'type' => 'movie', 'name' => 'Inconnu de TMDb'],
-            ['id' => 'tt0000001', 'type' => 'movie', 'name' => 'Absent de TMDb'],
-        ]]),
-        'api.themoviedb.org/3/find/tt0137523*' => Http::response(['movie_results' => [Tmdb::movie(550)], 'tv_results' => []]),
-        'api.themoviedb.org/3/find/tt0000001*' => Http::response(['movie_results' => [], 'tv_results' => []]),
-        'api.themoviedb.org/3/movie/551*' => Http::response(Tmdb::movie(551, ['title' => 'Autre', 'genres' => [['id' => 18, 'name' => 'Drame']]])),
-    ]);
+    Http::fake();
 
+    // Kept for the apps installed before, always empty, without calling any plug-in.
     $this->getJson('/api/v1/catalog/addons/sections')
         ->assertOk()
-        ->assertJsonCount(1, 'sections')
-        ->assertJsonPath('sections.0.key', "movie_addon:{$addon->id}:top")
-        ->assertJsonPath('sections.0.title', 'Les meilleurs · Films libres')
-        ->assertJsonPath('sections.0.type', 'movie')
-        ->assertJsonPath('sections.0.list', "addon:{$addon->id}:top")
-        ->assertJsonPath('sections.0.items.0.id', 550)
-        ->assertJsonPath('sections.0.items.0.title', 'Fight Club')
-        ->assertJsonPath('sections.0.items.1.id', 551)
-        ->assertJsonPath('sections.0.items.1.genre_ids', [18])
-        ->assertJsonCount(2, 'sections.0.items');
-});
+        ->assertExactJson(['sections' => []]);
+    $this->getJson("/api/v1/catalog/movie/lists/addon:{$addon->id}:top")->assertNotFound();
+    $this->getJson('/api/v1/addons/vixeo/manifest.json')->assertNotFound();
 
-it('leaves out the rows of a plug-in that fails or is turned off, and adult plug-ins for a restricted profile', function () {
-    installAddon($this->user);
-    $adult = installAddon($this->user, ['id' => 'adult', 'name' => 'Adulte', 'behaviorHints' => ['adult' => true]], 'adult.test');
-    installAddon($this->user, ['id' => 'off'], 'off.test')->update(['enabled' => false]);
-    $kid = Profile::factory()->for($this->user)->kid(12)->create();
-    Http::fake([
-        'addon.test/*' => Http::response('', 500),
-        'adult.test/catalog/movie/top.json' => Http::response(['metas' => [['id' => 'tt0137523']]]),
-        'api.themoviedb.org/3/find/*' => Http::response(['movie_results' => [Tmdb::movie(550)]]),
-        'api.themoviedb.org/3/movie/550/release_dates*' => Http::response(['results' => [['iso_3166_1' => 'FR', 'release_dates' => [['certification' => 'U']]]]]),
-    ]);
-
-    $this->getJson('/api/v1/catalog/addons/sections')
-        ->assertOk()
-        ->assertJsonCount(1, 'sections')
-        ->assertJsonPath('sections.0.list', "addon:{$adult->id}:top");
-
-    $this->withHeader('X-Profile-Id', (string) $kid->id)
-        ->getJson('/api/v1/catalog/addons/sections')
-        ->assertOk()
-        ->assertJsonCount(0, 'sections');
-
-    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'off.test'));
-});
-
-it('pages a plug-in catalog with skip, the size of its first page', function () {
-    $addon = installAddon($this->user);
-    Http::fake([
-        'addon.test/catalog/movie/top/skip=2.json' => Http::response(['metas' => [['id' => 'tmdb:552']]]),
-        'addon.test/catalog/movie/top.json' => Http::response(['metas' => [['id' => 'tmdb:550'], ['id' => 'tmdb:551']]]),
-        'api.themoviedb.org/3/movie/*' => fn (Request $request) => Http::response(Tmdb::movie((int) basename(parse_url($request->url(), PHP_URL_PATH)))),
-    ]);
-
-    $this->getJson("/api/v1/catalog/movie/lists/addon:{$addon->id}:top")
-        ->assertOk()
-        ->assertJsonCount(2, 'data')
-        ->assertJsonPath('meta.page', 1)
-        ->assertJsonPath('meta.total_pages', 2);
-
-    $this->getJson("/api/v1/catalog/movie/lists/addon:{$addon->id}:top?page=2")
-        ->assertOk()
-        ->assertJsonPath('data.0.id', 552)
-        ->assertJsonPath('meta.total_pages', 2);
-
-    $this->getJson("/api/v1/catalog/movie/lists/addon:{$addon->id}:unknown")->assertNotFound();
-    $this->getJson('/api/v1/catalog/movie/lists/addon:999:top')->assertNotFound();
+    Http::assertNothingSent();
 });
 
 // -------------------------------------------------------------------------------------------
