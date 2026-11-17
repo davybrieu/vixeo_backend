@@ -16,6 +16,194 @@
         }
     ],
     "paths": {
+        "/v1/addons": {
+            "get": {
+                "operationId": "v1.addons.index",
+                "summary": "The account's plug-ins, the Vixeo catalog first, then those of every account, then its own",
+                "tags": [
+                    "Addon"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `AddonResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AddonResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.addons.store",
+                "summary": "Installs a plug-in from its address. 422 with a French message (`errors.url`) when the\naddress is not a plug-in, does not answer, is private, or the plug-in is already installed",
+                "tags": [
+                    "Addon"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InstallAddonRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`AddonResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AddonResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/addons/order": {
+            "put": {
+                "operationId": "v1.addons.order",
+                "summary": "New order of the account's own plug-ins",
+                "tags": [
+                    "Addon"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderAddonsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/addons/{addon}": {
+            "patch": {
+                "operationId": "v1.addons.update",
+                "summary": "Turns one of the account's plug-ins on or off",
+                "tags": [
+                    "Addon"
+                ],
+                "parameters": [
+                    {
+                        "name": "addon",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAddonRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AddonResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AddonResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.addons.destroy",
+                "summary": "Removes one of the account's plug-ins",
+                "tags": [
+                    "Addon"
+                ],
+                "parameters": [
+                    {
+                        "name": "addon",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/app/update": {
             "get": {
                 "operationId": "v1.app.update",
@@ -978,6 +1166,39 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/addons/sections": {
+            "get": {
+                "operationId": "v1.catalog.addons.sections",
+                "summary": "Rows of the home from the plug-ins of the account (docs/plugins.md): their catalogs, as\nlight rows (no logo nor summary), after the rows of the home. Titles TMDb does not know are\nleft out; the profile's age limit applies. Without an account: the plug-ins installed for\neveryone only. A plug-in that does not answer has no row",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SectionResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "sections"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -5351,7 +5572,7 @@
         "/v1/catalog/sources/providers": {
             "get": {
                 "operationId": "v1.catalog.sources.providers",
-                "summary": "Providers the sources panel shows, so the app can list them before any search runs",
+                "summary": "Providers the sources panel shows, so the app can list them before any search runs: those\nof the server, then the account's plug-ins that serve streams (`addon:12`, docs/plugins.md)",
                 "tags": [
                     "Stream"
                 ],
@@ -5365,7 +5586,21 @@
                                     "properties": {
                                         "data": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "name"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
@@ -5381,6 +5616,7 @@
         "/v1/catalog/movie/{id}/sources": {
             "get": {
                 "operationId": "v1.catalog.movie.sources",
+                "summary": "Links of a movie. A plug-in provider (`addon:12`) gives streams already playable\n(`stream`, `headers`): no `resolve` needed",
                 "tags": [
                     "Stream"
                 ],
@@ -5445,6 +5681,7 @@
         "/v1/catalog/tv/{id}/season/{season}/episode/{episode}/sources": {
             "get": {
                 "operationId": "v1.catalog.episode.sources",
+                "summary": "Links of an episode (see `movieSources`)",
                 "tags": [
                     "Stream"
                 ],
@@ -6680,6 +6917,480 @@
                     }
                 }
             }
+        },
+        "/v1/addons/vixeo/manifest.json": {
+            "get": {
+                "operationId": "v1.addons.vixeo.manifest",
+                "summary": "The manifest: what the plug-in serves (catalogs, metadata of movies and series)",
+                "tags": [
+                    "VixeoAddon"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "logo": {
+                                            "type": "string"
+                                        },
+                                        "resources": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "types": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "idPrefixes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "catalogs": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string"
+                                                    },
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "extra": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "isRequired": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "name"
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "type",
+                                                    "id",
+                                                    "name",
+                                                    "extra"
+                                                ]
+                                            }
+                                        },
+                                        "behaviorHints": {
+                                            "type": "object",
+                                            "properties": {
+                                                "adult": {
+                                                    "type": "boolean"
+                                                },
+                                                "p2p": {
+                                                    "type": "boolean"
+                                                },
+                                                "configurable": {
+                                                    "type": "boolean"
+                                                },
+                                                "configurationRequired": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "adult",
+                                                "p2p",
+                                                "configurable",
+                                                "configurationRequired"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "version",
+                                        "name",
+                                        "description",
+                                        "logo",
+                                        "resources",
+                                        "types",
+                                        "idPrefixes",
+                                        "catalogs",
+                                        "behaviorHints"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/addons/vixeo/catalog/{type}/{catalog}/{extra}.json": {
+            "get": {
+                "operationId": "v1.addons.vixeo.catalog.extra",
+                "summary": "A catalog page or a search: extra properties in the path, as Stremio sends them\n(`skip=20`, `search=dune`, joined by `&`)",
+                "tags": [
+                    "VixeoAddon"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "catalog",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "extra",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "metas": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "poster": {
+                                                        "type": "string"
+                                                    },
+                                                    "posterShape": {
+                                                        "type": "string"
+                                                    },
+                                                    "background": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "releaseInfo": {
+                                                        "type": "string"
+                                                    },
+                                                    "imdbRating": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "type",
+                                                    "name"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "metas"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/addons/vixeo/catalog/{type}/{catalog}.json": {
+            "get": {
+                "operationId": "v1.addons.vixeo.catalog",
+                "summary": "A catalog: `{metas: [...]}`",
+                "tags": [
+                    "VixeoAddon"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "catalog",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "metas": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "poster": {
+                                                        "type": "string"
+                                                    },
+                                                    "posterShape": {
+                                                        "type": "string"
+                                                    },
+                                                    "background": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "releaseInfo": {
+                                                        "type": "string"
+                                                    },
+                                                    "imdbRating": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "type",
+                                                    "name"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "metas"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/addons/vixeo/meta/{type}/{id}.json": {
+            "get": {
+                "operationId": "v1.addons.vixeo.meta",
+                "summary": "The details of a movie or a series (`tmdb:550`), with its episodes: `{meta: {...}}`",
+                "tags": [
+                    "VixeoAddon"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "poster": {
+                                                    "type": "string"
+                                                },
+                                                "background": {
+                                                    "type": "string"
+                                                },
+                                                "logo": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "releaseInfo": {
+                                                    "type": "string"
+                                                },
+                                                "released": {
+                                                    "type": "string"
+                                                },
+                                                "runtime": {
+                                                    "type": "string"
+                                                },
+                                                "imdbRating": {
+                                                    "type": "string"
+                                                },
+                                                "genres": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "cast": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "director": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "imdb_id": {
+                                                    "type": "string"
+                                                },
+                                                "trailers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "source": {
+                                                                "type": "string"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "source",
+                                                            "type"
+                                                        ]
+                                                    }
+                                                },
+                                                "videos": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "season": {
+                                                                "type": "integer"
+                                                            },
+                                                            "episode": {
+                                                                "type": "integer"
+                                                            },
+                                                            "released": {
+                                                                "type": "string"
+                                                            },
+                                                            "overview": {
+                                                                "type": "string"
+                                                            },
+                                                            "thumbnail": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "title",
+                                                            "season",
+                                                            "episode"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "type",
+                                                "name",
+                                                "genres",
+                                                "cast",
+                                                "trailers"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -6690,6 +7401,98 @@
             }
         },
         "schemas": {
+            "AddonResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "\"vixeo\" for the Vixeo catalog, otherwise the plug-in's number."
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Logo (https only), null when the plug-in has none."
+                    },
+                    "host": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Host of the plug-in's address (\"addon.example.com\"); null for the Vixeo catalog."
+                    },
+                    "resources": {
+                        "type": "array",
+                        "description": "What it serves: \"catalog\", \"meta\", \"stream\", \"subtitles\".",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "types": {
+                        "type": "array",
+                        "description": "\"movie\", \"tv\".",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "catalogs": {
+                        "type": "integer",
+                        "description": "Number of its catalogs shown as rows (movies and TV shows)."
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "built_in": {
+                        "type": "boolean",
+                        "description": "The Vixeo catalog: built in, cannot be turned off nor removed."
+                    },
+                    "shared": {
+                        "type": "boolean",
+                        "description": "Installed on the server for every account: the account cannot change it."
+                    },
+                    "adult": {
+                        "type": "boolean",
+                        "description": "For adults only (hidden from profiles with an age limit)."
+                    },
+                    "manifest_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The Stremio address of the Vixeo catalog, to add it to another app; null for the others."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "version",
+                    "logo_url",
+                    "host",
+                    "resources",
+                    "types",
+                    "catalogs",
+                    "enabled",
+                    "built_in",
+                    "shared",
+                    "adult",
+                    "manifest_url"
+                ],
+                "title": "AddonResource"
+            },
             "AppPlatform": {
                 "type": "string",
                 "description": "Platforms whose installed apps check for updates (Android covers phones and Android TV).\n",
@@ -7103,6 +7906,20 @@
                     "name"
                 ],
                 "title": "GenreResource"
+            },
+            "InstallAddonRequest": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "Address of the plug-in's manifest (`https://\u2026/manifest.json`, or `stremio://\u2026`). A\nconfigured plug-in's address may hold a personal key: it is stored encrypted and never\nsent back.",
+                        "maxLength": 2048
+                    }
+                },
+                "required": [
+                    "url"
+                ],
+                "title": "InstallAddonRequest"
             },
             "ItemType": {
                 "type": "string",
@@ -7539,6 +8356,23 @@
                     "recommended"
                 ],
                 "title": "MovieResource"
+            },
+            "OrderAddonsRequest": {
+                "type": "object",
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "description": "The account's own plug-ins, first first (ids of `GET /addons`). The Vixeo catalog and\nthe plug-ins of every account keep their place.",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 20
+                        }
+                    }
+                },
+                "required": [
+                    "ids"
+                ],
+                "title": "OrderAddonsRequest"
             },
             "ParentalPinRequest": {
                 "type": "object",
@@ -9193,6 +10027,13 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "headers": {
+                        "type": "object",
+                        "description": "HTTP headers the player must send with `stream` (plug-in streams, docs/plugins.md).",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [
@@ -9201,7 +10042,8 @@
                     "url",
                     "stream",
                     "stream_type",
-                    "extractor"
+                    "extractor",
+                    "headers"
                 ],
                 "title": "StreamSourceResource"
             },
@@ -9500,6 +10342,19 @@
                     "still_url"
                 ],
                 "title": "UpcomingEpisodeResource"
+            },
+            "UpdateAddonRequest": {
+                "type": "object",
+                "properties": {
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Off: the plug-in stays installed, but its rows and streams are not shown."
+                    }
+                },
+                "required": [
+                    "enabled"
+                ],
+                "title": "UpdateAddonRequest"
             },
             "UpdateEmailRequest": {
                 "type": "object",

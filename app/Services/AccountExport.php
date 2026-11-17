@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Addon;
 use App\Models\EpisodeNotification;
 use App\Models\Profile;
 use App\Models\ProfileItem;
@@ -108,6 +109,15 @@ class AccountExport
                 'new_episodes' => $d->new_episodes,
                 'registered_at' => $d->created_at?->toIso8601String(),
                 'last_seen_at' => $d->last_seen_at?->toIso8601String(),
+            ])->values()->all(),
+            // Plug-ins the account installed (docs/plugins.md), with their address: it is the
+            // account's own data, even when it holds a personal key.
+            'plugins' => $user->addons()->get()->map(fn (Addon $a) => [
+                'name' => $a->manifest['name'] ?? null,
+                'version' => $a->manifest['version'] ?? null,
+                'address' => $a->transport_url,
+                'enabled' => $a->enabled,
+                'installed_at' => $a->created_at?->toIso8601String(),
             ])->values()->all(),
             'devices' => $user->tokens()->get()->map(fn (PersonalAccessToken $t) => [
                 'name' => $t->name,

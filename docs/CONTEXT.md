@@ -115,8 +115,12 @@ Fonctionnalités visées
 - Les contenus sont lus depuis les serveurs utilisés par Vixeo, **via l'API Vixeo** : l'appli lit
   les sources de lecture, la TV en direct, les sous-titres et les moments à passer que l'API lui
   renvoie (voir §5.1).
-- **Aucune configuration** pour l'utilisateur : il n'ajoute ni serveur, ni adresse, ni identifiant.
-  Il crée un compte et regarde.
+- **Aucune configuration nécessaire** pour l'utilisateur : il crée un compte et regarde.
+- **Plug-ins** (décision du développeur du 17/11/2026, voir `docs/plugins.md`) : comme dans
+  Stremio et Nuvio, un compte peut installer, en option, des plug-ins au format des add-ons
+  Stremio (catalogues et flux de films et de séries) avec l'adresse de leur manifeste. Le
+  catalogue Vixeo est le plug-in par défaut. C'est l'API qui appelle les plug-ins, jamais
+  l'appli.
 - **Pas de serveurs multimédias de l'utilisateur** (Jellyfin, Plex, Emby ou autre) : ni dans
   l'API, ni dans l'appli, ni sur le site de présentation. Ne pas les proposer ni les réintroduire.
 

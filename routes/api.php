@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AddonController;
 use App\Http\Controllers\Api\V1\AppUpdateController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvatarController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Api\V1\StreamPreferenceController;
 use App\Http\Controllers\Api\V1\TmdbAccountController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
+use App\Http\Controllers\Api\V1\VixeoAddonController;
 use App\Http\Middleware\ResolveProfile;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +64,19 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('logo');
     });
 
+    // The Vixeo catalog as a plug-in in the Stremio add-on format (docs/plugins.md): public, so
+    // that any app that installs Stremio add-ons can read it. Catalog ids hold dots ("vixeo.top_rated")
+    // and meta ids colons ("tmdb:550"): any character but a slash.
+    Route::prefix('addons/vixeo')->name('addons.vixeo.')->middleware('throttle:catalog')->group(function () {
+        Route::get('manifest.json', [VixeoAddonController::class, 'manifest'])->name('manifest');
+        Route::get('catalog/{type}/{catalog}/{extra}.json', [VixeoAddonController::class, 'catalogWithExtra'])
+            ->where(['type' => '[^/]+', 'catalog' => '[^/]+', 'extra' => '[^/]+'])->name('catalog.extra');
+        Route::get('catalog/{type}/{catalog}.json', [VixeoAddonController::class, 'catalog'])
+            ->where(['type' => '[^/]+', 'catalog' => '[^/]+'])->name('catalog');
+        Route::get('meta/{type}/{id}.json', [VixeoAddonController::class, 'meta'])
+            ->where(['type' => '[^/]+', 'id' => '[^/]+'])->name('meta');
+    });
+
     // Public social profile discovery (child profiles are excluded by the controller).
     Route::prefix('social')->name('social.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('search', [SocialProfileController::class, 'search'])->name('search');
@@ -91,6 +106,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
+        // Rows of the home from the account's plug-ins (docs/plugins.md), after the home itself.
+        Route::get('addons/sections', [CatalogController::class, 'addonSections'])->name('addons.sections');
         Route::get('episodes/upcoming', [CatalogTitleController::class, 'upcomingEpisodes'])->name('episodes.upcoming');
         Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
         Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
@@ -168,6 +185,15 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::put('/', [PushDeviceController::class, 'update'])->name('update');
             Route::delete('/', [PushDeviceController::class, 'destroy'])->name('destroy');
             Route::post('test', [PushDeviceController::class, 'test'])->name('test');
+        });
+
+        // Plug-ins of the account (docs/plugins.md).
+        Route::prefix('addons')->name('addons.')->middleware('throttle:addons')->group(function () {
+            Route::get('/', [AddonController::class, 'index'])->name('index');
+            Route::post('/', [AddonController::class, 'store'])->name('store');
+            Route::put('order', [AddonController::class, 'order'])->name('order');
+            Route::patch('{addon}', [AddonController::class, 'update'])->whereNumber('addon')->name('update');
+            Route::delete('{addon}', [AddonController::class, 'destroy'])->whereNumber('addon')->name('destroy');
         });
 
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');

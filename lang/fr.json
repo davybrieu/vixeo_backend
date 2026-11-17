@@ -77,5 +77,19 @@
     ":code “:title” is available.": ":code « :title » est disponible.",
     ":count new episodes of season :season are available.": ":count nouveaux épisodes de la saison :season sont disponibles.",
     ":count new episodes are available.": ":count nouveaux épisodes sont disponibles.",
-    "New episode": "Nouvel épisode"
+    "New episode": "Nouvel épisode",
+    "This address is not a plug-in.": "Cette adresse n’est pas celle d’un plug-in.",
+    "This plug-in does not answer.": "Ce plug-in ne répond pas.",
+    "A plug-in address starts with https://.": "L’adresse d’un plug-in commence par https://.",
+    "This plug-in address cannot be found.": "L’adresse de ce plug-in est introuvable.",
+    "This plug-in address is not allowed.": "Cette adresse de plug-in n’est pas autorisée.",
+    "This plug-in address is too long.": "L’adresse de ce plug-in est trop longue.",
+    "You have reached the maximum number of plug-ins.": "Vous avez atteint le nombre maximum de plug-ins.",
+    "This plug-in is already installed.": "Ce plug-in est déjà installé.",
+    "This plug-in must be configured on its website first: paste the address it gives you then.": "Ce plug-in doit d’abord être configuré sur son site : collez ensuite l’adresse qu’il vous donne.",
+    "This plug-in offers no catalog nor streams of movies or TV shows.": "Ce plug-in ne propose ni catalogue ni flux de films ou de séries.",
+    "This plug-in is not installed.": "Ce plug-in n’est pas installé.",
+    "This plug-in is temporarily unavailable.": "Ce plug-in est momentanément indisponible.",
+    "The Vixeo catalog: movies and TV shows, with their details, from TMDb.": "Le catalogue de Vixeo : films et séries, avec leurs fiches, d’après TMDb.",
+    "Search": "Recherche"
 }
