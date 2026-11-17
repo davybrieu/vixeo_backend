@@ -19,7 +19,8 @@ teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Sit
 
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
 question). Les applis lisent ce que l'API leur renvoie (sources de lecture, TV en direct, sous-titres,
-moments à passer) : l'utilisateur n'a **aucun serveur à configurer**. Pas de serveurs multimédias
+moments à passer) : l'utilisateur n'a **aucun serveur à configurer** (il peut, en option, ajouter des
+plug-ins au format Stremio : `docs/plugins.md`). Pas de serveurs multimédias
 de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli, ni sur le site.
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
@@ -251,6 +252,18 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   fiche). `vixeo:push "texte" --all | --user=…` (`SendPush`) : un message écrit à la main
   (canal `general`). `GET /catalog/episodes/upcoming` reste (heure de sortie estimée, jamais trop
   tôt : streaming 08:00 UTC, sinon 21:00 dans le pays de la série).
+- **Plug-ins** (doc : `docs/plugins.md`, demande du développeur : « comme Nuvio / Stremio »,
+  films et séries) : add-ons au **format Stremio** (manifeste, `catalog`, `meta`, `stream`).
+  Plug-in par défaut : le **catalogue Vixeo** (`App\Services\Addons\VixeoCatalogAddon`), intégré,
+  servi publiquement au format Stremio sous `/addons/vixeo/manifest.json` (ids `tmdb:…`). Un compte
+  installe les siens par leur adresse (`/addons`, table `addons` : adresse **chiffrée**, jamais
+  renvoyée ni journalisée, seulement l'hôte) ; `php artisan addons:server` pour tous les comptes.
+  **Tout appel à un plug-in passe par `AddonHttp`** (https, adresses publiques seulement, IP
+  épinglée, sans redirection, délai et taille limités). Catalogues → rangées légères après
+  l'accueil (`GET /catalog/addons/sections`, titres rattachés à TMDb par `TitleIds`, filtre
+  d'âge), « Voir tout » par `list` = `addon:{n}:{catalogue}` ; flux → fournisseurs `addon:{n}` du
+  panneau des sources, déjà lisibles (`stream`, `headers`), sans `resolve`. Seuls les flux à
+  adresse http(s) (pas de torrent).
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
@@ -299,6 +312,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
+- Fait aussi : plug-ins au format Stremio (catalogue Vixeo par défaut, plug-ins du compte et de
+  tous les comptes : rangées de l'accueil et flux du panneau des sources).
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
   les serveurs de Vixeo.

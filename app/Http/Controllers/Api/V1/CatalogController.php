@@ -13,12 +13,14 @@ use App\Http\Requests\Api\V1\DiscoverRequest;
 use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
+use App\Services\Addons\Addons;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\CatalogRows;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * Metadata from TMDb, cached by the API. Images are served directly by the TMDb CDN.
@@ -27,7 +29,33 @@ use Illuminate\Http\JsonResponse;
  */
 class CatalogController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleSummaries $summaries) {}
+    public function __construct(
+        private TmdbCatalog $catalog,
+        private AgeGate $ageGate,
+        private TitleSummaries $summaries,
+        private Addons $addons,
+    ) {}
+
+    /**
+     * Rows of the home from the plug-ins of the account (docs/plugins.md): their catalogs, as
+     * light rows (no logo nor summary), after the rows of the home. Titles TMDb does not know are
+     * left out; the profile's age limit applies. Without an account: the plug-ins installed for
+     * everyone only. A plug-in that does not answer has no row.
+     */
+    public function addonSections(Request $request): JsonResponse
+    {
+        $profile = ResolveProfile::profile($request);
+        $sections = $this->addons->sections($request->user('sanctum'), $profile);
+
+        $filtered = $this->ageGate->filterMany($profile, array_map(fn (array $section) => $section['items'], $sections));
+        foreach ($sections as $index => $section) {
+            $sections[$index]['items'] = $filtered[$index];
+        }
+
+        return response()->json([
+            'sections' => SectionResource::collection(array_values(array_filter($sections, fn (array $s) => $s['items'] !== []))),
+        ]);
+    }
 
     /**
      * Catalog configuration.
@@ -133,7 +161,10 @@ class CatalogController extends Controller
     {
         $curated = CatalogList::tryFrom($list);
 
-        if ($curated?->supports($type)) {
+        if (Addons::isAddonList($list)) {
+            // A catalog of a plug-in ("addon:12:top", the `list` of its row).
+            $page = $this->addons->catalogPage($request->user('sanctum'), $type, $list, $request->page());
+        } elseif ($curated?->supports($type)) {
             $page = $this->catalog->list($type, $curated, $request->page());
         } else {
             $row = CatalogRows::find($type, $list);

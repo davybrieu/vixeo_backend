@@ -39,6 +39,12 @@ class User extends Authenticatable
         return $this->hasMany(PushDevice::class);
     }
 
+    /** Plug-ins this account installed (docs/plugins.md). */
+    public function addons(): HasMany
+    {
+        return $this->hasMany(Addon::class)->orderBy('position')->orderBy('id');
+    }
+
     /** @return HasMany<Profile, $this> */
     public function profiles(): HasMany
     {

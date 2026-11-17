@@ -18,6 +18,12 @@ class StreamSourceResource extends JsonResource
             'stream' => isset($this['stream']) ? (string) $this['stream'] : null,
             'stream_type' => isset($this['streamType']) ? (string) $this['streamType'] : null,
             'extractor' => isset($this['extractor']) ? (string) $this['extractor'] : null,
+            /**
+             * HTTP headers the player must send with `stream` (plug-in streams, docs/plugins.md).
+             *
+             * @var array<string, string>
+             */
+            'headers' => (object) (is_array($this['headers'] ?? null) ? $this['headers'] : []),
         ];
     }
 }

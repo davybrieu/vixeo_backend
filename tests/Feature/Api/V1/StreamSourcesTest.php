@@ -3,8 +3,8 @@
 use App\Models\MissingExtractor;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
@@ -44,6 +44,7 @@ it('returns the player links of a movie, without resolving them by default', fun
             'stream' => null,
             'stream_type' => null,
             'extractor' => null,
+            'headers' => [],
         ]]]);
 
     Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/sources')
@@ -133,7 +134,6 @@ it('keeps only the links an extractor can resolve', function () {
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.url', 'https://voe.sx/e/known');
 });
-
 
 it('accepts links handled by newly registered scraper extractors', function () {
     Cache::forget('scraper.supported_domains');
