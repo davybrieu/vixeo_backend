@@ -87,10 +87,19 @@ class CatalogController extends Controller
      * network, studio and language (`list`: `trending_day`, `platform_netflix`, `network_hbo`,
      * `studio_marvel`, `language_fr`…). Their items carry no logo nor summary. Every row has its
      * "see all" page: `GET /catalog/{type}/lists/{list}`.
+     *
+     * Empty (no featured title, no row) when the account turned the Vixeo catalog off
+     * (`PATCH /addons/vixeo`, docs/plugins.md).
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function home(CatalogHomeRequest $request): JsonResponse
     {
+        // The Vixeo catalog turned off by the account (« Plug-ins »): none of its rows, the home
+        // keeps "Continuer à regarder", the channels and the rows of the other plug-ins.
+        if (! $this->addons->vixeoEnabled($request->user('sanctum'))) {
+            return response()->json(['featured' => [], 'sections' => []]);
+        }
+
         $home = $this->catalog->home($request->enum('type', MediaType::class));
 
         $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [

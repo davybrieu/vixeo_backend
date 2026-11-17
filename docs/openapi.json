@@ -127,7 +127,7 @@
         "/v1/addons/{addon}": {
             "patch": {
                 "operationId": "v1.addons.update",
-                "summary": "Turns one of the account's plug-ins on or off",
+                "summary": "Turns a plug-in on or off for the account: its own ones, those of every account, and the\nVixeo catalog (`vixeo`). The Vixeo catalog off: the home has none of its rows",
                 "tags": [
                     "Addon"
                 ],
@@ -1013,7 +1013,7 @@
         "/v1/catalog/home": {
             "get": {
                 "operationId": "v1.catalog.home",
-                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`) and a textless poster, unlike other lists.\n\nAfter TMDb's curated lists come the trends of the day, then rows by streaming platform, TV\nnetwork, studio and language (`list`: `trending_day`, `platform_netflix`, `network_hbo`,\n`studio_marvel`, `language_fr`\u2026). Their items carry no logo nor summary. Every row has its\n\"see all\" page: `GET /catalog/{type}/lists/{list}`.",
+                "description": "Featured carousel (titles with a backdrop) and themed rows.\n\nItems carry their title logo (`logo_url`) and a textless poster, unlike other lists.\n\nAfter TMDb's curated lists come the trends of the day, then rows by streaming platform, TV\nnetwork, studio and language (`list`: `trending_day`, `platform_netflix`, `network_hbo`,\n`studio_marvel`, `language_fr`\u2026). Their items carry no logo nor summary. Every row has its\n\"see all\" page: `GET /catalog/{type}/lists/{list}`.\n\nEmpty (no featured title, no row) when the account turned the Vixeo catalog off\n(`PATCH /addons/vixeo`, docs/plugins.md).",
                 "summary": "Home",
                 "tags": [
                     "Catalogue",
@@ -1043,24 +1043,53 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "featured": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/MediaItemResource"
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "featured": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MediaItemResource"
+                                                    }
+                                                },
+                                                "sections": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/SectionResource"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "featured",
+                                                "sections"
+                                            ]
                                         },
-                                        "sections": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/SectionResource"
-                                            }
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "featured": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0
+                                                },
+                                                "sections": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "featured",
+                                                "sections"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "featured",
-                                        "sections"
                                     ]
                                 }
                             }
@@ -7453,15 +7482,16 @@
                         "description": "Number of its catalogs shown as rows (movies and TV shows)."
                     },
                     "enabled": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "On for this account. Every plug-in can be turned off, the Vixeo catalog included."
                     },
                     "built_in": {
                         "type": "boolean",
-                        "description": "The Vixeo catalog: built in, cannot be turned off nor removed."
+                        "description": "The Vixeo catalog: built in, cannot be removed (it can be turned off)."
                     },
                     "shared": {
                         "type": "boolean",
-                        "description": "Installed on the server for every account: the account cannot change it."
+                        "description": "Installed on the server for every account: the account can only turn it off."
                     },
                     "adult": {
                         "type": "boolean",

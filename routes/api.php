@@ -192,8 +192,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::get('/', [AddonController::class, 'index'])->name('index');
             Route::post('/', [AddonController::class, 'store'])->name('store');
             Route::put('order', [AddonController::class, 'order'])->name('order');
-            Route::patch('{addon}', [AddonController::class, 'update'])->whereNumber('addon')->name('update');
-            Route::delete('{addon}', [AddonController::class, 'destroy'])->whereNumber('addon')->name('destroy');
+            Route::patch('{addon}', [AddonController::class, 'update'])->where('addon', 'vixeo|[0-9]+')->name('update');
+            Route::delete('{addon}', [AddonController::class, 'destroy'])->where('addon', 'vixeo|[0-9]+')->name('destroy');
         });
 
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');

@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * A plug-in of the account (docs/plugins.md). The address of a plug-in is never sent back
  * whole (it may hold a personal key): only its host.
  *
- * @property array{key: string, manifest: AddonManifest, addon: Addon|null} $resource
+ * @property array{key: string, manifest: AddonManifest, addon: Addon|null, enabled: bool} $resource
  */
 class AddonResource extends JsonResource
 {
@@ -48,10 +48,11 @@ class AddonResource extends JsonResource
             'types' => $manifest->mediaTypes(),
             /** Number of its catalogs shown as rows (movies and TV shows). */
             'catalogs' => count($manifest->catalogsFor('movie')) + count($manifest->catalogsFor('series')),
-            'enabled' => $builtIn || $addon->enabled,
-            /** The Vixeo catalog: built in, cannot be turned off nor removed. */
+            /** On for this account. Every plug-in can be turned off, the Vixeo catalog included. */
+            'enabled' => (bool) $this->resource['enabled'],
+            /** The Vixeo catalog: built in, cannot be removed (it can be turned off). */
             'built_in' => $builtIn,
-            /** Installed on the server for every account: the account cannot change it. */
+            /** Installed on the server for every account: the account can only turn it off. */
             'shared' => ! $builtIn && $addon->user_id === null,
             /** For adults only (hidden from profiles with an age limit). */
             'adult' => (bool) $manifest->adult,

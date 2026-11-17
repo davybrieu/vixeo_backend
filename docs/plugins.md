@@ -4,8 +4,10 @@ Vixeo accepte des **plug-ins au format des add-ons Stremio** (le même que Nuvio
 **films et les séries** : des catalogues (rangées de l'accueil) et des flux (fournisseurs du
 panneau des sources du lecteur). Les chaînes TV ne passent pas (encore) par les plug-ins.
 
-- **Plug-in par défaut** : le **catalogue Vixeo**, intégré à l'API, installé pour tous les comptes,
-  qu'on ne peut ni désactiver ni retirer.
+- **Plug-in par défaut** : le **catalogue Vixeo**, intégré à l'API, installé pour tous les comptes.
+  On ne peut pas le retirer, mais chaque compte peut le **désactiver** : l'accueil n'a alors plus
+  ses rangées ni son carrousel (`GET /catalog/home` vide) ; les fiches, la recherche et le plug-in
+  Stremio public restent (ils viennent de TMDb).
 - **Plug-ins d'un compte** : installés depuis l'appli (« Paramètres » → « Plug-ins ») avec l'adresse
   de leur manifeste.
 - **Plug-ins de tous les comptes** : installés sur le serveur (`php artisan addons:server`).
@@ -52,13 +54,18 @@ configuré contient souvent une clé personnelle), `url_hash` (SHA-256, unicité
 `manifest`, `position`, `enabled`. Supprimée avec le compte, présente dans son export
 (`plugins`).
 
+Table `addon_preferences` (`App\Models\AddonPreference`) : le choix d'un compte pour un plug-in
+qu'il ne possède pas, le catalogue Vixeo (`addon_key` = `vixeo`) ou un plug-in de tous les comptes
+(son numéro) ; pas de ligne = activé. Supprimée avec le compte, présente dans son export
+(`plugin_settings`). Le champ `enabled` de `GET /addons` est l'état **pour ce compte**.
+
 Routes (compte connecté, `throttle:addons`) :
 
 | Route | Rôle |
 |---|---|
 | `GET /addons` | le catalogue Vixeo (`id: "vixeo"`, `built_in`), puis ceux de tous les comptes (`shared`), puis ceux du compte |
 | `POST /addons {url}` | installe (`stremio://…` accepté, `/manifest.json` ajouté s'il manque) ; 422 `errors.url` sinon |
-| `PATCH /addons/{id} {enabled}` | active / désactive un plug-in du compte |
+| `PATCH /addons/{id} {enabled}` | active / désactive un plug-in pour ce compte : les siens, ceux de tous les comptes, et le catalogue Vixeo (`/addons/vixeo`) |
 | `PUT /addons/order {ids}` | ordre des plug-ins du compte |
 | `DELETE /addons/{id}` | retire un plug-in du compte |
 

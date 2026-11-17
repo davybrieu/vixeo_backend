@@ -46,18 +46,18 @@ class AddonController extends Controller
             throw ValidationException::withMessages(['url' => $e->getMessage()]);
         }
 
-        return (new AddonResource(['key' => (string) $addon->id, 'manifest' => $addon->parsedManifest(), 'addon' => $addon]))
+        return (new AddonResource(['key' => (string) $addon->id, 'manifest' => $addon->parsedManifest(), 'addon' => $addon, 'enabled' => true]))
             ->response()
             ->setStatusCode(201);
     }
 
-    /** Turns one of the account's plug-ins on or off. */
+    /**
+     * Turns a plug-in on or off for the account: its own ones, those of every account, and the
+     * Vixeo catalog (`vixeo`). The Vixeo catalog off: the home has none of its rows.
+     */
     public function update(UpdateAddonRequest $request, string $addon): AddonResource
     {
-        $model = $this->addons->owned($request->user(), $addon);
-        $model->update(['enabled' => $request->boolean('enabled')]);
-
-        return new AddonResource(['key' => (string) $model->id, 'manifest' => $model->parsedManifest(), 'addon' => $model]);
+        return new AddonResource($this->addons->setEnabled($request->user(), $addon, $request->boolean('enabled')));
     }
 
     /** New order of the account's own plug-ins. */

@@ -39,6 +39,12 @@ class User extends Authenticatable
         return $this->hasMany(PushDevice::class);
     }
 
+    /** On / off of the plug-ins this account does not own: the Vixeo catalog, those of everyone. */
+    public function addonPreferences(): HasMany
+    {
+        return $this->hasMany(AddonPreference::class);
+    }
+
     /** Plug-ins this account installed (docs/plugins.md). */
     public function addons(): HasMany
     {

@@ -255,7 +255,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Plug-ins** (doc : `docs/plugins.md`, demande du développeur : « comme Nuvio / Stremio »,
   films et séries) : add-ons au **format Stremio** (manifeste, `catalog`, `meta`, `stream`).
   Plug-in par défaut : le **catalogue Vixeo** (`App\Services\Addons\VixeoCatalogAddon`), intégré,
-  servi publiquement au format Stremio sous `/addons/vixeo/manifest.json` (ids `tmdb:…`). Un compte
+  servi publiquement au format Stremio sous `/addons/vixeo/manifest.json` (ids `tmdb:…`) ; non
+  supprimable mais **désactivable par compte** (demande du développeur : `PATCH /addons/vixeo`,
+  `GET /catalog/home` vide ; fiches et recherche inchangées), comme les plug-ins de tous les comptes
+  (table `addon_preferences`, `Addons::setEnabled`). Un compte
   installe les siens par leur adresse (`/addons`, table `addons` : adresse **chiffrée**, jamais
   renvoyée ni journalisée, seulement l'hôte) ; `php artisan addons:server` pour tous les comptes.
   **Tout appel à un plug-in passe par `AddonHttp`** (https, adresses publiques seulement, IP

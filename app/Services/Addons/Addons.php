@@ -4,6 +4,7 @@ namespace App\Services\Addons;
 
 use App\Enums\MediaType;
 use App\Models\Addon;
+use App\Models\AddonPreference;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\Playback\DeadStreams;
@@ -43,24 +44,80 @@ class Addons
     // Installed plug-ins
 
     /**
-     * Every plug-in an account sees, the Vixeo catalog first.
+     * Every plug-in an account sees, the Vixeo catalog first, with whether it is on for this
+     * account (`enabled`): its own choice for the Vixeo catalog and the plug-ins of everyone
+     * (`addon_preferences`), the plug-in's switch for its own ones.
      *
-     * @return list<array{key: string, manifest: AddonManifest, addon: Addon|null}>
+     * @return list<array{key: string, manifest: AddonManifest, addon: Addon|null, enabled: bool}>
      */
     public function installed(?User $user, bool $enabledOnly = false): array
     {
-        $list = [['key' => VixeoCatalogAddon::KEY, 'manifest' => $this->vixeo->parsedManifest(), 'addon' => null]];
+        $preferences = $this->preferences($user);
+        $list = [[
+            'key' => VixeoCatalogAddon::KEY,
+            'manifest' => $this->vixeo->parsedManifest(),
+            'addon' => null,
+            'enabled' => $preferences[VixeoCatalogAddon::KEY] ?? true,
+        ]];
 
-        $addons = Addon::query()->visibleTo($user)->when($enabledOnly, fn ($q) => $q->where('enabled', true))->get();
-        foreach ($addons as $addon) {
+        foreach (Addon::query()->visibleTo($user)->get() as $addon) {
             try {
-                $list[] = ['key' => (string) $addon->id, 'manifest' => $addon->parsedManifest(), 'addon' => $addon];
+                $list[] = [
+                    'key' => (string) $addon->id,
+                    'manifest' => $addon->parsedManifest(),
+                    'addon' => $addon,
+                    'enabled' => $this->isEnabled($addon, $preferences),
+                ];
             } catch (InvalidAddon) {
                 // A manifest stored by an older version that no longer reads: left out.
             }
         }
 
-        return $list;
+        return $enabledOnly ? array_values(array_filter($list, fn (array $entry) => $entry['enabled'])) : $list;
+    }
+
+    /** Whether the Vixeo catalog is on for the account (always for a guest). */
+    public function vixeoEnabled(?User $user): bool
+    {
+        return $this->preferences($user)[VixeoCatalogAddon::KEY] ?? true;
+    }
+
+    /**
+     * Turns a plug-in on or off for the account: the Vixeo catalog and the plug-ins of everyone
+     * through its preferences (the others keep theirs), its own ones through their switch.
+     *
+     * @return array{key: string, manifest: AddonManifest, addon: Addon|null, enabled: bool}
+     */
+    public function setEnabled(User $user, string $key, bool $enabled): array
+    {
+        $shared = ctype_digit($key) ? Addon::query()->whereNull('user_id')->find((int) $key) : null;
+
+        if ($key === VixeoCatalogAddon::KEY || $shared !== null) {
+            AddonPreference::updateOrCreate(['user_id' => $user->id, 'addon_key' => $key], ['enabled' => $enabled]);
+        } else {
+            $this->owned($user, $key)->update(['enabled' => $enabled]);
+        }
+
+        foreach ($this->installed($user) as $entry) {
+            if ($entry['key'] === $key) {
+                return $entry;
+            }
+        }
+
+        throw new NotFoundHttpException(__('This plug-in is not installed.'));
+    }
+
+    /** @return array<string, bool> addon key => on */
+    private function preferences(?User $user): array
+    {
+        return $user === null ? [] : AddonPreference::query()->where('user_id', $user->id)
+            ->pluck('enabled', 'addon_key')->map(fn ($enabled) => (bool) $enabled)->all();
+    }
+
+    /** @param  array<string, bool>  $preferences */
+    private function isEnabled(Addon $addon, array $preferences): bool
+    {
+        return $addon->enabled && ($addon->user_id !== null || ($preferences[(string) $addon->id] ?? true));
     }
 
     /**
@@ -393,13 +450,11 @@ class Addons
     // ---------------------------------------------------------------------------------------
     // Plumbing
 
-    /** An enabled plug-in the account sees (its own or everyone's), by its id. */
+    /** A plug-in the account sees (its own or everyone's) and has on, by its id. */
     private function visible(?User $user, string $key): Addon
     {
-        $addon = ctype_digit($key)
-            ? Addon::query()->visibleTo($user)->where('enabled', true)->whereKey((int) $key)->first()
-            : null;
-        if ($addon === null) {
+        $addon = ctype_digit($key) ? Addon::query()->visibleTo($user)->whereKey((int) $key)->first() : null;
+        if ($addon === null || ! $this->isEnabled($addon, $this->preferences($user))) {
             throw new NotFoundHttpException(__('This plug-in is not installed.'));
         }
 

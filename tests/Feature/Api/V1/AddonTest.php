@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\Addon;
+use App\Models\AddonPreference;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\AccountExport;
+use App\Services\Addons\Addons;
 use App\Services\Addons\HostResolver;
 use App\Services\Playback\DeadStreams;
 use Illuminate\Http\Client\Request;
@@ -281,12 +283,57 @@ it('turns off, orders and removes the account’s own plug-ins only', function (
     expect($second->fresh()->position)->toBe(1)->and($first->fresh()->position)->toBe(2)
         ->and($someoneElse->fresh()->position)->toBe(1);
 
-    $this->patchJson("/api/v1/addons/{$shared->id}", ['enabled' => false])->assertNotFound();
+    $this->patchJson("/api/v1/addons/{$someoneElse->id}", ['enabled' => false])->assertNotFound();
+    $this->deleteJson("/api/v1/addons/{$shared->id}")->assertNotFound();
     $this->deleteJson("/api/v1/addons/{$someoneElse->id}")->assertNotFound();
     $this->deleteJson('/api/v1/addons/vixeo')->assertNotFound();
 
     $this->deleteJson("/api/v1/addons/{$first->id}")->assertNoContent();
     expect(Addon::find($first->id))->toBeNull()->and(Addon::count())->toBe(3);
+});
+
+it('turns the Vixeo catalog off and on for the account: its home rows go, the rest stays', function () {
+    $this->patchJson('/api/v1/addons/vixeo', ['enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('data.id', 'vixeo')
+        ->assertJsonPath('data.enabled', false);
+    $this->getJson('/api/v1/addons')->assertJsonPath('data.0.enabled', false);
+
+    Http::fake();
+    $this->getJson('/api/v1/catalog/home')->assertOk()->assertExactJson(['featured' => [], 'sections' => []]);
+    Http::assertNothingSent();
+    // The public Stremio plug-in stays (other apps may use it).
+    $this->getJson('/api/v1/addons/vixeo/manifest.json')->assertOk();
+
+    // Another account, and a guest, keep it.
+    expect(app(Addons::class)->vixeoEnabled(User::factory()->create()))->toBeTrue()
+        ->and(app(Addons::class)->vixeoEnabled(null))->toBeTrue();
+
+    $this->patchJson('/api/v1/addons/vixeo', ['enabled' => true])->assertOk()->assertJsonPath('data.enabled', true);
+    expect(app(Addons::class)->vixeoEnabled($this->user))->toBeTrue();
+    $this->deleteJson('/api/v1/addons/vixeo')->assertNotFound();
+});
+
+it('turns a plug-in of every account off for this account only', function () {
+    $shared = installAddon(null, ['id' => 'shared', 'name' => 'Partagé'], 'shared.test');
+    $other = User::factory()->create();
+
+    $this->patchJson("/api/v1/addons/{$shared->id}", ['enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('data.enabled', false)
+        ->assertJsonPath('data.shared', true);
+    expect($shared->fresh()->enabled)->toBeTrue();
+
+    Http::fake();
+    $this->getJson('/api/v1/catalog/sources/providers')->assertOk()->assertExactJson(['data' => []]);
+    $this->getJson("/api/v1/catalog/movie/550/sources?provider=addon:{$shared->id}")->assertNotFound();
+    $this->getJson('/api/v1/catalog/addons/sections')->assertOk()->assertJsonCount(0, 'sections');
+    Http::assertNothingSent();
+
+    Sanctum::actingAs($other);
+    $this->getJson('/api/v1/catalog/sources/providers')
+        ->assertOk()
+        ->assertExactJson(['data' => [['id' => "addon:{$shared->id}", 'name' => 'Partagé']]]);
 });
 
 it('needs an account to manage plug-ins', function () {
@@ -452,14 +499,16 @@ it('asks a plug-in that only knows TMDb ids by its TMDb id, and reports a plug-i
 
 it('removes the plug-ins with the account and puts them in its export', function () {
     installAddon($this->user);
+    $this->patchJson('/api/v1/addons/vixeo', ['enabled' => false])->assertOk();
 
     $export = app(AccountExport::class)->build($this->user);
-    expect($export['plugins'])->toHaveCount(1)
+    expect($export['plugin_settings'])->toBe([['plugin' => 'vixeo', 'enabled' => false]])
+        ->and($export['plugins'])->toHaveCount(1)
         ->and($export['plugins'][0]['name'])->toBe('Films libres')
         ->and($export['plugins'][0]['address'])->toBe('https://addon.test/manifest.json');
 
     $this->user->delete();
-    expect(Addon::count())->toBe(0);
+    expect(Addon::count())->toBe(0)->and(AddonPreference::count())->toBe(0);
 });
 
 it('installs, lists and removes the plug-ins of every account from the command line', function () {

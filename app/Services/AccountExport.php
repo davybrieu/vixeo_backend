@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Addon;
+use App\Models\AddonPreference;
 use App\Models\EpisodeNotification;
 use App\Models\Profile;
 use App\Models\ProfileItem;
@@ -118,6 +119,11 @@ class AccountExport
                 'address' => $a->transport_url,
                 'enabled' => $a->enabled,
                 'installed_at' => $a->created_at?->toIso8601String(),
+            ])->values()->all(),
+            // Plug-ins it does not own but turned off or on (the Vixeo catalog, those of everyone).
+            'plugin_settings' => $user->addonPreferences()->get()->map(fn (AddonPreference $p) => [
+                'plugin' => $p->addon_key,
+                'enabled' => $p->enabled,
             ])->values()->all(),
             'devices' => $user->tokens()->get()->map(fn (PersonalAccessToken $t) => [
                 'name' => $t->name,
