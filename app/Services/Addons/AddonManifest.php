@@ -7,10 +7,10 @@ use App\Enums\MediaType;
 /**
  * The manifest of a plug-in, in the Stremio add-on format (docs/plugins.md): who it is
  * (`id`, `name`, `version`), what it serves (`resources`: catalog, meta, stream, subtitles), for
- * which types (`movie`, `series`…) and which ids (`idPrefixes`: `tt`, `tmdb:`…), and its
- * catalogs.
+ * which types (`movie`, `series`…) and which ids (`idPrefixes`: `tt`, `tmdb:`…).
  *
- * Vixeo only uses the `movie` and `series` types.
+ * Vixeo only uses the `stream` resource (sources of the player), for the `movie` and `series`
+ * types: the catalogs of a plug-in are ignored, the catalog is TMDb's.
  */
 final class AddonManifest
 {
@@ -18,7 +18,6 @@ final class AddonManifest
      * @param  list<string>  $types
      * @param  list<string>  $idPrefixes
      * @param  list<array{name: string, types: list<string>, idPrefixes: list<string>}>  $resources
-     * @param  list<array{type: string, id: string, name: string, required: list<string>, skip: bool, search: bool, genre: bool}>  $catalogs
      * @param  array<string, mixed>  $raw
      */
     private function __construct(
@@ -30,7 +29,6 @@ final class AddonManifest
         public readonly array $types,
         public readonly array $idPrefixes,
         public readonly array $resources,
-        public readonly array $catalogs,
         public readonly bool $adult,
         public readonly bool $configurationRequired,
         public readonly array $raw,
@@ -67,39 +65,6 @@ final class AddonManifest
             }
         }
 
-        $catalogs = [];
-        foreach (is_array($manifest['catalogs'] ?? null) ? $manifest['catalogs'] : [] as $catalog) {
-            $type = is_array($catalog) ? self::text($catalog['type'] ?? null) : null;
-            $catalogId = is_array($catalog) ? self::text($catalog['id'] ?? null) : null;
-            if ($type === null || $catalogId === null) {
-                continue;
-            }
-            // Extra properties: `extra` (current), `extraSupported` / `extraRequired` (older add-ons).
-            $supported = [];
-            $required = [];
-            foreach (is_array($catalog['extra'] ?? null) ? $catalog['extra'] : [] as $extra) {
-                $extraName = is_array($extra) ? self::text($extra['name'] ?? null) : null;
-                if ($extraName !== null) {
-                    $supported[] = $extraName;
-                    if (! empty($extra['isRequired'])) {
-                        $required[] = $extraName;
-                    }
-                }
-            }
-            $supported = array_values(array_unique([...$supported, ...self::texts($catalog['extraSupported'] ?? [])]));
-            $required = array_values(array_unique([...$required, ...self::texts($catalog['extraRequired'] ?? [])]));
-
-            $catalogs[] = [
-                'type' => $type,
-                'id' => $catalogId,
-                'name' => self::text($catalog['name'] ?? null) ?? $catalogId,
-                'required' => $required,
-                'skip' => in_array('skip', $supported, true),
-                'search' => in_array('search', $supported, true),
-                'genre' => in_array('genre', $supported, true),
-            ];
-        }
-
         $hints = is_array($manifest['behaviorHints'] ?? null) ? $manifest['behaviorHints'] : [];
 
         return new self(
@@ -111,7 +76,6 @@ final class AddonManifest
             types: $types,
             idPrefixes: $idPrefixes,
             resources: $resources,
-            catalogs: $catalogs,
             adult: ! empty($hints['adult']),
             configurationRequired: ! empty($hints['configurationRequired']),
             raw: $manifest,
@@ -122,16 +86,6 @@ final class AddonManifest
     public static function stremioType(MediaType $type): string
     {
         return $type === MediaType::Movie ? 'movie' : 'series';
-    }
-
-    /** The Vixeo media type of a Stremio type; null for the types Vixeo does not show (tv, channel…). */
-    public static function mediaType(string $type): ?MediaType
-    {
-        return match ($type) {
-            'movie' => MediaType::Movie,
-            'series' => MediaType::Tv,
-            default => null,
-        };
     }
 
     /**
@@ -186,45 +140,10 @@ final class AddonManifest
         return false;
     }
 
-    /** Whether it serves something Vixeo shows: a catalog or streams of movies or series. */
-    public function isUseful(): bool
+    /** Whether it serves streams of movies or series: the only thing Vixeo asks plug-ins for. */
+    public function servesStreams(): bool
     {
-        foreach (['movie', 'series'] as $type) {
-            if ($this->supports('stream', $type) || $this->catalogsFor($type) !== []) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Catalogs of a type that can be shown as they are (no required extra, like a search).
-     *
-     * @return list<array{type: string, id: string, name: string, required: list<string>, skip: bool, search: bool, genre: bool}>
-     */
-    public function catalogsFor(string $type): array
-    {
-        if (! $this->supports('catalog', $type)) {
-            return [];
-        }
-
-        return array_values(array_filter(
-            $this->catalogs,
-            fn (array $catalog) => $catalog['type'] === $type && $catalog['required'] === [],
-        ));
-    }
-
-    /** @return array{type: string, id: string, name: string, required: list<string>, skip: bool, search: bool, genre: bool}|null */
-    public function catalog(string $type, string $id): ?array
-    {
-        foreach ($this->catalogsFor($type) as $catalog) {
-            if ($catalog['id'] === $id) {
-                return $catalog;
-            }
-        }
-
-        return null;
+        return $this->supports('stream', 'movie') || $this->supports('stream', 'series');
     }
 
     /**

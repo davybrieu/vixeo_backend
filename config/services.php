@@ -190,24 +190,22 @@ return [
     ],
 
     /*
-    | Plug-ins (docs/plugins.md): add-ons in the Stremio format (manifest, catalogs, metadata,
-    | streams), installed by an account from their address, or for every account
-    | (`php artisan addons:install`). The API is the only one to call them: the apps never do.
+    | Plug-ins (docs/plugins.md): add-ons in the Stremio format that add sources (streams) to the
+    | player, installed by an account from their address, or for every account
+    | (`php artisan addons:server`). The API is the only one to call them: the apps never do.
+    | Their catalogs are ignored: the catalog is TMDb's.
     */
     'addons' => [
-        // Seconds to wait for a plug-in (manifest, catalog, streams).
+        // Seconds to wait for a plug-in (manifest, streams).
         'timeout' => (int) env('ADDONS_TIMEOUT', 8),
-        // Plug-ins an account may install (the Vixeo catalog not counted).
+        // Plug-ins an account may install.
         'max_per_user' => (int) env('ADDONS_MAX_PER_USER', 30),
         // Largest answer read from a plug-in, in bytes.
         'max_response_bytes' => (int) env('ADDONS_MAX_RESPONSE_BYTES', 5 * 1024 * 1024),
         // Plain http:// plug-ins (local development only): https only otherwise.
         'allow_http' => (bool) env('ADDONS_ALLOW_HTTP', false),
-        // Catalogs of one plug-in shown on the home (the others: "see all" of the plug-in).
-        'home_catalogs' => (int) env('ADDONS_HOME_CATALOGS', 6),
         'ttl' => [
             'manifest' => (int) env('ADDONS_TTL_MANIFEST', 3600),
-            'catalog' => (int) env('ADDONS_TTL_CATALOG', 900),
             'streams' => (int) env('ADDONS_TTL_STREAMS', 300),
         ],
     ],
