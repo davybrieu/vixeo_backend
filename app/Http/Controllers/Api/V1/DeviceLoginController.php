@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 /**
- * Sign a TV in with a QR code: the TV shows a code, a signed-in phone approves it.
+ * Sign a TV in with a code: the TV shows a short code, typed in a signed-in phone's app.
  * See docs/connexion-tv.md.
  *
  * @tags Authentification
@@ -33,8 +33,9 @@ class DeviceLoginController extends Controller
     {
         ['login' => $login, 'device_code' => $deviceCode] = $this->logins->start($request->validated('device_name'));
         $userCode = DeviceLogins::format($login->user_code);
-        // No web app any more: the former apps' QR code leads to the site, which shows how to
-        // install Vixeo; the current apps only show the code.
+        // No QR code any more (developer's request): the apps only show the code. The two links
+        // stay for the former apps (no breaking change in v1), which must update anyway
+        // (services.app_updates.minimum_builds).
         $url = rtrim((string) config('vixeo.urls.site'), '/');
 
         return response()->json([
@@ -44,7 +45,7 @@ class DeviceLoginController extends Controller
             'user_code' => $userCode,
             /** The site (former apps showed it): the code is typed in the phone's app. */
             'verification_url' => $url,
-            /** Former apps' QR code: the site. */
+            /** Kept for the former apps: the site. */
             'verification_url_complete' => $url.'/?code='.$login->user_code,
             /** Seconds before the code expires. */
             'expires_in' => DeviceLogins::TTL_SECONDS,

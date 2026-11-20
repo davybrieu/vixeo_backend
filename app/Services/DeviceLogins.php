@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Signs a TV in from a phone (device authorization flow, as on streaming TVs):
- * the TV shows a QR code / short code, a signed-in person approves it, the TV polls
+ * the TV shows a short code, a signed-in person types it in the phone's app, the TV polls
  * until it receives its own token.
  */
 class DeviceLogins

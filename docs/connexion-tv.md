@@ -5,8 +5,10 @@ affiche donc un **code court** ; la personne, déjà connectée dans l'appli Vix
 (ou de son ordinateur Windows), le tape dans « Paramètres » → « Connecter une TV » ; la TV reçoit
 alors son propre jeton.
 
-Il n'y a **plus de QR code** ni de page web de validation (l'appli web a été supprimée, demande du
-développeur, 20/11/2026) : le code se tape dans l'appli.
+**Aucun QR code** (demande du développeur, 20/11/2026), ni page web de validation (l'appli web a
+été supprimée) : le code se tape dans l'appli. Les applis Android d'avant le build 403, qui
+affichaient un QR code, doivent se mettre à jour avant tout (`ANDROID_MINIMUM_BUILD`, voir
+`mise-a-jour.md`) : elles n'affichent plus que l'écran « Mise à jour nécessaire ».
 
 ## Déroulé
 

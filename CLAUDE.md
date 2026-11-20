@@ -213,7 +213,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   GitHub** `android-<build>` (APK) et `windows-<build>` (installateur `.exe`) publiées par la CI
   de `vixeo_frontend` (`App\Services\GitHubReleases::for(AppPlatform)`, cache 5 min par
   plateforme : fichier, SHA-256, notes ; `App\Services\LatestReleases` pour le site). Un titre
-  contenant `[obligatoire]` force les versions plus anciennes de sa plateforme à se mettre à jour. Pas de table ni de commande (`vixeo:release` et `app_releases`
+  contenant `[obligatoire]` force les versions plus anciennes de sa plateforme à se mettre à jour,
+  comme un build sous le minimum du `.env` (`ANDROID_MINIMUM_BUILD`, 403 par défaut : les builds
+  d'avant affichaient un QR code pour connecter une TV ; **aucun QR code nulle part**, demande du
+  développeur, 20/11/2026 ; `WINDOWS_MINIMUM_BUILD`). Pas de table ni de commande (`vixeo:release` et `app_releases`
   supprimées, demande du développeur). `GET /app/update` (sans connexion) compare les **builds**
   et répond `up_to_date` / `update_available` / `update_required` ; GitHub en panne → `up_to_date`.
   Pas d'appli iOS pour l'instant : iOS est toujours `up_to_date`. L'installation reste faite par

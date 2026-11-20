@@ -82,6 +82,11 @@ public ; cache 5 minutes par plateforme) :
   release), fichier (`.apk` ou `.exe`) et empreinte ;
 - une release dont le **titre contient `[obligatoire]`** (majuscules ou non) oblige toutes les
   installations de **sa plateforme** plus anciennes que son build à se mettre à jour ;
+- un **build minimum** par plateforme, réglé dans le `.env`, oblige aussi les installations plus
+  anciennes à se mettre à jour, quelles que soient les releases : `ANDROID_MINIMUM_BUILD`
+  (**403** par défaut : les builds d'avant affichent un QR code pour connecter une TV, supprimé
+  le 20/11/2026, demande du développeur) et `WINDOWS_MINIMUM_BUILD` (0 = aucun). Une mise à jour
+  n'est jamais imposée tant qu'aucune release plus récente n'est publiée ;
 - si GitHub ne répond pas (panne, limite de 60 requêtes par heure sans jeton), aucune mise à jour
   n'est proposée : l'appli n'est jamais bloquée par une panne ;
 - `APP_UPDATES_GITHUB_REPOSITORY=` (vide) désactive les mises à jour ; les tests ne contactent

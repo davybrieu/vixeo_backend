@@ -491,7 +491,7 @@
                                         },
                                         "verification_url_complete": {
                                             "type": "string",
-                                            "description": "Former apps' QR code: the site."
+                                            "description": "Kept for the former apps: the site."
                                         },
                                         "expires_in": {
                                             "type": "integer",

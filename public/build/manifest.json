@@ -11,7 +11,7 @@
     "name": "dist"
   },
   "resources/js/app.js": {
-    "file": "assets/app-WRW5qCbY.js",
+    "file": "assets/app-C2xyWcwu.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -29,7 +29,7 @@
     ]
   },
   "resources/js/pages/Error.vue": {
-    "file": "assets/Error-Ovtfkw1n.js",
+    "file": "assets/Error-DOQNAHRk.js",
     "name": "Error",
     "src": "resources/js/pages/Error.vue",
     "isDynamicEntry": true,
@@ -40,7 +40,7 @@
     ]
   },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-Cdh0IFLQ.js",
+    "file": "assets/Home-D9OTitCS.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,

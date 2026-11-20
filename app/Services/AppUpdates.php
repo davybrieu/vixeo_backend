@@ -11,8 +11,9 @@ use App\Support\AppRelease;
  *
  * Builds are compared, never version names. The only source is GitHub: the Android and Windows
  * releases published by the CI (GitHubReleases); one whose title contains « [obligatoire] » forces
- * every older install of its platform to update. No iOS app is published yet: iOS is always up to
- * date.
+ * every older install of its platform to update, as does a build below the platform's minimum in
+ * config/services.php (Android: 403, the first build without a QR code). No iOS app is published
+ * yet: iOS is always up to date.
  */
 class AppUpdates
 {
@@ -22,6 +23,10 @@ class AppUpdates
     public function check(AppPlatform $platform, int $build): array
     {
         ['latest' => $latest, 'minimum_build' => $minimum] = $this->github->for($platform);
+        $floor = (int) config("services.app_updates.minimum_builds.{$platform->value}", 0);
+        if ($floor > 0) {
+            $minimum = max($minimum ?? 0, $floor);
+        }
 
         $status = match (true) {
             $latest === null || $build >= $latest->build => AppUpdateStatus::UpToDate,

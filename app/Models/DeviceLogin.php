@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A pending "connexion par QR code". Written only by App\Services\DeviceLogins.
+ * A pending "connexion d'une TV par code". Written only by App\Services\DeviceLogins.
  */
 class DeviceLogin extends Model
 {

@@ -18,7 +18,7 @@ it('signs a TV in once a signed-in phone approves its code', function () {
     $deviceCode = $start->json('device_code');
 
     expect($userCode)->toMatch('/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/')
-        // No web app any more: the former apps' QR code leads to the site.
+        // No QR code any more: the links stay for the former apps and lead to the site.
         ->and($start->json('verification_url'))->toBe('https://www.vixeo.test')
         ->and($start->json('verification_url_complete'))->toBe('https://www.vixeo.test/?code='.str_replace('-', '', $userCode))
         ->and($start->json('expires_in'))->toBe(600)
