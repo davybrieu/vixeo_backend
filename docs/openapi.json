@@ -861,6 +861,720 @@
                 }
             }
         },
+        "/v1/profiles/{profile}/tmdb": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.show",
+                "summary": "Linked TMDb account (former apps)",
+                "deprecated": true,
+                "tags": [
+                    "Avis",
+                    "TmdbAccount"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "linked": {
+                                                    "type": "boolean"
+                                                },
+                                                "account_id": {
+                                                    "type": "null"
+                                                },
+                                                "username": {
+                                                    "type": "null"
+                                                },
+                                                "name": {
+                                                    "type": "null"
+                                                },
+                                                "avatar_url": {
+                                                    "type": "null"
+                                                },
+                                                "linked_at": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "linked",
+                                                "account_id",
+                                                "username",
+                                                "name",
+                                                "avatar_url",
+                                                "linked_at"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/link": {
+            "post": {
+                "operationId": "v1.profiles.tmdb.link",
+                "summary": "Start linking a TMDb account (former apps)",
+                "deprecated": true,
+                "tags": [
+                    "Avis",
+                    "TmdbAccount"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "410": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "La liaison d\u2019un compte TMDb n\u2019est plus propos\u00e9e : vos avis restent dans Vixeo."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.index",
+                "description": "Every type, or one, with the comments: the most recently rated first, or sorted by `sort`\n(oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the\nprofile's age limit.",
+                "summary": "My reviews (\"Mes avis\")",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Movies, TV shows or episodes; every type when left out.",
+                        "schema": {
+                            "$ref": "#/components/schemas/RatedType"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "recent (default), oldest, highest (best rated first) or lowest (worst rated first).\n| |\n|---|\n| `recent` <br/> Most recently rated first (default). |\n| `oldest` <br/> Least recently rated first. |\n| `highest` <br/> Best rated first (then the most recent). |\n| `lowest` <br/> Worst rated first (then the most recent). |",
+                        "schema": {
+                            "$ref": "#/components/schemas/RatedSort"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1000
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Ratings per page (1 to 500, 20 by default).",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RatedItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {},
+                                                "total_results": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.season",
+                "description": "Only the rated episodes, with their comments.",
+                "summary": "My ratings of a season's episodes",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "episode_number": {
+                                                        "type": "integer"
+                                                    },
+                                                    "value": {
+                                                        "type": "number",
+                                                        "description": "0.5 to 10."
+                                                    },
+                                                    "comment": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "episode_number",
+                                                    "value",
+                                                    "comment"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}/episode/{episode}": {
+            "put": {
+                "operationId": "v1.profiles.tmdb.ratings.episode.rate",
+                "description": "Creates or updates the review.",
+                "summary": "Rate an episode",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "number"
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "value",
+                                                "comment"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.tmdb.ratings.episode.unrate",
+                "description": "Its comment is removed too.",
+                "summary": "Remove an episode rating",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/{type}/{id}": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.show",
+                "description": "`value` is null when not rated; `comment` is the profile's comment.",
+                "summary": "My rating of a movie or TV show",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": [
+                                                        "number",
+                                                        "null"
+                                                    ],
+                                                    "description": "0.5 to 10, null when not rated."
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "value",
+                                                "comment"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.profiles.tmdb.ratings.rate",
+                "description": "Creates or updates the review.",
+                "summary": "Rate a movie or TV show",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "number"
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "value",
+                                                "comment"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.tmdb.ratings.unrate",
+                "description": "Its comment is removed too.",
+                "summary": "Remove a movie or TV show rating",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/config": {
             "get": {
                 "operationId": "v1.catalog.config",
@@ -2328,860 +3042,6 @@
                 "responses": {
                     "204": {
                         "description": "No content"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb": {
-            "get": {
-                "operationId": "v1.profiles.tmdb.show",
-                "description": "`linked: false` (other fields null) when the profile has none.",
-                "summary": "Linked TMDb account",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbAccount"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`TmdbAccountResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/TmdbAccountResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "v1.profiles.tmdb.destroy",
-                "description": "The reviews stay in Vixeo and the ratings on TMDb; Vixeo's session on the account is ended.",
-                "summary": "Unlink the TMDb account",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbAccount"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb/link": {
-            "post": {
-                "operationId": "v1.profiles.tmdb.link",
-                "description": "Open `authorize_url` (or show it as a QR code on a TV): the person signs in to TMDb and\napproves Vixeo, then the app polls POST \u2026/tmdb/link/complete every `interval` seconds.\nLinking again replaces the current account.",
-                "summary": "Start linking a TMDb account",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbAccount"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "authorize_url": {
-                                            "type": "string",
-                                            "description": "TMDb page where the person approves Vixeo."
-                                        },
-                                        "expires_in": {
-                                            "type": "integer",
-                                            "description": "Seconds before this page expires."
-                                        },
-                                        "interval": {
-                                            "type": "integer",
-                                            "description": "Seconds between two polls.",
-                                            "const": 5
-                                        }
-                                    },
-                                    "required": [
-                                        "authorize_url",
-                                        "expires_in",
-                                        "interval"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb/link/complete": {
-            "post": {
-                "operationId": "v1.profiles.tmdb.link.complete",
-                "description": "202 `{\"status\":\"pending\"}` until the person approved Vixeo on TMDb, then 200 with the\naccount: the profile's reviews are sent to it (Vixeo wins), its other ratings come in. 410\nwhen the approval page expired: start again. 409 `{\"status\":\"taken\"}` when this TMDb account\nis already linked to another Vixeo profile (one profile per TMDb account).",
-                "summary": "Finish linking a TMDb account",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbAccount"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "410": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "const": "expired"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "La page d\u2019autorisation TMDb a expir\u00e9 : recommencez."
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "const": "taken"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Ce compte TMDb est d\u00e9j\u00e0 li\u00e9 \u00e0 un autre profil Vixeo : d\u00e9liez-le d\u2019abord de ce profil."
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "202": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "const": "pending"
-                                        }
-                                    },
-                                    "required": [
-                                        "status"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "const": "linked"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/TmdbAccountResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb/ratings": {
-            "get": {
-                "operationId": "v1.profiles.tmdb.ratings.index",
-                "description": "Every type, or one, with the comments: the most recently rated first, or sorted by `sort`\n(oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the\nprofile's age limit. With a linked TMDb account, ratings given on themoviedb.org that Vixeo\ndoesn't have show up within 10 minutes.",
-                "summary": "My reviews (\"Mes avis\")",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "query",
-                        "description": "Movies, TV shows or episodes; every type when left out.",
-                        "schema": {
-                            "$ref": "#/components/schemas/RatedType"
-                        }
-                    },
-                    {
-                        "name": "sort",
-                        "in": "query",
-                        "description": "recent (default), oldest, highest (best rated first) or lowest (worst rated first).\n| |\n|---|\n| `recent` <br/> Most recently rated first (default). |\n| `oldest` <br/> Least recently rated first. |\n| `highest` <br/> Best rated first (then the most recent). |\n| `lowest` <br/> Worst rated first (then the most recent). |",
-                        "schema": {
-                            "$ref": "#/components/schemas/RatedSort"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Page number.",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 1000
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Ratings per page (1 to 500, 20 by default).",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 500
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/RatedItemResource"
-                                            }
-                                        },
-                                        "meta": {
-                                            "type": "object",
-                                            "properties": {
-                                                "page": {
-                                                    "type": "integer"
-                                                },
-                                                "total_pages": {},
-                                                "total_results": {
-                                                    "type": "integer",
-                                                    "minimum": 0
-                                                }
-                                            },
-                                            "required": [
-                                                "page",
-                                                "total_pages",
-                                                "total_results"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "data",
-                                        "meta"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}": {
-            "get": {
-                "operationId": "v1.profiles.tmdb.ratings.season",
-                "description": "Only the rated episodes, with their comments.",
-                "summary": "My ratings of a season's episodes",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "season",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "episode_number": {
-                                                        "type": "integer"
-                                                    },
-                                                    "value": {
-                                                        "type": "number",
-                                                        "description": "0.5 to 10."
-                                                    },
-                                                    "comment": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "episode_number",
-                                                    "value",
-                                                    "comment"
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}/episode/{episode}": {
-            "put": {
-                "operationId": "v1.profiles.tmdb.ratings.episode.rate",
-                "description": "Creates or updates the review; with a linked TMDb account, the rating is sent there too.",
-                "summary": "Rate an episode",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "season",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "episode",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RateRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "value": {
-                                                    "type": "number"
-                                                },
-                                                "comment": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "value",
-                                                "comment"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "v1.profiles.tmdb.ratings.episode.unrate",
-                "description": "Its comment is removed too.",
-                "summary": "Remove an episode rating",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "season",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "episode",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/v1/profiles/{profile}/tmdb/ratings/{type}/{id}": {
-            "get": {
-                "operationId": "v1.profiles.tmdb.ratings.show",
-                "description": "`value` is null when not rated; `comment` is the profile's comment.",
-                "summary": "My rating of a movie or TV show",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "path",
-                        "required": true,
-                        "description": "The type ID",
-                        "schema": {
-                            "$ref": "#/components/schemas/MediaType"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "value": {
-                                                    "type": [
-                                                        "number",
-                                                        "null"
-                                                    ],
-                                                    "description": "0.5 to 10, null when not rated."
-                                                },
-                                                "comment": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "value",
-                                                "comment"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            },
-            "put": {
-                "operationId": "v1.profiles.tmdb.ratings.rate",
-                "description": "Creates or updates the review; with a linked TMDb account, the rating is sent there too.",
-                "summary": "Rate a movie or TV show",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "path",
-                        "required": true,
-                        "description": "The type ID",
-                        "schema": {
-                            "$ref": "#/components/schemas/MediaType"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RateRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "value": {
-                                                    "type": "number"
-                                                },
-                                                "comment": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "value",
-                                                "comment"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "v1.profiles.tmdb.ratings.unrate",
-                "description": "Its comment is removed too.",
-                "summary": "Remove a movie or TV show rating",
-                "tags": [
-                    "Compte TMDb",
-                    "TmdbRating"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "path",
-                        "required": true,
-                        "description": "The type ID",
-                        "schema": {
-                            "$ref": "#/components/schemas/MediaType"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -5292,11 +5152,11 @@
                                                             "string",
                                                             "null"
                                                         ],
-                                                        "description": "The profile's comment, kept by Vixeo only (null without one)."
+                                                        "description": "The profile's comment (null without one)."
                                                     },
                                                     "rated_at": {
                                                         "type": "string",
-                                                        "description": "When it was rated (first seen by Vixeo for a rating given on themoviedb.org), ISO 8601."
+                                                        "description": "When it was rated, ISO 8601."
                                                     },
                                                     "vote_average": {
                                                         "type": "number",
@@ -8683,7 +8543,7 @@
                             "string",
                             "null"
                         ],
-                        "description": "Optional comment, kept by Vixeo only (TMDb's API takes no written review). Null or empty removes it; left out, it is kept.",
+                        "description": "Optional comment. Null or empty removes it; left out, it is kept.",
                         "maxLength": 2000
                     }
                 },
@@ -8767,11 +8627,11 @@
                             "string",
                             "null"
                         ],
-                        "description": "The profile's comment, kept by Vixeo only (null without one)."
+                        "description": "The profile's comment (null without one)."
                     },
                     "rated_at": {
                         "type": "string",
-                        "description": "When it was rated (first seen by Vixeo for a rating given on themoviedb.org), ISO 8601."
+                        "description": "When it was rated, ISO 8601."
                     },
                     "vote_average": {
                         "type": "number",
@@ -8810,7 +8670,7 @@
             },
             "RatedType": {
                 "type": "string",
-                "description": "What a profile rates on TMDb (docs/compte-tmdb.md).\n",
+                "description": "What a profile reviews (docs/avis.md).\n",
                 "enum": [
                     "movie",
                     "tv",
@@ -9924,58 +9784,6 @@
                     "mal"
                 ],
                 "title": "TitleRatingsResource"
-            },
-            "TmdbAccountResource": {
-                "type": "object",
-                "properties": {
-                    "linked": {
-                        "type": "boolean",
-                        "description": "A TMDb account is linked to this profile."
-                    },
-                    "account_id": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
-                        "description": "TMDb account id."
-                    },
-                    "username": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "name": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Name shown on TMDb (may be null)."
-                    },
-                    "avatar_url": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "TMDb avatar, w185."
-                    },
-                    "linked_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "ISO 8601."
-                    }
-                },
-                "required": [
-                    "linked",
-                    "account_id",
-                    "username",
-                    "name",
-                    "avatar_url",
-                    "linked_at"
-                ],
-                "title": "TmdbAccountResource"
             },
             "UpcomingEpisodeResource": {
                 "type": "object",

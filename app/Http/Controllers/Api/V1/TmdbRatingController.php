@@ -19,11 +19,10 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * The profile's reviews: a rating and an optional comment (docs/compte-tmdb.md). Vixeo owns
- * them, with or without a TMDb account; when one is linked, the ratings are sent to it (the
- * comments stay in Vixeo: TMDb's API takes no written review).
+ * The profile's reviews: a rating and an optional comment per movie, TV show or episode
+ * (docs/avis.md). Kept by Vixeo only.
  *
- * @tags Compte TMDb
+ * @tags Avis
  */
 class TmdbRatingController extends Controller
 {
@@ -34,14 +33,13 @@ class TmdbRatingController extends Controller
      *
      * Every type, or one, with the comments: the most recently rated first, or sorted by `sort`
      * (oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the
-     * profile's age limit. With a linked TMDb account, ratings given on themoviedb.org that Vixeo
-     * doesn't have show up within 10 minutes.
+     * profile's age limit.
      */
     public function index(RatedListRequest $request, Profile $profile): JsonResponse
     {
         Gate::authorize('view', $profile);
         $type = $request->type();
-        $rows = $this->ratings->all($profile, $profile->tmdbLink)
+        $rows = $this->ratings->all($profile)
             ->when($type !== null, fn ($rows) => $rows->where('type', $type))
             ->sort(self::order($request->sort()))
             ->values();
@@ -106,7 +104,7 @@ class TmdbRatingController extends Controller
     /**
      * Rate a movie or TV show.
      *
-     * Creates or updates the review; with a linked TMDb account, the rating is sent there too.
+     * Creates or updates the review.
      */
     public function rate(RateRequest $request, Profile $profile, MediaType $type, int $id): JsonResponse
     {
@@ -126,7 +124,7 @@ class TmdbRatingController extends Controller
     /**
      * Rate an episode.
      *
-     * Creates or updates the review; with a linked TMDb account, the rating is sent there too.
+     * Creates or updates the review.
      */
     public function rateEpisode(RateRequest $request, Profile $profile, int $id, int $season, int $episode): JsonResponse
     {
@@ -146,7 +144,7 @@ class TmdbRatingController extends Controller
     private function save(RateRequest $request, Profile $profile, RatingTarget $target): JsonResponse
     {
         Gate::authorize('update', $profile);
-        $row = $this->ratings->save($profile, $profile->tmdbLink, $target, $request->value(), $request->hasComment(), $request->comment());
+        $row = $this->ratings->save($profile, $target, $request->value(), $request->hasComment(), $request->comment());
 
         return response()->json(['data' => [
             'value' => (float) $row->value,
@@ -157,7 +155,7 @@ class TmdbRatingController extends Controller
     private function remove(Profile $profile, RatingTarget $target): Response
     {
         Gate::authorize('update', $profile);
-        $this->ratings->remove($profile, $profile->tmdbLink, $target);
+        $this->ratings->remove($profile, $target);
 
         return response()->noContent();
     }

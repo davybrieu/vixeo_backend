@@ -12,7 +12,7 @@ class RateRequest extends FormRequest
         return [
             /** Rating from 0.5 to 10, by half points (TMDb scale). */
             'value' => ['required', 'numeric', 'min:0.5', 'max:10', 'multiple_of:0.5'],
-            /** Optional comment, kept by Vixeo only (TMDb's API takes no written review). Null or empty removes it; left out, it is kept. */
+            /** Optional comment. Null or empty removes it; left out, it is kept. */
             'comment' => ['sometimes', 'nullable', 'string', 'max:'.TmdbRating::MAX_COMMENT],
         ];
     }

@@ -174,18 +174,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   24 h). Sous-titres : OpenSubtitles avec la clé Vixeo commune (`Playback\OpenSubtitles`), fichiers
   servis en WebVTT depuis notre cache (quota quotidien d'OpenSubtitles). Les applis ne parlent
   jamais à ces services.
-- **Avis et compte TMDb du profil** (doc : `docs/compte-tmdb.md`) : **Vixeo est propriétaire
-  des avis** (demande du développeur) : note (0,5 à 10) et commentaire facultatif par profil
-  (`tmdb_ratings`, `App\Services\TmdbRatings`), écrits, modifiés et supprimés **sans compte
-  TMDb**. Liaison par la page d'autorisation de TMDb (`App\Services\TmdbLinks` : jeton de requête
-  en cache, l'appli interroge `link/complete`), table `tmdb_links` (une par profil ; **un compte
-  TMDb n'est lié qu'à un seul profil Vixeo**, sinon 409 `taken` ; session TMDb **chiffrée**,
-  jamais envoyée aux applis). La liaison ne sert qu'à synchroniser : **TMDb suit Vixeo** (chaque
-  avis écrit part sur TMDb ; à la liaison, tous les avis partent et remplacent une note
-  différente sur TMDb ; les notes de TMDb absentes de Vixeo arrivent, au plus toutes les 10 min ;
-  une note changée ou supprimée sur themoviedb.org ne change pas Vixeo). TMDb injoignable : l'avis
-  est enregistré et envoyé plus tard. Délier garde les avis. `TmdbClient::send` : appels sans
-  cache pour un compte, ne journalise que le chemin.
+- **Avis du profil** (doc : `docs/avis.md`) : note (0,5 à 10) et commentaire facultatif par
+  profil (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Plus de
+  liaison d'un compte TMDb ni de synchronisation des notes** (supprimées, demande du développeur,
+  20/11/2026 : table `tmdb_links` et colonne `account_id` supprimées ; ne pas les réintroduire).
+  Routes sous `/profiles/{id}/tmdb/ratings…` (nom historique). Pour les anciennes applis,
+  `GET /profiles/{id}/tmdb` répond toujours « non lié » et `POST …/tmdb/link` 410
+  (`TmdbAccountController`, obsolète).
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (« Ma liste » =
@@ -315,8 +310,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   temporaire d'un titre avec le PIN parental.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
-- Fait aussi : compte TMDb par profil, notes (films, séries, épisodes) synchronisées avec TMDb,
-  commentaires gardés par Vixeo.
+- Fait aussi : avis par profil (notes des films, séries et épisodes, commentaires), gardés par
+  Vixeo (plus de compte TMDb lié).
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.

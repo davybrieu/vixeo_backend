@@ -211,12 +211,11 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->scopeBindings()->whereNumber('search')->name('searches.destroy');
         });
 
-        // TMDb account of a profile and its ratings (docs/compte-tmdb.md).
-        Route::prefix('profiles/{profile}/tmdb')->name('profiles.tmdb.')->middleware('throttle:tmdb-account')->group(function () {
+        // The profile's reviews (docs/avis.md), under their former address. A TMDb account can no
+        // longer be linked: `/` and `link` only answer the apps installed before.
+        Route::prefix('profiles/{profile}/tmdb')->name('profiles.tmdb.')->middleware('throttle:reviews')->group(function () {
             Route::get('/', [TmdbAccountController::class, 'show'])->name('show');
-            Route::delete('/', [TmdbAccountController::class, 'destroy'])->name('destroy');
             Route::post('link', [TmdbAccountController::class, 'start'])->name('link');
-            Route::post('link/complete', [TmdbAccountController::class, 'complete'])->name('link.complete');
             Route::get('ratings', [TmdbRatingController::class, 'index'])->name('ratings.index');
             Route::get('ratings/tv/{id}/season/{season}', [TmdbRatingController::class, 'season'])
                 ->whereNumber(['id', 'season'])->name('ratings.season');

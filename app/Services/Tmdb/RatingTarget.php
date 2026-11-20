@@ -5,10 +5,10 @@ namespace App\Services\Tmdb;
 use App\Enums\MediaType;
 use App\Enums\RatedType;
 
-/** A movie, a TV show or an episode, as TMDb rates it (docs/compte-tmdb.md). */
+/** A reviewed movie, TV show or episode (docs/avis.md). */
 final readonly class RatingTarget
 {
-    /** TMDb path, also the key of the profile's copy ("movie/550", "tv/1399/season/1/episode/2"). */
+    /** TMDb path of the title, also the key of the review ("movie/550", "tv/1399/season/1/episode/2"). */
     public string $path;
 
     private function __construct(

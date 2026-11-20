@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -110,12 +109,6 @@ class Profile extends Model
         return $this->hasMany(ProfileStream::class);
     }
 
-    /** TMDb account linked to this profile (docs/compte-tmdb.md). @return HasOne<TmdbLink, $this> */
-    public function tmdbLink(): HasOne
-    {
-        return $this->hasOne(TmdbLink::class);
-    }
-
     /** Apps where this profile is in use, for push notifications. @return HasMany<PushDevice, $this> */
     public function pushDevices(): HasMany
     {
@@ -128,7 +121,7 @@ class Profile extends Model
         return $this->hasMany(EpisodeNotification::class);
     }
 
-    /** Copy of the linked TMDb account's ratings, with comments. @return HasMany<TmdbRating, $this> */
+    /** The profile's reviews (« Mes avis »): rating and comment. @return HasMany<TmdbRating, $this> */
     public function tmdbRatings(): HasMany
     {
         return $this->hasMany(TmdbRating::class);

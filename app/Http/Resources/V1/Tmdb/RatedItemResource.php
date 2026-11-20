@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A rating of the profile's TMDb account, with its comment ("Mes avis").
+ * A review of the profile: rating and comment ("Mes avis").
  *
  * @mixin TmdbRating
  */
@@ -39,9 +39,9 @@ class RatedItemResource extends JsonResource
             'still_url' => F::image($this->still_path === null ? null : (string) $this->still_path, 'w300'),
             /** The profile's rating, 0.5 to 10. */
             'value' => (float) $this->value,
-            /** The profile's comment, kept by Vixeo only (null without one). */
+            /** The profile's comment (null without one). */
             'comment' => $this->comment === null ? null : (string) $this->comment,
-            /** When it was rated (first seen by Vixeo for a rating given on themoviedb.org), ISO 8601. */
+            /** When it was rated, ISO 8601. */
             'rated_at' => (string) $this->rated_at->toIso8601String(),
             /** TMDb average rating, out of 10. */
             'vote_average' => (float) $this->vote_average,

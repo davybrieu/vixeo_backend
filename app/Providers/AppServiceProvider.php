@@ -66,8 +66,8 @@ class AppServiceProvider extends ServiceProvider
         // The player resolves one link per source switch: enough for zapping, not for scraping.
         RateLimiter::for('resolve', fn (Request $request) => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));
 
-        // TMDb account: the link page polls every 5 s, title pages read the ratings.
-        RateLimiter::for('tmdb-account', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+        // The profile's reviews: title pages and episodes read them, « Mes avis » lists them.
+        RateLimiter::for('reviews', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 
         // Apps register for push notifications at launch and when the profile changes.
         RateLimiter::for('push', fn (Request $request) => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));

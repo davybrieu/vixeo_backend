@@ -3,101 +3,54 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\Tmdb\TmdbAccountResource;
 use App\Models\Profile;
-use App\Services\TmdbLinks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * TMDb account of a profile, to rate movies, TV shows and episodes (docs/compte-tmdb.md).
- * The same TMDb account can be linked to several profiles, of any Vixeo account.
+ * Linking a TMDb account to a profile no longer exists (docs/avis.md): the reviews are kept by
+ * Vixeo only. These two routes stay for the apps installed before, which still have a
+ * « Connexions » page: no account is ever linked, and starting a link says why it can't.
  *
- * @tags Compte TMDb
+ * @tags Avis
  */
 class TmdbAccountController extends Controller
 {
-    public function __construct(private TmdbLinks $links) {}
-
     /**
-     * Linked TMDb account.
+     * Linked TMDb account (former apps).
      *
-     * `linked: false` (other fields null) when the profile has none.
+     * Always `linked: false`: a TMDb account can no longer be linked.
+     *
+     * @deprecated
      */
-    public function show(Profile $profile): TmdbAccountResource
+    public function show(Profile $profile): JsonResponse
     {
         Gate::authorize('view', $profile);
 
-        return new TmdbAccountResource($profile->tmdbLink);
+        return response()->json(['data' => [
+            'linked' => false,
+            'account_id' => null,
+            'username' => null,
+            'name' => null,
+            'avatar_url' => null,
+            'linked_at' => null,
+        ]]);
     }
 
     /**
-     * Start linking a TMDb account.
+     * Start linking a TMDb account (former apps).
      *
-     * Open `authorize_url` (or show it as a QR code on a TV): the person signs in to TMDb and
-     * approves Vixeo, then the app polls POST …/tmdb/link/complete every `interval` seconds.
-     * Linking again replaces the current account.
+     * Always 410: a TMDb account can no longer be linked; the reviews stay in Vixeo.
+     *
+     * @deprecated
      */
     public function start(Profile $profile): JsonResponse
     {
         Gate::authorize('update', $profile);
-        ['authorize_url' => $url, 'expires_in' => $expiresIn] = $this->links->start($profile);
 
         return response()->json([
-            /** TMDb page where the person approves Vixeo. */
-            'authorize_url' => $url,
-            /** Seconds before this page expires. */
-            'expires_in' => $expiresIn,
-            /** Seconds between two polls. */
-            'interval' => TmdbLinks::INTERVAL_SECONDS,
-        ]);
-    }
-
-    /**
-     * Finish linking a TMDb account.
-     *
-     * 202 `{"status":"pending"}` until the person approved Vixeo on TMDb, then 200 with the
-     * account: the profile's reviews are sent to it (Vixeo wins), its other ratings come in. 410
-     * when the approval page expired: start again. 409 `{"status":"taken"}` when this TMDb account
-     * is already linked to another Vixeo profile (one profile per TMDb account).
-     */
-    public function complete(Profile $profile): JsonResponse
-    {
-        Gate::authorize('update', $profile);
-        $result = $this->links->complete($profile);
-
-        if ($result['status'] === 'linked') {
-            return response()->json(['status' => 'linked', 'data' => new TmdbAccountResource($result['link'])]);
-        }
-
-        if ($result['status'] === 'pending') {
-            return response()->json(['status' => 'pending'], Response::HTTP_ACCEPTED);
-        }
-
-        if ($result['status'] === 'taken') {
-            return response()->json([
-                'status' => 'taken',
-                'message' => __('This TMDb account is already linked to another Vixeo profile: unlink it there first.'),
-            ], Response::HTTP_CONFLICT);
-        }
-
-        return response()->json([
-            'status' => 'expired',
-            'message' => __('The TMDb approval page has expired: start again.'),
+            'message' => __('Linking a TMDb account is no longer offered: your reviews stay in Vixeo.'),
         ], Response::HTTP_GONE);
-    }
-
-    /**
-     * Unlink the TMDb account.
-     *
-     * The reviews stay in Vixeo and the ratings on TMDb; Vixeo's session on the account is ended.
-     */
-    public function destroy(Profile $profile): Response
-    {
-        Gate::authorize('update', $profile);
-        $this->links->unlink($profile);
-
-        return response()->noContent();
     }
 }

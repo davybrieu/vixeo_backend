@@ -11,12 +11,12 @@ beforeEach(function () {
 
 it('lists a member\'s reviews with the fields of « Mes avis », images included', function () {
     TmdbRating::forceCreate([
-        'profile_id' => $this->member->id, 'account_id' => 42, 'target' => 'movie/550', 'type' => 'movie',
+        'profile_id' => $this->member->id, 'target' => 'movie/550', 'type' => 'movie',
         'tmdb_id' => 550, 'value' => 8.5, 'comment' => 'Une claque.', 'title' => 'Fight Club',
         'date' => '1999-10-15', 'poster_path' => '/fc.jpg', 'rated_at' => now()->subDay(),
     ]);
     TmdbRating::forceCreate([
-        'profile_id' => $this->member->id, 'account_id' => 42, 'target' => 'tv/1399/season/1/episode/2',
+        'profile_id' => $this->member->id, 'target' => 'tv/1399/season/1/episode/2',
         'type' => 'episode', 'tmdb_id' => 1399, 'season_number' => 1, 'episode_number' => 2, 'value' => 7,
         'title' => 'Game of Thrones', 'episode_name' => 'La route royale', 'still_path' => '/ep.jpg',
         'rated_at' => now(),

@@ -32,7 +32,7 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with(['items', 'streams', 'searches', 'tmdbLink', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'streams', 'searches', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
@@ -51,13 +51,7 @@ class AccountExport
                     'query' => $s->query,
                     'searched_at' => $s->updated_at?->toIso8601String(),
                 ])->values()->all(),
-                // The ratings themselves are on TMDb, not at Vixeo.
-                'tmdb_account' => $p->tmdbLink === null ? null : [
-                    'account_id' => $p->tmdbLink->account_id,
-                    'username' => $p->tmdbLink->username,
-                    'linked_at' => $p->tmdbLink->linked_at?->toIso8601String(),
-                ],
-                // Copy of the TMDb ratings, with the comments written in Vixeo.
+                // The profile's reviews (« Mes avis »): rating and comment.
                 'tmdb_ratings' => $p->tmdbRatings->sortByDesc('rated_at')->map(fn (TmdbRating $r) => [
                     'title' => $r->title,
                     'type' => $r->type->value,
