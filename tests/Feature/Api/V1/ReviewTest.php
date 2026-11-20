@@ -206,21 +206,6 @@ it('refuses other accounts\' profiles', function () {
     $this->getJson("/api/v1/profiles/{$stranger->id}/tmdb/ratings")->assertForbidden();
     $this->putJson("/api/v1/profiles/{$stranger->id}/tmdb/ratings/movie/550", ['value' => 5])->assertForbidden();
     $this->deleteJson("/api/v1/profiles/{$stranger->id}/tmdb/ratings/movie/550")->assertForbidden();
-    $this->getJson("/api/v1/profiles/{$stranger->id}/tmdb")->assertForbidden();
-});
-
-it('no longer links a TMDb account: the former apps are told so', function () {
-    $this->getJson($this->url)->assertOk()
-        ->assertJsonPath('data.linked', false)
-        ->assertJsonPath('data.username', null);
-    $this->postJson("{$this->url}/link")->assertGone()
-        ->assertJsonPath('message', 'La liaison d’un compte TMDb n’est plus proposée : vos avis restent dans Vixeo.');
-    $this->postJson("{$this->url}/link/complete")->assertNotFound();
-    $this->deleteJson($this->url)->assertMethodNotAllowed();
-
-    expect(Schema::hasTable('tmdb_links'))->toBeFalse()
-        ->and(Schema::hasColumn('tmdb_ratings', 'account_id'))->toBeFalse();
-    Http::assertNothingSent();
 });
 
 it('exports the reviews, and deletes them with the profile', function () {

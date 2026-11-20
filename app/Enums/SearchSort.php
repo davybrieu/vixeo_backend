@@ -8,7 +8,6 @@ enum SearchSort: string
     /** TMDb order for the typed text. */
     case Relevance = 'relevance';
     case Popularity = 'popularity';
-    case Rating = 'rating';
     case Recent = 'recent';
     case Oldest = 'oldest';
 }

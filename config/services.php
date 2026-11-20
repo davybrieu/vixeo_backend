@@ -186,27 +186,6 @@ return [
         ],
     ],
 
-    /*
-    | Plug-ins (docs/plugins.md): add-ons in the Stremio format that add sources (streams) to the
-    | player, installed by an account from their address, or for every account
-    | (`php artisan addons:server`). The API is the only one to call them: the apps never do.
-    | Their catalogs are ignored: the catalog is TMDb's.
-    */
-    'addons' => [
-        // Seconds to wait for a plug-in (manifest, streams).
-        'timeout' => (int) env('ADDONS_TIMEOUT', 8),
-        // Plug-ins an account may install.
-        'max_per_user' => (int) env('ADDONS_MAX_PER_USER', 30),
-        // Largest answer read from a plug-in, in bytes.
-        'max_response_bytes' => (int) env('ADDONS_MAX_RESPONSE_BYTES', 5 * 1024 * 1024),
-        // Plain http:// plug-ins (local development only): https only otherwise.
-        'allow_http' => (bool) env('ADDONS_ALLOW_HTTP', false),
-        'ttl' => [
-            'manifest' => (int) env('ADDONS_TTL_MANIFEST', 3600),
-            'streams' => (int) env('ADDONS_TTL_STREAMS', 300),
-        ],
-    ],
-
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

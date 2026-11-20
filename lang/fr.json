@@ -59,7 +59,6 @@
     "Live TV is temporarily unavailable.": "La TV en direct est momentanément indisponible. Réessayez dans quelques instants.",
     "Vavoo is not configured.": "La TV Vavoo n'est pas configurée sur le serveur.",
     "Vavoo is temporarily unavailable.": "Impossible de joindre le serveur Vavoo. Réessayez dans quelques instants.",
-    "Dead stream recorded.": "Le flux a été signalé comme mort.",
     "Notifications are not available right now.": "Les notifications ne sont pas disponibles pour le moment.",
     "This device is not registered for notifications.": "Cet appareil n’est pas inscrit aux notifications.",
     "Test notification": "Notification de test",
@@ -72,19 +71,5 @@
     ":code “:title” is available.": ":code « :title » est disponible.",
     ":count new episodes of season :season are available.": ":count nouveaux épisodes de la saison :season sont disponibles.",
     ":count new episodes are available.": ":count nouveaux épisodes sont disponibles.",
-    "New episode": "Nouvel épisode",
-    "This address is not a plug-in.": "Cette adresse n’est pas celle d’un plug-in.",
-    "This plug-in does not answer.": "Ce plug-in ne répond pas.",
-    "A plug-in address starts with https://.": "L’adresse d’un plug-in commence par https://.",
-    "This plug-in address cannot be found.": "L’adresse de ce plug-in est introuvable.",
-    "This plug-in address is not allowed.": "Cette adresse de plug-in n’est pas autorisée.",
-    "This plug-in address is too long.": "L’adresse de ce plug-in est trop longue.",
-    "You have reached the maximum number of plug-ins.": "Vous avez atteint le nombre maximum de plug-ins.",
-    "This plug-in is already installed.": "Ce plug-in est déjà installé.",
-    "This plug-in must be configured on its website first: paste the address it gives you then.": "Ce plug-in doit d’abord être configuré sur son site : collez ensuite l’adresse qu’il vous donne.",
-    "This plug-in offers no sources for movies or TV shows.": "Ce plug-in ne propose pas de sources de films ou de séries.",
-    "This plug-in is not installed.": "Ce plug-in n’est pas installé.",
-    "This plug-in is temporarily unavailable.": "Ce plug-in est momentanément indisponible.",
-    "Linking a TMDb account is no longer offered: your reviews stay in Vixeo.": "La liaison d’un compte TMDb n’est plus proposée : vos avis restent dans Vixeo.",
-    "This source cannot be played.": "Cette source n’est pas lisible."
+    "New episode": "Nouvel épisode"
 }

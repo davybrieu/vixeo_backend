@@ -107,25 +107,6 @@ class VavooClient
     }
 
     /**
-     * Live channels, optionally filtered by category.
-     *
-     * @return list<array{id: string, name: string, category_id: string, logo: string|null, url: string}>
-     */
-    public function channelsByCategory(?string $categoryId = null): array
-    {
-        $channels = $this->channels();
-
-        if ($categoryId !== null && $categoryId !== '') {
-            $channels = array_values(array_filter(
-                $channels,
-                fn (array $c) => $c['category_id'] === $categoryId
-            ));
-        }
-
-        return $channels;
-    }
-
-    /**
      * @return list<array{id: string, name: string}>
      */
     public function categories(): array

@@ -3,7 +3,6 @@
 namespace App\Services\Tmdb;
 
 use App\Enums\CatalogList;
-use App\Enums\DiscoverSort;
 use App\Enums\MediaType;
 use App\Enums\PersonCreditsSort;
 use App\Enums\SearchSort;
@@ -146,34 +145,6 @@ class TmdbCatalog
         $afterTrending = count(array_filter($sections, fn (array $section) => $section['list'] === 'trending'));
 
         return [...array_slice($sections, 0, $afterTrending), ...$trends, ...array_slice($sections, $afterTrending), ...$others];
-    }
-
-    /** @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>} */
-    public function discover(MediaType $type, TitleFilters $filters, DiscoverSort $sort, int $page = 1): array
-    {
-        $query = [
-            'page' => $page,
-            'include_adult' => 'false',
-            'sort_by' => $sort->sortBy($type),
-        ] + $filters->discoverQuery($type);
-
-        if ($sort === DiscoverSort::Rating) {
-            // Without a floor, the top is made of titles with 1 vote at 10/10.
-            $query['vote_count.gte'] = max(200, $query['vote_count.gte'] ?? 0);
-        }
-
-        if ($sort === DiscoverSort::Oldest) {
-            // Known titles, not the first films ever registered (often without image or summary).
-            $query['vote_count.gte'] = max(100, $query['vote_count.gte'] ?? 0);
-        }
-
-        if ($sort === DiscoverSort::Recent) {
-            // Already released only, not announced titles dated in years.
-            $field = $type === MediaType::Movie ? 'primary_release_date.lte' : 'first_air_date.lte';
-            $query[$field] = min((string) ($query[$field] ?? '9999-12-31'), now()->toDateString());
-        }
-
-        return $this->page($this->tmdb->get("discover/{$type->value}", $query, 'lists'), $type->value);
     }
 
     /** @return array{movie: list<array<string, mixed>>, tv: list<array<string, mixed>>} */
@@ -354,15 +325,10 @@ class TmdbCatalog
      */
     private static function sort(array $items, SearchSort $sort): array
     {
-        $rated = fn (array $item) => (int) ($item['vote_count'] ?? 0) >= TitleFilters::MIN_VOTES;
-
         // usort is stable: equal items keep TMDb's relevance order.
         match ($sort) {
             SearchSort::Relevance => null,
             SearchSort::Popularity => usort($items, fn ($a, $b) => (float) ($b['popularity'] ?? 0) <=> (float) ($a['popularity'] ?? 0)),
-            // Titles with too few votes come after the others, whatever their rating.
-            SearchSort::Rating => usort($items, fn ($a, $b) => [! $rated($a), (float) ($b['vote_average'] ?? 0)]
-                <=> [! $rated($b), (float) ($a['vote_average'] ?? 0)]),
             // Titles without a date come last.
             SearchSort::Recent => usort($items, fn ($a, $b) => [TitleFilters::date($a) === null, TitleFilters::date($b) ?? '']
                 <=> [TitleFilters::date($b) === null, TitleFilters::date($a) ?? '']),
@@ -371,19 +337,6 @@ class TmdbCatalog
         };
 
         return $items;
-    }
-
-    /**
-     * Popular people (search page without text, "Personnes"). Adult profiles are left out.
-     *
-     * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
-     */
-    public function popularPeople(int $page = 1): array
-    {
-        $result = $this->page($this->tmdb->get('person/popular', ['page' => $page], 'lists'), 'person');
-        $result['results'] = array_values(array_filter($result['results'], fn (array $p) => empty($p['adult'])));
-
-        return $result;
     }
 
     /** @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>} */

@@ -20,9 +20,10 @@ teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Sit
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
 question). Les applis lisent ce que l'API leur renvoie (sources de lecture, TV en direct, sous-titres,
 moments à passer) : l'utilisateur n'a **aucun serveur à configurer**. Les flux des films et
-séries viennent **uniquement des plug-ins** (add-ons Stremio / Nuvio, `docs/plugins.md`) : plus
-de scraper, de fournisseurs ni d'extracteurs sur le serveur (supprimés le 20/11/2026, demande du
-développeur ; ne pas les réintroduire). Pas de serveurs multimédias
+séries viennent **uniquement des plug-ins exécutés par l'appli** (dépôts de scrapers JavaScript
+façon Nuvio, `vixeo_frontend/docs/scrapers.md`) : le serveur n'a plus de scraper, de
+fournisseurs, d'extracteurs (supprimés le 20/11/2026), ni de plug-ins Stremio, de sources, de
+flux favoris ou morts (supprimés le 21/11/2026) ; demande du développeur, ne pas les réintroduire. Pas de serveurs multimédias
 de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli, ni sur le site.
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
@@ -102,7 +103,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 - Toutes les routes sous `/api/v1` (`routes/api.php`). **Pas de changement cassant en v1** :
   les applis installées ne se mettent pas à jour en même temps que l'API. Ajouter des champs
-  est autorisé ; renommer/supprimer → nouvelle version.
+  est autorisé ; renommer/supprimer → nouvelle version. Exception décidée par le développeur
+  (seul utilisateur pour l'instant, 21/11/2026) : les routes que l'appli n'appelle plus ont été
+  supprimées (plug-ins Stremio, sources, `resolve`, flux favoris / morts, `continue-watching`,
+  `favorites`, `history`, `catalog/config`, `discover`, `people/popular`, `episodes/upcoming`,
+  compatibilité TMDb, `PATCH /social/profile`) ; ne pas les recréer.
 - Contrôleurs dans `app/Http/Controllers/Api/V1`, validation dans des Form Requests
   (`app/Http/Requests/Api/V1`), réponses via des API Resources (`app/Http/Resources/V1`),
   autorisations via des Policies (`Gate::authorize`).
@@ -128,14 +133,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     (`(int)`, `(string)`, helpers typés) pour que Scramble produise un schéma typé ; pour une liste
     ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
     des helpers statiques).
-  - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to`,
-    `min_rating` ; requêtes : trait `Concerns\FiltersTitles`) : envoyés à TMDb pour
-    `/{type}/discover` (« Explorer », tris `DiscoverSort`). La recherche par texte de TMDb n'a ni
-    filtres ni tri : avec un filtre ou un tri autre que `relevance` (`SearchSort`), l'API lit les
-    `SEARCH_DEPTH` (3) premières pages, filtre, trie et renvoie une seule page. Une recherche
-    filtrée ne renvoie pas de personnes ; une note minimale exige `TitleFilters::MIN_VOTES` votes.
-    Sans texte, « Personnes » liste les personnes populaires de TMDb (`GET /catalog/people/popular`,
-    paginé, profils adultes retirés).
+  - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to` ;
+    requêtes : trait `Concerns\FiltersTitles` ; plus de `min_rating` ni de tri `rating`, ni
+    d'« Explorer » `/discover`, 21/11/2026 : l'appli ne cherche qu'avec un texte). La recherche par
+    texte de TMDb n'a ni filtres ni tri : avec un filtre ou un tri autre que `relevance`
+    (`SearchSort`), l'API lit les `SEARCH_DEPTH` (3) premières pages, filtre, trie et renvoie une
+    seule page. Une recherche filtrée ne renvoie pas de personnes.
   - Fiches film / série : `images` ajouté à l'appel TMDb (`include_image_language=fr,en,null`).
     `TmdbFormat::logo` choisit le logo du titre (français, puis anglais, puis sans langue ; pas de
     SVG) → `logo_url` + `logo_aspect_ratio` ; `TmdbFormat::textlessBackdrop` une image de fond sans
@@ -210,7 +213,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `/people` ; chaque écriture prend `++profiles.sync_revision` sous verrou.
 - **Recherche de membres** (`GET /social/search`, `SocialProfileController`) : profils adultes
   avec un pseudo, **jamais le profil actif lui-même** (demande du développeur, 20/11/2026 : on
-  ouvre son propre profil par la navigation, « Profil »).
+  ouvre son propre profil par la navigation, « Profil »). Les listes de comptes (recherche,
+  abonnés, abonnements) ne donnent que l'identité (`identity`) ; les compteurs (une sous-requête
+  chacun) seulement pour la page d'un membre (`publicProfile(withCounts: true)`).
+- **Requêtes** : hors production, `Model::preventLazyLoading()` (`AppServiceProvider`) fait
+  échouer une relation lue dans une boucle sans `with()` (N+1) : les tests l'attrapent.
 - **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; le code se tape dans
   l'appli du téléphone (« Paramètres » → « Connecter une TV »), **plus de QR code** (demande du
@@ -284,29 +291,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   ni l'activation des alertes, jamais deux fois (`episode_notifications`), pas la nuit sur
   l'appareil (23 h – 8 h), une notification par série (canal Android `episodes`, `data.path` =
   fiche). `vixeo:push "texte" --all | --user=…` (`SendPush`) : un message écrit à la main
-  (canal `general`). `GET /catalog/episodes/upcoming` reste (heure de sortie estimée, jamais trop
-  tôt : streaming 08:00 UTC, sinon 21:00 dans le pays de la série).
-- **Plug-ins** (doc : `docs/plugins.md`, demande du développeur : « comme Nuvio / Stremio »,
-  films et séries) : add-ons au **format Stremio**, **uniquement pour les sources** (ressource
-  `stream`). **Le catalogue n'en dépend pas** (demande du développeur : il reste celui de TMDb,
-  avec la clé de Vixeo, inchangeable) : pas de plug-in « catalogue Vixeo », pas de rangées ni de
-  listes venues d'un plug-in, les catalogues d'un manifeste sont ignorés ; ne pas les réintroduire.
-  `GET /catalog/addons/sections` reste pour les anciennes applis, toujours vide. Un compte installe
-  les siens par leur adresse (`/addons`, table `addons` : adresse **chiffrée**, jamais renvoyée ni
-  journalisée, seulement l'hôte ; refusé s'il ne sert pas de flux de films ou de séries) ;
-  `php artisan addons:server` pour tous les comptes. **Tout appel à un plug-in passe par
-  `AddonHttp`** (https, adresses publiques seulement, IP épinglée, sans redirection, délai et
-  taille limités). Flux → fournisseurs `addon:{n}` du panneau des sources, déjà lisibles
-  (`stream`, `headers`), sans `resolve`, demandés par id IMDb (`TitleIds`) ou `tmdb:`. Seuls les
-  flux à adresse http(s) (pas de torrent). **Seule source des flux** : `scraper/` (Node),
-  `StreamSources`, les fournisseurs du serveur et la table `missing_extractors` sont supprimés
-  (20/11/2026) ; sans `provider`, `…/sources` donne les flux de tous les plug-ins, un ancien
-  fournisseur une liste vide ; `POST /catalog/resolve` répond toujours 502 (anciennes applis).
-- **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
-  contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
-  favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
-  signalés par l'appli (`POST /catalog/streams/dead`), mis en cache 24 h pour tous les comptes
-  (`dead_streams`, `App\Services\Playback\DeadStreams`), retirés de la liste des sources.
+  (canal `general`). Heure de sortie estimée (`UpcomingEpisodes`), jamais trop tôt : streaming
+  08:00 UTC, sinon 21:00 dans le pays de la série.
 - **Jamais de secret dans une URL** (PIN, mot de passe, jeton) : corps de requête ou en-tête.
   Pas de champ secret sur un DELETE (Scramble le documenterait en paramètre d'URL) ; un test
   de `tests/Feature/OpenApiTest.php` le vérifie.
@@ -346,15 +332,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait aussi : avis par profil (notes des films et séries, commentaires), gardés par Vixeo
   (plus de compte TMDb lié, plus de notes d'épisodes).
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
-  logos de la bibliothèque tv-logos) et flux favoris / « dernier flux qui a
-  fonctionné » synchronisés par profil, avec cache partagé des flux morts.
+  logos de la bibliothèque tv-logos).
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
 - Fait aussi : notes des autres sites (MDBList, clé de Vixeo, cache partagé, réglage du profil
   `rating_source`).
-- Fait aussi : plug-ins de sources au format Stremio (plug-ins du compte et de tous les comptes :
-  flux du panneau des sources), seule source des flux (scraper et extracteurs supprimés) ; le
-  catalogue reste celui de TMDb.
+- Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
+  (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
   les serveurs de Vixeo.

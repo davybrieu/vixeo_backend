@@ -17,13 +17,6 @@ beforeEach(function () {
     Sanctum::actingAs(User::factory()->create());
 });
 
-it('exposes image configuration and the TMDb attribution', function () {
-    $this->getJson('/api/v1/catalog/config')
-        ->assertOk()
-        ->assertJsonPath('image_base_url', 'https://image.tmdb.org/t/p/')
-        ->assertJsonPath('attribution', 'This product uses the TMDB API but is not endorsed or certified by TMDB.');
-});
-
 it('builds the mixed home with featured items and French row titles', function () {
     Http::fake([
         'api.themoviedb.org/3/trending/all/week*' => Http::response(Tmdb::page([
@@ -299,21 +292,6 @@ it('validates pages', function () {
         ->assertUnprocessable()->assertJsonValidationErrors('page');
 });
 
-it('discovers by genre with sensible TMDb filters', function () {
-    Http::fake(['api.themoviedb.org/3/discover/movie*' => Http::response(Tmdb::page([Tmdb::movie(1)]))]);
-
-    $this->getJson('/api/v1/catalog/movie/discover?genre=28&sort=rating')->assertOk()->assertJsonPath('data.0.id', 1);
-    $this->getJson('/api/v1/catalog/movie/discover?sort=recent')->assertOk();
-
-    Http::assertSent(fn (Request $request) => ($request->data()['with_genres'] ?? null) == 28
-        && $request['sort_by'] === 'vote_average.desc'
-        && $request['vote_count.gte'] == 200
-        && $request['include_adult'] === 'false');
-    Http::assertSent(fn (Request $request) => $request['sort_by'] === 'primary_release_date.desc'
-        && ($request->data()['primary_release_date.lte'] ?? null) === now()->toDateString()
-        && ! isset($request->data()['with_genres']));
-});
-
 it('returns movie and TV genres', function () {
     Http::fake([
         'api.themoviedb.org/3/genre/movie/list*' => Http::response(['genres' => [['id' => 28, 'name' => 'Action']]]),
@@ -357,25 +335,6 @@ it('searches one type with pagination', function () {
         ->assertOk()
         ->assertJsonPath('data.0.type', 'tv')
         ->assertJsonPath('meta.total_pages', 4);
-});
-
-it('lists popular people without a text, adult profiles left out', function () {
-    Http::fake(['api.themoviedb.org/3/person/popular*' => Http::response(Tmdb::page([
-        ['id' => 287, 'name' => 'Brad Pitt', 'known_for_department' => 'Acting', 'profile_path' => '/pitt.jpg'],
-        ['id' => 9, 'name' => 'Adult', 'adult' => true, 'known_for_department' => 'Acting', 'profile_path' => null],
-    ], totalPages: 3, page: 2))]);
-
-    $this->getJson('/api/v1/catalog/people/popular?page=2')
-        ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0', [
-            'id' => 287, 'name' => 'Brad Pitt', 'known_for_department' => 'Acting',
-            'profile_path' => '/pitt.jpg', 'profile_url' => 'https://image.tmdb.org/t/p/w185/pitt.jpg',
-        ])
-        ->assertJsonPath('meta.page', 2)
-        ->assertJsonPath('meta.total_pages', 3);
-
-    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'person/popular') && $request['page'] == 2);
 });
 
 it('requires a search query', function () {

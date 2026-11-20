@@ -41,7 +41,7 @@ class MediaItemResource extends JsonResource
             /** @var list<int> */
             'genre_ids' => F::ints($r, 'genre_ids'),
             'poster_path' => $poster,
-            /** Poster, w342. Build other sizes with `poster_path` (see /catalog/config). */
+            /** Poster, w342. Other sizes: the same URL with another TMDb size (w185, w500, w780, original). */
             'poster_url' => F::image($poster, 'w342'),
             'backdrop_path' => $backdrop,
             /** Backdrop, w1280. */

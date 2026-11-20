@@ -9,7 +9,6 @@ use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\CatalogHomeRequest;
 use App\Http\Requests\Api\V1\CatalogPageRequest;
 use App\Http\Requests\Api\V1\CatalogTitlesRequest;
-use App\Http\Requests\Api\V1\DiscoverRequest;
 use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
@@ -34,38 +33,6 @@ class CatalogController extends Controller
         private AgeGate $ageGate,
         private TitleSummaries $summaries,
     ) {}
-
-    /**
-     * Rows of the home from plug-ins: always empty. Plug-ins only add sources to the player; the
-     * catalog is TMDb's. Kept for the apps that still ask for it.
-     *
-     * @deprecated
-     *
-     * @response array{sections: list<array<string, mixed>>}
-     */
-    public function addonSections(): JsonResponse
-    {
-        return response()->json(['sections' => []]);
-    }
-
-    /**
-     * Catalog configuration.
-     *
-     * Image base URL and sizes (URL = `image_base_url` + size + `*_path`), and the TMDb
-     * attribution that the app must display (e.g. in "À propos").
-     */
-    public function config(): JsonResponse
-    {
-        return response()->json([
-            'image_base_url' => (string) config('services.tmdb.image_base_url'),
-            'poster_sizes' => ['w92', 'w154', 'w185', 'w342', 'w500', 'w780', 'original'],
-            'backdrop_sizes' => ['w300', 'w780', 'w1280', 'original'],
-            'profile_sizes' => ['w45', 'w185', 'h632', 'original'],
-            'still_sizes' => ['w92', 'w185', 'w300', 'original'],
-            'attribution' => 'This product uses the TMDB API but is not endorsed or certified by TMDB.',
-            'attribution_url' => 'https://www.themoviedb.org',
-        ]);
-    }
 
     /**
      * Home.
@@ -193,27 +160,6 @@ class CatalogController extends Controller
         }
 
         $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
-
-        return response()->json([
-            'data' => MediaItemResource::collection($page['results']),
-            'meta' => [
-                'page' => $page['page'],
-                'total_pages' => $page['total_pages'],
-                'total_results' => $page['total_results'],
-            ],
-        ]);
-    }
-
-    /**
-     * Discover (search page without text).
-     *
-     * Movies or TV shows by genre, years and minimum rating, in the chosen order.
-     */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
-    public function discover(DiscoverRequest $request, MediaType $type): JsonResponse
-    {
-        $page = $this->catalog->discover($type, $request->titleFilters(), $request->sort(), $request->page());
-        $page['results'] = $this->summaries->add($this->ageGate->filter(ResolveProfile::profile($request), $page['results']));
 
         return response()->json([
             'data' => MediaItemResource::collection($page['results']),

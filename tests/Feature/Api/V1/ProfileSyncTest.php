@@ -236,9 +236,6 @@ it('forbids syncing another account profile', function () {
     $this->getJson("/api/v1/profiles/{$foreign->id}/sync")->assertForbidden();
     $this->postJson("/api/v1/profiles/{$foreign->id}/sync", ['changes' => [change(['watched' => ['value' => true, 'at' => '2026-06-01T10:00:00Z']])]])
         ->assertForbidden();
-    $this->getJson("/api/v1/profiles/{$foreign->id}/favorites")->assertForbidden();
-    $this->getJson("/api/v1/profiles/{$foreign->id}/continue-watching")->assertForbidden();
-    $this->getJson("/api/v1/profiles/{$foreign->id}/history")->assertForbidden();
 
     expect(ProfileItem::count())->toBe(0);
 });

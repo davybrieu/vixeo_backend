@@ -104,9 +104,3 @@ Connexion par le compte de service : un JWT signé avec sa clé (RS256) contre u
 Google, gardé en cache jusqu'à 5 minutes avant son expiration. Réponses : envoyé, **invalide**
 (`UNREGISTERED`, 404, `SENDER_ID_MISMATCH` : l'appareil est supprimé) ou échec (réseau, quota,
 5xx : réessayé à la tâche suivante). Les jetons ne sont jamais journalisés.
-
-## `GET /api/v1/catalog/episodes/upcoming?ids=1399,66732`
-
-Les épisodes des **60 prochains jours** des séries demandées (100 au plus), avec la même heure
-de sortie estimée (`available_at`), le plus proche d'abord. Public, avec `X-Profile-Id` pour
-l'âge maximum. L'appli ne s'en sert plus pour les notifications ; la route reste (v1).

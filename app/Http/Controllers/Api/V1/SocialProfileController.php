@@ -27,18 +27,17 @@ class SocialProfileController extends Controller
             // Never the active profile itself: it is reached from the navigation (« Profil »).
             ->when($viewer instanceof Profile, fn ($q) => $q->whereKeyNot($viewer->id))
             ->where('username', 'like', '%'.addcslashes($query, '%_\\').'%')
-            ->withCount(['followers', 'following'])
             ->orderByRaw('username = ? desc', [mb_strtolower(ltrim($query, '@'))])
             ->limit(30)
             ->get();
 
-        return response()->json(['data' => $profiles->map(fn (Profile $profile) => $this->summary($profile))]);
+        return response()->json(['data' => $profiles->map(fn (Profile $profile) => $this->identity($profile))]);
     }
 
     public function show(Request $request, string $username): JsonResponse
     {
         $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
+        $profile = $this->publicProfile($username, withCounts: true);
         $viewer = ResolveProfile::profile($request);
 
         return response()->json(['data' => [
@@ -48,25 +47,6 @@ class SocialProfileController extends Controller
                 ? $viewer->following()->whereKey($profile->id)->exists() : false,
             'is_self' => $viewer instanceof Profile && $viewer->id === $profile->id,
         ]]);
-    }
-
-    public function update(Request $request): JsonResponse
-    {
-        /** @var Profile|null $profile */
-        $profile = ResolveProfile::profile($request);
-        abort_unless($profile, 422, 'Sélectionnez un profil.');
-        abort_if($profile->is_kid, 403, 'Les profils enfants ne disposent pas de profil public.');
-
-        $data = $request->validate([
-            'username' => ['sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/', 'unique:profiles,username,'.$profile->id],
-            'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
-        ]);
-        if (isset($data['username'])) {
-            $data['username'] = mb_strtolower($data['username']);
-        }
-        $profile->update($data);
-
-        return response()->json(['data' => $this->summary($profile->fresh()) + ['bio' => $profile->bio]]);
     }
 
     public function follow(Request $request, string $username): JsonResponse
@@ -178,9 +158,9 @@ class SocialProfileController extends Controller
         $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username);
         $relation = $direction === 'followers' ? $profile->followers() : $profile->following();
-        $items = $relation->where('is_kid', false)->withCount(['followers', 'following'])->paginate(30);
+        $items = $relation->where('is_kid', false)->paginate(30);
 
-        return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->summary($p)),
+        return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->identity($p)),
             'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage()]]);
     }
 
@@ -199,11 +179,15 @@ class SocialProfileController extends Controller
         return $profile;
     }
 
-    private function publicProfile(string $username): Profile
+    /**
+     * An adult profile with a username. Its counters (one subquery each) only for its page: the
+     * lists of a profile only need its id.
+     */
+    private function publicProfile(string $username, bool $withCounts = false): Profile
     {
         return Profile::query()->where('username', mb_strtolower(ltrim($username, '@')))
             ->where('is_kid', false)
-            ->withCount([
+            ->when($withCounts, fn ($query) => $query->withCount([
                 'followers',
                 'following',
                 'tmdbRatings as reviews_count',
@@ -211,17 +195,26 @@ class SocialProfileController extends Controller
                 'items as list_count' => fn ($query) => $query->where('is_favorite', true)->whereIn('type', ['movie', 'tv']),
                 'items as liked_count' => fn ($query) => $query->where('is_liked', true)->whereIn('type', ['movie', 'tv']),
                 'items as people_count' => fn ($query) => $query->where('is_followed', true)->where('type', 'person'),
-            ])
+            ]))
             ->firstOrFail();
     }
 
-    private function summary(Profile $profile): array
+    /** A profile in a list (search, followers): who it is, without counters. */
+    private function identity(Profile $profile): array
     {
         return [
             'id' => $profile->id, 'username' => $profile->username, 'name' => $profile->name,
             'avatar' => $profile->avatar, 'bio' => $profile->bio,
-            'followers_count' => (int) ($profile->followers_count ?? $profile->followers()->count()),
-            'following_count' => (int) ($profile->following_count ?? $profile->following()->count()),
+        ];
+    }
+
+    /** A profile's page: who it is and its counters (loaded by publicProfile). */
+    private function summary(Profile $profile): array
+    {
+        return [
+            ...$this->identity($profile),
+            'followers_count' => (int) ($profile->followers_count ?? 0),
+            'following_count' => (int) ($profile->following_count ?? 0),
             'reviews_count' => (int) ($profile->reviews_count ?? 0),
             'watched_count' => (int) ($profile->watched_count ?? 0),
             'list_count' => (int) ($profile->list_count ?? 0),

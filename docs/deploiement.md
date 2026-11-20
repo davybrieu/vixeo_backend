@@ -157,7 +157,7 @@ VIXEO_HOST_PHONE="…"
 ```
 
 **Scraper supprimé** (20/11/2026, demande du développeur) : le serveur n'a plus de scraper Node,
-de fournisseurs ni d'extracteurs ; les sources viennent des plug-ins (`docs/plugins.md`). Sur
+de fournisseurs ni d'extracteurs ; les sources viennent des plug-ins exécutés par l'appli. Sur
 Forge, arrêter et supprimer le daemon du scraper (s'il existe) et retirer `SCRAPER_URL` et
 `SCRAPER_TIMEOUT` de l'environnement.
 

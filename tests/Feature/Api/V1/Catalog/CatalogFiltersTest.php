@@ -28,36 +28,7 @@ function fakeMovieSearch(array $pages): void
     ]);
 }
 
-it('sends years, minimum rating and the oldest order to TMDb discover', function () {
-    Http::fake(['api.themoviedb.org/3/discover/*' => Http::response(Tmdb::page([Tmdb::movie(1)]))]);
-
-    $this->getJson('/api/v1/catalog/movie/discover?genre=18&year_from=1990&year_to=1999&min_rating=7&sort=oldest')
-        ->assertOk()->assertJsonPath('data.0.id', 1);
-    $this->getJson('/api/v1/catalog/tv/discover?year_from=2010&year_to=2019&sort=recent')->assertOk();
-
-    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'discover/movie')
-        && $request['with_genres'] == 18
-        && $request['primary_release_date.gte'] === '1990-01-01'
-        && $request['primary_release_date.lte'] === '1999-12-31'
-        && $request['vote_average.gte'] == 7
-        && $request['vote_count.gte'] == 100
-        && $request['sort_by'] === 'primary_release_date.asc');
-    // "Plus récents" within past years: the end of the decade, not today.
-    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'discover/tv')
-        && $request['first_air_date.gte'] === '2010-01-01'
-        && $request['first_air_date.lte'] === '2019-12-31'
-        && $request['sort_by'] === 'first_air_date.desc');
-});
-
-it('keeps a high vote floor for the best rated order with a minimum rating', function () {
-    Http::fake(['api.themoviedb.org/3/discover/movie*' => Http::response(Tmdb::page([]))]);
-
-    $this->getJson('/api/v1/catalog/movie/discover?min_rating=8&sort=rating')->assertOk();
-
-    Http::assertSent(fn (Request $request) => $request['vote_count.gte'] == 200 && $request['vote_average.gte'] == 8);
-});
-
-it('filters text search results by genre, years and rating, among the first 3 pages', function () {
+it('filters text search results by genre and years, among the first 3 pages', function () {
     fakeMovieSearch([
         1 => [
             Tmdb::movie(1, ['title' => 'Drame 1995', 'genre_ids' => [18], 'release_date' => '1995-03-01', 'vote_average' => 7.5]),
@@ -65,8 +36,7 @@ it('filters text search results by genre, years and rating, among the first 3 pa
             Tmdb::movie(3, ['title' => 'Drame 2005', 'genre_ids' => [18], 'release_date' => '2005-03-01']),
         ],
         2 => [
-            Tmdb::movie(4, ['title' => 'Drame mal noté', 'genre_ids' => [18], 'release_date' => '1992-01-01', 'vote_average' => 5.1]),
-            Tmdb::movie(5, ['title' => 'Drame peu de votes', 'genre_ids' => [18], 'release_date' => '1992-01-01', 'vote_count' => 3]),
+            Tmdb::movie(4, ['title' => 'Drame 1992', 'genre_ids' => [18], 'release_date' => '1992-01-01']),
             // Same title again on the next page: listed once.
             Tmdb::movie(1, ['title' => 'Drame 1995', 'genre_ids' => [18], 'release_date' => '1995-03-01']),
         ],
@@ -74,14 +44,14 @@ it('filters text search results by genre, years and rating, among the first 3 pa
         4 => [Tmdb::movie(7, ['title' => 'Trop loin', 'genre_ids' => [18], 'release_date' => '1994-01-01'])],
     ]);
 
-    $response = $this->getJson('/api/v1/catalog/search?query=drame&genre=18&year_from=1990&year_to=1999&min_rating=7')
+    $response = $this->getJson('/api/v1/catalog/search?query=drame&genre=18&year_from=1990&year_to=1999')
         ->assertOk()
-        ->assertJsonPath('movies.total_results', 2)
+        ->assertJsonPath('movies.total_results', 3)
         // No people for a filtered search: the filters are about titles.
         ->assertJsonPath('people.data', [])
         ->assertJsonPath('people.total_results', 0);
 
-    expect($response->json('movies.data.*.title'))->toBe(['Drame 1995', 'Drame 1999']);
+    expect($response->json('movies.data.*.title'))->toBe(['Drame 1995', 'Drame 1992', 'Drame 1999']);
 
     // Pages 1 to 3, never the 4th.
     Http::assertSent(fn (Request $request) => str_contains($request->url(), 'search/movie') && $request['page'] == 3);
@@ -105,8 +75,6 @@ it('sorts text search results', function (string $sort, array $titles) {
 })->with([
     'relevance' => ['relevance', ['A', 'B', 'C', 'D']],
     'popularity' => ['popularity', ['B', 'D', 'C', 'A']],
-    // A has the best rating, but only 12 votes: after the others.
-    'rating' => ['rating', ['D', 'C', 'B', 'A']],
     // No date: last.
     'recent' => ['recent', ['B', 'A', 'D', 'C']],
     'oldest' => ['oldest', ['D', 'A', 'B', 'C']],
@@ -131,21 +99,22 @@ it('filters and sorts one type in a single page, but not people', function () {
 });
 
 it('validates the filters, in French', function (string $query, string $field, string $message) {
-    $this->getJson('/api/v1/catalog/movie/discover?'.$query)
+    $this->getJson('/api/v1/catalog/search/movie?query=x&'.$query)
         ->assertUnprocessable()
         ->assertJsonPath("errors.{$field}.0", $message);
 })->with([
     ['year_from=2000&year_to=1990', 'year_to', 'Le champ année de fin doit être supérieur ou égal à 2000.'],
-    ['min_rating=11', 'min_rating', 'Le champ note minimale doit être compris entre 0 et 10.'],
+    ['sort=rating', 'sort', "La valeur sélectionnée pour tri n'est pas valide."],
     ['year_from=1500', 'year_from', 'Le champ année de début doit être compris entre 1870 et 2100.'],
-    ['sort=relevance', 'sort', "La valeur sélectionnée pour tri n'est pas valide."],
 ]);
 
 it('accepts an end year alone', function () {
-    Http::fake(['api.themoviedb.org/3/discover/movie*' => Http::response(Tmdb::page([]))]);
+    fakeMovieSearch([1 => [
+        Tmdb::movie(1, ['title' => 'Ancien', 'release_date' => '1975-01-01']),
+        Tmdb::movie(2, ['title' => 'Récent', 'release_date' => '2020-01-01']),
+    ]]);
 
-    $this->getJson('/api/v1/catalog/movie/discover?year_to=1979')->assertOk();
-
-    Http::assertSent(fn (Request $request) => $request['primary_release_date.lte'] === '1979-12-31'
-        && ! isset($request->data()['primary_release_date.gte']));
+    $this->getJson('/api/v1/catalog/search/movie?query=x&year_to=1979')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['Ancien']);
 });

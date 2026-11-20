@@ -1,27 +1,21 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
-use App\Http\Controllers\Api\V1\AddonController;
 use App\Http\Controllers\Api\V1\AppUpdateController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
-use App\Http\Controllers\Api\V1\DeadStreamController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PlaybackController;
 use App\Http\Controllers\Api\V1\ProfileController;
-use App\Http\Controllers\Api\V1\ProfileLibraryController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\PushDeviceController;
 use App\Http\Controllers\Api\V1\SocialProfileController;
-use App\Http\Controllers\Api\V1\StreamController;
-use App\Http\Controllers\Api\V1\StreamPreferenceController;
-use App\Http\Controllers\Api\V1\TmdbAccountController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
 use App\Http\Middleware\ResolveProfile;
@@ -90,20 +84,14 @@ Route::prefix('v1')->name('v1.')->group(function () {
     // Catalog metadata, title search and playback helpers are public. A profile header,
     // when present, is still validated and used for age filtering.
     Route::prefix('catalog')->name('catalog.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
-        Route::get('config', [CatalogController::class, 'config'])->name('config');
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
         // MDBList's quota is shared by every account: a lower limit (docs/notes.md).
         Route::get('ratings', [CatalogController::class, 'ratings'])->middleware('throttle:ratings')->name('ratings');
-        // Deprecated, always empty: plug-ins no longer add rows to the home (docs/plugins.md).
-        Route::get('addons/sections', [CatalogController::class, 'addonSections'])->name('addons.sections');
-        Route::get('episodes/upcoming', [CatalogTitleController::class, 'upcomingEpisodes'])->name('episodes.upcoming');
         Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
         Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
-        Route::get('people/popular', [CatalogSearchController::class, 'popularPeople'])->name('people.popular');
         Route::get('{type}/lists/{list}', [CatalogController::class, 'list'])->name('list');
-        Route::get('{type}/discover', [CatalogController::class, 'discover'])->name('discover');
         Route::get('movie/{id}', [CatalogTitleController::class, 'movie'])->whereNumber('id')->name('movie');
         Route::get('tv/{id}', [CatalogTitleController::class, 'show'])->whereNumber('id')->name('show');
         Route::get('tv/{id}/season/{season}', [CatalogTitleController::class, 'season'])
@@ -128,28 +116,11 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->whereNumber(['id', 'season', 'episode'])->name('episode.subtitles');
         Route::get('subtitles/{file}', [PlaybackController::class, 'subtitleFile'])
             ->whereNumber('file')->middleware('throttle:subtitles')->name('subtitles.file');
-
-        // Stream sources: the plug-ins' streams (Stremio add-ons, docs/plugins.md). No provider of
-        // the server any more (no scraper, no extractor).
-        Route::get('sources/providers', [StreamController::class, 'providers'])->name('sources.providers');
-        Route::get('movie/{id}/sources', [StreamController::class, 'movieSources'])
-            ->whereNumber('id')->name('movie.sources');
-        Route::get('tv/{id}/season/{season}/episode/{episode}/sources', [StreamController::class, 'episodeSources'])
-            ->whereNumber(['id', 'season', 'episode'])->name('episode.sources');
-        // Former apps: the server no longer resolves player links (always 502).
-        Route::post('resolve', [StreamController::class, 'resolve'])
-            ->middleware('throttle:resolve')->name('resolve');
     });
 
     Route::middleware('auth:sanctum')->group(function () {
-        // Reporting a dead stream changes shared catalogue data: keep it account-only.
-        Route::post('catalog/streams/dead', [DeadStreamController::class, 'store'])
-            ->middleware(['throttle:catalog', ResolveProfile::class])
-            ->name('catalog.streams.dead');
-
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::middleware(ResolveProfile::class)->prefix('social')->name('social.')->group(function () {
-            Route::patch('profile', [SocialProfileController::class, 'update'])->name('profile.update');
             Route::post('profiles/{username}/follow', [SocialProfileController::class, 'follow'])->name('profiles.follow');
             Route::delete('profiles/{username}/follow', [SocialProfileController::class, 'unfollow'])->name('profiles.unfollow');
         });
@@ -185,15 +156,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('test', [PushDeviceController::class, 'test'])->name('test');
         });
 
-        // Plug-ins of the account (docs/plugins.md).
-        Route::prefix('addons')->name('addons.')->middleware('throttle:addons')->group(function () {
-            Route::get('/', [AddonController::class, 'index'])->name('index');
-            Route::post('/', [AddonController::class, 'store'])->name('store');
-            Route::put('order', [AddonController::class, 'order'])->name('order');
-            Route::patch('{addon}', [AddonController::class, 'update'])->whereNumber('addon')->name('update');
-            Route::delete('{addon}', [AddonController::class, 'destroy'])->whereNumber('addon')->name('destroy');
-        });
-
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
         Route::apiResource('profiles', ProfileController::class);
         Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
@@ -204,14 +166,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::prefix('profiles/{profile}')->name('profiles.')->middleware('throttle:sync')->group(function () {
             Route::get('sync', [ProfileSyncController::class, 'pull'])->name('sync.pull');
             Route::post('sync', [ProfileSyncController::class, 'push'])->name('sync.push');
-            Route::get('continue-watching', [ProfileLibraryController::class, 'continueWatching'])->name('continue-watching');
-            Route::get('favorites', [ProfileLibraryController::class, 'favorites'])->name('favorites');
-            Route::get('history', [ProfileLibraryController::class, 'history'])->name('history');
-
-            // Stream preferences of a content: favorites (❤) and the last stream that worked.
-            Route::get('streams', [StreamPreferenceController::class, 'index'])->name('streams.index');
-            Route::post('streams/favorite', [StreamPreferenceController::class, 'favorite'])->name('streams.favorite');
-            Route::post('streams/worked', [StreamPreferenceController::class, 'worked'])->name('streams.worked');
 
             // Recent searches, the same on all the profile's devices (docs/lecture.md).
             Route::get('searches', [ProfileSearchController::class, 'index'])->name('searches.index');
@@ -221,11 +175,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 ->scopeBindings()->whereNumber('search')->name('searches.destroy');
         });
 
-        // The profile's reviews (docs/avis.md), under their former address. A TMDb account can no
-        // longer be linked: `/` and `link` only answer the apps installed before.
+        // The profile's reviews (docs/avis.md), under their historical address.
         Route::prefix('profiles/{profile}/tmdb')->name('profiles.tmdb.')->middleware('throttle:reviews')->group(function () {
-            Route::get('/', [TmdbAccountController::class, 'show'])->name('show');
-            Route::post('link', [TmdbAccountController::class, 'start'])->name('link');
             Route::get('ratings', [TmdbRatingController::class, 'index'])->name('ratings.index');
             Route::get('ratings/{type}/{id}', [TmdbRatingController::class, 'show'])
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.show');
@@ -234,6 +185,5 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::delete('ratings/{type}/{id}', [TmdbRatingController::class, 'unrate'])
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.unrate');
         });
-
     });
 });

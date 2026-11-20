@@ -3,12 +3,10 @@
 namespace App\Services;
 
 use App\Enums\RatingSource;
-use App\Models\Addon;
 use App\Models\EpisodeNotification;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\ProfileSearch;
-use App\Models\ProfileStream;
 use App\Models\PushDevice;
 use App\Models\TmdbRating;
 use App\Models\User;
@@ -32,7 +30,7 @@ class AccountExport
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
             ],
-            'profiles' => $user->profiles()->with(['items', 'streams', 'searches', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
+            'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
@@ -87,18 +85,6 @@ class AccountExport
                     'is_followed' => $i->is_followed,
                     'followed_at' => $i->followed_at?->toIso8601String(),
                 ])->values()->all(),
-                // Stream preferences: favorites (❤) and the last stream that worked per content.
-                'stream_preferences' => $p->streams->sortByDesc('last_worked_at')->map(fn (ProfileStream $s) => [
-                    'source' => $s->source,
-                    'item_id' => $s->item_id,
-                    'stream_id' => $s->stream_id,
-                    'stream_url' => $s->stream_url,
-                    'quality' => $s->quality,
-                    'language' => $s->language,
-                    'is_favorite' => $s->is_favorite,
-                    'favorited_at' => $s->favorited_at?->toIso8601String(),
-                    'last_worked_at' => $s->last_worked_at?->toIso8601String(),
-                ])->values()->all(),
             ])->values()->all(),
             // Apps registered for push notifications (their Firebase token is left out).
             'notification_devices' => $user->pushDevices()->with('profile')->get()->map(fn (PushDevice $d) => [
@@ -107,15 +93,6 @@ class AccountExport
                 'new_episodes' => $d->new_episodes,
                 'registered_at' => $d->created_at?->toIso8601String(),
                 'last_seen_at' => $d->last_seen_at?->toIso8601String(),
-            ])->values()->all(),
-            // Plug-ins the account installed (docs/plugins.md), with their address: it is the
-            // account's own data, even when it holds a personal key.
-            'plugins' => $user->addons()->get()->map(fn (Addon $a) => [
-                'name' => $a->manifest['name'] ?? null,
-                'version' => $a->manifest['version'] ?? null,
-                'address' => $a->transport_url,
-                'enabled' => $a->enabled,
-                'installed_at' => $a->created_at?->toIso8601String(),
             ])->values()->all(),
             'devices' => $user->tokens()->get()->map(fn (PersonalAccessToken $t) => [
                 'name' => $t->name,

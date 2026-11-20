@@ -120,12 +120,13 @@ Fonctionnalités visées
   les sources de lecture, la TV en direct, les sous-titres et les moments à passer que l'API lui
   renvoie (voir §5.1).
 - **Aucune configuration nécessaire** pour l'utilisateur : il crée un compte et regarde.
-- **Plug-ins** (décisions du développeur du 17/11/2026, voir `docs/plugins.md`) : comme dans
-  Stremio et Nuvio, un compte peut installer, en option, des plug-ins au format des add-ons
-  Stremio avec l'adresse de leur manifeste, **uniquement pour les sources** (flux de films et de
-  séries du lecteur). **Le catalogue ne passe pas par les plug-ins** : il reste celui de TMDb, avec
-  la clé de Vixeo, et ne change pas (ni rangées, ni listes, ni plug-in « catalogue Vixeo »).
-  C'est l'API qui appelle les plug-ins, jamais l'appli.
+- **Plug-ins** (décisions du développeur des 17, 19 et 20/11/2026) : comme dans Nuvio, la
+  personne ajoute, en option, des dépôts de scrapers JavaScript, **uniquement pour les sources**
+  (flux de films et de séries du lecteur), **exécutés par l'appli elle-même** dans un bac à sable
+  (`vixeo_frontend/docs/scrapers.md`) ; le serveur n'en sait rien (plus de plug-ins Stremio côté
+  serveur depuis le 21/11/2026). **Le catalogue ne passe pas par les plug-ins** : il reste celui de
+  TMDb, avec la clé de Vixeo, et ne change pas (ni rangées, ni listes, ni plug-in « catalogue
+  Vixeo »).
 - **Pas de serveurs multimédias de l'utilisateur** (Jellyfin, Plex, Emby ou autre) : ni dans
   l'API, ni dans l'appli, ni sur le site de présentation. Ne pas les proposer ni les réintroduire.
 

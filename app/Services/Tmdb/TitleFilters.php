@@ -2,56 +2,21 @@
 
 namespace App\Services\Tmdb;
 
-use App\Enums\MediaType;
-
 /**
- * Filters of the search page ("Explorer" and text search): genre, years, minimum rating.
- *
- * Explorer sends them to TMDb (discover); a text search applies them itself to the results,
- * since TMDb's search has no such filters.
+ * Filters of the search page: genre and years. TMDb's text search has no such filters: the API
+ * applies them itself to the results.
  */
 final readonly class TitleFilters
 {
-    /** Votes needed for a rating to count (minimum rating, "best rated" order). */
-    public const MIN_VOTES = 50;
-
     public function __construct(
         public ?int $genre = null,
         public ?int $yearFrom = null,
         public ?int $yearTo = null,
-        public ?float $minRating = null,
     ) {}
 
     public function isEmpty(): bool
     {
-        return $this->genre === null && $this->yearFrom === null && $this->yearTo === null && $this->minRating === null;
-    }
-
-    /**
-     * TMDb discover parameters.
-     *
-     * @return array<string, int|float|string>
-     */
-    public function discoverQuery(MediaType $type): array
-    {
-        $date = $type === MediaType::Movie ? 'primary_release_date' : 'first_air_date';
-        $query = [];
-
-        if ($this->genre !== null) {
-            $query['with_genres'] = $this->genre;
-        }
-        if ($this->yearFrom !== null) {
-            $query["{$date}.gte"] = sprintf('%04d-01-01', $this->yearFrom);
-        }
-        if ($this->yearTo !== null) {
-            $query["{$date}.lte"] = sprintf('%04d-12-31', $this->yearTo);
-        }
-        if ($this->minRating !== null) {
-            $query['vote_average.gte'] = $this->minRating;
-            $query['vote_count.gte'] = self::MIN_VOTES;
-        }
-
-        return $query;
+        return $this->genre === null && $this->yearFrom === null && $this->yearTo === null;
     }
 
     /**
@@ -70,12 +35,6 @@ final readonly class TitleFilters
             if ($year === null
                 || ($this->yearFrom !== null && $year < $this->yearFrom)
                 || ($this->yearTo !== null && $year > $this->yearTo)) {
-                return false;
-            }
-        }
-
-        if ($this->minRating !== null) {
-            if ((int) ($item['vote_count'] ?? 0) < self::MIN_VOTES || (float) ($item['vote_average'] ?? 0) < $this->minRating) {
                 return false;
             }
         }

@@ -113,16 +113,6 @@ Actions de l'appui long :
 | Retirer de « Continuer à regarder » | `progress: { position_ms: <inchangée>, continue_watching: false, at }` |
 | Reprendre la lecture | `progress: { position_ms, duration_ms, continue_watching: true, at }` |
 
-## Listes prêtes à l'emploi
-
-Pour un client sans copie locale (ex. version web) :
-
-| Route | Contenu |
-| - | - |
-| `GET /api/v1/profiles/{id}/continue-watching?type=` | Continuer à regarder (50 max) |
-| `GET /api/v1/profiles/{id}/favorites?type=&watched=&sort=recent\|title\|year&page=` | « Ma liste » paginée |
-| `GET /api/v1/profiles/{id}/history?type=&page=` | Historique (contenus vus, du plus récent) |
-
 ## Limites
 
 - 500 changements par envoi, 1 000 items par réception, 120 appels par minute et par compte.

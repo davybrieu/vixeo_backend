@@ -9,6 +9,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Password::defaults(fn () => Password::min(8));
+
+        // Outside production, a relation read in a loop without `with()` (one query per row, N+1)
+        // throws instead of slowing the API down quietly: the tests catch it.
+        Model::preventLazyLoading(! $this->app->isProduction());
 
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
@@ -57,16 +62,11 @@ class AppServiceProvider extends ServiceProvider
         // Ratings of other sites (MDBList, Vixeo's daily quota): a home or a page of cards asks
         // its ratings in a few requests.
         RateLimiter::for('ratings', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
-        // Plug-ins of an account: installing one calls its address (docs/plugins.md).
-        RateLimiter::for('addons', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
 
         // Each new subtitle file uses Vixeo's OpenSubtitles daily quota (cached ones don't).
         RateLimiter::for('subtitles', fn (Request $request) => Limit::perHour(40)->by($request->user()?->id ?: $request->ip()));
 
-        // The player resolves one link per source switch: enough for zapping, not for scraping.
-        RateLimiter::for('resolve', fn (Request $request) => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));
-
-        // The profile's reviews: title pages and episodes read them, « Mes avis » lists them.
+        // The profile's reviews: title pages read them, « Mes avis » lists them.
         RateLimiter::for('reviews', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 
         // Apps register for push notifications at launch and when the profile changes.

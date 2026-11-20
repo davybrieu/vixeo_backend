@@ -71,10 +71,9 @@ it('returns the authenticated user', function () {
         ->assertJsonPath('data.id', $user->id);
 });
 
-it('protects personal endpoints while allowing public catalog configuration', function () {
+it('protects personal endpoints', function () {
     $this->getJson('/api/v1/me')->assertUnauthorized();
     $this->getJson('/api/v1/profiles')->assertUnauthorized();
-    $this->getJson('/api/v1/catalog/config')->assertOk();
     $this->withToken('invalid-token')
         ->withHeader('X-Profile-Id', '1')
         ->getJson('/api/v1/catalog/home')

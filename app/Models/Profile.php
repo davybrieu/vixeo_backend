@@ -103,12 +103,6 @@ class Profile extends Model
         return $this->hasMany(ProfileSearch::class);
     }
 
-    /** Stream preferences (favorites, last one that worked). @return HasMany<ProfileStream, $this> */
-    public function streams(): HasMany
-    {
-        return $this->hasMany(ProfileStream::class);
-    }
-
     /** Apps where this profile is in use, for push notifications. @return HasMany<PushDevice, $this> */
     public function pushDevices(): HasMany
     {

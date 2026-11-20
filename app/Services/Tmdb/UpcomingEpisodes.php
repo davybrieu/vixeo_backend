@@ -2,7 +2,6 @@
 
 namespace App\Services\Tmdb;
 
-use App\Models\Profile;
 use Carbon\CarbonImmutable;
 use DateTimeZone;
 use ValueError;
@@ -18,12 +17,6 @@ use ValueError;
  */
 class UpcomingEpisodes
 {
-    /** How far ahead, in days. */
-    public const DAYS = 60;
-
-    /** Episodes given, at most. */
-    public const LIMIT = 200;
-
     /** TMDb networks that publish worldwide at once: Netflix, Prime Video, Disney+, Apple TV+, Hulu, HBO Max, Paramount+, Peacock. */
     private const STREAMING = [213, 1024, 2739, 2552, 453, 3186, 4330, 3353];
 
@@ -48,57 +41,7 @@ class UpcomingEpisodes
         'KZ' => 'Asia/Almaty',
     ];
 
-    public function __construct(private TmdbClient $tmdb, private TitleSummaries $summaries, private AgeGate $ageGate) {}
-
-    /**
-     * Episodes of these TV shows available in the next DAYS days, the soonest first. Shows the
-     * profile may not see, or that TMDb doesn't know, are left out.
-     *
-     * @param  list<int>  $showIds
-     * @return list<array{show: array<string, mixed>, episode: array<string, mixed>, available_at: CarbonImmutable}>
-     */
-    public function for(?Profile $profile, array $showIds): array
-    {
-        $now = CarbonImmutable::now('UTC');
-        $until = $now->addDays(self::DAYS);
-
-        // The season of each show's next episode, when it comes out in the period.
-        $shows = [];
-        $seasons = [];
-        foreach ($this->summaries->shows($showIds) as $id => $show) {
-            $next = $show['next_episode_to_air'] ?? null;
-            if ($show === null || ! is_array($next) || ! $this->ageGate->allows($profile, $show)) {
-                continue;
-            }
-            $at = self::availableAt($show, TmdbFormat::string($next, 'air_date'));
-            if ($at !== null && $at->lte($until)) {
-                $shows[$id] = $show;
-                $seasons[$id] = "tv/{$id}/season/".(int) ($next['season_number'] ?? 0);
-            }
-        }
-        $responses = $seasons === [] ? [] : $this->tmdb->getMany(array_values($seasons));
-
-        $episodes = [];
-        foreach ($seasons as $id => $path) {
-            $show = $shows[$id];
-            // Season unavailable: at least the next episode.
-            $list = TmdbFormat::array($responses[$path] ?? [], 'episodes') ?: [$show['next_episode_to_air']];
-            foreach ($list as $episode) {
-                if (! is_array($episode)) {
-                    continue;
-                }
-                $at = self::availableAt($show, TmdbFormat::string($episode, 'air_date'));
-                if ($at !== null && $at->gte($now) && $at->lte($until)) {
-                    $episodes[] = ['show' => $show, 'episode' => $episode, 'available_at' => $at];
-                }
-            }
-        }
-
-        usort($episodes, fn (array $a, array $b) => [$a['available_at']->getTimestamp(), (string) ($a['show']['name'] ?? ''), (int) ($a['episode']['season_number'] ?? 0), (int) ($a['episode']['episode_number'] ?? 0)]
-            <=> [$b['available_at']->getTimestamp(), (string) ($b['show']['name'] ?? ''), (int) ($b['episode']['season_number'] ?? 0), (int) ($b['episode']['episode_number'] ?? 0)]);
-
-        return array_slice($episodes, 0, self::LIMIT);
-    }
+    public function __construct(private TmdbClient $tmdb, private TitleSummaries $summaries) {}
 
     /**
      * Episodes of these TV shows available between [$from] and [$to], by show (the push of new
