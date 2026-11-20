@@ -54,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('tv-logos', fn (Request $request) => Limit::perMinute(600)->by($request->ip()));
 
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
+        // Ratings of other sites (MDBList, Vixeo's daily quota): a home or a page of cards asks
+        // its ratings in a few requests.
+        RateLimiter::for('ratings', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
         // Plug-ins of an account: installing one calls its address (docs/plugins.md).
         RateLimiter::for('addons', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
 

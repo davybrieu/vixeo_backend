@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Enums\PosterFormat;
+use App\Enums\RatingSource;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\ParentalControl;
@@ -42,6 +43,8 @@ class ProfileRequest extends FormRequest
             'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
             /** How titles are drawn in rows and grids. Default `portrait`. */
             'poster_format' => ['sometimes', Rule::enum(PosterFormat::class)],
+            /** Site whose rating titles show (MDBList, docs/notes.md). Default `imdb`. */
+            'rating_source' => ['sometimes', Rule::enum(RatingSource::class)],
             /** Kid profile. Without `max_age_rating`, its age limit is 10. */
             'is_kid' => ['sometimes', 'boolean'],
             /** Maximum age rating allowed for this profile (e.g. 12, 16). Null = no limit. */
@@ -99,6 +102,7 @@ class ProfileRequest extends FormRequest
         if (isset($data['username'])) {
             $data['username'] = mb_strtolower($data['username']);
         }
+
         return $data;
     }
 

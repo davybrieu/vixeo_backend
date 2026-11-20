@@ -158,6 +158,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     applis) reste inchangé.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
+- **Notes des autres sites** (doc : `docs/notes.md`, demande du développeur) : IMDb, Rotten
+  Tomatoes, Metacritic, Letterboxd, Trakt, MyAnimeList (et TMDb) depuis **MDBList, clé de Vixeo**
+  (`App\Services\Ratings\MdbListRatings`) ; `GET /catalog/ratings?ids=movie:550,tv:1399` (100 au
+  plus, `throttle:ratings`), chaque note sur l'échelle de son site, `available: false` quand
+  MDBList ne peut pas être interrogé (titres absents, jamais d'erreur). Quota MDBList par compte
+  (gratuit : 1 000 requêtes / jour, toutes clés) : cache partagé 3 jours (inconnu : 1 jour),
+  lots de 200 par type, budget `MDBLIST_DAILY_REQUESTS`, pause 1 h après un 429 / clé refusée,
+  1 min après une panne ; la clé n'est jamais journalisée. Réglage du profil `rating_source`
+  (`RatingSource`, `imdb` par défaut, synchronisé). Pas de note par épisode chez MDBList.
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`
   (`App\Support\Languages`) et `skip_intro` / `skip_recap` / `skip_credits` / `skip_preview` ;
   recherches récentes synchronisées (`profile_searches`, 20 par profil, une recherche qui en
@@ -313,6 +322,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
+- Fait aussi : notes des autres sites (MDBList, clé de Vixeo, cache partagé, réglage du profil
+  `rating_source`).
 - Fait aussi : plug-ins de sources au format Stremio (plug-ins du compte et de tous les comptes :
   flux du panneau des sources) ; le catalogue reste celui de TMDb.
 - Prochaine étape possible : configuration distante (chaînes FAST).

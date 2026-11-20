@@ -1170,6 +1170,61 @@
                 }
             }
         },
+        "/v1/catalog/ratings": {
+            "get": {
+                "operationId": "v1.catalog.ratings",
+                "description": "IMDb, TMDb, Trakt, Letterboxd, Rotten Tomatoes (critics and audience), Metacritic and\nMyAnimeList ratings of movies and TV shows by id, from MDBList (docs/notes.md), in one\nrequest for a whole row or page of cards. Kept a few days for every account. A title\nMDBList does not know comes with every rating at null. When MDBList cannot be asked now\n(no key, daily quota spent, service down), titles not kept yet are left out and\n`available` is false: show TMDb's rating and ask again later. No title data is returned,\nso no age filter is applied.",
+                "summary": "Ratings of other sites",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "description": "Titles, comma-separated: `movie:550,tv:1399` (100 at most).",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^(movie|tv):\\d{1,9}(,(movie|tv):\\d{1,9}){0,99}$",
+                            "maxLength": 2000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TitleRatingsResource"
+                                            }
+                                        },
+                                        "available": {
+                                            "type": "boolean",
+                                            "description": "False when some titles could not be asked to MDBList now (they are missing from `data`)."
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "available"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/addons/sections": {
             "get": {
                 "operationId": "v1.catalog.addons.sections",
@@ -8261,6 +8316,10 @@
                         "description": "How titles are drawn in rows and grids. Default `portrait`.\n\n| |\n|---|\n| `portrait` <br/> Vertical poster (2:3). Default. |\n| `landscape` <br/> Horizontal image (16:9). |",
                         "$ref": "#/components/schemas/PosterFormat"
                     },
+                    "rating_source": {
+                        "description": "Site whose rating titles show (MDBList, docs/notes.md). Default `imdb`.\n\n| |\n|---|\n| `imdb` <br/> IMDb, out of 10. Default. |\n| `tmdb` <br/> TMDb, out of 10 (also given with every title, without MDBList). |\n| `tomatoes` <br/> Rotten Tomatoes critics (Tomatometer), percentage. |\n| `audience` <br/> Rotten Tomatoes audience (Popcornmeter), percentage. |\n| `metacritic` <br/> Metacritic, out of 100. |\n| `letterboxd` <br/> Letterboxd, out of 5 (movies). |\n| `trakt` <br/> Trakt, out of 100. |\n| `mal` <br/> MyAnimeList, out of 10 (anime). |",
+                        "$ref": "#/components/schemas/RatingSource"
+                    },
                     "is_kid": {
                         "type": "boolean",
                         "description": "Kid profile. Without `max_age_rating`, its age limit is 10."
@@ -8423,6 +8482,10 @@
                     "poster_format": {
                         "$ref": "#/components/schemas/PosterFormat"
                     },
+                    "rating_source": {
+                        "description": "Site whose rating titles show (GET /catalog/ratings); `tmdb` = `vote_average`.\n| |\n|---|\n| `imdb` <br/> IMDb, out of 10. Default. |\n| `tmdb` <br/> TMDb, out of 10 (also given with every title, without MDBList). |\n| `tomatoes` <br/> Rotten Tomatoes critics (Tomatometer), percentage. |\n| `audience` <br/> Rotten Tomatoes audience (Popcornmeter), percentage. |\n| `metacritic` <br/> Metacritic, out of 100. |\n| `letterboxd` <br/> Letterboxd, out of 5 (movies). |\n| `trakt` <br/> Trakt, out of 100. |\n| `mal` <br/> MyAnimeList, out of 10 (anime). |",
+                        "$ref": "#/components/schemas/RatingSource"
+                    },
                     "is_kid": {
                         "type": "boolean"
                     },
@@ -8508,6 +8571,7 @@
                     "bio",
                     "avatar",
                     "poster_format",
+                    "rating_source",
                     "is_kid",
                     "max_age_rating",
                     "effective_max_age_rating",
@@ -8753,6 +8817,21 @@
                     "episode"
                 ],
                 "title": "RatedType"
+            },
+            "RatingSource": {
+                "type": "string",
+                "description": "Site whose rating a profile wants on titles (docs/notes.md): MDBList's sources.\n| |\n|---|\n| `imdb` <br/> IMDb, out of 10. Default. |\n| `tmdb` <br/> TMDb, out of 10 (also given with every title, without MDBList). |\n| `tomatoes` <br/> Rotten Tomatoes critics (Tomatometer), percentage. |\n| `audience` <br/> Rotten Tomatoes audience (Popcornmeter), percentage. |\n| `metacritic` <br/> Metacritic, out of 100. |\n| `letterboxd` <br/> Letterboxd, out of 5 (movies). |\n| `trakt` <br/> Trakt, out of 100. |\n| `mal` <br/> MyAnimeList, out of 10 (anime). |",
+                "enum": [
+                    "imdb",
+                    "tmdb",
+                    "tomatoes",
+                    "audience",
+                    "metacritic",
+                    "letterboxd",
+                    "trakt",
+                    "mal"
+                ],
+                "title": "RatingSource"
             },
             "RegisterPushDeviceRequest": {
                 "type": "object",
@@ -9764,6 +9843,87 @@
                     "changes"
                 ],
                 "title": "SyncPushRequest"
+            },
+            "TitleRatingsResource": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/MediaType"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "description": "TMDb id."
+                    },
+                    "imdb": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "IMDb, out of 10."
+                    },
+                    "tmdb": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "TMDb, out of 10."
+                    },
+                    "trakt": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Trakt, out of 100."
+                    },
+                    "letterboxd": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Letterboxd, out of 5 (movies)."
+                    },
+                    "tomatoes": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Rotten Tomatoes critics (Tomatometer), percentage."
+                    },
+                    "audience": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Rotten Tomatoes audience (Popcornmeter), percentage."
+                    },
+                    "metacritic": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Metacritic, out of 100."
+                    },
+                    "mal": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "MyAnimeList, out of 10 (anime)."
+                    }
+                },
+                "required": [
+                    "type",
+                    "id",
+                    "imdb",
+                    "tmdb",
+                    "trakt",
+                    "letterboxd",
+                    "tomatoes",
+                    "audience",
+                    "metacritic",
+                    "mal"
+                ],
+                "title": "TitleRatingsResource"
             },
             "TmdbAccountResource": {
                 "type": "object",

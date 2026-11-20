@@ -92,6 +92,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
+        // MDBList's quota is shared by every account: a lower limit (docs/notes.md).
+        Route::get('ratings', [CatalogController::class, 'ratings'])->middleware('throttle:ratings')->name('ratings');
         // Deprecated, always empty: plug-ins no longer add rows to the home (docs/plugins.md).
         Route::get('addons/sections', [CatalogController::class, 'addonSections'])->name('addons.sections');
         Route::get('episodes/upcoming', [CatalogTitleController::class, 'upcomingEpisodes'])->name('episodes.upcoming');

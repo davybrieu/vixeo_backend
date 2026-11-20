@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PosterFormat;
+use App\Enums\RatingSource;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Hash;
  * positions will be attached to a profile, not to the account.
  */
 #[Fillable([
-    'name', 'username', 'bio', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
+    'name', 'username', 'bio', 'avatar', 'poster_format', 'rating_source', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
 ])]
 #[Hidden(['pin', 'sync_revision'])]
@@ -43,6 +44,7 @@ class Profile extends Model
     protected $attributes = [
         'allow_unrated' => false,
         'poster_format' => 'portrait',
+        'rating_source' => 'imdb',
         'no_spoiler' => false,
         'skip_intro' => false,
         'skip_recap' => false,
@@ -57,6 +59,7 @@ class Profile extends Model
             'max_age_rating' => 'integer',
             'allow_unrated' => 'boolean',
             'poster_format' => PosterFormat::class,
+            'rating_source' => RatingSource::class,
             'locked_sources' => 'array',
             'pin' => 'hashed',
             'position' => 'integer',

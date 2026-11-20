@@ -13,6 +13,8 @@ use App\Http\Requests\Api\V1\DiscoverRequest;
 use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
+use App\Http\Resources\V1\Catalog\TitleRatingsResource;
+use App\Services\Ratings\MdbListRatings;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\CatalogRows;
 use App\Services\Tmdb\TitleSummaries;
@@ -121,6 +123,37 @@ class CatalogController extends Controller
         $titles = $this->ageGate->filter(ResolveProfile::profile($request), $this->summaries->titles($request->titles()));
 
         return response()->json(['data' => MediaItemResource::collection($titles)]);
+    }
+
+    /**
+     * Ratings of other sites.
+     *
+     * IMDb, TMDb, Trakt, Letterboxd, Rotten Tomatoes (critics and audience), Metacritic and
+     * MyAnimeList ratings of movies and TV shows by id, from MDBList (docs/notes.md), in one
+     * request for a whole row or page of cards. Kept a few days for every account. A title
+     * MDBList does not know comes with every rating at null. When MDBList cannot be asked now
+     * (no key, daily quota spent, service down), titles not kept yet are left out and
+     * `available` is false: show TMDb's rating and ask again later. No title data is returned,
+     * so no age filter is applied.
+     */
+    public function ratings(CatalogTitlesRequest $request, MdbListRatings $mdbList): JsonResponse
+    {
+        $titles = $request->titles();
+        $found = $mdbList->for($titles);
+
+        $data = [];
+        foreach ($titles as [$type, $id]) {
+            $ratings = $found['ratings']["{$type->value}:{$id}"] ?? null;
+            if ($ratings !== null) {
+                $data[] = ['type' => $type, 'id' => $id, 'ratings' => $ratings];
+            }
+        }
+
+        return response()->json([
+            'data' => TitleRatingsResource::collection($data),
+            /** False when some titles could not be asked to MDBList now (they are missing from `data`). */
+            'available' => (bool) $found['available'],
+        ]);
     }
 
     /**

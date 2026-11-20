@@ -196,6 +196,7 @@ return [
         'pin' => 'code PIN',
         'position' => 'position',
         'poster_format' => 'format des affiches',
+        'rating_source' => 'source des notes',
         'user_code' => 'code',
         'code' => 'code',
         'platform' => 'plateforme',
