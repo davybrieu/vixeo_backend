@@ -33,20 +33,12 @@ class DeviceLoginController extends Controller
     {
         ['login' => $login, 'device_code' => $deviceCode] = $this->logins->start($request->validated('device_name'));
         $userCode = DeviceLogins::format($login->user_code);
-        // No QR code any more (developer's request): the apps only show the code. The two links
-        // stay for the former apps (no breaking change in v1), which must update anyway
-        // (services.app_updates.minimum_builds).
-        $url = rtrim((string) config('vixeo.urls.site'), '/');
 
         return response()->json([
             /** Secret, for POST /auth/device/token only. */
             'device_code' => $deviceCode,
-            /** Code to show on the TV, e.g. "K7F-29Q". */
+            /** Code to show on the TV, e.g. "K7F-29Q", typed in the phone's app (no QR code, no link). */
             'user_code' => $userCode,
-            /** The site (former apps showed it): the code is typed in the phone's app. */
-            'verification_url' => $url,
-            /** Kept for the former apps: the site. */
-            'verification_url_complete' => $url.'/?code='.$login->user_code,
             /** Seconds before the code expires. */
             'expires_in' => DeviceLogins::TTL_SECONDS,
             /** Seconds between two polls. */

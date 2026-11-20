@@ -199,7 +199,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; le code se tape dans
   l'appli du téléphone (« Paramètres » → « Connecter une TV »), **plus de QR code** (demande du
-  développeur) ; `verification_url(_complete)` gardés pour les anciennes applis, vers le site.
+  développeur) ni lien (`verification_url(_complete)` supprimés, 20/11/2026).
 - **Compte** (doc : `docs/compte.md`) : « mot de passe oublié » par code à 6 chiffres envoyé par
   e-mail (`App\Services\PasswordResets` : haché, 15 min, usage unique, 5 essais ; la réponse ne
   révèle pas si l'adresse a un compte ; la réinitialisation déconnecte tous les appareils),
@@ -213,10 +213,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   GitHub** `android-<build>` (APK) et `windows-<build>` (installateur `.exe`) publiées par la CI
   de `vixeo_frontend` (`App\Services\GitHubReleases::for(AppPlatform)`, cache 5 min par
   plateforme : fichier, SHA-256, notes ; `App\Services\LatestReleases` pour le site). Un titre
-  contenant `[obligatoire]` force les versions plus anciennes de sa plateforme à se mettre à jour,
-  comme un build sous le minimum du `.env` (`ANDROID_MINIMUM_BUILD`, 403 par défaut : les builds
-  d'avant affichaient un QR code pour connecter une TV ; **aucun QR code nulle part**, demande du
-  développeur, 20/11/2026 ; `WINDOWS_MINIMUM_BUILD`). Pas de table ni de commande (`vixeo:release` et `app_releases`
+  contenant `[obligatoire]` force les versions plus anciennes de sa plateforme à se mettre à jour
+  (pas de build minimum dans le `.env` : demande du développeur, 20/11/2026). Pas de table ni de commande (`vixeo:release` et `app_releases`
   supprimées, demande du développeur). `GET /app/update` (sans connexion) compare les **builds**
   et répond `up_to_date` / `update_available` / `update_required` ; GitHub en panne → `up_to_date`.
   Pas d'appli iOS pour l'instant : iOS est toujours `up_to_date`. L'installation reste faite par

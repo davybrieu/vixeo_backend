@@ -11,16 +11,13 @@ function startTv(string $name = 'Vixeo TV')
 }
 
 it('signs a TV in once a signed-in phone approves its code', function () {
-    config(['vixeo.urls.site' => 'https://www.vixeo.test']);
-
     $start = startTv()->assertOk();
     $userCode = $start->json('user_code');
     $deviceCode = $start->json('device_code');
 
     expect($userCode)->toMatch('/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/')
-        // No QR code any more: the links stay for the former apps and lead to the site.
-        ->and($start->json('verification_url'))->toBe('https://www.vixeo.test')
-        ->and($start->json('verification_url_complete'))->toBe('https://www.vixeo.test/?code='.str_replace('-', '', $userCode))
+        // No QR code, no link (developer's request): only the code, typed in the phone's app.
+        ->and($start->json())->not->toHaveKeys(['verification_url', 'verification_url_complete'])
         ->and($start->json('expires_in'))->toBe(600)
         ->and($start->json('interval'))->toBe(5);
 

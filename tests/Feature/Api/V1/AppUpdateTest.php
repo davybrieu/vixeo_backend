@@ -94,31 +94,6 @@ it('forces installs older than a release marked [obligatoire] in its GitHub titl
     checkUpdate('android', 16)->assertJsonPath('status', 'up_to_date');
 });
 
-it('forces Android builds below the configured minimum (the former QR code builds)', function () {
-    config(['services.app_updates.minimum_builds.android' => 403]);
-    fakeGithub([githubRelease(404), githubRelease(403)]);
-
-    // A former app (QR code on the TV sign-in) must update before anything else.
-    checkUpdate('android', 367)
-        ->assertOk()
-        ->assertJsonPath('status', 'update_required')
-        ->assertJsonPath('minimum_build', 403)
-        ->assertJsonPath('latest.build', 404);
-    checkUpdate('android', 403)->assertJsonPath('status', 'update_available');
-    checkUpdate('android', 404)->assertJsonPath('status', 'up_to_date');
-    // Windows has no minimum of its own.
-    fakeGithub([]);
-    checkUpdate('windows', 1)->assertJsonPath('status', 'up_to_date')->assertJsonPath('minimum_build', null);
-});
-
-it('never forces an update that is not published yet', function () {
-    config(['services.app_updates.minimum_builds.android' => 403]);
-    fakeGithub([githubRelease(367)]);
-
-    checkUpdate('android', 367)->assertOk()->assertJsonPath('status', 'up_to_date');
-    checkUpdate('android', 300)->assertJsonPath('status', 'update_required');
-});
-
 it('never blocks the apps when GitHub fails', function () {
     config(['services.app_updates.github_repository' => 'davybrieu/vixeo_frontend']);
     Http::preventStrayRequests();

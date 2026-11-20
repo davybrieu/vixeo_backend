@@ -483,15 +483,7 @@
                                         },
                                         "user_code": {
                                             "type": "string",
-                                            "description": "Code to show on the TV, e.g. \"K7F-29Q\"."
-                                        },
-                                        "verification_url": {
-                                            "type": "string",
-                                            "description": "The site (former apps showed it): the code is typed in the phone's app."
-                                        },
-                                        "verification_url_complete": {
-                                            "type": "string",
-                                            "description": "Kept for the former apps: the site."
+                                            "description": "Code to show on the TV, e.g. \"K7F-29Q\", typed in the phone's app (no QR code, no link)."
                                         },
                                         "expires_in": {
                                             "type": "integer",
@@ -507,8 +499,6 @@
                                     "required": [
                                         "device_code",
                                         "user_code",
-                                        "verification_url",
-                                        "verification_url_complete",
                                         "expires_in",
                                         "interval"
                                     ]

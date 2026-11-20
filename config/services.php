@@ -103,13 +103,6 @@ return [
         'android_url' => env('ANDROID_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
         'ios_url' => env('IOS_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
         'windows_url' => env('WINDOWS_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
-        // Builds below these must update, whatever the GitHub releases say. Android builds before
-        // 403 sign a TV in with a QR code, removed on 20/11/2026 (developer's request: no QR code
-        // anywhere); 0 = no minimum.
-        'minimum_builds' => [
-            'android' => (int) env('ANDROID_MINIMUM_BUILD', 403),
-            'windows' => (int) env('WINDOWS_MINIMUM_BUILD', 0),
-        ],
     ],
 
     /*

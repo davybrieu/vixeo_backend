@@ -19,7 +19,6 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="ANDROID_MINIMUM_BUILD" value="0"/>
         <env name="APP_LOCALE" value="fr"/>
         <!-- Two hosts, as in production (config/vixeo.php): relative test URLs hit the API host (tests/TestCase.php). -->
         <env name="APP_URL" value="https://www.vixeo.test"/>

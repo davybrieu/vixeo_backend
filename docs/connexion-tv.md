@@ -6,9 +6,7 @@ affiche donc un **code court** ; la personne, déjà connectée dans l'appli Vix
 alors son propre jeton.
 
 **Aucun QR code** (demande du développeur, 20/11/2026), ni page web de validation (l'appli web a
-été supprimée) : le code se tape dans l'appli. Les applis Android d'avant le build 403, qui
-affichaient un QR code, doivent se mettre à jour avant tout (`ANDROID_MINIMUM_BUILD`, voir
-`mise-a-jour.md`) : elles n'affichent plus que l'écran « Mise à jour nécessaire ».
+été supprimée) : le code se tape dans l'appli.
 
 ## Déroulé
 
@@ -18,16 +16,14 @@ affichaient un QR code, doivent se mettre à jour avant tout (`ANDROID_MINIMUM_B
    {
      "device_code": "…48 caractères secrets…",
      "user_code": "K7F-29Q",
-     "verification_url": "https://www.vixeo.app",
-     "verification_url_complete": "https://www.vixeo.app/?code=K7F29Q",
      "expires_in": 600,
      "interval": 5
    }
    ```
 
-   La TV affiche `user_code` et garde `device_code` pour elle. `verification_url` et
-   `verification_url_complete` restent dans la réponse pour les anciennes applis (pas de
-   changement cassant en v1) : elles mènent au site, l'appli actuelle ne les affiche pas.
+   La TV affiche `user_code` et garde `device_code` pour elle. Aucun lien ni QR code
+   (`verification_url` et `verification_url_complete` supprimés, demande du développeur,
+   20/11/2026).
 2. **TV** : toutes les `interval` secondes, `POST /api/v1/auth/device/token` avec `device_code` :
    - `202 {"status":"pending"}` : pas encore validé, continuer ;
    - `200 {"status":"approved","token":…,"user":…}` : connectée (jeton remis une seule fois) ;
@@ -48,4 +44,4 @@ Le code accepte majuscules / minuscules, avec ou sans tiret.
 
 ## Réglage
 
-Aucun : `verification_url` est l'adresse du site (`APP_URL`).
+Aucun.
