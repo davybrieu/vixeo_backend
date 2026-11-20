@@ -5,6 +5,7 @@ namespace App\Services\Tmdb;
 use App\Enums\CatalogList;
 use App\Enums\DiscoverSort;
 use App\Enums\MediaType;
+use App\Enums\PersonCreditsSort;
 use App\Enums\SearchSort;
 use App\Enums\SearchType;
 
@@ -222,8 +223,57 @@ class TmdbCatalog
     public function person(int $id): array
     {
         $person = $this->tmdb->get("person/{$id}", ['append_to_response' => 'combined_credits']);
+        $credits = $this->sortedCredits($person);
+        unset($person['combined_credits']);
 
-        // An actor can appear several times in the same title (several roles).
+        return $person + [
+            'known_for' => array_slice($credits[PersonCreditsSort::Popular->value], 0, 10),
+            'filmography' => array_slice($credits[PersonCreditsSort::Date->value], 0, 100),
+        ];
+    }
+
+    /**
+     * Every title of a person (as cast), each once, in the given order: the whole « Connu pour »
+     * or « Filmographie » (the person page only shows their start). Same TMDb call as person().
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function personCredits(int $id, PersonCreditsSort $sort): array
+    {
+        $person = $this->tmdb->get("person/{$id}", ['append_to_response' => 'combined_credits']);
+
+        return $this->sortedCredits($person)[$sort->value];
+    }
+
+    /**
+     * A page of « Vous pourriez aussi aimer »: TMDb recommendations, or similar titles when TMDb
+     * has no recommendation for this title (the same choice as the title page).
+     *
+     * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
+     */
+    public function recommendations(MediaType $type, int $id, int $page = 1): array
+    {
+        $recommendations = $this->page(
+            $this->tmdb->get("{$type->value}/{$id}/recommendations", ['page' => $page], 'lists'),
+            $type->value,
+        );
+
+        if ($recommendations['total_results'] > 0) {
+            return $recommendations;
+        }
+
+        return $this->page($this->tmdb->get("{$type->value}/{$id}/similar", ['page' => $page], 'lists'), $type->value);
+    }
+
+    /**
+     * A person's credits, each title once (an actor can play several roles in the same title),
+     * by votes and by date.
+     *
+     * @param  array<string, mixed>  $person
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function sortedCredits(array $person): array
+    {
         $credits = [];
         foreach ($this->items($person['combined_credits']['cast'] ?? []) as $credit) {
             $credits[$credit['media_type'].'-'.$credit['id']] ??= $credit;
@@ -236,12 +286,7 @@ class TmdbCatalog
         $byDate = $credits;
         usort($byDate, fn (array $a, array $b) => self::date($b) <=> self::date($a));
 
-        unset($person['combined_credits']);
-
-        return $person + [
-            'known_for' => array_slice($byVotes, 0, 10),
-            'filmography' => array_slice($byDate, 0, 100),
-        ];
+        return [PersonCreditsSort::Popular->value => $byVotes, PersonCreditsSort::Date->value => $byDate];
     }
 
     /**

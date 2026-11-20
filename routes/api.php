@@ -109,6 +109,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('tv/{id}/season/{season}', [CatalogTitleController::class, 'season'])
             ->whereNumber(['id', 'season'])->name('season');
         Route::get('person/{id}', [CatalogTitleController::class, 'person'])->whereNumber('id')->name('person');
+        // « Voir tout » of the person and title pages.
+        Route::get('person/{id}/credits', [CatalogTitleController::class, 'personCredits'])
+            ->whereNumber('id')->name('person.credits');
+        Route::get('{type}/{id}/recommendations', [CatalogTitleController::class, 'recommendations'])
+            ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('recommendations');
+        Route::get('{type}/{id}/credits', [CatalogTitleController::class, 'credits'])
+            ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('credits');
 
         // Player metadata: moments to skip and subtitles.
         Route::get('movie/{id}/segments', [PlaybackController::class, 'movieSegments'])

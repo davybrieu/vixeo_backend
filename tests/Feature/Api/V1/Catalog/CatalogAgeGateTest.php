@@ -88,6 +88,23 @@ it('refuses a page the profile may not see', function () {
     $this->withHeader('X-Profile-Id', (string) $this->adult->id)->getJson('/api/v1/catalog/movie/550')->assertOk();
 });
 
+it('refuses the full credits and recommendations of a title the profile may not see, and filters them', function () {
+    Http::fake([
+        'api.themoviedb.org/3/movie/550/recommendations*' => Http::response(Tmdb::page([Tmdb::movie(1), Tmdb::movie(2), Tmdb::movie(3)])),
+        'api.themoviedb.org/3/movie/550*' => Http::response(Tmdb::movieDetails()), // 16
+        'api.themoviedb.org/3/movie/807/recommendations*' => Http::response(Tmdb::page([Tmdb::movie(1), Tmdb::movie(2), Tmdb::movie(3)])),
+        'api.themoviedb.org/3/movie/807*' => Http::response(array_merge(Tmdb::movieDetails(), ['id' => 807, 'release_dates' => frRelease('U')])),
+    ]);
+    $kid = fn (string $url) => $this->withHeader('X-Profile-Id', (string) $this->kid->id)->getJson($url);
+
+    $kid('/api/v1/catalog/movie/550/credits')->assertForbidden();
+    $kid('/api/v1/catalog/movie/550/recommendations')->assertForbidden();
+
+    // An allowed title: only the recommendations the profile may see.
+    expect(array_column($kid('/api/v1/catalog/movie/807/recommendations')->assertOk()->json('data'), 'id'))->toBe([1]);
+    $kid('/api/v1/catalog/movie/807/credits')->assertOk();
+});
+
 it('refuses seasons of a TV show the profile may not see', function () {
     $this->kid->update(['max_age_rating' => 7]);
 

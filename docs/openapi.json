@@ -2828,6 +2828,227 @@
                 }
             }
         },
+        "/v1/catalog/person/{id}/credits": {
+            "get": {
+                "operationId": "v1.catalog.person.credits",
+                "description": "Every title of \u00ab Connu pour \u00bb (`sort=popular`, the person page shows 10) or \u00ab Filmographie \u00bb\n(`sort=date`, newest first), each once, filtered by the active profile's age limit.",
+                "summary": "Titles of a person",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "`popular` (most voted first, \u00ab Connu pour \u00bb) or `date` (newest first, \u00ab Filmographie \u00bb).\n| |\n|---|\n| `popular` <br/> Most voted first: \u00ab Connu pour \u00bb. |\n| `date` <br/> Newest first: \u00ab Filmographie \u00bb. |",
+                        "schema": {
+                            "$ref": "#/components/schemas/PersonCreditsSort"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/{type}/{id}/recommendations": {
+            "get": {
+                "operationId": "v1.catalog.recommendations",
+                "description": "Every page of \u00ab Vous pourriez aussi aimer \u00bb (the title page shows the first 20): TMDb\nrecommendations, or similar titles when TMDb has none. Filtered by the active profile's\nage limit; 403 if the profile may not see the title itself.",
+                "summary": "Recommendations of a movie / TV show",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (1 to 500).",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/{type}/{id}/credits": {
+            "get": {
+                "operationId": "v1.catalog.credits",
+                "description": "Everyone of \u00ab Cr\u00e9ateur et distribution \u00bb (the title page shows 20 cast members): directors\n(movie) or creators (TV show), then the whole cast. 403 if the active profile may not see\nthe title.",
+                "summary": "Credits of a movie / TV show",
+                "tags": [
+                    "Catalogue",
+                    "CatalogTitle"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CreditsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CreditsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/v1/me/delete": {
             "post": {
                 "operationId": "v1.me.delete",
@@ -7035,6 +7256,30 @@
                 ],
                 "title": "CastResource"
             },
+            "CreditsResource": {
+                "type": "object",
+                "properties": {
+                    "crew": {
+                        "type": "array",
+                        "description": "Directors (movie) or creators (TV show).",
+                        "items": {
+                            "$ref": "#/components/schemas/CrewResource"
+                        }
+                    },
+                    "cast": {
+                        "type": "array",
+                        "description": "The whole cast in billing order (over all seasons for a TV show).",
+                        "items": {
+                            "$ref": "#/components/schemas/CastResource"
+                        }
+                    }
+                },
+                "required": [
+                    "crew",
+                    "cast"
+                ],
+                "title": "CreditsResource"
+            },
             "CrewResource": {
                 "type": "object",
                 "properties": {
@@ -7817,6 +8062,15 @@
                     "pin"
                 ],
                 "title": "ParentalPinRequest"
+            },
+            "PersonCreditsSort": {
+                "type": "string",
+                "description": "Order of a person's titles (GET /catalog/person/{id}/credits).\n| |\n|---|\n| `popular` <br/> Most voted first: \u00ab Connu pour \u00bb. |\n| `date` <br/> Newest first: \u00ab Filmographie \u00bb. |",
+                "enum": [
+                    "popular",
+                    "date"
+                ],
+                "title": "PersonCreditsSort"
             },
             "PersonItemResource": {
                 "type": "object",

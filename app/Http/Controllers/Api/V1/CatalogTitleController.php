@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\MediaType;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
+use App\Http\Requests\Api\V1\CatalogPageRequest;
+use App\Http\Requests\Api\V1\PersonCreditsRequest;
 use App\Http\Requests\Api\V1\UpcomingEpisodesRequest;
+use App\Http\Resources\V1\Catalog\CreditsResource;
+use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\MovieResource;
 use App\Http\Resources\V1\Catalog\PersonResource;
 use App\Http\Resources\V1\Catalog\SeasonResource;
@@ -55,6 +60,48 @@ class CatalogTitleController extends Controller
     }
 
     /**
+     * Recommendations of a movie / TV show.
+     *
+     * Every page of « Vous pourriez aussi aimer » (the title page shows the first 20): TMDb
+     * recommendations, or similar titles when TMDb has none. Filtered by the active profile's
+     * age limit; 403 if the profile may not see the title itself.
+     */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
+    public function recommendations(CatalogPageRequest $request, MediaType $type, int $id): JsonResponse
+    {
+        $profile = ResolveProfile::profile($request);
+        $this->ageGate->authorizeTitle($profile, $this->title($type, $id));
+
+        $page = $this->catalog->recommendations($type, $id, $request->page());
+        $page['results'] = $this->ageGate->filter($profile, $page['results']);
+
+        return response()->json([
+            'data' => MediaItemResource::collection($page['results']),
+            'meta' => [
+                'page' => (int) $page['page'],
+                'total_pages' => (int) $page['total_pages'],
+                'total_results' => (int) $page['total_results'],
+            ],
+        ]);
+    }
+
+    /**
+     * Credits of a movie / TV show.
+     *
+     * Everyone of « Créateur et distribution » (the title page shows 20 cast members): directors
+     * (movie) or creators (TV show), then the whole cast. 403 if the active profile may not see
+     * the title.
+     */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
+    public function credits(Request $request, MediaType $type, int $id): CreditsResource
+    {
+        $title = $this->title($type, $id);
+        $this->ageGate->authorizeTitle(ResolveProfile::profile($request), $title);
+
+        return new CreditsResource($title, $type);
+    }
+
+    /**
      * Upcoming episodes.
      *
      * Episodes of the TV shows asked (« Ma liste ») available in the next 60 days, the soonest
@@ -100,6 +147,33 @@ class CatalogTitleController extends Controller
         ]);
 
         return new PersonResource(array_merge($person, $lists));
+    }
+
+    /**
+     * Titles of a person.
+     *
+     * Every title of « Connu pour » (`sort=popular`, the person page shows 10) or « Filmographie »
+     * (`sort=date`, newest first), each once, filtered by the active profile's age limit.
+     */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
+    public function personCredits(PersonCreditsRequest $request, int $id): JsonResponse
+    {
+        $titles = $this->ageGate->filter(
+            ResolveProfile::profile($request),
+            $this->catalog->personCredits($id, $request->sort()),
+        );
+
+        return response()->json(['data' => MediaItemResource::collection($titles)]);
+    }
+
+    /**
+     * TMDb data of a movie or TV show page (cached).
+     *
+     * @return array<string, mixed>
+     */
+    private function title(MediaType $type, int $id): array
+    {
+        return $type === MediaType::Movie ? $this->catalog->movie($id) : $this->catalog->show($id);
     }
 
     /**

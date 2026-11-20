@@ -19,9 +19,13 @@ class SocialProfileController extends Controller
         $query = ltrim(trim((string) $request->query('query', '')), '@');
         abort_if(mb_strlen($query) < 2, 422, 'Saisissez au moins deux caractères.');
 
+        $viewer = ResolveProfile::profile($request);
+
         $profiles = Profile::query()
             ->where('is_kid', false)
             ->whereNotNull('username')
+            // Never the active profile itself: it is reached from the navigation (« Profil »).
+            ->when($viewer instanceof Profile, fn ($q) => $q->whereKeyNot($viewer->id))
             ->where('username', 'like', '%'.addcslashes($query, '%_\\').'%')
             ->withCount(['followers', 'following'])
             ->orderByRaw('username = ? desc', [mb_strtolower(ltrim($query, '@'))])

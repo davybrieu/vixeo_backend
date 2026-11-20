@@ -19,6 +19,20 @@ final class TmdbFormat
 
     private const RATING_COUNTRIES = ['FR', 'US'];
 
+    /**
+     * Directors of a movie (TMDb data with `credits`).
+     *
+     * @param  array<string, mixed>  $movie
+     * @return list<array<string, mixed>>
+     */
+    public static function directors(array $movie): array
+    {
+        return array_values(array_filter(
+            self::array(self::array($movie, 'credits'), 'crew'),
+            fn ($member) => is_array($member) && ($member['job'] ?? null) === 'Director',
+        ));
+    }
+
     /** Our item type, from the `media_type` TMDb sets on mixed lists (or TmdbCatalog sets). */
     public static function mediaType(mixed $value): MediaType
     {

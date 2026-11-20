@@ -21,10 +21,7 @@ class MovieResource extends JsonResource
         $certification = F::certification($r);
         $trailer = F::trailer($r);
         $credits = F::array($r, 'credits');
-        $directors = array_values(array_filter(
-            F::array($credits, 'crew'),
-            fn ($member) => is_array($member) && ($member['job'] ?? null) === 'Director',
-        ));
+        $directors = F::directors($r);
         $poster = F::string($r, 'poster_path');
         $backdrop = F::string($r, 'backdrop_path');
         $logo = F::logo($r);

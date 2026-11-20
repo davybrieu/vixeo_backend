@@ -197,6 +197,82 @@ it('returns a person with a deduplicated filmography, most recent first', functi
         ->and(array_column($person['known_for'], 'title'))->toBe(['Fight Club', 'Friends', 'F1']);
 });
 
+it('lists every person of a title for « Voir tout »: crew first, then the whole cast', function () {
+    $details = Tmdb::movieDetails();
+    $details['credits']['cast'] = array_map(
+        fn (int $i) => ['id' => 1000 + $i, 'name' => "Actor {$i}", 'character' => "Role {$i}", 'profile_path' => null],
+        range(1, 25),
+    );
+    Http::fake([
+        'api.themoviedb.org/3/movie/550*' => Http::response($details),
+        'api.themoviedb.org/3/tv/1399*' => Http::response(Tmdb::showDetails()),
+    ]);
+
+    // The title page keeps 20 cast members; the credits give them all.
+    expect($this->getJson('/api/v1/catalog/movie/550')->json('data.cast'))->toHaveCount(20);
+    $credits = $this->getJson('/api/v1/catalog/movie/550/credits')->assertOk()->json('data');
+    expect(array_column($credits['crew'], 'name'))->toBe(['David Fincher'])
+        ->and($credits['cast'])->toHaveCount(25)
+        ->and($credits['cast'][24])->toMatchArray(['name' => 'Actor 25', 'character' => 'Role 25']);
+
+    $show = $this->getJson('/api/v1/catalog/tv/1399/credits')->assertOk()->json('data');
+    expect(array_column($show['crew'], 'name'))->toBe(['David Benioff'])
+        ->and($show['cast'][0])->toMatchArray(['name' => 'Peter Dinklage', 'character' => 'Tyrion Lannister']);
+
+    $this->getJson('/api/v1/catalog/person/550/recommendations')->assertNotFound();
+});
+
+it('pages the recommendations of a title, or its similar titles without any', function () {
+    Http::fake([
+        'api.themoviedb.org/3/movie/550/recommendations*' => Http::response(Tmdb::page([], 0)),
+        'api.themoviedb.org/3/movie/550/similar*' => Http::response(Tmdb::page([Tmdb::movie(807, ['title' => 'Seven'])], 3, 2)),
+        'api.themoviedb.org/3/movie/550*' => Http::response(Tmdb::movieDetails()),
+        'api.themoviedb.org/3/tv/1399/recommendations*' => Http::response(Tmdb::page([Tmdb::show(1402, ['name' => 'The Walking Dead'])], 2)),
+        'api.themoviedb.org/3/tv/1399*' => Http::response(Tmdb::showDetails()),
+    ]);
+
+    $this->getJson('/api/v1/catalog/movie/550/recommendations?page=2')
+        ->assertOk()
+        ->assertJsonPath('data.0.title', 'Seven')
+        ->assertJsonPath('data.0.type', 'movie')
+        ->assertJsonPath('meta.page', 2)
+        ->assertJsonPath('meta.total_pages', 3);
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'movie/550/similar') && $request['page'] === 2);
+
+    $this->getJson('/api/v1/catalog/tv/1399/recommendations')
+        ->assertOk()
+        ->assertJsonPath('data.0.title', 'The Walking Dead')
+        ->assertJsonPath('data.0.type', 'tv')
+        ->assertJsonPath('meta.total_pages', 2);
+    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'tv/1399/similar'));
+
+    $this->getJson('/api/v1/catalog/movie/550/recommendations?page=0')->assertUnprocessable();
+});
+
+it('lists every title of a person, most voted or newest first', function () {
+    Http::fake(['api.themoviedb.org/3/person/287*' => Http::response([
+        'id' => 287, 'name' => 'Brad Pitt', 'profile_path' => null,
+        'combined_credits' => ['cast' => [
+            Tmdb::movie(550, ['media_type' => 'movie', 'vote_count' => 30000]),
+            Tmdb::movie(550, ['media_type' => 'movie', 'vote_count' => 30000, 'character' => 'Second role']),
+            Tmdb::movie(1, ['media_type' => 'movie', 'title' => 'F1', 'release_date' => '2025-06-25', 'vote_count' => 2000]),
+            Tmdb::show(2, ['media_type' => 'tv', 'name' => 'Friends', 'first_air_date' => '1994-09-22', 'vote_count' => 9000]),
+            ...array_map(fn (int $i) => Tmdb::movie(100 + $i, ['media_type' => 'movie', 'title' => "Film {$i}", 'release_date' => '1990-01-01', 'vote_count' => $i]), range(1, 10)),
+        ]],
+    ])]);
+
+    // The person page shows the 10 best known; the credits give them all, each once.
+    expect($this->getJson('/api/v1/catalog/person/287')->json('data.known_for'))->toHaveCount(10);
+    $popular = $this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data');
+    expect($popular)->toHaveCount(13)
+        ->and(array_column(array_slice($popular, 0, 3), 'title'))->toBe(['Fight Club', 'Friends', 'F1']);
+
+    $byDate = $this->getJson('/api/v1/catalog/person/287/credits?sort=date')->assertOk()->json('data');
+    expect(array_column(array_slice($byDate, 0, 3), 'title'))->toBe(['F1', 'Fight Club', 'Friends']);
+
+    $this->getJson('/api/v1/catalog/person/287/credits?sort=rating')->assertUnprocessable()->assertJsonValidationErrors('sort');
+});
+
 it('lists a catalog page and caps TMDb page counts', function () {
     Http::fake(['api.themoviedb.org/3/tv/on_the_air*' => Http::response(Tmdb::page([Tmdb::show(1)], totalPages: 900, page: 2))]);
 

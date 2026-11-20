@@ -150,6 +150,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
     plus, `TitleSummaries::titles`, même cache) donne plusieurs titres d'un coup avec ces champs :
     « Ma liste » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
+  - **« Voir tout » des fiches et des personnes** (demande du développeur, 20/11/2026) : la fiche
+    ne donne que 20 recommandations et 20 membres de la distribution, la page d'une personne
+    10 titres « Connu pour » et 100 de filmographie ; les listes entières viennent de
+    `GET /catalog/{type}/{id}/recommendations?page=` (paginé comme les listes, recommandations
+    TMDb sinon titres similaires, même choix que la fiche), `GET /catalog/{type}/{id}/credits`
+    (`crew` : réalisation ou création, `cast` : toute la distribution) et
+    `GET /catalog/person/{id}/credits?sort=popular|date` (tous les titres, chacun une fois ; même
+    appel TMDb que la page, en cache). Tous passent par `AgeGate` (titre refusé → 403, titres
+    filtrés).
   - **Rangées de l'accueil** (demande du développeur) : après les listes de TMDb
     (`CatalogList`, `TmdbCatalog::COMBINED_HOME`) viennent les rangées de `CatalogRows` :
     tendances du jour (juste après celles de la semaine), puis plateformes (`platform_netflix`… :
@@ -196,6 +205,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   demande du développeur), personnes suivies = `followed` (items `person:<id>`, type `person`)),
   le plus récent gagne ; listes publiques d'un membre : `/social/profiles/{username}/liked` et
   `/people` ; chaque écriture prend `++profiles.sync_revision` sous verrou.
+- **Recherche de membres** (`GET /social/search`, `SocialProfileController`) : profils adultes
+  avec un pseudo, **jamais le profil actif lui-même** (demande du développeur, 20/11/2026 : on
+  ouvre son propre profil par la navigation, « Profil »).
 - **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; le code se tape dans
   l'appli du téléphone (« Paramètres » → « Connecter une TV »), **plus de QR code** (demande du

@@ -4,6 +4,7 @@ use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\TmdbRating;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     config(['services.tmdb.image_base_url' => 'https://image.tmdb.org/t/p']);
@@ -55,6 +56,19 @@ it('shows a member\'s public page, with the avatar to draw it', function () {
         ->assertOk()
         ->assertJsonPath('data.0.username', 'lea')
         ->assertJsonPath('data.0.avatar', $this->member->avatar);
+});
+
+it('never finds the active profile itself in the search', function () {
+    $user = User::factory()->create();
+    $me = Profile::factory()->for($user)->create(['username' => 'leane']);
+    $mySecondProfile = Profile::factory()->for($user)->create(['username' => 'leon']);
+    Sanctum::actingAs($user);
+
+    $found = fn () => array_column($this->withHeader('X-Profile-Id', (string) $me->id)
+        ->getJson('/api/v1/social/search?query=le')->assertOk()->json('data'), 'username');
+
+    // Reached from the navigation (« Profil »), not from the search.
+    expect($found())->not->toContain('leane')->toContain('lea', 'leon');
 });
 
 it('lists a member\'s « Favoris » ❤ and the people they follow, with their counts', function () {
