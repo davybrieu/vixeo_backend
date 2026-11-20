@@ -2,8 +2,10 @@
 
 Les applis affichent la note d'un film ou d'une série **sur le site choisi par le profil** :
 IMDb (par défaut), TMDb, Rotten Tomatoes (critiques ou public), Metacritic, Letterboxd, Trakt ou
-MyAnimeList. Les notes viennent de [MDBList](https://mdblist.com), avec **la clé de Vixeo** : les
-applis ne parlent jamais à MDBList (même règle que TMDb, OpenSubtitles et TheIntroDB).
+MyAnimeList, **sinon la note TMDb** (`vote_average`, jamais IMDb à la place d'un autre site :
+demande du développeur, 20/11/2026). Les notes viennent de [MDBList](https://mdblist.com), avec
+**la clé de Vixeo** : les applis ne parlent jamais à MDBList (même règle que TMDb, OpenSubtitles et
+TheIntroDB).
 
 ## Réglage du profil
 
@@ -35,7 +37,8 @@ catalogue, limitée à 60 requêtes par minute (`throttle:ratings`). Réponse :
 - `available: false` : MDBList ne peut pas être interrogé maintenant (pas de clé, budget du jour
   dépensé, limite atteinte, panne) ; les titres pas encore gardés **manquent** dans `data`.
   L'appli affiche alors la note TMDb et redemande plus tard. Jamais d'erreur pour une note.
-- Pas de note par épisode : MDBList n'en a pas (les épisodes gardent la note TMDb).
+- Pas de note par épisode : MDBList n'en a pas, et les applis n'affichent aucune note sur un
+  épisode (ni celle de TMDb ; plus d'avis d'épisode non plus, `docs/avis.md`).
 - Aucune donnée de titre n'est renvoyée : pas de filtre d'âge (`AgeGate`), comme les moments à
   passer.
 

@@ -183,7 +183,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (gratuit : 1 000 requêtes / jour, toutes clés) : cache partagé 3 jours (inconnu : 1 jour),
   lots de 200 par type, budget `MDBLIST_DAILY_REQUESTS`, pause 1 h après un 429 / clé refusée,
   1 min après une panne ; la clé n'est jamais journalisée. Réglage du profil `rating_source`
-  (`RatingSource`, `imdb` par défaut, synchronisé). Pas de note par épisode chez MDBList.
+  (`RatingSource`, `imdb` par défaut, synchronisé) ; les applis affichent la note du site
+  choisi, sinon celle de TMDb. Pas de note par épisode (ni MDBList, ni affichée par les applis).
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`
   (`App\Support\Languages`) et `skip_intro` / `skip_recap` / `skip_credits` / `skip_preview` ;
   recherches récentes synchronisées (`profile_searches`, 20 par profil, une recherche qui en
@@ -192,7 +193,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   servis en WebVTT depuis notre cache (quota quotidien d'OpenSubtitles). Les applis ne parlent
   jamais à ces services.
 - **Avis du profil** (doc : `docs/avis.md`) : note (0,5 à 10) et commentaire facultatif par
-  profil (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Plus de
+  profil, **films et séries seulement** (plus de notes d'épisodes : routes, filtre `episode`,
+  colonnes et avis supprimés le 20/11/2026, demande du développeur ; ne pas les réintroduire)
+  (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Plus de
   liaison d'un compte TMDb ni de synchronisation des notes** (supprimées, demande du développeur,
   20/11/2026 : table `tmdb_links` et colonne `account_id` supprimées ; ne pas les réintroduire).
   Routes sous `/profiles/{id}/tmdb/ratings…` (nom historique). Pour les anciennes applis,
@@ -340,8 +343,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   temporaire d'un titre avec le PIN parental.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
-- Fait aussi : avis par profil (notes des films, séries et épisodes, commentaires), gardés par
-  Vixeo (plus de compte TMDb lié).
+- Fait aussi : avis par profil (notes des films et séries, commentaires), gardés par Vixeo
+  (plus de compte TMDb lié, plus de notes d'épisodes).
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos) et flux favoris / « dernier flux qui a
   fonctionné » synchronisés par profil, avec cache partagé des flux morts.

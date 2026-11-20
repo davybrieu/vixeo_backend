@@ -1,6 +1,6 @@
 # Avis d'un profil
 
-Chaque profil **note** des films, des séries et des épisodes, avec un **commentaire** facultatif,
+Chaque profil **note** des films et des séries, avec un **commentaire** facultatif,
 et retrouve ses avis dans « Mes avis ». **Les avis sont à Vixeo seulement** (décision du
 développeur) : ils ne sont ni envoyés à un compte TMDb, ni lus depuis un compte TMDb.
 
@@ -10,6 +10,11 @@ sessions TMDb chiffrées) et la colonne `tmdb_ratings.account_id` ont été supp
 (migration `2026_11_20_150000_drop_tmdb_account_links`). Les notes déjà arrivées de TMDb avant
 cette date restent des avis Vixeo comme les autres.
 
+**Plus de notes d'épisodes** (supprimées à la demande du développeur, 20/11/2026) : ni routes,
+ni filtre `type=episode`, ni champs `season_number`, `episode_number`, `episode_name`,
+`still_url`. Les avis d'épisodes déjà enregistrés et leurs colonnes ont été supprimés
+(migration `2026_11_20_230000_drop_episode_reviews`).
+
 ## Routes
 
 Routes sous `/api/v1/profiles/{profile}/tmdb/…` (nom historique, gardé : les applis installées
@@ -17,21 +22,18 @@ l'utilisent), limite `throttle:reviews` (120 requêtes par minute et par compte 
 
 | Méthode | Route (`/api/v1/profiles/{profile}/tmdb/…`) | Rôle |
 | --- | --- | --- |
-| GET | `ratings?type=movie\|tv\|episode&sort=recent\|oldest\|highest\|lowest&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, avec les commentaires (`per_page` jusqu'à 500). Tri `sort` : `recent` (par défaut, notés le plus récemment d'abord), `oldest`, `highest`, `lowest` ; à note égale, le plus récent d'abord. Le tri est fait avant la pagination |
+| GET | `ratings?type=movie\|tv&sort=recent\|oldest\|highest\|lowest&page=1&per_page=20` | « Mes avis » : tous les types sans `type`, avec les commentaires (`per_page` jusqu'à 500). Tri `sort` : `recent` (par défaut, notés le plus récemment d'abord), `oldest`, `highest`, `lowest` ; à note égale, le plus récent d'abord. Le tri est fait avant la pagination |
 | GET | `ratings/{movie\|tv}/{id}` | note et commentaire du profil pour un film / une série (`value` : `null` si aucune) |
-| GET | `ratings/tv/{id}/season/{season}` | notes et commentaires des épisodes d'une saison (seulement ceux notés) |
 | PUT | `ratings/{movie\|tv}/{id}` | noter ou modifier (`value` : 0,5 à 10, multiple de 0,5 ; `comment` facultatif, 2000 caractères) |
 | DELETE | `ratings/{movie\|tv}/{id}` | supprimer l'avis (note et commentaire) |
-| PUT / DELETE | `ratings/tv/{id}/season/{season}/episode/{episode}` | idem pour un épisode |
 
 - **Les avis** (`App\Services\TmdbRatings`, table `tmdb_ratings`, une ligne par profil et
-  titre) : note, commentaire, date, et ce que « Mes avis » montre du titre (nom, affiche, image
-  de l'épisode, lus sur TMDb avec la clé Vixeo, en cache).
+  titre) : note, commentaire, date, et ce que « Mes avis » montre du titre (nom, affiche, image de
+  fond, lus sur TMDb avec la clé Vixeo, en cache).
 - TMDb injoignable à l'écriture : l'avis est enregistré sans son titre ; « Mes avis » le complète
   à l'affichage suivant (10 avis au plus par affichage, pour ne jamais ralentir la page).
 - `comment` absent du PUT : le commentaire est gardé ; `null` ou vide : il est supprimé.
-- La liste filtre selon l'âge maximum du profil (`AgeGate`) ; pour un épisode, c'est sa série qui
-  compte.
+- La liste filtre selon l'âge maximum du profil (`AgeGate`).
 - Supprimer un avis qui n'existe pas répond 204.
 - La page publique d'un membre (`/social/profiles/{username}/reviews`) montre ses avis.
 - `422` : note hors de l'échelle (validation).

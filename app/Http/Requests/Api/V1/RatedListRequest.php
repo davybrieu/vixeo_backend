@@ -12,7 +12,7 @@ class RatedListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /** Movies, TV shows or episodes; every type when left out. */
+            /** Movies or TV shows; both when left out. */
             'type' => ['sometimes', Rule::enum(RatedType::class)],
             /** recent (default), oldest, highest (best rated first) or lowest (worst rated first). */
             'sort' => ['sometimes', Rule::enum(RatedSort::class)],
