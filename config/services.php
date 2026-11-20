@@ -102,6 +102,7 @@ return [
         // An empty variable (as in .env.example) falls back to the site's page too.
         'android_url' => env('ANDROID_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
         'ios_url' => env('IOS_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
+        'windows_url' => env('WINDOWS_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
     ],
 
     /*

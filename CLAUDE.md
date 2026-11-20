@@ -1,16 +1,16 @@
 # Vixeo — API et site (vixeo_backend)
 
-API REST Laravel de **Vixeo**, media center multiplateforme (Flutter : web, Android,
-Android TV, iOS), **et site de présentation** (ancien dépôt `vixeo_web`, fusionné ici). L'appli
+API REST Laravel de **Vixeo**, media center multiplateforme (Flutter : Android, Android TV,
+Windows, puis iOS ; **plus d'appli web**, demande du développeur, 20/11/2026), **et site de présentation** (ancien dépôt `vixeo_web`, fusionné ici). L'appli
 cliente est dans le dépôt [`davybrieu/vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
 
 **Un seul projet, un seul site Forge, deux domaines** (décision du développeur) :
 `api.vixeo.app` → l'API (`routes/api.php` sous `/api/v1`, `routes/api-host.php`),
 `www.vixeo.app` → le site (`routes/site.php`, Vue + Inertia SSR, doc : `docs/site.md`),
 `vixeo.app` → 301 vers `www` (**redirection du site Forge**, pas de Laravel). Routage par `Host`
-dans `bootstrap/app.php` (`App\Support\Hosts`). **Trois adresses, chacune écrite une seule fois**
+dans `bootstrap/app.php` (`App\Support\Hosts`). **Deux adresses, chacune écrite une seule fois**
 dans le `.env` : `APP_URL` = le site (`https://www.vixeo.app`), `API_URL` = l'API
-(`https://api.vixeo.app`), `WEB_URL` = l'appli web (`https://app.vixeo.app`) ; `config/vixeo.php`
+(`https://api.vixeo.app`) ; plus de `WEB_URL` (pas d'appli web, pas de CORS à prévoir) ; `config/vixeo.php`
 en tire les domaines avec `parse_url()` (`vixeo.urls`, `vixeo.domains`) : ne pas ajouter de clé
 qui répète un domaine. `API_URL` vide ou même hôte que `APP_URL` (en local) : un seul hôte, le
 site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
@@ -39,6 +39,12 @@ Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est d
 - vérification des développeurs Android par Google : obligatoire hors Play Store dans 4 pays
   depuis le 30/09/2026, prévue partout en 2027 : enregistrer le développeur dans l'Android
   Developer Console avant.
+
+**Distribution Windows** (demande du développeur, 20/11/2026) : installateur Inno Setup
+(`vixeo-setup-<build>.exe`, pour l'utilisateur, sans droits d'administrateur, Windows 10 / 11
+64 bits) publié en release GitHub `windows-<build>` par la CI de `vixeo_frontend`, téléchargé
+depuis le site (`#installer`) ; pas de Microsoft Store ; **non signé** pour l'instant (SmartScreen
+prévient, le site et la FAQ l'expliquent).
 
 ## Langue
 
@@ -90,7 +96,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   **Une seule page de présentation** : l'accueil, avec les sections `#installer` et `#faq` ; pages
   Installer et FAQ et liens courts supprimés (`/installer`, `/faq`, `/telecharger`, `/android`,
   `/tv` → 404 ; `/apk` reste, adresse à taper sur une TV), barre de navigation
-  sans liens ni menu burger (logo + « Ouvrir Vixeo »). Ne pas les recréer.
+  sans liens ni menu burger (logo + « Télécharger », vers `#installer` : plus d'appli web à ouvrir). Ne pas les recréer.
   **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
   modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.
 
@@ -190,9 +196,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   demande du développeur), personnes suivies = `followed` (items `person:<id>`, type `person`)),
   le plus récent gagne ; listes publiques d'un membre : `/social/profiles/{username}/liked` et
   `/people` ; chaque écriture prend `++profiles.sync_revision` sous verrou.
-- **Connexion TV par QR code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
-  `device_code` secret haché, `user_code` court, 10 min, usage unique ; la page de validation
-  est `<WEB_URL>/tv` (appli web).
+- **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
+  `device_code` secret haché, `user_code` court, 10 min, usage unique ; le code se tape dans
+  l'appli du téléphone (« Paramètres » → « Connecter une TV »), **plus de QR code** (demande du
+  développeur) ; `verification_url(_complete)` gardés pour les anciennes applis, vers le site.
 - **Compte** (doc : `docs/compte.md`) : « mot de passe oublié » par code à 6 chiffres envoyé par
   e-mail (`App\Services\PasswordResets` : haché, 15 min, usage unique, 5 essais ; la réponse ne
   révèle pas si l'adresse a un compte ; la réinitialisation déconnecte tous les appareils),
@@ -203,13 +210,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
   lui (clé étrangère `cascadeOnDelete`) et ajoutée à l'export.
 - **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : **seule source, les releases
-  GitHub** `android-<build>` publiées par la CI de `vixeo_frontend` (`App\Services\GitHubReleases`,
-  cache 5 min : APK, SHA-256, notes). Un titre contenant `[obligatoire]` force les versions plus
-  anciennes à se mettre à jour. Pas de table ni de commande (`vixeo:release` et `app_releases`
+  GitHub** `android-<build>` (APK) et `windows-<build>` (installateur `.exe`) publiées par la CI
+  de `vixeo_frontend` (`App\Services\GitHubReleases::for(AppPlatform)`, cache 5 min par
+  plateforme : fichier, SHA-256, notes ; `App\Services\LatestReleases` pour le site). Un titre
+  contenant `[obligatoire]` force les versions plus anciennes de sa plateforme à se mettre à jour. Pas de table ni de commande (`vixeo:release` et `app_releases`
   supprimées, demande du développeur). `GET /app/update` (sans connexion) compare les **builds**
   et répond `up_to_date` / `update_available` / `update_required` ; GitHub en panne → `up_to_date`.
   Pas d'appli iOS pour l'instant : iOS est toujours `up_to_date`. L'installation reste faite par
-  le système (Android : APK, pas de Play Store).
+  un installateur (Android : APK, pas de Play Store ; Windows : installateur lancé en silencieux
+  par l'appli, qui se ferme puis redémarre).
 - **Avatars de profil** : `resources/avatars/catalog.json`, regroupés par licence (`GET /avatars`,
   triés par nom). Un avatar = pixel art 12×12 (`pixels` + `palette`) ou `image_url`. Le profil
   stocke l'`id` (validé contre le catalogue) : ne jamais renommer ni supprimer un id utilisé.
@@ -244,8 +253,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   jamais le programme) ; `php artisan tv:match` liste les chaînes sans logo ni programme ; jamais leur adresse, mais `GET /tv/logo/{hash}` sur notre domaine
   (`App\Services\Tv\ChannelLogos` : hash SHA-256 stable des candidats, le relais sert le premier
   qui donne une image ; l'image est **relayée, jamais stockée** sur le serveur (décision du
-  développeur), vérifiée, gardée 7 jours par l'appli et le navigateur (`Cache-Control`) ; publique,
-  CORS ; sans logo : `null`).
+  développeur), vérifiée, gardée 7 jours par l'appli (`Cache-Control`) ; publique,
+  sans logo : `null`).
 - **Notifications push** (doc : `docs/notifications.md`, demande du développeur : un serveur de
   push, pas de notifications programmées par l'appli) : **Firebase Cloud Messaging**, API HTTP v1
   (`App\Services\Push\Fcm`, compte de service `FCM_CREDENTIALS` hors du dépôt : chemin du JSON
@@ -302,7 +311,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 ## État actuel
 
 - Fait aussi : site de présentation sur `www.vixeo.app`, dans ce projet : une page d'accueil
-  (installation Android / Android TV / navigateur, fonctionnalités, FAQ), mentions légales,
+  (installation Android / Android TV / Windows, fonctionnalités, FAQ), mentions légales,
   confidentialité, pages d'erreur, sitemap.
   À faire avant la mise en ligne : mentions légales dans le `.env` de production.
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
@@ -312,7 +321,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
   avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
-  par QR code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
+  par code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
   et export des données (RGPD), vérification des mises à jour des applis (releases GitHub).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
   temporaire d'un titre avec le PIN parental.

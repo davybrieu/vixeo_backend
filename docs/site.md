@@ -1,7 +1,9 @@
 # Site de présentation (www.vixeo.app)
 
 Site public de Vixeo : présentation de l'appli et mode d'emploi pour l'installer sur **Android**
-(téléphone, tablette, Android TV / Google TV) ou l'ouvrir dans le **navigateur**. Il vivait dans
+(téléphone, tablette, Android TV / Google TV) ou sur **Windows** (10 et 11, 64 bits). Il n'y a
+plus d'appli web (demande du développeur, 20/11/2026) : le site ne propose plus de l'ouvrir dans
+le navigateur. Il vivait dans
 le dépôt `vixeo_web` ; il fait maintenant partie de ce projet, servi à l'adresse `APP_URL`.
 
 Vue 3, Inertia 3 avec rendu côté serveur (SSR), Tailwind CSS 4. Pas de compte, pas de formulaire,
@@ -16,8 +18,8 @@ routes/api-host.php                      racine et robots.txt de api.vixeo.app
 app/Support/Hosts.php                    quel hôte ? (domaines tirés de API_URL et APP_URL)
 app/Http/Controllers/SiteController.php  pages (Inertia::render), sitemap, robots, redirection vixeo.app → www
 app/Http/Middleware/                     HandleInertiaRequests, SecurityHeaders
-app/Services/LatestAndroidRelease.php    dernière version Android (GitHubReleases, comme GET /app/update)
-app/Support/Platform.php                 appareil du visiteur d'après le User-Agent : android | tv | web
+app/Services/LatestReleases.php          dernières versions Android et Windows (GitHubReleases, comme GET /app/update)
+app/Support/Platform.php                 appareil du visiteur d'après le User-Agent : android | tv | windows
 app/Providers/AppServiceProvider.php     props partagées : site, platform, path
 config/vixeo.php                         domaines, APK de secours, mentions légales
 resources/views/app.blade.php            page HTML
@@ -53,14 +55,14 @@ committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'emp
 
 | Adresse | Contenu |
 | - | - |
-| `/` | **La seule page de présentation** : accueil, installation (`#installer`, onglets Android / TV / navigateur avec le bouton de l'APK, l'empreinte SHA-256 et l'adresse courte pour la TV), fonctionnalités, questions fréquentes (`#faq`, `resources/js/data/faq.js`) |
+| `/` | **La seule page de présentation** : accueil, installation (`#installer`, onglets Android / TV / Windows avec le bouton de l'APK ou de l'installateur Windows, l'empreinte SHA-256 et l'adresse courte pour la TV), fonctionnalités, questions fréquentes (`#faq`, `resources/js/data/faq.js`) |
 | `/mentions-legales`, `/confidentialite` | Informations légales, confidentialité du site |
 | `/installer`, `/faq`, `/telecharger`, `/android`, `/tv` | Anciennes pages et liens courts, supprimés : **404** (demande du développeur) |
 | `/apk` | Le fichier APK du moment (adresse à taper sur une TV), 404 sans APK |
 | `/sitemap.xml`, `/robots.txt` | Référencement (`APP_URL`) |
 
-Barre de navigation : le logo (accueil) et « Ouvrir Vixeo », **sans liens de sections ni menu
-burger** (demande du développeur). Ne pas recréer de pages Installer, FAQ ou Fonctionnalités :
+Barre de navigation : le logo (accueil) et « Télécharger » (`/#installer`), **sans liens de
+sections ni menu burger** (demande du développeur). Ne pas recréer de pages Installer, FAQ ou Fonctionnalités :
 tout est sur l'accueil.
 
 Ajouter une page publique (si le développeur le demande) : la route (`routes/site.php`), la page
@@ -72,16 +74,18 @@ Vue (`resources/js/pages`), et `SiteController::PAGES` (sitemap). Chaque page po
 | Variable | Rôle |
 | - | - |
 | `APP_URL` | Adresse du site (`https://www.vixeo.app`) : son domaine, les liens canoniques, le sitemap |
-| `WEB_URL` | Appli web Flutter (boutons « Ouvrir dans le navigateur », « Créer un compte ») |
 | `VIXEO_ANDROID_APK_URL`, `VIXEO_ANDROID_APK_SHA256` | Secours : APK et empreinte s'il n'y a pas de release GitHub |
 | `VIXEO_PUBLISHER_*`, `VIXEO_PUBLICATION_DIRECTOR`, `VIXEO_CONTACT_EMAIL`, `VIXEO_HOST_*` | Mentions légales (obligatoires avant la mise en ligne) |
 | `INERTIA_SSR_ENABLED`, `INERTIA_SSR_URL` | Rendu côté serveur ; le serveur SSR écoute le port de cette URL, sur 127.0.0.1 (lu au démarrage, pas figé dans le build) |
 
-**Pas de Play Store** : l'APK (et son empreinte SHA-256) vient de la dernière release GitHub
-`android-<build>` publiée par la CI de `vixeo_frontend`, lue directement par
-`App\Services\GitHubReleases` (la même source et le même cache que `GET /api/v1/app/update` :
-plus d'appel HTTP du site vers l'API). Sans release, l'APK de secours du `.env` ; sans APK du
-tout, le site affiche « Version Android bientôt disponible » et propose le navigateur.
+**Pas de Play Store ni de Microsoft Store** : l'APK et l'installateur Windows (et leurs empreintes
+SHA-256) viennent des dernières releases GitHub `android-<build>` et `windows-<build>` publiées
+par la CI de `vixeo_frontend`, lues directement par `App\Services\GitHubReleases` (la même source
+et le même cache que `GET /api/v1/app/update` : pas d'appel HTTP du site vers l'API). Sans
+release Android, l'APK de secours du `.env` (pas de secours pour Windows) ; sans fichier, le site affiche « Version
+Android bientôt disponible » (ou « Version Windows… »). L'installateur Windows n'est pas signé :
+le site prévient que SmartScreen peut afficher un avertissement (« Informations
+complémentaires » → « Exécuter quand même »).
 
 ## Erreurs
 
@@ -90,8 +94,8 @@ tout, le site affiche « Version Android bientôt disponible » et propose le na
   page d'erreur elle-même échoue (build manquant…), la réponse de Laravel est renvoyée telle quelle.
 - `/api/*` répond toujours en JSON, quel que soit l'hôte : l'API n'est pas servie sur
   `www.vixeo.app` (404 JSON).
-- La version Android indisponible (GitHub en panne, Redis en panne) n'empêche jamais une page de
-  s'afficher : elle est simplement masquée (et journalisée).
+- Une version Android ou Windows indisponible (GitHub en panne, Redis en panne) n'empêche jamais
+  une page de s'afficher : elle est simplement masquée (et journalisée).
 
 ## Conventions
 

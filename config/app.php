@@ -55,11 +55,6 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
-    | Address of the Vixeo web app (where a TV sign-in code is approved: <web_url>/tv).
-    */
-    'web_url' => env('WEB_URL', 'http://localhost:8080'),
-
-    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

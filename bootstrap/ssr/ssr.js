@@ -40530,7 +40530,7 @@ var _sfc_main$4 = {
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<footer${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "border-t border-line/70 bg-surface/40" }, _attrs))}><div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]"><div>`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$5, { size: "h-8" }, null, _parent));
-			_push(`<p class="mt-4 max-w-xs text-sm leading-relaxed text-text-muted"> Vos films et séries, sur votre téléphone, votre TV Android et votre navigateur. </p></div><div><h2 class="text-sm font-semibold text-text">Vixeo</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li><a href="/#installer" class="hover:text-text">Installer</a></li><li><a href="/#faq" class="hover:text-text">Questions fréquentes</a></li><li><a${(0, server_renderer_exports.ssrRenderAttr)("href", (0, vue_exports.unref)(site).appUrl)} class="hover:text-text">Ouvrir dans le navigateur</a></li>`);
+			_push(`<p class="mt-4 max-w-xs text-sm leading-relaxed text-text-muted"> Vos films et séries, sur votre téléphone, votre TV Android et votre PC Windows. </p></div><div><h2 class="text-sm font-semibold text-text">Vixeo</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li><a href="/#installer" class="hover:text-text">Installer</a></li><li><a href="/#faq" class="hover:text-text">Questions fréquentes</a></li>`);
 			if ((0, vue_exports.unref)(site).contactEmail) _push(`<li><a${(0, server_renderer_exports.ssrRenderAttr)("href", `mailto:${(0, vue_exports.unref)(site).contactEmail}`)} class="hover:text-text">Contact</a></li>`);
 			else _push(`<!---->`);
 			_push(`</ul></div><div><h2 class="text-sm font-semibold text-text">Informations</h2><ul class="mt-4 space-y-3 text-sm text-text-secondary"><li>`);
@@ -40555,7 +40555,7 @@ var _sfc_main$4 = {
 				}),
 				_: 1
 			}, _parent));
-			_push(`</li><li><a${(0, server_renderer_exports.ssrRenderAttr)("href", `${(0, vue_exports.unref)(site).appUrl}/confidentialite`)} class="hover:text-text">Confidentialité de l’appli</a></li></ul></div></div><div class="border-t border-line/50"><p class="mx-auto max-w-6xl px-5 py-6 text-xs leading-relaxed text-text-muted sm:px-8"> © ${(0, server_renderer_exports.ssrInterpolate)((0, vue_exports.unref)(year))} ${(0, server_renderer_exports.ssrInterpolate)((0, vue_exports.unref)(site).publisher || "Vixeo")}. Informations et images des titres fournies par TMDb. This product uses the TMDB API but is not endorsed or certified by TMDB. </p></div></footer>`);
+			_push(`</li></ul></div></div><div class="border-t border-line/50"><p class="mx-auto max-w-6xl px-5 py-6 text-xs leading-relaxed text-text-muted sm:px-8"> © ${(0, server_renderer_exports.ssrInterpolate)((0, vue_exports.unref)(year))} ${(0, server_renderer_exports.ssrInterpolate)((0, vue_exports.unref)(site).publisher || "Vixeo")}. Informations et images des titres fournies par TMDb. This product uses the TMDB API but is not endorsed or certified by TMDB. </p></div></footer>`);
 		};
 	}
 };
@@ -40610,6 +40610,7 @@ var _sfc_main$3 = {
 			close: "M6.25 6.25l11.5 11.5M17.75 6.25l-11.5 11.5",
 			keyboard: "M3.75 6.75h16.5v10.5H3.75V6.75ZM7 10h.01M10 10h.01M13 10h.01M16.5 10h.01M8 14h8",
 			bookmark: "M7.25 3.75h9.5v16.5L12 16.5l-4.75 3.75V3.75Z",
+			monitor: "M3.75 4.75h16.5a1 1 0 0 1 1 1v9.5a1 1 0 0 1-1 1H3.75a1 1 0 0 1-1-1v-9.5a1 1 0 0 1 1-1ZM12 16.25v3.5M8 19.75h8",
 			heart: "M12 19.75s-7.25-4.35-7.25-9.5a4 4 0 0 1 7.25-2.3 4 4 0 0 1 7.25 2.3c0 5.15-7.25 9.5-7.25 9.5Z"
 		};
 		return (_ctx, _push, _parent, _attrs) => {
@@ -40732,7 +40733,6 @@ var _sfc_main$1 = {
 	__name: "SiteNav",
 	__ssrInlineRender: true,
 	setup(__props) {
-		const page = usePage();
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<header${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "fixed inset-x-0 top-3 z-50 px-3 sm:top-4" }, _attrs))}><nav aria-label="Navigation principale" class="mx-auto flex h-14 max-w-5xl items-center gap-2 rounded-2xl border border-white/8 bg-bg/70 pr-2 pl-4 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)((0, vue_exports.unref)(link_default), {
@@ -40747,12 +40747,12 @@ var _sfc_main$1 = {
 				_: 1
 			}, _parent));
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$2, {
-				href: (0, vue_exports.unref)(page).props.site.appUrl,
+				href: "/#installer",
 				class: "!h-10 !px-4 !text-sm"
 			}, {
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(`Ouvrir Vixeo`);
-					else return [(0, vue_exports.createTextVNode)("Ouvrir Vixeo")];
+					if (_push) _push(`Télécharger`);
+					else return [(0, vue_exports.createTextVNode)("Télécharger")];
 				}),
 				_: 1
 			}, _parent));
@@ -40794,9 +40794,9 @@ var render = (page) => (app ??= createInertiaApp({
 	resolve: async (name, page) => {
 		const module = await (/* @__PURE__ */ Object.assign({
 			"./pages/Error.vue": () => import("./assets/Error-QB98lOxs.js"),
-			"./pages/Home.vue": () => import("./assets/Home-CH5OyYPe.js"),
-			"./pages/Legal.vue": () => import("./assets/Legal-CT5MV7tX.js"),
-			"./pages/Privacy.vue": () => import("./assets/Privacy-BveWGz03.js")
+			"./pages/Home.vue": () => import("./assets/Home-Tw25qOhp.js"),
+			"./pages/Legal.vue": () => import("./assets/Legal-BMTuJmJ_.js"),
+			"./pages/Privacy.vue": () => import("./assets/Privacy--nSD4vej.js")
 		}))[`./pages/${name}.vue`]?.();
 		if (!module) throw new Error(`Page not found: ${name}`);
 		return module.default ?? module;

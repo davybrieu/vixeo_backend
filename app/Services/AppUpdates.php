@@ -9,9 +9,10 @@ use App\Support\AppRelease;
 /**
  * Tells an installed app whether to update (docs/mise-a-jour.md).
  *
- * Builds are compared, never version names. The only source is GitHub: the Android releases
- * published by the CI (GitHubReleases); one whose title contains « [obligatoire] » forces every
- * older install to update. No iOS app is published yet: iOS is always up to date.
+ * Builds are compared, never version names. The only source is GitHub: the Android and Windows
+ * releases published by the CI (GitHubReleases); one whose title contains « [obligatoire] » forces
+ * every older install of its platform to update. No iOS app is published yet: iOS is always up to
+ * date.
  */
 class AppUpdates
 {
@@ -20,9 +21,7 @@ class AppUpdates
     /** @return array{status: AppUpdateStatus, latest: ?AppRelease, minimum_build: ?int, update_url: ?string} */
     public function check(AppPlatform $platform, int $build): array
     {
-        ['latest' => $latest, 'minimum_build' => $minimum] = $platform === AppPlatform::Android
-            ? $this->github->android()
-            : ['latest' => null, 'minimum_build' => null];
+        ['latest' => $latest, 'minimum_build' => $minimum] = $this->github->for($platform);
 
         $status = match (true) {
             $latest === null || $build >= $latest->build => AppUpdateStatus::UpToDate,
@@ -38,7 +37,7 @@ class AppUpdates
         ];
     }
 
-    /** Where people get the new version: the site's install page (no Play Store). */
+    /** Where people get the new version: the site's install page (no store). */
     public function updateUrl(AppPlatform $platform): ?string
     {
         $url = config("services.app_updates.{$platform->value}_url");

@@ -11,7 +11,7 @@
     "name": "dist"
   },
   "resources/js/app.js": {
-    "file": "assets/app-SkvXwIHB.js",
+    "file": "assets/app-WRW5qCbY.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -25,11 +25,11 @@
       "resources/js/pages/Privacy.vue"
     ],
     "css": [
-      "assets/app-DS0JJSVD.css"
+      "assets/app-_IXxu1tz.css"
     ]
   },
   "resources/js/pages/Error.vue": {
-    "file": "assets/Error-0fGuwAQT.js",
+    "file": "assets/Error-Ovtfkw1n.js",
     "name": "Error",
     "src": "resources/js/pages/Error.vue",
     "isDynamicEntry": true,
@@ -40,7 +40,7 @@
     ]
   },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-CQWc2IDB.js",
+    "file": "assets/Home-Cdh0IFLQ.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,
@@ -51,7 +51,7 @@
     ]
   },
   "resources/js/pages/Legal.vue": {
-    "file": "assets/Legal-kpv9e5mu.js",
+    "file": "assets/Legal-DWjXO5uS.js",
     "name": "Legal",
     "src": "resources/js/pages/Legal.vue",
     "isDynamicEntry": true,
@@ -61,7 +61,7 @@
     ]
   },
   "resources/js/pages/Privacy.vue": {
-    "file": "assets/Privacy-rx_DqktP.js",
+    "file": "assets/Privacy-guZfnfWj.js",
     "name": "Privacy",
     "src": "resources/js/pages/Privacy.vue",
     "isDynamicEntry": true,

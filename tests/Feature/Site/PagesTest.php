@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AppPlatform;
 use App\Services\GitHubReleases;
 use App\Support\AppRelease;
 use Illuminate\Support\Carbon;
@@ -18,12 +19,15 @@ function site(string $path = '/'): string
     return 'https://www.vixeo.test'.$path;
 }
 
-/** The GitHub release the site shows (null: none published, or GitHub down). */
-function withLatestAndroid(?AppRelease $release): void
+/** The GitHub releases the site shows (null: none published, or GitHub down). */
+function withLatestAndroid(?AppRelease $release, ?AppRelease $windows = null): void
 {
     test()->mock(GitHubReleases::class)
-        ->shouldReceive('android')
-        ->andReturn(['latest' => $release, 'minimum_build' => null]);
+        ->shouldReceive('for')
+        ->andReturnUsing(fn (AppPlatform $platform) => [
+            'latest' => $platform === AppPlatform::Windows ? $windows : $release,
+            'minimum_build' => null,
+        ]);
 }
 
 function androidRelease(?string $url = 'https://github.com/davybrieu/vixeo_frontend/releases/download/android-14/vixeo.apk', ?string $sha = null): AppRelease
@@ -48,11 +52,12 @@ it('renders every page with the shared site settings', function (string $uri, st
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component($component)
-            ->where('site.appUrl', 'https://app.vixeo.test')
+            ->missing('site.appUrl')
             ->where('site.url', 'https://www.vixeo.test')
-            ->where('platform', 'web')
+            ->where('platform', 'windows')
             ->where('path', $uri)
-            ->has('site.android'));
+            ->has('site.android')
+            ->has('site.windows'));
 })->with([
     ['/', 'Home'],
     ['/mentions-legales', 'Legal'],
@@ -102,17 +107,47 @@ it('falls back to the APK of the .env, or offers none', function () {
         ->where('site.android.apkSha256', 'abc'));
 });
 
-it('reads the GitHub releases once per page', function () {
-    test()->mock(GitHubReleases::class)
-        ->shouldReceive('android')->once()
+it('offers the Windows installer of the latest GitHub release', function () {
+    $sha = str_repeat('cd', 32);
+    $windows = new AppRelease(
+        version: '1.2.0',
+        build: 14,
+        required: false,
+        notes: null,
+        downloadUrl: 'https://github.com/davybrieu/vixeo_frontend/releases/download/windows-14/vixeo-setup-14.exe',
+        sha256: $sha,
+        publishedAt: Carbon::parse('2026-11-05T10:00:00Z'),
+    );
+    withLatestAndroid(androidRelease(), $windows);
+
+    $this->get(site('/'))->assertInertia(fn (Assert $page) => $page
+        ->where('site.windows.installerUrl', 'https://github.com/davybrieu/vixeo_frontend/releases/download/windows-14/vixeo-setup-14.exe')
+        ->where('site.windows.installerSha256', $sha)
+        ->where('site.windows.minimum', 'Windows 10 (64 bits)')
+        ->where('latestWindows.version', '1.2.0'));
+});
+
+it('offers no Windows installer before the first Windows release', function () {
+    withLatestAndroid(androidRelease());
+
+    $this->get(site('/'))->assertInertia(fn (Assert $page) => $page
+        ->where('site.windows.installerUrl', null)
+        ->where('latestWindows', null));
+});
+
+it('reads the GitHub releases once per page and platform', function () {
+    $github = test()->mock(GitHubReleases::class);
+    $github->shouldReceive('for')->with(AppPlatform::Android)->once()
         ->andReturn(['latest' => androidRelease(), 'minimum_build' => null]);
+    $github->shouldReceive('for')->with(AppPlatform::Windows)->once()
+        ->andReturn(['latest' => null, 'minimum_build' => null]);
 
     $this->get(site('/'))->assertOk();
 });
 
 it('still renders when the releases cannot be read', function () {
     test()->mock(GitHubReleases::class)
-        ->shouldReceive('android')
+        ->shouldReceive('for')
         ->andThrow(new RuntimeException('Redis is down'));
 
     $this->get(site('/'))

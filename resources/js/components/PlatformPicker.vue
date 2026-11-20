@@ -9,20 +9,24 @@ import TvHomeScreen from '../mock/TvHomeScreen.vue';
 import Icon from './Icon.vue';
 import InstallButtons from './InstallButtons.vue';
 
-// "Choisissez votre écran": tabs for Android, TV and the web. The visitor's device (guessed by
-// the server from the User-Agent) is selected first.
-const props = defineProps({ latestAndroid: { type: Object, default: null } });
+// "Choisissez votre écran": tabs for Android, TV and Windows. The visitor's device (guessed by
+// the server from the User-Agent) is selected first. No web app any more (developer's request).
+const props = defineProps({
+    latestAndroid: { type: Object, default: null },
+    latestWindows: { type: Object, default: null },
+});
 
 const page = usePage();
 const screens = [
     { id: 'android', label: 'Téléphone et tablette', short: 'Android', icon: 'phone' },
     { id: 'tv', label: 'TV', short: 'TV', icon: 'tv' },
-    { id: 'web', label: 'Navigateur', short: 'Web', icon: 'globe' },
+    { id: 'windows', label: 'Ordinateur Windows', short: 'Windows', icon: 'monitor' },
 ];
-const selected = ref(screens.some((s) => s.id === page.props.platform) ? page.props.platform : 'web');
+const selected = ref(screens.some((s) => s.id === page.props.platform) ? page.props.platform : 'windows');
 const tabs = ref([]);
 const minimum = computed(() => page.props.site.android.minimum);
 const android = computed(() => page.props.site.android);
+const windows = computed(() => page.props.site.windows);
 // Short link to type with a TV remote (route /apk).
 const apkShort = computed(() => `${page.props.site.url.replace(/^https?:\/\//, '')}/apk`);
 
@@ -92,15 +96,15 @@ function onKey(event, index) {
                     <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Android TV et Google TV</h3>
                     <p class="mt-4 leading-relaxed text-text-secondary">
                         Une interface pensée pour la télécommande, avec de grandes images et un repère vert sur l’élément
-                        choisi. Pour vous connecter, scannez le QR code de la TV avec votre téléphone : aucun mot de passe à
-                        taper.
+                        choisi. Pour vous connecter, tapez sur votre téléphone le code affiché par la TV : aucun mot de passe
+                        à taper avec la télécommande.
                     </p>
                 </template>
                 <template v-else>
-                    <h3 class="text-2xl font-bold sm:text-3xl">Vixeo dans le navigateur</h3>
+                    <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Windows</h3>
                     <p class="mt-4 leading-relaxed text-text-secondary">
-                        Rien à installer : ouvrez Vixeo dans Chrome, Edge, Firefox ou Safari, sur ordinateur, tablette ou
-                        téléphone. Au clavier, les flèches et la touche Entrée suffisent, comme une télécommande.
+                        Sur votre ordinateur, à la souris ou au clavier : les flèches et la touche Entrée suffisent, comme
+                        une télécommande. Compatible {{ windows.minimum }}, sans droits d’administrateur.
                     </p>
                 </template>
 
@@ -118,8 +122,19 @@ function onKey(event, index) {
                     <strong class="text-text">{{ apkShort }}</strong>, puis installez Vixeo.
                 </p>
 
-                <p v-if="screen.id !== 'web' && latestAndroid" class="mt-4 text-sm text-text-muted">
+                <p v-if="screen.id === 'windows' && windows.installerUrl" class="mt-4 text-sm leading-relaxed text-text-muted">
+                    Windows peut afficher « Windows a protégé votre ordinateur » : choisissez « Informations
+                    complémentaires », puis « Exécuter quand même ». Vixeo se met ensuite à jour tout seul.
+                    <span v-if="windows.installerSha256" class="mt-2 block break-all">
+                        Empreinte SHA-256 : <code class="rounded bg-bg px-1.5 py-0.5 font-mono text-xs text-text-soft">{{ windows.installerSha256 }}</code>
+                    </span>
+                </p>
+
+                <p v-if="screen.id !== 'windows' && latestAndroid" class="mt-4 text-sm text-text-muted">
                     Dernière version : {{ latestAndroid.version }}
+                </p>
+                <p v-if="screen.id === 'windows' && latestWindows" class="mt-4 text-sm text-text-muted">
+                    Dernière version : {{ latestWindows.version }}
                 </p>
             </div>
 
@@ -127,10 +142,10 @@ function onKey(event, index) {
                 <PhoneFrame v-if="screen.id === 'android'" label="L’accueil de Vixeo sur un téléphone Android">
                     <PhoneHomeScreen />
                 </PhoneFrame>
-                <TvFrame v-else-if="screen.id === 'tv'" label="La connexion de la TV par QR code">
+                <TvFrame v-else-if="screen.id === 'tv'" label="La connexion de la TV avec un code court">
                     <TvCodeScreen />
                 </TvFrame>
-                <TvFrame v-else label="L’accueil de Vixeo dans le navigateur, sur un ordinateur">
+                <TvFrame v-else label="L’accueil de Vixeo sur un ordinateur Windows">
                     <TvHomeScreen />
                 </TvFrame>
             </div>

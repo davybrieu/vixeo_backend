@@ -37,6 +37,12 @@ return [
         'minimum' => 'Android 7.0',
     ],
 
+    // Windows : installateur publié par la CI de vixeo_frontend (release GitHub windows-<build>),
+    // pour l'utilisateur courant, sans droits d'administrateur. Windows 10 ou 11, 64 bits.
+    'windows' => [
+        'minimum' => 'Windows 10 (64 bits)',
+    ],
+
     // Mentions légales (loi pour la confiance dans l'économie numérique, article 6).
     // Une valeur vide masque la ligne correspondante.
     'publisher' => [

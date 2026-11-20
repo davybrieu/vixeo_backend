@@ -24,8 +24,8 @@ class DeviceLoginController extends Controller
     /**
      * Start a TV sign-in.
      *
-     * Returns the code to show (and to put in the QR code: `verification_url_complete`) and
-     * the secret `device_code` the TV polls with every `interval` seconds.
+     * Returns the code to show, typed in the phone's app (« Paramètres » → « Connecter une TV »),
+     * and the secret `device_code` the TV polls with every `interval` seconds.
      *
      * @unauthenticated
      */
@@ -33,17 +33,19 @@ class DeviceLoginController extends Controller
     {
         ['login' => $login, 'device_code' => $deviceCode] = $this->logins->start($request->validated('device_name'));
         $userCode = DeviceLogins::format($login->user_code);
-        $url = rtrim((string) config('app.web_url'), '/').'/tv';
+        // No web app any more: the former apps' QR code leads to the site, which shows how to
+        // install Vixeo; the current apps only show the code.
+        $url = rtrim((string) config('vixeo.urls.site'), '/');
 
         return response()->json([
             /** Secret, for POST /auth/device/token only. */
             'device_code' => $deviceCode,
             /** Code to show on the TV, e.g. "K7F-29Q". */
             'user_code' => $userCode,
-            /** Page where the person types the code. */
+            /** The site (former apps showed it): the code is typed in the phone's app. */
             'verification_url' => $url,
-            /** Same page with the code filled in: put it in the QR code. */
-            'verification_url_complete' => $url.'?code='.$login->user_code,
+            /** Former apps' QR code: the site. */
+            'verification_url_complete' => $url.'/?code='.$login->user_code,
             /** Seconds before the code expires. */
             'expires_in' => DeviceLogins::TTL_SECONDS,
             /** Seconds between two polls. */

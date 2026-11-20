@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Controllers\SiteController;
-use App\Services\LatestAndroidRelease;
+use App\Services\LatestReleases;
 use App\Support\Platform;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Once per request: the site's layout and page both ask for the latest release.
-        $this->app->scoped(LatestAndroidRelease::class);
+        $this->app->scoped(LatestReleases::class);
     }
 
     public function boot(): void
@@ -89,17 +89,23 @@ class AppServiceProvider extends ServiceProvider
     {
         Inertia::share([
             'site' => function () {
-                // No Play Store: the APK of the latest GitHub release, or the one of the .env.
-                $apk = app(LatestAndroidRelease::class)->apk();
+                // No store: the APK and the Windows installer of the latest GitHub releases (the APK
+                // may also come from the .env). No web app any more (developer's request).
+                $releases = app(LatestReleases::class);
+                $apk = $releases->apk();
+                $installer = $releases->windowsInstaller();
 
                 return [
                     'url' => SiteController::siteUrl(),
-                    // The Vixeo web app (Flutter web, vixeo_frontend): WEB_URL.
-                    'appUrl' => rtrim((string) config('app.web_url'), '/'),
                     'android' => [
                         'apkUrl' => $apk['url'] ?? null,
                         'apkSha256' => $apk['sha256'] ?? null,
                         'minimum' => config('vixeo.android.minimum'),
+                    ],
+                    'windows' => [
+                        'installerUrl' => $installer['url'] ?? null,
+                        'installerSha256' => $installer['sha256'] ?? null,
+                        'minimum' => config('vixeo.windows.minimum'),
                     ],
                     'contactEmail' => config('vixeo.publisher.email') ?: null,
                     'publisher' => config('vixeo.publisher.name') ?: null,

@@ -15,7 +15,7 @@ var _sfc_main = {
 		}
 	},
 	setup(__props) {
-		const site = usePage().props.site;
+		usePage().props.site;
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<!--[-->`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$1, {
@@ -40,7 +40,7 @@ var _sfc_main = {
 			else _push(`<!---->`);
 			if (__props.host.phone) _push(`<!--[--><dt class="text-text-muted">Téléphone</dt><dd>${(0, server_renderer_exports.ssrInterpolate)(__props.host.phone)}</dd><!--]-->`);
 			else _push(`<!---->`);
-			_push(`</dl></section><section class="mt-10 space-y-3 leading-relaxed text-text-secondary" aria-labelledby="propriete"><h2 id="propriete" class="text-xl font-bold text-text">Propriété intellectuelle</h2><p>Le nom Vixeo, son logo, les textes et les illustrations de ce site appartiennent à leur éditeur.</p><p> Les informations et images des films et séries affichées dans l’appli proviennent de TMDb (The Movie Database). This product uses the TMDB API but is not endorsed or certified by TMDB. </p><p>Polices Sora et Inter, sous licence SIL Open Font License (<a href="/fonts/OFL-Sora.txt" class="text-accent">Sora</a>, <a href="/fonts/OFL-Inter.txt" class="text-accent">Inter</a>).</p><p>Android, Google TV et Google Play sont des marques de leurs propriétaires respectifs.</p></section><section class="mt-10 space-y-3 leading-relaxed text-text-secondary" aria-labelledby="donnees"><h2 id="donnees" class="text-xl font-bold text-text">Données personnelles</h2><p> Ce site ne dépose aucun cookie : voir la <a href="/confidentialite" class="font-semibold text-accent hover:text-accent-hover">confidentialité du site</a>. Pour l’appli, voir sa <a${(0, server_renderer_exports.ssrRenderAttr)("href", `${(0, vue_exports.unref)(site).appUrl}/confidentialite`)} class="font-semibold text-accent hover:text-accent-hover">politique de confidentialité</a>. </p></section></article><!--]-->`);
+			_push(`</dl></section><section class="mt-10 space-y-3 leading-relaxed text-text-secondary" aria-labelledby="propriete"><h2 id="propriete" class="text-xl font-bold text-text">Propriété intellectuelle</h2><p>Le nom Vixeo, son logo, les textes et les illustrations de ce site appartiennent à leur éditeur.</p><p> Les informations et images des films et séries affichées dans l’appli proviennent de TMDb (The Movie Database). This product uses the TMDB API but is not endorsed or certified by TMDB. </p><p>Polices Sora et Inter, sous licence SIL Open Font License (<a href="/fonts/OFL-Sora.txt" class="text-accent">Sora</a>, <a href="/fonts/OFL-Inter.txt" class="text-accent">Inter</a>).</p><p>Android, Google TV et Google Play sont des marques de leurs propriétaires respectifs.</p></section><section class="mt-10 space-y-3 leading-relaxed text-text-secondary" aria-labelledby="donnees"><h2 id="donnees" class="text-xl font-bold text-text">Données personnelles</h2><p> Ce site ne dépose aucun cookie : voir la <a href="/confidentialite" class="font-semibold text-accent hover:text-accent-hover">confidentialité du site</a>. </p></section></article><!--]-->`);
 		};
 	}
 };

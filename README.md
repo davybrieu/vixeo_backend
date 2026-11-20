@@ -21,8 +21,7 @@ php artisan serve                 # site sur http://localhost:8000, API sur /api
 ```
 
 En local, `API_URL` est vide : un seul hôte (`APP_URL`) sert le site (`/`) et l'API (`/api/v1`).
-En production : `APP_URL=https://www.vixeo.app`, `API_URL=https://api.vixeo.app`,
-`WEB_URL=https://app.vixeo.app`.
+En production : `APP_URL=https://www.vixeo.app`, `API_URL=https://api.vixeo.app`.
 
 - Tests : `./vendor/bin/pest`
 - Formatage : `./vendor/bin/pint`
@@ -43,8 +42,8 @@ Authentification par jeton Bearer (`Authorization: Bearer <token>`).
 | GET / DELETE | `/api/v1/me/devices` · `/me/devices/{id}` | Appareils connectés, en déconnecter un (jetons valables 180 jours) |
 | POST | `/api/v1/me/export` | Recevoir ses données par e-mail (JSON) |
 | POST | `/api/v1/me/delete` | Supprimer le compte et toutes ses données (mot de passe) |
-| GET | `/api/v1/app/update` | L'appli Android / iOS est-elle à jour ? (voir [`docs/mise-a-jour.md`](docs/mise-a-jour.md)) |
-| POST | `/api/v1/auth/device` · `/auth/device/token` | Connexion d'une TV par QR code (voir [`docs/connexion-tv.md`](docs/connexion-tv.md)) |
+| GET | `/api/v1/app/update` | L'appli Android / Windows / iOS est-elle à jour ? (voir [`docs/mise-a-jour.md`](docs/mise-a-jour.md)) |
+| POST | `/api/v1/auth/device` · `/auth/device/token` | Connexion d'une TV par code (voir [`docs/connexion-tv.md`](docs/connexion-tv.md)) |
 | POST | `/api/v1/auth/device/lookup` · `/auth/device/approve` | Valider le code d'une TV depuis un appareil connecté |
 | GET / POST | `/api/v1/profiles` | Lister / créer des profils (5 max) |
 | GET / PATCH / DELETE | `/api/v1/profiles/{id}` | Lire / modifier / supprimer un profil (PIN parental si activé) |

@@ -2,7 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import Seo from '../components/Seo.vue';
 
-// Privacy of this website only (the app has its own policy, at <app>/confidentialite).
+// Privacy of this website only.
 // Keep it true: no cookie, no analytics, no third party (CLAUDE.md).
 const site = usePage().props.site;
 </script>
@@ -28,17 +28,16 @@ const site = usePage().props.site;
                 durée limitée et ne servent à rien d’autre.
             </p>
             <p>
-                Pour afficher la dernière version Android, notre serveur interroge GitHub, où chaque version de l’appli
-                est publiée : votre navigateur n’y participe pas.
+                Pour afficher les dernières versions Android et Windows, notre serveur interroge GitHub, où chaque
+                version de l’appli est publiée : votre navigateur n’y participe pas.
             </p>
         </section>
 
         <section class="space-y-3" aria-labelledby="liens">
             <h2 id="liens" class="text-xl font-bold text-text">Liens vers d’autres services</h2>
             <p>
-                Le bouton « Télécharger l’APK » télécharge l’appli depuis GitHub, où chaque version est publiée. « Ouvrir dans le navigateur » mène à
-                l’appli Vixeo, décrite dans sa
-                <a :href="`${site.appUrl}/confidentialite`" class="font-semibold text-accent hover:text-accent-hover">politique de confidentialité</a>.
+                Les boutons « Télécharger l’APK » et « Télécharger pour Windows » téléchargent l’appli depuis GitHub, où
+                chaque version est publiée.
             </p>
         </section>
 

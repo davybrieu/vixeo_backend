@@ -4,20 +4,20 @@ namespace App\Support;
 
 /**
  * The visitor's screen, guessed from the User-Agent: the site shows the matching install option
- * first. iOS is not offered yet: iPhones and iPads get the web version.
+ * first. No iOS app yet, no web app any more: anything that is not Android is offered Windows.
  */
 enum Platform: string
 {
     case Android = 'android';
     case Tv = 'tv';
-    case Web = 'web';
+    case Windows = 'windows';
 
     public static function fromUserAgent(?string $userAgent): self
     {
         $ua = (string) $userAgent;
 
         if (! preg_match('/Android/i', $ua)) {
-            return self::Web;
+            return self::Windows;
         }
 
         // Android TV, Google TV, Chromecast, Fire TV (AFT…), Sony Bravia, Xiaomi, Nvidia Shield…

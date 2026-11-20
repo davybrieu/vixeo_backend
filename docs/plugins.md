@@ -96,8 +96,8 @@ de côté). Un autre `provider` (ancien fournisseur du serveur, `frenchstream`�
 `POST /catalog/resolve` (anciennes applis) répond toujours 502 « Cette source n'est pas
 lisible. » : le serveur ne résout plus de liens.
 
-Sur le web, un flux d'un plug-in doit autoriser le navigateur (CORS) : l'API ne relaie pas les
-vidéos des plug-ins.
+L'API ne relaie pas les vidéos des plug-ins : les applis (Android, Windows, iOS) les lisent
+directement, avec leurs `headers`. Il n'y a plus d'appli web (pas de CORS à prévoir).
 
 ## Ancienne route
 

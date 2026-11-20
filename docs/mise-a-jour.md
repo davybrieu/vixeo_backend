@@ -1,10 +1,11 @@
-# Mises à jour des applis Android et iOS
+# Mises à jour des applis Android, Windows et iOS
 
 Une mise à jour passe par deux niveaux :
 
-1. **L'installation de la nouvelle version**, toujours faite par le système. L'appli ne télécharge
-   jamais de code qu'elle exécuterait elle-même : Apple l'interdit (règle 2.5.2), et une
-   mise à jour Android passe toujours par l'installateur du système.
+1. **L'installation de la nouvelle version**, toujours faite par un installateur. L'appli ne
+   télécharge jamais de code qu'elle exécuterait elle-même : Apple l'interdit (règle 2.5.2), une
+   mise à jour Android passe toujours par l'installateur du système, et sous Windows par
+   l'installateur de Vixeo (Inno Setup).
 2. **La vérification dans l'appli** (cette API) : l'appli demande si elle est à jour, signale la
    nouvelle version, ou bloque si la version installée n'est plus acceptée.
 
@@ -13,6 +14,7 @@ Une mise à jour passe par deux niveaux :
 | Plateforme | Comment la nouvelle version arrive | Lien envoyé par l'API |
 |---|---|---|
 | Android, Android TV | **Pas de Play Store** (décision du développeur) : l'appli télécharge elle-même le nouvel APK (`latest.download_url`), vérifie son empreinte SHA-256, puis lance l'installateur d'Android, qui demande une confirmation. L'APK doit être signé avec la même clé de release. | `ANDROID_UPDATE_URL` (`<APP_URL>/#installer` par défaut, la section d'installation de l'accueil), en secours |
+| Windows (10 et 11, 64 bits) | L'appli télécharge l'installateur (`latest.download_url`, `vixeo-setup-<build>.exe`), vérifie son empreinte SHA-256, le lance en mode silencieux (`/SILENT`) et se ferme ; l'installateur remplace la version installée (dossier de l'utilisateur, sans droits d'administrateur) puis relance Vixeo. Installateur **non signé** pour l'instant : Windows SmartScreen peut avertir à la première installation depuis le site. | `WINDOWS_UPDATE_URL` (`<APP_URL>/#installer` par défaut), en secours |
 | iOS | **Pas d'appli iOS pour l'instant** : l'API répond toujours `up_to_date` pour iOS. Plus tard (distribution web UE) : chaque version notarisée par Apple, paquet hébergé sur le site, que l'iPhone interroge au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`). | `IOS_UPDATE_URL` (`<APP_URL>/#installer` par défaut) |
 
 Côté iOS (plus tard), le serveur de distribution **reste à construire**. Il n'est possible qu'une fois la
@@ -32,7 +34,8 @@ your app from your website », « Installing apps from an alternative marketplac
 
 Sans connexion. Limite : 30 appels par minute et par adresse IP.
 
-`GET /api/v1/app/update?platform=android&build=12` renvoie :
+`platform` : `android`, `windows` ou `ios`. `GET /api/v1/app/update?platform=android&build=12`
+renvoie :
 
 ```json
 {
@@ -51,8 +54,8 @@ Sans connexion. Limite : 30 appels par minute et par adresse IP.
 - `up_to_date` : rien à faire. C'est aussi la réponse quand la version installée est plus récente
   que la dernière publiée (version de test), quand GitHub ne répond pas, et toujours sur iOS.
 - `update_available` : l'appli affiche en haut de ses pages la barre « Une nouvelle mise à jour est
-  disponible », avec un bouton « Télécharger » (APK téléchargé et vérifié dans l'appli, puis
-  installateur d'Android ; sans APK, page d'installation du site).
+  disponible », avec un bouton « Télécharger » (APK ou installateur Windows téléchargé et vérifié
+  dans l'appli, puis installé ; sans fichier, page d'installation du site).
 - `update_required` : la version installée est plus ancienne qu'une release marquée
   **« [obligatoire] »** (`minimum_build`). L'appli affiche « Mise à jour nécessaire » et reste
   bloquée tant que la mise à jour n'est pas installée.
@@ -61,16 +64,24 @@ Seuls les **numéros de build** sont comparés, jamais les noms de version.
 
 ## 3. La seule source : les releases GitHub de la CI
 
-La CI de `vixeo_frontend` publie chaque APK signé comme *release* GitHub du dépôt
-`APP_UPDATES_GITHUB_REPOSITORY` (par défaut `davybrieu/vixeo_frontend`), avec le tag
-`android-<build>`, l'APK et son fichier `.apk.sha256`. L'API lit ces releases
-(`App\Services\GitHubReleases`, sans jeton, donc dépôt public ; cache 5 minutes) :
+La CI de `vixeo_frontend` publie à chaque commit sur `main` deux *releases* GitHub du dépôt
+`APP_UPDATES_GITHUB_REPOSITORY` (par défaut `davybrieu/vixeo_frontend`), avec le même numéro de
+build :
 
-- seules les releases publiées (ni brouillon, ni pré-version) avec un tag `android-<n>` comptent ;
+| Plateforme | Tag | Fichiers |
+|---|---|---|
+| Android | `android-<build>` | `vixeo-<build>.apk` et `vixeo-<build>.apk.sha256` |
+| Windows | `windows-<build>` | `vixeo-setup-<build>.exe` et `vixeo-setup-<build>.exe.sha256` |
+
+L'API lit ces releases (`App\Services\GitHubReleases::for(AppPlatform)`, sans jeton, donc dépôt
+public ; cache 5 minutes par plateforme) :
+
+- seules les releases publiées (ni brouillon, ni pré-version) avec le tag de la plateforme
+  (`android-<n>`, `windows-<n>`) comptent ;
 - la plus récente est proposée : version (lue dans le titre), notes (la description de la
-  release), APK et empreinte ;
+  release), fichier (`.apk` ou `.exe`) et empreinte ;
 - une release dont le **titre contient `[obligatoire]`** (majuscules ou non) oblige toutes les
-  installations plus anciennes que son build à se mettre à jour ;
+  installations de **sa plateforme** plus anciennes que son build à se mettre à jour ;
 - si GitHub ne répond pas (panne, limite de 60 requêtes par heure sans jeton), aucune mise à jour
   n'est proposée : l'appli n'est jamais bloquée par une panne ;
 - `APP_UPDATES_GITHUB_REPOSITORY=` (vide) désactive les mises à jour ; les tests ne contactent
@@ -80,18 +91,22 @@ Il n'y a plus de table ni de commande artisan pour déclarer une version (la com
 `vixeo:release` et la table `app_releases` ont été supprimées) : tout se fait sur GitHub.
 
 Attention : avec une release à chaque commit sur `main`, chaque commit est proposé comme mise à
-jour à tous les appareils Android.
+jour à tous les appareils Android et Windows.
 
 ## Publier une version
 
 1. Si besoin, changer la version affichée dans `vixeo_frontend` (`version:` de `pubspec.yaml`).
    Le numéro de build est donné par la CI : c'est le numéro de son run, qui augmente tout seul.
-2. Pousser sur `main` : la CI compile l'APK signé avec la clé de release et publie la release
-   `android-<build>` (titre : « Vixeo Android v1.0.0 - build 160 »). Les applis la voient dans les 5 minutes, le site www.vixeo.app aussi (son
-   bouton « Télécharger l'APK » pointe vers le même fichier).
+2. Pousser sur `main` : la CI compile l'APK signé avec la clé de release et l'installateur
+   Windows, et publie les releases `android-<build>` (« Vixeo Android v1.0.0 - build 160 ») et
+   `windows-<build>` (« Vixeo Windows v1.0.0 - build 160 »). Les applis les voient dans les
+   5 minutes, le site www.vixeo.app aussi (ses boutons « Télécharger l'APK » et « Télécharger pour
+   Windows » pointent vers les mêmes fichiers).
 3. **Mise à jour obligatoire** (cas sérieux seulement : faille de sécurité, ancienne version
    incompatible avec l'API) : sur GitHub, *Releases* → la release → *Edit*, ajouter
-   `[obligatoire]` au titre (« Vixeo Android v1.0.0 - build 160 [obligatoire] »), enregistrer. Le retirer rend la mise à jour facultative à nouveau.
+   `[obligatoire]` au titre (« Vixeo Android v1.0.0 - build 160 [obligatoire] »), enregistrer ;
+   faire de même pour la release `windows-<build>` si Windows est concerné. Le retirer rend la
+   mise à jour facultative à nouveau.
 4. **Retirer une version** : la supprimer sur GitHub, ou la passer en pré-version ; la précédente
    redevient la dernière.
 

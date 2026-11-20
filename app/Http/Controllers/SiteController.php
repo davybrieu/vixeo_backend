@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\LatestAndroidRelease;
+use App\Enums\AppPlatform;
+use App\Services\LatestReleases;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
@@ -13,15 +14,18 @@ class SiteController extends Controller
     /** Pages listed in the sitemap, with their priority. */
     private const PAGES = ['/' => '1.0', '/mentions-legales' => '0.2', '/confidentialite' => '0.2'];
 
-    public function home(LatestAndroidRelease $release): InertiaResponse
+    public function home(LatestReleases $releases): InertiaResponse
     {
-        return Inertia::render('Home', ['latestAndroid' => $release->get()]);
+        return Inertia::render('Home', [
+            'latestAndroid' => $releases->get(AppPlatform::Android),
+            'latestWindows' => $releases->get(AppPlatform::Windows),
+        ]);
     }
 
     /** Short link to type on a TV (www.vixeo.app/apk): the current APK. */
-    public function apk(LatestAndroidRelease $release): RedirectResponse
+    public function apk(LatestReleases $releases): RedirectResponse
     {
-        $apk = $release->apk();
+        $apk = $releases->apk();
         abort_if($apk === null, 404);
 
         return redirect()->away($apk['url'], 302);

@@ -66,10 +66,7 @@ it('relays the logo from our origin, without the provider address, and never sto
         ->assertOk()
         ->assertHeader('Content-Type', 'image/png')
         ->assertHeader('Cache-Control', 'max-age=604800, public');
-    // Flutter web downloads images with fetch: the web app's origin must be allowed (CORS).
-    $this->get($logo, ['Origin' => 'https://app.vixeo.test'])
-        ->assertOk()
-        ->assertHeader('Access-Control-Allow-Origin', 'https://app.vixeo.test');
+    $this->get($logo)->assertOk();
 
     // Asked twice, fetched twice from the provider: nothing is kept on our server (the apps and
     // browsers cache it 7 days).

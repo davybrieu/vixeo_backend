@@ -87,15 +87,11 @@ APP_DEBUG=false
 APP_KEY=base64:...                  # celle du site de l'API, ne pas la changer
 APP_LOCALE=fr
 
-# Les trois adresses, chacune une seule fois : les domaines en sont tirés (config/vixeo.php).
+# Les deux adresses, chacune une seule fois : les domaines en sont tirés (config/vixeo.php).
 # Site de présentation
 APP_URL=https://www.vixeo.app
 # API
 API_URL=https://api.vixeo.app
-# Appli web Flutter (vixeo_frontend, servie ailleurs) : sa page /tv valide la connexion des TV
-WEB_URL=https://app.vixeo.app
-# Origines du Flutter web autorisées à appeler l'API, séparées par des virgules
-CORS_ALLOWED_ORIGINS=https://app.vixeo.app
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -164,6 +160,14 @@ VIXEO_HOST_PHONE="…"
 de fournisseurs ni d'extracteurs ; les sources viennent des plug-ins (`docs/plugins.md`). Sur
 Forge, arrêter et supprimer le daemon du scraper (s'il existe) et retirer `SCRAPER_URL` et
 `SCRAPER_TIMEOUT` de l'environnement.
+
+**Appli web supprimée** (20/11/2026, demande du développeur) : Vixeo existe sur Android
+(téléphones, tablettes, TV) et Windows, puis iOS. Sur Forge, supprimer le site de l'appli web
+(`app.vixeo.app`, déployé par l'ancienne CI de `vixeo_frontend`) et, dans Cloudflare,
+l'enregistrement DNS `app` ; retirer `WEB_URL` et `CORS_ALLOWED_ORIGINS` de l'environnement de
+l'API (les applis ne sont pas des navigateurs : pas de CORS ; sans la variable, toutes les origines
+restent autorisées, ce qui ne gêne pas la documentation interactive). Le secret GitHub
+`FORGE_DEPLOY_WEBHOOK` de `vixeo_frontend` ne sert plus.
 
 Les anciennes variables `SITE_URL`, `API_DOMAIN`, `SITE_DOMAIN`, `SITE_REDIRECT_DOMAINS`,
 `VIXEO_APP_URL` et `VIXEO_API_URL` n'existent plus : à supprimer de l'environnement. **Attention :
@@ -271,7 +275,8 @@ Les erreurs sont journalisées dans `storage/logs` (partagé entre les releases)
 
 ## Notes
 
-- **APK** : servis par les releases GitHub de `vixeo_frontend` (lien `https://github.com/...`).
+- **APK et installateur Windows** : servis par les releases GitHub de `vixeo_frontend` (lien
+  `https://github.com/...`).
   Avec les déploiements sans interruption, un fichier déposé dans `public/` disparaît au
   déploiement suivant ; pour un APK de secours hébergé ici, utiliser un dossier hors release
   (`/home/forge/<dossier du site>/telechargements`) et ajouter au script, avant

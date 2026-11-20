@@ -54,7 +54,6 @@ const site = usePage().props.site;
             <h2 id="donnees" class="text-xl font-bold text-text">Données personnelles</h2>
             <p>
                 Ce site ne dépose aucun cookie : voir la <a href="/confidentialite" class="font-semibold text-accent hover:text-accent-hover">confidentialité du site</a>.
-                Pour l’appli, voir sa <a :href="`${site.appUrl}/confidentialite`" class="font-semibold text-accent hover:text-accent-hover">politique de confidentialité</a>.
             </p>
         </section>
     </article>

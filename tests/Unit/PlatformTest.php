@@ -10,7 +10,8 @@ it('recognises the visitor device', function (?string $userAgent, Platform $expe
     'Google TV' => ['Mozilla/5.0 (Linux; Android 12; Chromecast) AppleWebKit/537.36 Chrome/120.0 Safari/537.36', Platform::Tv],
     'Android TV' => ['Mozilla/5.0 (Linux; Android 11; BRAVIA 4K VH2 Build/RTT1.220304.001) AppleWebKit/537.36', Platform::Tv],
     'Fire TV' => ['Mozilla/5.0 (Linux; Android 9; AFTMM Build/PS7633) AppleWebKit/537.36 Silk/120.0', Platform::Tv],
-    'Desktop' => ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36', Platform::Web],
-    'iPhone (web for now)' => ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', Platform::Web],
-    'none' => [null, Platform::Web],
+    'Windows' => ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36', Platform::Windows],
+    // No iOS app yet, no web app any more: the Windows version is shown first.
+    'iPhone' => ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', Platform::Windows],
+    'none' => [null, Platform::Windows],
 ]);

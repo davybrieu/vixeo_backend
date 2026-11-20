@@ -4,7 +4,6 @@ const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp
 const link = (href, text) => `<a href="${escape(href)}" class="font-semibold text-accent hover:text-accent-hover">${escape(text)}</a>`;
 
 export default function faq(site) {
-    const app = site.appUrl;
     const apkShort = `${site.url.replace(/^https?:\/\//, '')}/apk`;
     const contact = site.contactEmail ? ` Une autre question ? Écrivez-nous à ${link(`mailto:${site.contactEmail}`, site.contactEmail)}.` : '';
 
@@ -27,8 +26,8 @@ export default function faq(site) {
             id: 'appareils',
             question: 'Sur quels appareils puis-je utiliser Vixeo ?',
             answer: [
-                `Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et dans un navigateur récent (Chrome, Edge, Firefox ou Safari) : ${link(app, 'ouvrir Vixeo')}.`,
-                'Sur iPhone et iPad, utilisez Vixeo dans Safari.',
+                `Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et sur les ordinateurs Windows (${escape(site.windows.minimum)}) : ${link('#installer', 'installer Vixeo')}.`,
+                'Vixeo n’a pas de version web. Une version pour iPhone et iPad est en préparation.',
             ],
         },
         {
@@ -48,17 +47,25 @@ export default function faq(site) {
             ],
         },
         {
+            id: 'installer-windows',
+            question: 'Comment installer Vixeo sur Windows ?',
+            answer: [
+                `Téléchargez l’installateur depuis ce site (${link('#installer', 'version Windows')}) et ouvrez-le : Vixeo s’installe pour votre compte Windows, sans droits d’administrateur.`,
+                'Windows peut afficher « Windows a protégé votre ordinateur » : choisissez « Informations complémentaires », puis « Exécuter quand même ».',
+            ],
+        },
+        {
             id: 'compte',
             question: 'Faut-il un compte ?',
             answer: [
-                `Oui : une adresse e-mail et un mot de passe. Le même compte sert sur tous vos écrans et accueille jusqu’à 5 profils. ${link(`${app}/inscription`, 'Créer un compte')}.`,
+                'Oui : une adresse e-mail et un mot de passe. Le même compte sert sur tous vos écrans et accueille jusqu’à 5 profils. Créez-le dans l’appli, depuis l’écran de connexion (« Créer un compte »).',
             ],
         },
         {
             id: 'tv',
             question: 'Comment connecter ma TV sans taper mon mot de passe ?',
             answer: [
-                `Ouvrez Vixeo sur la TV : l’écran de connexion affiche un QR code et un code court. Scannez le QR code avec votre téléphone (ou ouvrez ${link(`${app}/tv`, `${app.replace(/^https?:\/\//, '')}/tv`)}), vérifiez le code et appuyez sur « Autoriser ». La TV se connecte toute seule.`,
+                'Ouvrez Vixeo sur la TV : l’écran de connexion affiche un code court. Sur votre téléphone (déjà connecté), ouvrez Vixeo, puis « Paramètres » → « Connecter une TV », tapez le code et appuyez sur « Autoriser ». La TV se connecte toute seule.',
             ],
         },
         {
@@ -79,14 +86,14 @@ export default function faq(site) {
             id: 'donnees',
             question: 'Que devient mon compte et mes données ?',
             answer: [
-                `Pas de publicité ni de pistage. Depuis l’appli (Mon profil, puis Mon compte), vous pouvez recevoir une copie de vos données ou supprimer votre compte à tout moment. Détails dans la ${link(`${app}/confidentialite`, 'politique de confidentialité de l’appli')}.`,
+                'Pas de publicité ni de pistage. Depuis l’appli (Paramètres, puis Compte), vous pouvez recevoir une copie de vos données ou supprimer votre compte à tout moment.',
             ],
         },
         {
             id: 'mises-a-jour',
             question: 'Comment mettre Vixeo à jour ?',
             answer: [
-                'Sur Android, Vixeo vous prévient quand une nouvelle version est disponible : il télécharge le fichier, le vérifie, puis Android vous demande de confirmer l’installation. Dans le navigateur, vous avez toujours la dernière version.',
+                'Vixeo vous prévient quand une nouvelle version est disponible : il télécharge le fichier et le vérifie. Sur Android, confirmez ensuite l’installation ; sur Windows, elle se fait toute seule et Vixeo redémarre.',
             ],
         },
         {

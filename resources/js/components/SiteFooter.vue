@@ -12,7 +12,7 @@ const year = new Date().getFullYear();
             <div>
                 <VxLogo size="h-8" />
                 <p class="mt-4 max-w-xs text-sm leading-relaxed text-text-muted">
-                    Vos films et séries, sur votre téléphone, votre TV Android et votre navigateur.
+                    Vos films et séries, sur votre téléphone, votre TV Android et votre PC Windows.
                 </p>
             </div>
             <div>
@@ -20,7 +20,6 @@ const year = new Date().getFullYear();
                 <ul class="mt-4 space-y-3 text-sm text-text-secondary">
                     <li><a href="/#installer" class="hover:text-text">Installer</a></li>
                     <li><a href="/#faq" class="hover:text-text">Questions fréquentes</a></li>
-                    <li><a :href="site.appUrl" class="hover:text-text">Ouvrir dans le navigateur</a></li>
                     <li v-if="site.contactEmail"><a :href="`mailto:${site.contactEmail}`" class="hover:text-text">Contact</a></li>
                 </ul>
             </div>
@@ -29,7 +28,6 @@ const year = new Date().getFullYear();
                 <ul class="mt-4 space-y-3 text-sm text-text-secondary">
                     <li><Link href="/mentions-legales" class="hover:text-text">Mentions légales</Link></li>
                     <li><Link href="/confidentialite" class="hover:text-text">Confidentialité du site</Link></li>
-                    <li><a :href="`${site.appUrl}/confidentialite`" class="hover:text-text">Confidentialité de l’appli</a></li>
                 </ul>
             </div>
         </div>

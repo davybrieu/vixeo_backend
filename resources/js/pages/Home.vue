@@ -19,14 +19,15 @@ import TvFrame from '../mock/TvFrame.vue';
 import TvHomeScreen from '../mock/TvHomeScreen.vue';
 import TvWhoScreen from '../mock/TvWhoScreen.vue';
 
-defineProps({ latestAndroid: { type: Object, default: null } });
+defineProps({
+    latestAndroid: { type: Object, default: null },
+    latestWindows: { type: Object, default: null },
+});
 
 const page = usePage();
 const site = page.props.site;
-const onAndroid = computed(() => page.props.platform !== 'web');
-const hasAndroid = computed(() => !!site.android.apkUrl);
-// On an Android device, installing comes first; elsewhere, opening in the browser.
-const androidFirst = computed(() => onAndroid.value && hasAndroid.value);
+// The visitor's device first: Android (phone, tablet, TV), otherwise Windows. No web app any more.
+const onAndroid = computed(() => page.props.platform !== 'windows');
 const questions = faq(site);
 
 const screens = [
@@ -34,13 +35,13 @@ const screens = [
     { icon: 'phone', label: 'Tablette Android' },
     { icon: 'tv', label: 'Android TV' },
     { icon: 'tv', label: 'Google TV' },
-    { icon: 'globe', label: 'Chrome, Edge, Firefox, Safari' },
+    { icon: 'monitor', label: 'Windows 10 et 11' },
 ];
 </script>
 
 <template>
     <Seo
-        description="Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, votre liste et votre progression sur votre téléphone Android, votre TV et votre navigateur."
+        description="Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, votre liste et votre progression sur votre téléphone Android, votre TV et votre PC Windows."
     />
 
     <!-- Hero -->
@@ -51,7 +52,7 @@ const screens = [
         />
         <div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8">
             <p class="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft">
-                <span class="size-2 rounded-full bg-accent" /> Android · Android TV · Navigateur web
+                <span class="size-2 rounded-full bg-accent" /> Android · Android TV · Windows
             </p>
             <h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
                 Vos films et séries, <span class="text-accent">sur tous vos écrans.</span>
@@ -60,14 +61,14 @@ const screens = [
                 Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV.
             </p>
             <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
-                <template v-if="androidFirst">
+                <template v-if="onAndroid">
                     <VxButton href="#installer" icon="download" size="lg">
                         {{ page.props.platform === 'tv' ? 'Installer sur la TV' : 'Installer sur Android' }}
                     </VxButton>
-                    <VxButton :href="site.appUrl" icon="globe" variant="outline" size="lg">Ouvrir dans le navigateur</VxButton>
+                    <VxButton href="#installer" icon="monitor" variant="outline" size="lg">Version Windows</VxButton>
                 </template>
                 <template v-else>
-                    <VxButton :href="site.appUrl" icon="globe" size="lg">Ouvrir dans le navigateur</VxButton>
+                    <VxButton href="#installer" icon="download" size="lg">Télécharger pour Windows</VxButton>
                     <VxButton href="#installer" icon="phone" variant="outline" size="lg">Installer sur Android</VxButton>
                 </template>
             </div>
@@ -97,9 +98,9 @@ const screens = [
     <section id="installer" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="titre-ecrans">
         <SectionHeading id="titre-ecrans" title="Choisissez votre écran.">
             Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au
-            clavier et à la souris dans le navigateur.
+            clavier et à la souris sur Windows.
         </SectionHeading>
-        <PlatformPicker class="mt-10" :latest-android="latestAndroid" />
+        <PlatformPicker class="mt-10" :latest-android="latestAndroid" :latest-windows="latestWindows" />
     </section>
 
     <!-- Features -->
@@ -120,9 +121,9 @@ const screens = [
 
                 <FeatureRow title="Pensé pour la télécommande" icon="remote" reverse>
                     Sur Android TV, tout se fait aux flèches et au bouton OK : l’élément choisi est entouré de vert. Pour
-                    vous connecter, scannez le QR code affiché sur la TV avec votre téléphone, sans taper de mot de passe.
+                    vous connecter, tapez sur votre téléphone le code affiché par la TV, sans taper de mot de passe.
                     <template #visual>
-                        <TvFrame label="La connexion de la TV : un QR code à scanner et un code court"><TvCodeScreen /></TvFrame>
+                        <TvFrame label="La connexion de la TV : un code court à taper sur le téléphone"><TvCodeScreen /></TvFrame>
                     </template>
                 </FeatureRow>
 
@@ -199,10 +200,9 @@ const screens = [
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(46,229,138,0.18),transparent_60%)]" aria-hidden="true" />
         <div class="relative mx-auto max-w-3xl px-5">
             <h2 id="titre-installer" class="text-3xl font-extrabold sm:text-5xl">Installez Vixeo en une minute.</h2>
-            <p class="mt-5 text-lg text-text-secondary">Un seul compte pour votre téléphone, votre TV et votre navigateur.</p>
+            <p class="mt-5 text-lg text-text-secondary">Un seul compte pour votre téléphone, votre TV et votre PC.</p>
             <div class="mt-9 flex flex-wrap justify-center gap-3">
                 <VxButton href="#installer" icon="download" size="lg">Installer Vixeo</VxButton>
-                <VxButton :href="site.appUrl" icon="globe" variant="outline" size="lg">Ouvrir dans le navigateur</VxButton>
             </div>
         </div>
     </section>

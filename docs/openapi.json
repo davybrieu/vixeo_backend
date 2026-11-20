@@ -453,7 +453,7 @@
         "/v1/auth/device": {
             "post": {
                 "operationId": "v1.auth.device.start",
-                "description": "Returns the code to show (and to put in the QR code: `verification_url_complete`) and\nthe secret `device_code` the TV polls with every `interval` seconds.",
+                "description": "Returns the code to show, typed in the phone's app (\u00ab Param\u00e8tres \u00bb \u2192 \u00ab Connecter une TV \u00bb),\nand the secret `device_code` the TV polls with every `interval` seconds.",
                 "summary": "Start a TV sign-in",
                 "tags": [
                     "Authentification",
@@ -487,11 +487,11 @@
                                         },
                                         "verification_url": {
                                             "type": "string",
-                                            "description": "Page where the person types the code."
+                                            "description": "The site (former apps showed it): the code is typed in the phone's app."
                                         },
                                         "verification_url_complete": {
                                             "type": "string",
-                                            "description": "Same page with the code filled in: put it in the QR code."
+                                            "description": "Former apps' QR code: the site."
                                         },
                                         "expires_in": {
                                             "type": "integer",
@@ -6923,7 +6923,8 @@
                 "description": "Platforms whose installed apps check for updates (Android covers phones and Android TV).\n",
                 "enum": [
                     "ios",
-                    "android"
+                    "android",
+                    "windows"
                 ],
                 "title": "AppPlatform"
             },

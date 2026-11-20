@@ -110,10 +110,9 @@ bibliothèque ou refusé passe au suivant. Les logos restent la propriété des 
 seulement à reconnaître la chaîne.
 
 Le `logo` d'une chaîne n'est jamais l'adresse d'origine : `App\Services\Tv\ChannelLogos` la
-remplace par `https://<API_URL>/api/v1/tv/logo/<hash>` (SHA-256 des adresses possibles). Sans
-cela, les logos ne s'affichaient pas : Flutter web télécharge les images avec `fetch` (il faut des
-en-têtes CORS, que les hébergeurs de logos n'envoient pas) et une version Android de production
-refuse les images en HTTP clair.
+remplace par `https://<API_URL>/api/v1/tv/logo/<hash>` (SHA-256 des adresses possibles) : une
+version Android de production refuse les images en HTTP clair, et l'appli ne connaît jamais le
+fournisseur.
 
 - **L'image n'est jamais stockée sur notre serveur** (décision du développeur) : à chaque demande,
   elle est lue chez le fournisseur, vérifiée sur ses octets (PNG, JPEG, WebP ou GIF ; pas de SVG ;
@@ -121,7 +120,7 @@ refuse les images en HTTP clair.
   le relais réessaie la même adresse en `http://` : l'appli reçoit toujours l'image en HTTPS,
   depuis notre domaine. Seule la correspondance hash → adresse est gardée dans le cache
   (du texte, 7 jours), pour que l'URL reste la même.
-- L'URL est **stable** pour un même logo : l'appli et le navigateur gardent l'image **7 jours**
+- L'URL est **stable** pour un même logo : l'appli garde l'image **7 jours**
   (`Cache-Control: public, max-age=604800`). La route est publique (une image se charge sans
   jeton) et limitée à 600 requêtes par minute et par IP (`throttle:tv-logos`).
 - Introuvable ou invalide : 404, et l'appli affiche son icône. Une chaîne sans aucun logo garde

@@ -1,10 +1,10 @@
 <script setup>
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import VxButton from './VxButton.vue';
 import VxLogo from './VxLogo.vue';
 
-// Floating bar: the logo (home) and "Ouvrir Vixeo". The site is one page: no menu.
-const page = usePage();
+// Floating bar: the logo (home) and "Télécharger" (the install section). The site is one page:
+// no menu. No web app to open any more.
 </script>
 
 <template>
@@ -17,7 +17,7 @@ const page = usePage();
                 <VxLogo size="h-6" />
             </Link>
 
-            <VxButton :href="page.props.site.appUrl" class="!h-10 !px-4 !text-sm">Ouvrir Vixeo</VxButton>
+            <VxButton href="/#installer" class="!h-10 !px-4 !text-sm">Télécharger</VxButton>
         </nav>
     </header>
 </template>

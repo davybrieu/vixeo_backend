@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AppPlatform;
 use App\Support\AppRelease;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -11,16 +12,17 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Android releases published on GitHub (repository `services.app_updates.github_repository`), the
- * only source of the update check (docs/mise-a-jour.md): the CI publishes each signed APK as a
- * release tagged `android-<build>`, with the APK and its `.apk.sha256` as assets. A release whose
- * title contains « [obligatoire] » forces older installs to update. Read without a token (public
+ * App releases published on GitHub (repository `services.app_updates.github_repository`), the only
+ * source of the update check (docs/mise-a-jour.md): the CI publishes each signed APK as a release
+ * tagged `android-<build>` (the APK and its `.apk.sha256`), and each Windows installer as
+ * `windows-<build>` (the `.exe` and its `.exe.sha256`). A release whose title contains
+ * « [obligatoire] » forces older installs of its platform to update. Read without a token (public
  * repository), cached 5 minutes. Any failure gives no release: the apps are then up to date, never
  * blocked.
  */
 class GitHubReleases
 {
-    private const CACHE_KEY = 'app-updates:github:android:v2';
+    private const CACHE_KEY = 'app-updates:github:%s:v3';
 
     private const TTL = 300;
 
@@ -34,23 +36,34 @@ class GitHubReleases
      */
     public function android(): array
     {
+        return $this->for(AppPlatform::Android);
+    }
+
+    /**
+     * The newest release of [$platform] and the build every install must reach. Nothing for a
+     * platform without releases (iOS).
+     *
+     * @return array{latest: ?AppRelease, minimum_build: ?int}
+     */
+    public function for(AppPlatform $platform): array
+    {
         $repository = (string) config('services.app_updates.github_repository');
-        $found = $repository === ''
+        $found = $repository === '' || $platform->fileExtension() === null
             ? null
-            : Cache::remember(self::CACHE_KEY, self::TTL, fn () => $this->fetch($repository) ?? false);
+            : Cache::remember(sprintf(self::CACHE_KEY, $platform->value), self::TTL, fn () => $this->fetch($repository, $platform) ?? false);
 
         return is_array($found)
-            ? ['latest' => $this->toRelease($found['latest']), 'minimum_build' => $found['minimum_build']]
+            ? ['latest' => $this->toRelease($found['latest'], $platform), 'minimum_build' => $found['minimum_build']]
             : ['latest' => null, 'minimum_build' => null];
     }
 
     /**
-     * Published (not draft, not pre-release) `android-<build>` releases: the newest one with its
+     * Published (not draft, not pre-release) `<platform>-<build>` releases: the newest one with its
      * checksum, and the highest build marked « [obligatoire] ».
      *
      * @return array{latest: array<string, mixed>, minimum_build: ?int}|null
      */
-    private function fetch(string $repository): ?array
+    private function fetch(string $repository, AppPlatform $platform): ?array
     {
         try {
             $response = Http::acceptJson()->connectTimeout(5)->timeout(8)
@@ -70,22 +83,23 @@ class GitHubReleases
             ->filter(fn ($item) => is_array($item)
                 && ! ($item['draft'] ?? true)
                 && ! ($item['prerelease'] ?? true)
-                && self::buildOf($item) !== null)
-            ->sortByDesc(fn (array $item) => self::buildOf($item));
+                && self::buildOf($item, $platform) !== null)
+            ->sortByDesc(fn (array $item) => self::buildOf($item, $platform));
         $latest = $releases->first();
         if ($latest === null) {
             return null;
         }
-        $latest['sha256'] = $this->checksum(collect($latest['assets'] ?? []));
-        $minimum = $releases->filter(fn (array $item) => self::isRequired($item))->map(fn (array $item) => self::buildOf($item))->max();
+        $latest['sha256'] = $this->checksum(collect($latest['assets'] ?? []), $platform);
+        $minimum = $releases->filter(fn (array $item) => self::isRequired($item))->map(fn (array $item) => self::buildOf($item, $platform))->max();
 
         return ['latest' => $latest, 'minimum_build' => $minimum === null ? null : (int) $minimum];
     }
 
-    /** SHA-256 from the `.apk.sha256` asset, or null (the app then sends people to the site). */
-    private function checksum(Collection $assets): ?string
+    /** SHA-256 from the `.apk.sha256` / `.exe.sha256` asset, or null (the app then sends people to the site). */
+    private function checksum(Collection $assets, AppPlatform $platform): ?string
     {
-        $asset = $assets->first(fn ($a) => is_array($a) && str_ends_with(strtolower((string) ($a['name'] ?? '')), '.apk.sha256'));
+        $suffix = '.'.$platform->fileExtension().'.sha256';
+        $asset = $assets->first(fn ($a) => is_array($a) && str_ends_with(strtolower((string) ($a['name'] ?? '')), $suffix));
         $url = is_array($asset) ? ($asset['browser_download_url'] ?? null) : null;
         if (! is_string($url) || ! str_starts_with($url, 'https://')) {
             return null;
@@ -103,17 +117,18 @@ class GitHubReleases
     }
 
     /** @param  array<string, mixed>  $release */
-    private function toRelease(array $release): AppRelease
+    private function toRelease(array $release, AppPlatform $platform): AppRelease
     {
         preg_match('/\bv?(\d+\.\d+\.\d+)\b/', (string) ($release['name'] ?? ''), $version);
-        $apk = collect($release['assets'] ?? [])
-            ->first(fn ($a) => is_array($a) && str_ends_with(strtolower((string) ($a['name'] ?? '')), '.apk'));
-        $url = is_array($apk) ? ($apk['browser_download_url'] ?? null) : null;
+        $suffix = '.'.$platform->fileExtension();
+        $file = collect($release['assets'] ?? [])
+            ->first(fn ($a) => is_array($a) && str_ends_with(strtolower((string) ($a['name'] ?? '')), $suffix));
+        $url = is_array($file) ? ($file['browser_download_url'] ?? null) : null;
         $notes = trim((string) ($release['body'] ?? ''));
 
         return new AppRelease(
             version: $version[1] ?? '0.0.0',
-            build: (int) self::buildOf($release),
+            build: (int) self::buildOf($release, $platform),
             required: self::isRequired($release),
             notes: $notes === '' ? null : $notes,
             // The app only installs over https, with a checksum.
@@ -124,9 +139,9 @@ class GitHubReleases
     }
 
     /** @param  array<string, mixed>  $release */
-    private static function buildOf(array $release): ?int
+    private static function buildOf(array $release, AppPlatform $platform): ?int
     {
-        return preg_match('/^android-(\d+)$/', (string) ($release['tag_name'] ?? ''), $match) ? (int) $match[1] : null;
+        return preg_match('/^'.$platform->value.'-(\d+)$/', (string) ($release['tag_name'] ?? ''), $match) ? (int) $match[1] : null;
     }
 
     /** @param  array<string, mixed>  $release */

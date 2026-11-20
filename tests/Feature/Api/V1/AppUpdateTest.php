@@ -119,8 +119,34 @@ it('has no iOS app yet: iOS is up to date, without asking GitHub', function () {
     Http::assertNothingSent();
 });
 
+it('offers the newest Windows installer, apart from the Android releases', function () {
+    fakeGithub([
+        githubRelease(20),
+        githubRelease(19, [
+            'tag_name' => 'windows-19',
+            'name' => 'Vixeo Windows v1.19.0 - build 19',
+            'assets' => [
+                ['name' => 'vixeo-setup-19.exe', 'browser_download_url' => 'https://github.com/davybrieu/vixeo_frontend/releases/download/windows-19/vixeo-setup-19.exe'],
+                ['name' => 'vixeo-setup-19.exe.sha256', 'browser_download_url' => 'https://github.com/davybrieu/vixeo_frontend/releases/download/windows-19/vixeo-setup-19.exe.sha256'],
+            ],
+        ]),
+    ]);
+
+    checkUpdate('windows', 10)
+        ->assertOk()
+        ->assertJsonPath('status', 'update_available')
+        ->assertJsonPath('latest.build', 19)
+        ->assertJsonPath('latest.version', '1.19.0')
+        ->assertJsonPath('latest.download_url', 'https://github.com/davybrieu/vixeo_frontend/releases/download/windows-19/vixeo-setup-19.exe')
+        ->assertJsonPath('latest.sha256', str_repeat('ab', 32))
+        ->assertJsonPath('update_url', 'https://www.vixeo.test/#installer');
+    checkUpdate('windows', 19)->assertJsonPath('status', 'up_to_date');
+    // Android keeps its own releases.
+    checkUpdate('android', 19)->assertJsonPath('latest.build', 20);
+});
+
 it('validates the platform and the build', function () {
-    $this->getJson('/api/v1/app/update?platform=windows&build=x')
+    $this->getJson('/api/v1/app/update?platform=macos&build=x')
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['platform', 'build']);
 });
