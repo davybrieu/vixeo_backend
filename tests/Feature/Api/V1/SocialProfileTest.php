@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Profile;
+use App\Models\ProfileItem;
 use App\Models\TmdbRating;
 use App\Models\User;
 
@@ -54,4 +55,36 @@ it('shows a member\'s public page, with the avatar to draw it', function () {
         ->assertOk()
         ->assertJsonPath('data.0.username', 'lea')
         ->assertJsonPath('data.0.avatar', $this->member->avatar);
+});
+
+it('lists a member\'s « Favoris » ❤ and the people they follow, with their counts', function () {
+    $item = fn (array $attributes) => ProfileItem::forceCreate($attributes + [
+        'profile_id' => $this->member->id, 'source' => 'tmdb', 'revision' => 1,
+    ]);
+    $item(['item_id' => 'movie:550', 'type' => 'movie', 'title' => 'Fight Club', 'year' => 1999,
+        'poster_url' => 'https://image.tmdb.org/t/p/w342/fc.jpg', 'is_liked' => true, 'liked_at' => now()->subDay()]);
+    $item(['item_id' => 'tv:1399', 'type' => 'tv', 'title' => 'Game of Thrones', 'is_liked' => true, 'liked_at' => now()]);
+    // In « Ma liste » only: not a favorite.
+    $item(['item_id' => 'movie:13', 'type' => 'movie', 'title' => 'Forrest Gump', 'is_favorite' => true, 'favorited_at' => now()]);
+    $item(['item_id' => 'person:287', 'type' => 'person', 'title' => 'Brad Pitt',
+        'poster_url' => 'https://image.tmdb.org/t/p/w185/brad.jpg', 'is_followed' => true, 'followed_at' => now()]);
+
+    $this->getJson('/api/v1/social/profiles/lea/liked')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['Game of Thrones', 'Fight Club'])
+        ->assertJsonPath('data.1.item_id', 'movie:550')
+        ->assertJsonPath('data.1.poster_url', 'https://image.tmdb.org/t/p/w342/fc.jpg');
+
+    $this->getJson('/api/v1/social/profiles/lea/people')
+        ->assertOk()
+        ->assertExactJson(['data' => [[
+            'id' => 287, 'item_id' => 'person:287', 'name' => 'Brad Pitt',
+            'profile_url' => 'https://image.tmdb.org/t/p/w185/brad.jpg',
+        ]], 'meta' => ['current_page' => 1, 'last_page' => 1]]);
+
+    $this->getJson('/api/v1/social/profiles/lea')
+        ->assertOk()
+        ->assertJsonPath('data.liked_count', 2)
+        ->assertJsonPath('data.people_count', 1)
+        ->assertJsonPath('data.list_count', 1);
 });

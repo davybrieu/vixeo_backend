@@ -13,4 +13,6 @@ enum ItemType: string
     case Channel = 'channel';
     /** Any other video (local file…). */
     case Video = 'video';
+    /** A TMDb person (actor, director…) the profile follows: item id "person:287". */
+    case Person = 'person';
 }

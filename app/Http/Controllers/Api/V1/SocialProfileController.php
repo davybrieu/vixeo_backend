@@ -127,6 +127,48 @@ class SocialProfileController extends Controller
         ]]);
     }
 
+    /**
+     * A member's « Favoris » ❤ (movies and TV shows), the most recently added first.
+     */
+    public function liked(Request $request, string $username): JsonResponse
+    {
+        $this->assertAdultViewer($request);
+        $profile = $this->publicProfile($username);
+        $items = ProfileItem::query()->where('profile_id', $profile->id)
+            ->where('is_liked', true)->whereIn('type', ['movie', 'tv'])
+            ->latest('liked_at')->latest('id')->paginate(30);
+
+        return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
+            'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
+            'year' => $item->year, 'poster_url' => $item->poster_url,
+        ]), 'meta' => [
+            'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
+        ]]);
+    }
+
+    /**
+     * The people (actors, directors…) a member follows, the most recently followed first.
+     *
+     * `id` is the TMDb person id, `profile_url` their photo (null without one).
+     */
+    public function people(Request $request, string $username): JsonResponse
+    {
+        $this->assertAdultViewer($request);
+        $profile = $this->publicProfile($username);
+        $items = ProfileItem::query()->where('profile_id', $profile->id)
+            ->where('is_followed', true)->where('type', 'person')
+            ->latest('followed_at')->latest('id')->paginate(30);
+
+        return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
+            'id' => (int) str_replace('person:', '', $item->item_id),
+            'item_id' => $item->item_id,
+            'name' => $item->title,
+            'profile_url' => $item->poster_url,
+        ]), 'meta' => [
+            'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
+        ]]);
+    }
+
     private function connections(Request $request, string $username, string $direction): JsonResponse
     {
         $this->assertAdultViewer($request);
@@ -163,6 +205,8 @@ class SocialProfileController extends Controller
                 'tmdbRatings as reviews_count',
                 'items as watched_count' => fn ($query) => $query->where('is_watched', true)->whereIn('type', ['movie', 'tv']),
                 'items as list_count' => fn ($query) => $query->where('is_favorite', true)->whereIn('type', ['movie', 'tv']),
+                'items as liked_count' => fn ($query) => $query->where('is_liked', true)->whereIn('type', ['movie', 'tv']),
+                'items as people_count' => fn ($query) => $query->where('is_followed', true)->where('type', 'person'),
             ])
             ->firstOrFail();
     }
@@ -177,6 +221,10 @@ class SocialProfileController extends Controller
             'reviews_count' => $profile->reviews_count ?? 0,
             'watched_count' => $profile->watched_count ?? 0,
             'list_count' => $profile->list_count ?? 0,
+            /** « Favoris » ❤ (movies and TV shows). */
+            'liked_count' => $profile->liked_count ?? 0,
+            /** Followed people (actors, directors…). */
+            'people_count' => $profile->people_count ?? 0,
         ];
     }
 }

@@ -40,6 +40,16 @@ class ProfileItemResource extends JsonResource
             'watched_at' => $this->watched_at,
             'watched_changed_at' => $this->watched_changed_at,
 
+            /** « Favoris » ❤ (movies and TV shows). */
+            'is_liked' => $this->is_liked,
+            'liked_at' => $this->liked_at,
+            'liked_changed_at' => $this->liked_changed_at,
+
+            /** A followed person (type "person"). */
+            'is_followed' => $this->is_followed,
+            'followed_at' => $this->followed_at,
+            'followed_changed_at' => $this->followed_changed_at,
+
             'updated_at' => $this->updated_at,
         ];
     }

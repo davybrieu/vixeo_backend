@@ -4544,6 +4544,34 @@
                                                                 ]
                                                             }
                                                         ]
+                                                    },
+                                                    "liked_count": {
+                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "people_count": {
+                                                        "description": "Followed people (actors, directors\u2026).",
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
                                                     }
                                                 },
                                                 "required": [
@@ -4556,7 +4584,9 @@
                                                     "following_count",
                                                     "reviews_count",
                                                     "watched_count",
-                                                    "list_count"
+                                                    "list_count",
+                                                    "liked_count",
+                                                    "people_count"
                                                 ]
                                             }
                                         }
@@ -4705,6 +4735,34 @@
                                                         }
                                                     ]
                                                 },
+                                                "liked_count": {
+                                                    "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "integer",
+                                                            "enum": [
+                                                                0
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "people_count": {
+                                                    "description": "Followed people (actors, directors\u2026).",
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "integer",
+                                                            "enum": [
+                                                                0
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
                                                 "is_following": {
                                                     "type": "boolean"
                                                 },
@@ -4723,6 +4781,8 @@
                                                 "reviews_count",
                                                 "watched_count",
                                                 "list_count",
+                                                "liked_count",
+                                                "people_count",
                                                 "is_following",
                                                 "is_self"
                                             ]
@@ -4851,6 +4911,34 @@
                                                                 ]
                                                             }
                                                         ]
+                                                    },
+                                                    "liked_count": {
+                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "people_count": {
+                                                        "description": "Followed people (actors, directors\u2026).",
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
                                                     }
                                                 },
                                                 "required": [
@@ -4863,7 +4951,9 @@
                                                     "following_count",
                                                     "reviews_count",
                                                     "watched_count",
-                                                    "list_count"
+                                                    "list_count",
+                                                    "liked_count",
+                                                    "people_count"
                                                 ]
                                             }
                                         },
@@ -5007,6 +5097,34 @@
                                                                 ]
                                                             }
                                                         ]
+                                                    },
+                                                    "liked_count": {
+                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "people_count": {
+                                                        "description": "Followed people (actors, directors\u2026).",
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
                                                     }
                                                 },
                                                 "required": [
@@ -5019,7 +5137,9 @@
                                                     "following_count",
                                                     "reviews_count",
                                                     "watched_count",
-                                                    "list_count"
+                                                    "list_count",
+                                                    "liked_count",
+                                                    "people_count"
                                                 ]
                                             }
                                         },
@@ -5273,6 +5393,176 @@
                                                     "title",
                                                     "year",
                                                     "poster_url"
+                                                ]
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/social/profiles/{username}/liked": {
+            "get": {
+                "operationId": "v1.social.profiles.liked",
+                "summary": "A member's \u00ab Favoris \u00bb \u2764 (movies and TV shows), the most recently added first",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {
+                                                        "$ref": "#/components/schemas/ItemType"
+                                                    },
+                                                    "item_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "year": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "poster_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "type",
+                                                    "item_id",
+                                                    "title",
+                                                    "year",
+                                                    "poster_url"
+                                                ]
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/social/profiles/{username}/people": {
+            "get": {
+                "operationId": "v1.social.profiles.people",
+                "description": "`id` is the TMDb person id, `profile_url` their photo (null without one).",
+                "summary": "The people (actors, directors\u2026) a member follows, the most recently followed first",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "item_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "profile_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "item_id",
+                                                    "name",
+                                                    "profile_url"
                                                 ]
                                             }
                                         },
@@ -7369,13 +7659,14 @@
             },
             "ItemType": {
                 "type": "string",
-                "description": "Kind of content a profile item points to (any source: TMDb, live TV channels\u2026).\n| |\n|---|\n| `movie` <br/>  |\n| `tv` <br/> A whole TV show (e.g. favorite series). |\n| `episode` <br/>  |\n| `channel` <br/> Live TV channel (FAST). |\n| `video` <br/> Any other video (local file\u2026). |",
+                "description": "Kind of content a profile item points to (any source: TMDb, live TV channels\u2026).\n| |\n|---|\n| `movie` <br/>  |\n| `tv` <br/> A whole TV show (e.g. favorite series). |\n| `episode` <br/>  |\n| `channel` <br/> Live TV channel (FAST). |\n| `video` <br/> Any other video (local file\u2026). |\n| `person` <br/> A TMDb person (actor, director\u2026) the profile follows: item id \"person:287\". |",
                 "enum": [
                     "movie",
                     "tv",
                     "episode",
                     "channel",
-                    "video"
+                    "video",
+                    "person"
                 ],
                 "title": "ItemType"
             },
@@ -8092,6 +8383,42 @@
                         ],
                         "format": "date-time"
                     },
+                    "is_liked": {
+                        "type": "boolean",
+                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
+                    },
+                    "liked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "liked_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "is_followed": {
+                        "type": "boolean",
+                        "description": "A followed person (type \"person\")."
+                    },
+                    "followed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "followed_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
                     "updated_at": {
                         "type": [
                             "string",
@@ -8122,6 +8449,12 @@
                     "is_watched",
                     "watched_at",
                     "watched_changed_at",
+                    "is_liked",
+                    "liked_at",
+                    "liked_changed_at",
+                    "is_followed",
+                    "followed_at",
+                    "followed_changed_at",
                     "updated_at"
                 ],
                 "title": "ProfileItemResource"
@@ -9635,7 +9968,7 @@
                                 },
                                 "favorite": {
                                     "type": "object",
-                                    "description": "\"Ma liste\": added or removed. At least one of favorite, progress, watched is required.",
+                                    "description": "\"Ma liste\": added or removed. At least one of favorite, progress, watched, liked, followed is required.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"
@@ -9677,6 +10010,32 @@
                                 "watched": {
                                     "type": "object",
                                     "description": "Marked as watched or not watched.",
+                                    "properties": {
+                                        "value": {
+                                            "type": "boolean"
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    }
+                                },
+                                "liked": {
+                                    "type": "object",
+                                    "description": "\u00ab Favoris \u00bb \u2764 (a movie or a TV show): added or removed.",
+                                    "properties": {
+                                        "value": {
+                                            "type": "boolean"
+                                        },
+                                        "at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    }
+                                },
+                                "followed": {
+                                    "type": "object",
+                                    "description": "A person (type \"person\", item id \"person:287\") followed or no longer followed.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"

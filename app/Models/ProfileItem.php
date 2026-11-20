@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Synced state of one content for one profile (Ma liste, progress, watched).
+ * Synced state of one content for one profile (Ma liste, progress, watched, « Favoris » ❤, a
+ * followed person).
  * Written only through App\Services\ProfileSync.
  */
 #[Fillable(['source', 'item_id', 'type', 'title', 'year', 'poster_url', 'backdrop_url', 'parent_item_id', 'season_number', 'episode_number'])]
@@ -25,6 +26,8 @@ class ProfileItem extends Model
         'is_favorite' => false,
         'position_ms' => 0,
         'is_watched' => false,
+        'is_liked' => false,
+        'is_followed' => false,
     ];
 
     protected function casts(): array
@@ -44,6 +47,12 @@ class ProfileItem extends Model
             'is_watched' => 'boolean',
             'watched_at' => 'datetime',
             'watched_changed_at' => 'datetime',
+            'is_liked' => 'boolean',
+            'liked_at' => 'datetime',
+            'liked_changed_at' => 'datetime',
+            'is_followed' => 'boolean',
+            'followed_at' => 'datetime',
+            'followed_changed_at' => 'datetime',
             'revision' => 'integer',
         ];
     }
@@ -54,13 +63,15 @@ class ProfileItem extends Model
         return $this->belongsTo(Profile::class);
     }
 
-    /** Items that carry some state (an item can be fully reset: not in Ma liste, no progress, not watched). */
+    /** Items that carry some state (an item can be fully reset: not in Ma liste, no progress, not watched, not liked, not followed). */
     #[Scope]
     protected function notEmpty(Builder $query): void
     {
         $query->where(fn (Builder $q) => $q
             ->where('is_favorite', true)
             ->orWhere('is_watched', true)
+            ->orWhere('is_liked', true)
+            ->orWhere('is_followed', true)
             ->orWhere('position_ms', '>', 0)
             ->orWhereNotNull('last_engaged_at'));
     }

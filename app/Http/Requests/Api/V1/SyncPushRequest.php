@@ -36,8 +36,8 @@ class SyncPushRequest extends FormRequest
             'changes.*.season_number' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
             'changes.*.episode_number' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
 
-            /** "Ma liste": added or removed. At least one of favorite, progress, watched is required. */
-            'changes.*.favorite' => ['required_without_all:changes.*.progress,changes.*.watched', 'array:value,at'],
+            /** "Ma liste": added or removed. At least one of favorite, progress, watched, liked, followed is required. */
+            'changes.*.favorite' => ['required_without_all:changes.*.progress,changes.*.watched,changes.*.liked,changes.*.followed', 'array:value,at'],
             'changes.*.favorite.value' => ['required_with:changes.*.favorite', 'boolean'],
             /** When the change happened on the device (ISO 8601). */
             'changes.*.favorite.at' => ['required_with:changes.*.favorite', 'date'],
@@ -54,6 +54,16 @@ class SyncPushRequest extends FormRequest
             'changes.*.watched' => ['sometimes', 'array:value,at'],
             'changes.*.watched.value' => ['required_with:changes.*.watched', 'boolean'],
             'changes.*.watched.at' => ['required_with:changes.*.watched', 'date'],
+
+            /** « Favoris » ❤ (a movie or a TV show): added or removed. */
+            'changes.*.liked' => ['sometimes', 'array:value,at'],
+            'changes.*.liked.value' => ['required_with:changes.*.liked', 'boolean'],
+            'changes.*.liked.at' => ['required_with:changes.*.liked', 'date'],
+
+            /** A person (type "person", item id "person:287") followed or no longer followed. */
+            'changes.*.followed' => ['sometimes', 'array:value,at'],
+            'changes.*.followed.value' => ['required_with:changes.*.followed', 'boolean'],
+            'changes.*.followed.at' => ['required_with:changes.*.followed', 'date'],
         ];
     }
 

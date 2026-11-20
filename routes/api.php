@@ -71,6 +71,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('profiles/{username}/following', [SocialProfileController::class, 'following'])->name('profiles.following');
         Route::get('profiles/{username}/reviews', [SocialProfileController::class, 'reviews'])->name('profiles.reviews');
         Route::get('profiles/{username}/list', [SocialProfileController::class, 'favoritesList'])->name('profiles.list');
+        Route::get('profiles/{username}/liked', [SocialProfileController::class, 'liked'])->name('profiles.liked');
+        Route::get('profiles/{username}/people', [SocialProfileController::class, 'people'])->name('profiles.people');
     });
 
     // Public browsing and playback: no account or profile is required.

@@ -10,7 +10,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Per-profile sync of "Ma liste" (favorite), playback progress and watched state.
+ * Per-profile sync of "Ma liste" (favorite), playback progress, watched state, « Favoris » ❤
+ * (liked) and followed people (followed).
  *
  * - Every write gives the item a new revision (per-profile counter). Clients pull
  *   "everything after revision N" and keep the last revision as their cursor.
@@ -120,6 +121,12 @@ class ProfileSync
             }
         }
 
+        foreach (['liked', 'followed'] as $group) {
+            if (isset($change[$group])) {
+                $this->toggle($item, $group, (bool) $change[$group]['value'], $this->time($change[$group]['at']));
+            }
+        }
+
         if (isset($change['progress'])) {
             $progress = $change['progress'];
             $at = $this->time($progress['at']);
@@ -144,6 +151,20 @@ class ProfileSync
                 $item->watched_changed_at = $at;
             }
         }
+    }
+
+    /**
+     * A yes / no group with its date (liked, followed): set when the change is the most recent.
+     * Setting it again keeps the original date (sort "ajoutés récemment").
+     */
+    private function toggle(ProfileItem $item, string $group, bool $value, CarbonImmutable $at): void
+    {
+        if (! $this->isNewer($at, $item->{"{$group}_changed_at"})) {
+            return;
+        }
+        $item->{"{$group}_at"} = $value ? ($item->{"is_{$group}"} ? ($item->{"{$group}_at"} ?? $at) : $at) : null;
+        $item->{"is_{$group}"} = $value;
+        $item->{"{$group}_changed_at"} = $at;
     }
 
     /** Ties go to the incoming change: replaying the same push is harmless. */

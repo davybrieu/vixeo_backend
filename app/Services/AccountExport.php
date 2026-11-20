@@ -84,6 +84,10 @@ class AccountExport
                     'last_engaged_at' => $i->last_engaged_at?->toIso8601String(),
                     'is_watched' => $i->is_watched,
                     'watched_at' => $i->watched_at?->toIso8601String(),
+                    'is_liked' => $i->is_liked,
+                    'liked_at' => $i->liked_at?->toIso8601String(),
+                    'is_followed' => $i->is_followed,
+                    'followed_at' => $i->followed_at?->toIso8601String(),
                 ])->values()->all(),
                 // Stream preferences: favorites (❤) and the last stream that worked per content.
                 'stream_preferences' => $p->streams->sortByDesc('last_worked_at')->map(fn (ProfileStream $s) => [

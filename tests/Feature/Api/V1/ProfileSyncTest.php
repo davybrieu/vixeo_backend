@@ -167,13 +167,49 @@ it('keeps every type in "Ma liste", live TV channels included', function () {
         ->assertJsonPath('data.0.is_favorite', true)
         ->assertJsonPath('data.1.type', 'episode')
         ->assertJsonPath('data.2.type', 'channel')
-        ->assertJsonMissingPath('data.0.is_liked');
+        ->assertJsonPath('data.0.is_liked', false);
 });
 
-it('no longer has "Favoris" (liked): a liked-only change is refused', function () {
+it('syncs « Favoris » ❤ apart from « Ma liste », the most recent change winning', function () {
     push([change(['liked' => ['value' => true, 'at' => '2026-06-01T10:00:00Z']])])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('changes.0.favorite');
+        ->assertOk()
+        ->assertJsonPath('data.0.is_liked', true)
+        ->assertJsonPath('data.0.liked_at', '2026-06-01T10:00:00.000000Z')
+        ->assertJsonPath('data.0.is_favorite', false);
+
+    // An older "unlike" from an offline device loses; liking again keeps the first date.
+    push([change(['liked' => ['value' => false, 'at' => '2026-06-01T09:00:00Z']])])->assertJsonPath('data.0.is_liked', true);
+    push([change(['liked' => ['value' => true, 'at' => '2026-06-01T11:00:00Z']])])
+        ->assertJsonPath('data.0.liked_at', '2026-06-01T10:00:00.000000Z');
+
+    // « Ma liste » does not touch it.
+    push([change(['favorite' => ['value' => true, 'at' => '2026-06-01T12:00:00Z']])])
+        ->assertJsonPath('data.0.is_favorite', true)
+        ->assertJsonPath('data.0.is_liked', true);
+
+    push([change(['liked' => ['value' => false, 'at' => '2026-06-01T13:00:00Z']])])
+        ->assertJsonPath('data.0.is_liked', false)
+        ->assertJsonPath('data.0.liked_at', null);
+});
+
+it('syncs the people a profile follows', function () {
+    $person = fn (array $followed) => change([
+        'item_id' => 'person:287', 'type' => 'person', 'title' => 'Brad Pitt', 'year' => null,
+        'poster_url' => 'https://image.tmdb.org/t/p/w185/brad.jpg', 'followed' => $followed,
+    ]);
+
+    push([$person(['value' => true, 'at' => '2026-06-01T10:00:00Z'])])
+        ->assertOk()
+        ->assertJsonPath('data.0.type', 'person')
+        ->assertJsonPath('data.0.is_followed', true)
+        ->assertJsonPath('data.0.followed_at', '2026-06-01T10:00:00.000000Z');
+
+    // A new device downloads it.
+    pull()->assertJsonCount(1, 'data')->assertJsonPath('data.0.title', 'Brad Pitt');
+
+    push([$person(['value' => false, 'at' => '2026-06-01T11:00:00Z'])])->assertJsonPath('data.0.is_followed', false);
+    // No longer followed: nothing left to download.
+    pull()->assertJsonCount(0, 'data');
 });
 
 it('paginates pulls', function () {
