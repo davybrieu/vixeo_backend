@@ -122,13 +122,14 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('subtitles/{file}', [PlaybackController::class, 'subtitleFile'])
             ->whereNumber('file')->middleware('throttle:subtitles')->name('subtitles.file');
 
-        // Stream sources (FrenchStream, Wiflix, Frembed via Node scraper).
+        // Stream sources: the plug-ins' streams (Stremio add-ons, docs/plugins.md). No provider of
+        // the server any more (no scraper, no extractor).
         Route::get('sources/providers', [StreamController::class, 'providers'])->name('sources.providers');
         Route::get('movie/{id}/sources', [StreamController::class, 'movieSources'])
             ->whereNumber('id')->name('movie.sources');
         Route::get('tv/{id}/season/{season}/episode/{episode}/sources', [StreamController::class, 'episodeSources'])
             ->whereNumber(['id', 'season', 'episode'])->name('episode.sources');
-        // Resolve a chosen player link into a playable stream (docs/lecture.md).
+        // Former apps: the server no longer resolves player links (always 502).
         Route::post('resolve', [StreamController::class, 'resolve'])
             ->middleware('throttle:resolve')->name('resolve');
     });

@@ -85,5 +85,6 @@
     "This plug-in offers no sources for movies or TV shows.": "Ce plug-in ne propose pas de sources de films ou de séries.",
     "This plug-in is not installed.": "Ce plug-in n’est pas installé.",
     "This plug-in is temporarily unavailable.": "Ce plug-in est momentanément indisponible.",
-    "Linking a TMDb account is no longer offered: your reviews stay in Vixeo.": "La liaison d’un compte TMDb n’est plus proposée : vos avis restent dans Vixeo."
+    "Linking a TMDb account is no longer offered: your reviews stay in Vixeo.": "La liaison d’un compte TMDb n’est plus proposée : vos avis restent dans Vixeo.",
+    "This source cannot be played.": "Cette source n’est pas lisible."
 }

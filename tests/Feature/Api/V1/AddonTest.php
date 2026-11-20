@@ -50,8 +50,6 @@ beforeEach(function () {
     config([
         'services.tmdb.token' => 'test-token',
         'services.tmdb.base_url' => 'https://api.themoviedb.org/3',
-        'services.scraper.base_url' => '',
-        'services.scraper.providers' => [],
     ]);
     Http::preventStrayRequests();
 
@@ -301,6 +299,29 @@ it('asks a plug-in that only knows TMDb ids by its TMDb id, and reports a plug-i
 
     $this->getJson("/api/v1/catalog/movie/551/sources?provider=addon:{$addon->id}")->assertStatus(503);
     $this->getJson('/api/v1/catalog/movie/550/sources?provider=addon:999')->assertNotFound();
+});
+
+it('only has the plug-ins\' streams: every plug-in without a provider, nothing for a former provider of the server', function () {
+    installAddon($this->user, ['idPrefixes' => ['tmdb:']]);
+    installAddon($this->user, ['id' => 'down', 'name' => 'En panne', 'idPrefixes' => ['tmdb:']], 'down.test');
+    Http::fake([
+        'api.themoviedb.org/3/movie/550/external_ids*' => Http::response(['imdb_id' => 'tt0137523']),
+        'addon.test/stream/movie/tmdb:550.json' => Http::response(['streams' => [['url' => 'https://cdn.test/fc.mp4']]]),
+        'down.test/*' => Http::response('', 503),
+    ]);
+
+    // Every plug-in; the one down leaves the others.
+    $this->getJson('/api/v1/catalog/movie/550/sources')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.stream', 'https://cdn.test/fc.mp4');
+
+    // No scraper, no extractor on the server any more (developer's request).
+    $this->getJson('/api/v1/catalog/movie/550/sources?provider=frenchstream')->assertOk()->assertExactJson(['data' => []]);
+    $this->postJson('/api/v1/catalog/resolve', ['url' => 'https://voe.sx/e/abc'])
+        ->assertStatus(502)
+        ->assertJsonPath('message', 'Cette source n’est pas lisible.');
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), '3100') || str_contains($request->url(), 'scraper'));
 });
 
 // -------------------------------------------------------------------------------------------

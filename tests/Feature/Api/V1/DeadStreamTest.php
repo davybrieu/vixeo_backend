@@ -3,9 +3,7 @@
 use App\Models\DeadStream;
 use App\Models\User;
 use App\Services\Playback\DeadStreams;
-use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
-use Tests\Feature\Api\V1\Catalog\TmdbFixtures;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -36,29 +34,13 @@ it('ignores a report older than a day', function () {
     expect(app(DeadStreams::class)->isDead('frenchstream', 'https://voe.sx/e/dead'))->toBeFalse();
 });
 
-it('drops a stream reported as dead from the sources list', function () {
-    config([
-        'services.tmdb.token' => 'test-token',
-        'services.tmdb.api_key' => null,
-        'services.tmdb.base_url' => 'https://api.themoviedb.org/3',
-        'services.scraper.base_url' => 'http://scraper.test',
-        'services.scraper.timeout' => 5,
-    ]);
-    Http::preventStrayRequests();
-    Http::fake([
-        'api.themoviedb.org/3/movie/550*' => Http::response(TmdbFixtures::movie()),
-        'scraper.test/sources' => Http::response(['sources' => [
-            ['provider' => 'frembed', 'name' => 'Frembed (VF)', 'url' => 'https://voe.sx/e/dead'],
-            ['provider' => 'frembed', 'name' => 'Frembed (VOSTFR)', 'url' => 'https://voe.sx/e/ok'],
-        ]]),
-    ]);
+it('drops a stream reported as dead from a list of sources', function () {
+    $this->postJson('/api/v1/catalog/streams/dead', ['source' => 'addon:1', 'stream_id' => 'https://cdn.test/dead.mp4'])->assertOk();
 
-    $this->postJson('/api/v1/catalog/streams/dead', ['source' => 'frembed', 'stream_id' => 'https://voe.sx/e/dead'])->assertOk();
-
-    $this->getJson('/api/v1/catalog/movie/550/sources')
-        ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.url', 'https://voe.sx/e/ok');
+    expect(app(DeadStreams::class)->filter([
+        ['provider' => 'addon:1', 'name' => 'Mort', 'url' => 'https://cdn.test/dead.mp4'],
+        ['provider' => 'addon:1', 'name' => 'Vivant', 'url' => 'https://cdn.test/ok.mp4'],
+    ]))->toBe([['provider' => 'addon:1', 'name' => 'Vivant', 'url' => 'https://cdn.test/ok.mp4']]);
 });
 
 it('validates the report', function () {

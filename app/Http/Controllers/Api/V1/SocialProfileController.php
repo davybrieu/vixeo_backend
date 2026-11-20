@@ -216,15 +216,15 @@ class SocialProfileController extends Controller
         return [
             'id' => $profile->id, 'username' => $profile->username, 'name' => $profile->name,
             'avatar' => $profile->avatar, 'bio' => $profile->bio,
-            'followers_count' => $profile->followers_count ?? $profile->followers()->count(),
-            'following_count' => $profile->following_count ?? $profile->following()->count(),
-            'reviews_count' => $profile->reviews_count ?? 0,
-            'watched_count' => $profile->watched_count ?? 0,
-            'list_count' => $profile->list_count ?? 0,
+            'followers_count' => (int) ($profile->followers_count ?? $profile->followers()->count()),
+            'following_count' => (int) ($profile->following_count ?? $profile->following()->count()),
+            'reviews_count' => (int) ($profile->reviews_count ?? 0),
+            'watched_count' => (int) ($profile->watched_count ?? 0),
+            'list_count' => (int) ($profile->list_count ?? 0),
             /** « Favoris » ❤ (movies and TV shows). */
-            'liked_count' => $profile->liked_count ?? 0,
+            'liked_count' => (int) ($profile->liked_count ?? 0),
             /** Followed people (actors, directors…). */
-            'people_count' => $profile->people_count ?? 0,
+            'people_count' => (int) ($profile->people_count ?? 0),
         ];
     }
 }

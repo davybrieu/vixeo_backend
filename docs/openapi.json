@@ -4485,93 +4485,27 @@
                                                         ]
                                                     },
                                                     "followers_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "minimum": 0
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "following_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "minimum": 0
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "reviews_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "watched_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "list_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "liked_count": {
-                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer",
+                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
                                                     },
                                                     "people_count": {
-                                                        "description": "Followed people (actors, directors\u2026).",
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer",
+                                                        "description": "Followed people (actors, directors\u2026)."
                                                     }
                                                 },
                                                 "required": [
@@ -4675,93 +4609,27 @@
                                                     ]
                                                 },
                                                 "followers_count": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "minimum": 0
-                                                        }
-                                                    ]
+                                                    "type": "integer"
                                                 },
                                                 "following_count": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "minimum": 0
-                                                        }
-                                                    ]
+                                                    "type": "integer"
                                                 },
                                                 "reviews_count": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "enum": [
-                                                                0
-                                                            ]
-                                                        }
-                                                    ]
+                                                    "type": "integer"
                                                 },
                                                 "watched_count": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "enum": [
-                                                                0
-                                                            ]
-                                                        }
-                                                    ]
+                                                    "type": "integer"
                                                 },
                                                 "list_count": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "enum": [
-                                                                0
-                                                            ]
-                                                        }
-                                                    ]
+                                                    "type": "integer"
                                                 },
                                                 "liked_count": {
-                                                    "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "enum": [
-                                                                0
-                                                            ]
-                                                        }
-                                                    ]
+                                                    "type": "integer",
+                                                    "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
                                                 },
                                                 "people_count": {
-                                                    "description": "Followed people (actors, directors\u2026).",
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "enum": [
-                                                                0
-                                                            ]
-                                                        }
-                                                    ]
+                                                    "type": "integer",
+                                                    "description": "Followed people (actors, directors\u2026)."
                                                 },
                                                 "is_following": {
                                                     "type": "boolean"
@@ -4852,93 +4720,27 @@
                                                         ]
                                                     },
                                                     "followers_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "minimum": 0
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "following_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "minimum": 0
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "reviews_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "watched_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "list_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "liked_count": {
-                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer",
+                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
                                                     },
                                                     "people_count": {
-                                                        "description": "Followed people (actors, directors\u2026).",
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer",
+                                                        "description": "Followed people (actors, directors\u2026)."
                                                     }
                                                 },
                                                 "required": [
@@ -5038,93 +4840,27 @@
                                                         ]
                                                     },
                                                     "followers_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "minimum": 0
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "following_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "minimum": 0
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "reviews_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "watched_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "list_count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer"
                                                     },
                                                     "liked_count": {
-                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows).",
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer",
+                                                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
                                                     },
                                                     "people_count": {
-                                                        "description": "Followed people (actors, directors\u2026).",
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
+                                                        "type": "integer",
+                                                        "description": "Followed people (actors, directors\u2026)."
                                                     }
                                                 },
                                                 "required": [
@@ -5779,7 +5515,7 @@
         "/v1/catalog/sources/providers": {
             "get": {
                 "operationId": "v1.catalog.sources.providers",
-                "summary": "Providers the sources panel shows, so the app can list them before any search runs: those\nof the server, then the account's plug-ins that serve streams (`addon:12`, docs/plugins.md)",
+                "summary": "Providers the sources panel shows, so the app can list them before any search runs: the\naccount's plug-ins that serve streams (`addon:12`, docs/plugins.md)",
                 "tags": [
                     "Stream"
                 ],
@@ -5823,7 +5559,7 @@
         "/v1/catalog/movie/{id}/sources": {
             "get": {
                 "operationId": "v1.catalog.movie.sources",
-                "summary": "Links of a movie. A plug-in provider (`addon:12`) gives streams already playable\n(`stream`, `headers`): no `resolve` needed",
+                "summary": "Links of a movie: the streams of one plug-in (`provider=addon:12`), already playable\n(`stream`, `headers`), or of every plug-in without `provider`. Another provider (a former\nprovider of the server) has no link",
                 "tags": [
                     "Stream"
                 ],
@@ -5837,17 +5573,9 @@
                         }
                     },
                     {
-                        "name": "extract",
-                        "in": "query",
-                        "description": "Resolve each link into a playable stream (slower, hits the scraper).",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
                         "name": "provider",
                         "in": "query",
-                        "description": "Keep only the links of that provider.",
+                        "description": "Only the streams of that plug-in (`addon:12`); all of them when left out.",
                         "schema": {
                             "type": [
                                 "string",
@@ -5918,17 +5646,9 @@
                         }
                     },
                     {
-                        "name": "extract",
-                        "in": "query",
-                        "description": "Resolve each link into a playable stream (slower, hits the scraper).",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
                         "name": "provider",
                         "in": "query",
-                        "description": "Keep only the links of that provider.",
+                        "description": "Only the streams of that plug-in (`addon:12`); all of them when left out.",
                         "schema": {
                             "type": [
                                 "string",
@@ -5969,40 +5689,12 @@
         "/v1/catalog/resolve": {
             "post": {
                 "operationId": "v1.catalog.resolve",
-                "description": "Runs the scraper's extractor for the link's host and returns the HLS/MP4 stream the\nplayer should load, with the headers it must send. 502 when the link cannot be resolved\n(unknown host, extraction failure): the app then shows an error instead of the raw link.",
-                "summary": "Resolve a player link into a playable stream",
+                "summary": "Resolve a player link into a playable stream (former apps)",
+                "deprecated": true,
                 "tags": [
                     "Stream"
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ResolveStreamRequest"
-                            }
-                        }
-                    }
-                },
                 "responses": {
-                    "200": {
-                        "description": "`ResolvedStreamResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ResolvedStreamResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "502": {
                         "description": "",
                         "content": {
@@ -6021,9 +5713,6 @@
                                 }
                             }
                         }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -9123,64 +8812,6 @@
                 ],
                 "title": "ResetPasswordRequest"
             },
-            "ResolveStreamRequest": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "format": "uri",
-                        "description": "Player page URL to resolve into a playable stream (\"https://voe.sx/e/abc\").",
-                        "maxLength": 2048
-                    }
-                },
-                "required": [
-                    "url"
-                ],
-                "title": "ResolveStreamRequest"
-            },
-            "ResolvedStreamResource": {
-                "type": "object",
-                "properties": {
-                    "stream": {
-                        "type": "string",
-                        "description": "Playable stream URL (HLS `.m3u8` or progressive `.mp4`)."
-                    },
-                    "stream_type": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "\"m3u8\" or \"mp4\"."
-                    },
-                    "extractor": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Extractor that resolved the link (\"voe\", \"streamtape\"\u2026), null for the generic one."
-                    },
-                    "headers": {
-                        "type": "object",
-                        "description": "HTTP headers the player must send when fetching the stream (Referer, Origin\u2026).",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    },
-                    "subtitles": {
-                        "type": "array",
-                        "description": "Subtitles found next to the stream, when the extractor provides some.",
-                        "items": {}
-                    }
-                },
-                "required": [
-                    "stream",
-                    "stream_type",
-                    "extractor",
-                    "headers",
-                    "subtitles"
-                ],
-                "title": "ResolvedStreamResource"
-            },
             "SearchSort": {
                 "type": "string",
                 "description": "Order of text search results (TMDb only gives them by relevance: the API sorts them).\n| |\n|---|\n| `relevance` <br/> TMDb order for the typed text. |\n| `popularity` <br/>  |\n| `rating` <br/>  |\n| `recent` <br/>  |\n| `oldest` <br/>  |",
@@ -9817,7 +9448,7 @@
                             "string",
                             "null"
                         ],
-                        "description": "Renseign\u00e9s seulement quand l'extraction est demand\u00e9e (`?extract=1`)\net que le lien du lecteur a pu \u00eatre r\u00e9solu en flux lisible."
+                        "description": "The address to play (plug-in streams are already playable)."
                     },
                     "stream_type": {
                         "type": [
@@ -9829,7 +9460,8 @@
                         "type": [
                             "string",
                             "null"
-                        ]
+                        ],
+                        "description": "Always null: the server has no extractor any more (kept for the former apps)."
                     },
                     "headers": {
                         "type": "object",

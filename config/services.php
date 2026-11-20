@@ -114,26 +114,6 @@ return [
     ],
 
     /*
-    | Node.js scraper worker (Playwright) that searches the French-language film and series providers.
-    */
-    'scraper' => [
-        'base_url' => env('SCRAPER_URL', 'http://127.0.0.1:3100'),
-        'timeout' => (int) env('SCRAPER_TIMEOUT', 45),
-
-        // Providers the app shows in the sources panel, in display order. Each is queried
-        // on its own so the panel can report a per-provider state (loading, failed, links).
-        // Aligned with Onyx TMDB FR: Coflix + Aplouf (Cloudstream), no Wiflix.
-        'providers' => [
-            ['id' => 'tmdb-fr', 'name' => 'TMDB Français (Onyx)'],
-            ['id' => 'coflix', 'name' => 'Coflix'],
-            ['id' => 'aplouf', 'name' => 'Aplouf'],
-            ['id' => 'frenchstream', 'name' => 'FrenchStream'],
-            ['id' => 'frembed', 'name' => 'Frembed'],
-            ['id' => '1jour1film', 'name' => '1Jour1Film'],
-        ],
-    ],
-
-    /*
     | Vavoo live TV (docs/lecture.md). Vavoo's MediaHubMX API is signed with an "addonSig"
     | obtained from a ping endpoint; mirrors and signature stay on the server, apps only get
     | the resolved HLS URL and the User-Agent to send. Mirrors and versions are ONYX's.

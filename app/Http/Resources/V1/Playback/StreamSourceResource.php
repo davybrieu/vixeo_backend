@@ -13,10 +13,10 @@ class StreamSourceResource extends JsonResource
             'provider' => (string) ($this['provider'] ?? ''),
             'name' => (string) ($this['name'] ?? ''),
             'url' => (string) ($this['url'] ?? ''),
-            // Renseignés seulement quand l'extraction est demandée (`?extract=1`)
-            // et que le lien du lecteur a pu être résolu en flux lisible.
+            /** The address to play (plug-in streams are already playable). */
             'stream' => isset($this['stream']) ? (string) $this['stream'] : null,
             'stream_type' => isset($this['streamType']) ? (string) $this['streamType'] : null,
+            /** Always null: the server has no extractor any more (kept for the former apps). */
             'extractor' => isset($this['extractor']) ? (string) $this['extractor'] : null,
             /**
              * HTTP headers the player must send with `stream` (plug-in streams, docs/plugins.md).

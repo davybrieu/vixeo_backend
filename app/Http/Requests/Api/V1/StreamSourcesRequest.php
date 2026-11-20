@@ -9,16 +9,9 @@ class StreamSourcesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /** Resolve each link into a playable stream (slower, hits the scraper). */
-            'extract' => ['sometimes', 'boolean'],
-            /** Keep only the links of that provider. */
+            /** Only the streams of that plug-in (`addon:12`); all of them when left out. */
             'provider' => ['sometimes', 'nullable', 'string', 'max:100'],
         ];
-    }
-
-    public function extract(): bool
-    {
-        return $this->boolean('extract');
     }
 
     public function provider(): ?string

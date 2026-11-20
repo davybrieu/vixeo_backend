@@ -19,8 +19,10 @@ teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Sit
 
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
 question). Les applis lisent ce que l'API leur renvoie (sources de lecture, TV en direct, sous-titres,
-moments à passer) : l'utilisateur n'a **aucun serveur à configurer** (il peut, en option, ajouter des
-plug-ins de sources au format Stremio : `docs/plugins.md`). Pas de serveurs multimédias
+moments à passer) : l'utilisateur n'a **aucun serveur à configurer**. Les flux des films et
+séries viennent **uniquement des plug-ins** (add-ons Stremio / Nuvio, `docs/plugins.md`) : plus
+de scraper, de fournisseurs ni d'extracteurs sur le serveur (supprimés le 20/11/2026, demande du
+développeur ; ne pas les réintroduire). Pas de serveurs multimédias
 de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli, ni sur le site.
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
@@ -271,7 +273,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `AddonHttp`** (https, adresses publiques seulement, IP épinglée, sans redirection, délai et
   taille limités). Flux → fournisseurs `addon:{n}` du panneau des sources, déjà lisibles
   (`stream`, `headers`), sans `resolve`, demandés par id IMDb (`TitleIds`) ou `tmdb:`. Seuls les
-  flux à adresse http(s) (pas de torrent).
+  flux à adresse http(s) (pas de torrent). **Seule source des flux** : `scraper/` (Node),
+  `StreamSources`, les fournisseurs du serveur et la table `missing_extractors` sont supprimés
+  (20/11/2026) ; sans `provider`, `…/sources` donne les flux de tous les plug-ins, un ancien
+  fournisseur une liste vide ; `POST /catalog/resolve` répond toujours 502 (anciennes applis).
 - **Flux favoris et dernier flux qui a marché** (doc : `docs/lecture.md`) : par profil et par
   contenu (`profile_streams`, `App\Services\Playback\StreamPreferences`). Le lecteur essaie les
   favoris (❤) d'abord, puis le dernier flux qui a marché, puis la liste normale. Flux morts :
@@ -323,7 +328,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait aussi : notes des autres sites (MDBList, clé de Vixeo, cache partagé, réglage du profil
   `rating_source`).
 - Fait aussi : plug-ins de sources au format Stremio (plug-ins du compte et de tous les comptes :
-  flux du panneau des sources) ; le catalogue reste celui de TMDb.
+  flux du panneau des sources), seule source des flux (scraper et extracteurs supprimés) ; le
+  catalogue reste celui de TMDb.
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
   les serveurs de Vixeo.

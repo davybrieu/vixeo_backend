@@ -176,8 +176,9 @@ Responsabilités du backend :
 - Synchronisation des favoris, historiques, réglages et progressions.
 - Gestion intégrale des serveurs et des fournisseurs de contenus.
 - Communication avec les services et API externes.
-- Recherche et récupération des flux.
-- Extraction et normalisation des résultats.
+- Récupération des flux par les plug-ins de sources (add-ons Stremio / Nuvio) ; plus de
+  fournisseurs, de scraper ni d'extracteurs sur le serveur (supprimés le 20/11/2026).
+- Normalisation des résultats.
 - Gestion des erreurs et indisponibilités.
 - Cache des métadonnées TMDb.
 - Gestion des sous-titres OpenSubtitles.

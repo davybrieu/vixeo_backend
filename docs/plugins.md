@@ -74,8 +74,12 @@ L'adresse d'un plug-in est choisie par la personne qui l'installe : chaque requ�
 
 ## Flux des plug-ins : panneau des sources
 
-`GET /catalog/sources/providers` ajoute, après les fournisseurs du serveur, chaque plug-in activé
-qui sert des flux de films ou de séries : `{id: "addon:12", name}`. Pour ce fournisseur,
+**Les plug-ins sont la seule source des flux** : le serveur n'a plus de scraper, de fournisseurs
+ni d'extracteurs (supprimés le 20/11/2026, demande du développeur : dossier `scraper/`,
+`StreamSources`, table `missing_extractors`).
+
+`GET /catalog/sources/providers` donne chaque plug-in activé qui sert des flux de films ou de
+séries : `{id: "addon:12", name}`. Pour ce fournisseur,
 `GET /catalog/movie/{id}/sources?provider=addon:12` (et l'équivalent pour un épisode) :
 
 - l'API demande au plug-in les flux du titre par son id IMDb (`external_ids` de TMDb,
@@ -86,6 +90,11 @@ qui sert des flux de films ou de séries : `{id: "addon:12", name}`. Pour ce fou
   l'adresse) et `headers` (`behaviorHints.proxyHeaders.request`) ; pas de `POST /catalog/resolve` ;
 - les flux signalés morts (`DeadStreams`) sont retirés ; cache de `ADDONS_TTL_STREAMS` (5 min) ;
 - plug-in qui ne répond pas : 503 « Ce plug-in est momentanément indisponible. ».
+
+Sans `provider` : les flux de tous les plug-ins, dans leur ordre (un plug-in en panne est laissé
+de côté). Un autre `provider` (ancien fournisseur du serveur, `frenchstream`…) : liste vide.
+`POST /catalog/resolve` (anciennes applis) répond toujours 502 « Cette source n'est pas
+lisible. » : le serveur ne résout plus de liens.
 
 Sur le web, un flux d'un plug-in doit autoriser le navigateur (CORS) : l'API ne relaie pas les
 vidéos des plug-ins.

@@ -157,8 +157,13 @@ VIXEO_HOST_NAME="…"
 VIXEO_HOST_ADDRESS="…"
 VIXEO_HOST_PHONE="…"
 
-# (TV en direct, scraper : inchangés, voir .env.example)
+# (TV en direct : inchangée, voir .env.example)
 ```
+
+**Scraper supprimé** (20/11/2026, demande du développeur) : le serveur n'a plus de scraper Node,
+de fournisseurs ni d'extracteurs ; les sources viennent des plug-ins (`docs/plugins.md`). Sur
+Forge, arrêter et supprimer le daemon du scraper (s'il existe) et retirer `SCRAPER_URL` et
+`SCRAPER_TIMEOUT` de l'environnement.
 
 Les anciennes variables `SITE_URL`, `API_DOMAIN`, `SITE_DOMAIN`, `SITE_REDIRECT_DOMAINS`,
 `VIXEO_APP_URL` et `VIXEO_API_URL` n'existent plus : à supprimer de l'environnement. **Attention :
