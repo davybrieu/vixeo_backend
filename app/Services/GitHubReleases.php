@@ -66,8 +66,10 @@ class GitHubReleases
     private function fetch(string $repository, AppPlatform $platform): ?array
     {
         try {
+            // The most GitHub gives in one page: each CI run publishes two releases (Android and
+            // Windows), the 100 latest keep 50 builds of each.
             $response = Http::acceptJson()->connectTimeout(5)->timeout(8)
-                ->get("https://api.github.com/repos/{$repository}/releases", ['per_page' => 50]);
+                ->get("https://api.github.com/repos/{$repository}/releases", ['per_page' => 100]);
         } catch (Throwable $e) {
             Log::warning('GitHub releases unreachable', ['error' => $e->getMessage()]);
 

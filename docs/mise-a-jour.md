@@ -96,7 +96,9 @@ jour à tous les appareils Android et Windows.
 ## Publier une version
 
 1. Si besoin, changer la version affichée dans `vixeo_frontend` (`version:` de `pubspec.yaml`).
-   Le numéro de build est donné par la CI : c'est le numéro de son run, qui augmente tout seul.
+   Le numéro de build est donné par la CI : le numéro de son run + 400 (`BUILD_OFFSET`, le
+   workflow ayant été renommé le 20/11/2026), qui augmente tout seul. L'API lit les 100 dernières
+   releases (50 builds par plateforme).
 2. Pousser sur `main` : la CI compile l'APK signé avec la clé de release et l'installateur
    Windows, et publie les releases `android-<build>` (« Vixeo Android v1.0.0 - build 160 ») et
    `windows-<build>` (« Vixeo Windows v1.0.0 - build 160 »). Les applis les voient dans les
