@@ -1,5 +1,5 @@
 import { i as server_renderer_exports, s as vue_exports, t as _sfc_main$1 } from "../ssr.js";
-import { t as _sfc_main$2 } from "./Seo-LbnFsiRl.js";
+import { t as _sfc_main$2 } from "./Seo-BAMcyPOF.js";
 // resources/js/pages/Error.vue
 var _sfc_main = {
 	__name: "Error",

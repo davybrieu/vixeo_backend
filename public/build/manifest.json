@@ -1,6 +1,13 @@
 {
-  "_Seo-Dq4wpFYS.js": {
-    "file": "assets/Seo-Dq4wpFYS.js",
+  "_PixelAvatar-DHlIrtlw.js": {
+    "file": "assets/PixelAvatar-DHlIrtlw.js",
+    "name": "PixelAvatar",
+    "imports": [
+      "_dist-C6Kqx0Fb.js"
+    ]
+  },
+  "_Seo-p98cWJhy.js": {
+    "file": "assets/Seo-p98cWJhy.js",
     "name": "Seo",
     "imports": [
       "_dist-C6Kqx0Fb.js"
@@ -11,7 +18,7 @@
     "name": "dist"
   },
   "resources/js/app.js": {
-    "file": "assets/app-C2xyWcwu.js",
+    "file": "assets/app-ZGfdsJeW.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -22,52 +29,66 @@
       "resources/js/pages/Error.vue",
       "resources/js/pages/Home.vue",
       "resources/js/pages/Legal.vue",
+      "resources/js/pages/Member.vue",
       "resources/js/pages/Privacy.vue"
     ],
     "css": [
-      "assets/app-_IXxu1tz.css"
+      "assets/app-DvdE9D_o.css"
     ]
   },
   "resources/js/pages/Error.vue": {
-    "file": "assets/Error-DOQNAHRk.js",
+    "file": "assets/Error-BE9Utef7.js",
     "name": "Error",
     "src": "resources/js/pages/Error.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-C6Kqx0Fb.js",
-      "_Seo-Dq4wpFYS.js",
+      "_Seo-p98cWJhy.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-D9OTitCS.js",
+    "file": "assets/Home-BCogmmP5.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-C6Kqx0Fb.js",
       "resources/js/app.js",
-      "_Seo-Dq4wpFYS.js"
+      "_Seo-p98cWJhy.js",
+      "_PixelAvatar-DHlIrtlw.js"
     ]
   },
   "resources/js/pages/Legal.vue": {
-    "file": "assets/Legal-DWjXO5uS.js",
+    "file": "assets/Legal-CSkDFths.js",
     "name": "Legal",
     "src": "resources/js/pages/Legal.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-C6Kqx0Fb.js",
-      "_Seo-Dq4wpFYS.js"
+      "_Seo-p98cWJhy.js"
+    ]
+  },
+  "resources/js/pages/Member.vue": {
+    "file": "assets/Member-CcuE-kB-.js",
+    "name": "Member",
+    "src": "resources/js/pages/Member.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_dist-C6Kqx0Fb.js",
+      "_Seo-p98cWJhy.js",
+      "resources/js/app.js",
+      "_PixelAvatar-DHlIrtlw.js"
     ]
   },
   "resources/js/pages/Privacy.vue": {
-    "file": "assets/Privacy-guZfnfWj.js",
+    "file": "assets/Privacy-Bjy5-2ex.js",
     "name": "Privacy",
     "src": "resources/js/pages/Privacy.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-C6Kqx0Fb.js",
-      "_Seo-Dq4wpFYS.js"
+      "_Seo-p98cWJhy.js"
     ]
   }
 }

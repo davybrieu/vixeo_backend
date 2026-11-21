@@ -50,6 +50,20 @@ class AvatarCatalog
         return $ids;
     }
 
+    /** One avatar of the catalog (null: unknown id). @return array<string, mixed>|null */
+    public function find(?string $id): ?array
+    {
+        foreach ($this->licenses() as $license) {
+            foreach ($license['avatars'] as $avatar) {
+                if ($id !== null && $avatar['id'] === $id) {
+                    return $avatar;
+                }
+            }
+        }
+
+        return null;
+    }
+
     /** An avatar of the catalog, at random: the default of a new profile (null if the catalog is empty). */
     public function randomId(): ?string
     {

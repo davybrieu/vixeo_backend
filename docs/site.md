@@ -59,6 +59,8 @@ committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'emp
 | `/mentions-legales`, `/confidentialite` | Informations légales, confidentialité du site |
 | `/installer`, `/faq`, `/telecharger`, `/android`, `/tv` | Anciennes pages et liens courts, supprimés : **404** (demande du développeur) |
 | `/apk` | Le fichier APK du moment (adresse à taper sur une TV), 404 sans APK |
+| `/@pseudo` | **Page publique d'un profil** (demande du développeur, 21/11/2026), le lien du bouton « Partager » de l'appli (`share_url` de `GET /social/profiles/{pseudo}`) : nom, @pseudo, avatar (`AvatarCatalog::find`, pixel art dessiné par `PixelAvatar`), biographie, « Ouvrir dans Vixeo » (Android seulement : lien `intent://`, retour sur `/#installer` sans l'appli) et « Télécharger Vixeo ». Profils adultes avec un pseudo seulement (enfant ou inconnu : 404) ; ni nom de compte, ni e-mail ; **pas indexée** (`X-Robots-Tag: noindex`, `<meta robots>`, absente du sitemap) ; `throttle:members` (60 / min par IP) |
+| `/.well-known/assetlinks.json` | Liens d'appli Android : `www.vixeo.app/@…` s'ouvre dans l'appli signée avec la clé de release (`vixeo.android.package`, `vixeo.android.cert_sha256` : empreinte SHA-256 du certificat, publique, `VIXEO_ANDROID_CERT_SHA256` pour la changer) |
 | `/sitemap.xml`, `/robots.txt` | Référencement (`APP_URL`) |
 
 Barre de navigation : le logo (accueil) et « Télécharger » (`/#installer`), **sans liens de

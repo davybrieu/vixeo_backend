@@ -1,5 +1,5 @@
 import { i as server_renderer_exports, o as usePage, s as vue_exports } from "../ssr.js";
-import { t as _sfc_main$1 } from "./Seo-LbnFsiRl.js";
+import { t as _sfc_main$1 } from "./Seo-BAMcyPOF.js";
 // resources/js/pages/Legal.vue
 var _sfc_main = {
 	__name: "Legal",

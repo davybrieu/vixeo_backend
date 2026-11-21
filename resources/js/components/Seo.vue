@@ -6,6 +6,8 @@ import { computed } from 'vue';
 const props = defineProps({
     title: { type: String, default: null },
     description: { type: String, required: true },
+    // Kept out of search engines (a member's page).
+    noindex: { type: Boolean, default: false },
 });
 
 const page = usePage();
@@ -20,5 +22,6 @@ const fullTitle = computed(() => (props.title ? `${props.title} · Vixeo` : 'Vix
         <meta head-key="og:title" property="og:title" :content="fullTitle" />
         <meta head-key="og:description" property="og:description" :content="description" />
         <meta head-key="og:url" property="og:url" :content="url" />
+        <meta v-if="noindex" head-key="robots" name="robots" content="noindex" />
     </Head>
 </template>

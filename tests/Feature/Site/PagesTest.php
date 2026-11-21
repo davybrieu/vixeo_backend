@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AppPlatform;
+use App\Models\Profile;
 use App\Services\GitHubReleases;
 use App\Support\AppRelease;
 use Illuminate\Support\Carbon;
@@ -230,4 +231,61 @@ it('publishes a sitemap and robots.txt with the site address', function () {
 it('answers the health check on both hosts', function () {
     $this->get(site('/up'))->assertOk();
     $this->get('/up')->assertOk();
+});
+
+it('shows the public page of a profile, shared from the app', function () {
+    withLatestAndroid(null);
+    $profile = Profile::factory()->create([
+        'name' => 'Léa', 'username' => 'lea', 'bio' => 'Fan de science-fiction.', 'avatar' => 'quest-knight',
+    ]);
+
+    $this->get(site('/@lea'))
+        ->assertOk()
+        // Not offered to search engines, nor in the sitemap.
+        ->assertHeader('X-Robots-Tag', 'noindex')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member')
+            ->where('member.name', 'Léa')
+            ->where('member.username', 'lea')
+            ->where('member.bio', 'Fan de science-fiction.')
+            ->where('member.avatar.background', '#1E2A3A')
+            ->has('member.avatar.pixels', 12)
+            ->where('openInApp', null)
+            ->missing('member.email')
+            ->missing('member.id'));
+
+    // The username is found whatever its case; Android gets « Ouvrir dans Vixeo » (intent://).
+    $this->withHeader('User-Agent', ANDROID_UA)->get(site('/@LEA'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where(
+            'openInApp',
+            'intent://www.vixeo.test/@lea#Intent;scheme=https;package=app.vixeo.vixeo;S.browser_fallback_url='
+                .rawurlencode('https://www.vixeo.test/#installer').';end',
+        ));
+
+    $this->get(site('/sitemap.xml'))->assertDontSee('/@lea', false);
+    expect($profile->user->email)->not->toBeEmpty();
+});
+
+it('has no public page for a child profile or an unknown username', function () {
+    withLatestAndroid(null);
+    Profile::factory()->create(['username' => 'petit', 'is_kid' => true]);
+
+    $this->get(site('/@petit'))->assertNotFound();
+    $this->get(site('/@personne'))->assertNotFound();
+    // Not a username: never a profile page.
+    $this->get(site('/@a'))->assertNotFound();
+});
+
+it('publishes the Android app links of the release key', function () {
+    $this->getJson(site('/.well-known/assetlinks.json'))
+        ->assertOk()
+        ->assertExactJson([[
+            'relation' => ['delegate_permission/common.handle_all_urls'],
+            'target' => [
+                'namespace' => 'android_app',
+                'package_name' => 'app.vixeo.vixeo',
+                'sha256_cert_fingerprints' => ['B6:3F:7D:E4:B2:CF:E1:7D:EF:D2:03:CF:12:3D:1E:6A:26:FB:51:13:C1:85:21:74:A1:80:7E:E3:40:38:7C:7B'],
+            ],
+        ]]);
 });

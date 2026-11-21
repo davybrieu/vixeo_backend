@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SiteController;
 use App\Http\Middleware\ResolveProfile;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\Profile;
@@ -208,11 +209,13 @@ class SocialProfileController extends Controller
         ];
     }
 
-    /** A profile's page: who it is and its counters (loaded by publicProfile). */
+    /** A profile's page: who it is, its counters (loaded by publicProfile) and its public address. */
     private function summary(Profile $profile): array
     {
         return [
             ...$this->identity($profile),
+            /** The page of the profile on the site, shared from the app (« Partager »). */
+            'share_url' => SiteController::memberUrl((string) $profile->username),
             'followers_count' => (int) ($profile->followers_count ?? 0),
             'following_count' => (int) ($profile->following_count ?? 0),
             'reviews_count' => (int) ($profile->reviews_count ?? 0),

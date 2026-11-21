@@ -11,6 +11,10 @@ var _sfc_main = {
 		description: {
 			type: String,
 			required: true
+		},
+		noindex: {
+			type: Boolean,
+			default: false
 		}
 	},
 	setup(__props) {
@@ -21,8 +25,11 @@ var _sfc_main = {
 		return (_ctx, _push, _parent, _attrs) => {
 			_push((0, server_renderer_exports.ssrRenderComponent)((0, vue_exports.unref)(head_default), (0, vue_exports.mergeProps)({ title: __props.title }, _attrs), {
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(`<meta head-key="description" name="description"${(0, server_renderer_exports.ssrRenderAttr)("content", __props.description)}${_scopeId}><link head-key="canonical" rel="canonical"${(0, server_renderer_exports.ssrRenderAttr)("href", url.value)}${_scopeId}><meta head-key="og:title" property="og:title"${(0, server_renderer_exports.ssrRenderAttr)("content", fullTitle.value)}${_scopeId}><meta head-key="og:description" property="og:description"${(0, server_renderer_exports.ssrRenderAttr)("content", __props.description)}${_scopeId}><meta head-key="og:url" property="og:url"${(0, server_renderer_exports.ssrRenderAttr)("content", url.value)}${_scopeId}>`);
-					else return [
+					if (_push) {
+						_push(`<meta head-key="description" name="description"${(0, server_renderer_exports.ssrRenderAttr)("content", __props.description)}${_scopeId}><link head-key="canonical" rel="canonical"${(0, server_renderer_exports.ssrRenderAttr)("href", url.value)}${_scopeId}><meta head-key="og:title" property="og:title"${(0, server_renderer_exports.ssrRenderAttr)("content", fullTitle.value)}${_scopeId}><meta head-key="og:description" property="og:description"${(0, server_renderer_exports.ssrRenderAttr)("content", __props.description)}${_scopeId}><meta head-key="og:url" property="og:url"${(0, server_renderer_exports.ssrRenderAttr)("content", url.value)}${_scopeId}>`);
+						if (__props.noindex) _push(`<meta head-key="robots" name="robots" content="noindex"${_scopeId}>`);
+						else _push(`<!---->`);
+					} else return [
 						(0, vue_exports.createVNode)("meta", {
 							"head-key": "description",
 							name: "description",
@@ -47,7 +54,13 @@ var _sfc_main = {
 							"head-key": "og:url",
 							property: "og:url",
 							content: url.value
-						}, null, 8, ["content"])
+						}, null, 8, ["content"]),
+						__props.noindex ? ((0, vue_exports.openBlock)(), (0, vue_exports.createBlock)("meta", {
+							key: 0,
+							"head-key": "robots",
+							name: "robots",
+							content: "noindex"
+						})) : (0, vue_exports.createCommentVNode)("", true)
 					];
 				}),
 				_: 1

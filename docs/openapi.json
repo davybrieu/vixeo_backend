@@ -3513,6 +3513,10 @@
                                                         "null"
                                                     ]
                                                 },
+                                                "share_url": {
+                                                    "type": "string",
+                                                    "description": "The page of the profile on the site, shared from the app (\u00ab Partager \u00bb)."
+                                                },
                                                 "followers_count": {
                                                     "type": "integer"
                                                 },
@@ -3549,6 +3553,7 @@
                                                 "name",
                                                 "avatar",
                                                 "bio",
+                                                "share_url",
                                                 "followers_count",
                                                 "following_count",
                                                 "reviews_count",

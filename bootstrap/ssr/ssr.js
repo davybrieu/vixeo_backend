@@ -40792,10 +40792,11 @@ var app;
 var render = (page) => (app ??= createInertiaApp({
 	resolve: async (name, page) => {
 		const module = await (/* @__PURE__ */ Object.assign({
-			"./pages/Error.vue": () => import("./assets/Error-QB98lOxs.js"),
-			"./pages/Home.vue": () => import("./assets/Home-Tw25qOhp.js"),
-			"./pages/Legal.vue": () => import("./assets/Legal-BMTuJmJ_.js"),
-			"./pages/Privacy.vue": () => import("./assets/Privacy--nSD4vej.js")
+			"./pages/Error.vue": () => import("./assets/Error-DpTqaR1w.js"),
+			"./pages/Home.vue": () => import("./assets/Home-2wDEiL5i.js"),
+			"./pages/Legal.vue": () => import("./assets/Legal-CsbVODPh.js"),
+			"./pages/Member.vue": () => import("./assets/Member-DUzeWnZI.js"),
+			"./pages/Privacy.vue": () => import("./assets/Privacy-tXI6vBy7.js")
 		}))[`./pages/${name}.vue`]?.();
 		if (!module) throw new Error(`Page not found: ${name}`);
 		return module.default ?? module;

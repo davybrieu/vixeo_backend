@@ -33,6 +33,16 @@ const site = usePage().props.site;
             </p>
         </section>
 
+        <section class="space-y-3" aria-labelledby="profils">
+            <h2 id="profils" class="text-xl font-bold text-text">Pages de profil</h2>
+            <p>
+                Quand une personne partage son profil Vixeo (ou celui d’un autre membre) depuis l’appli, le lien mène à
+                une page de ce site, à l’adresse « /@pseudo » : nom du profil, pseudo, avatar et biographie, déjà
+                visibles par les membres dans l’appli. Les profils enfants n’en ont pas, et ces pages ne sont pas
+                proposées aux moteurs de recherche.
+            </p>
+        </section>
+
         <section class="space-y-3" aria-labelledby="liens">
             <h2 id="liens" class="text-xl font-bold text-text">Liens vers d’autres services</h2>
             <p>
