@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Imdb\ImdbDatasets;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -18,8 +19,20 @@ class ImportImdbRatings extends Command
 
     protected $description = 'Import IMDb ratings (title.ratings) and rated episodes (title.episode) when IMDb published new datasets';
 
+    /** Longest import: past it, a lock left by a killed process is released. */
+    private const LOCK_SECONDS = 3 * 3600;
+
     public function handle(ImdbDatasets $datasets): int
     {
+        // One import at a time, whoever starts it (the hourly task, Forge's « Commands », SSH):
+        // two imports would write the same rows and remove each other's.
+        $lock = Cache::lock('imdb:import', self::LOCK_SECONDS);
+        if (! $lock->get()) {
+            $this->info('An IMDb import is already running: nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $started = microtime(true);
         try {
             $result = $datasets->importIfChanged((bool) $this->option('force'));
@@ -28,6 +41,8 @@ class ImportImdbRatings extends Command
             $this->error('IMDb import failed: '.$e->getMessage());
 
             return self::FAILURE;
+        } finally {
+            $lock->release();
         }
 
         if (! $result['imported']) {

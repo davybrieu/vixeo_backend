@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\Imdb\ImdbDatasets;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
@@ -289,4 +290,15 @@ it('gives no ratings with the list items that have no summary', function () {
     $this->getJson('/api/v1/catalog/movie/lists/popular')
         ->assertOk()
         ->assertJsonPath('data.0.ratings', null);
+});
+
+it('never runs two imports at once', function () {
+    $imdb = fakeImdb([]);
+    $running = Cache::lock('imdb:import', 60);
+    $running->get();
+
+    $this->artisan('imdb:import --force')->expectsOutputToContain('already running')->assertSuccessful();
+    expect($imdb->checks + $imdb->downloads)->toBe(0);
+
+    $running->release();
 });

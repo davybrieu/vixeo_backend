@@ -75,7 +75,10 @@ lancer en arrière-plan :
 nohup php artisan imdb:import --force > storage/logs/imdb-import.log 2>&1 &
 ```
 
-ou laisser la tâche planifiée le faire à la 17e minute de l'heure (pas de limite de durée). Un
+ou laisser la tâche planifiée le faire à la 17e minute de l'heure (pas de limite de durée).
+**Un seul import à la fois** (verrou `imdb:import` du cache, 3 h au plus) : un deuxième lancement
+répond « An IMDb import is already running » sans rien faire. Attention : une commande « Commands »
+de Forge coupée (code 143) peut continuer à tourner sur le serveur (`ps aux | grep imdb:import`). Un
 import réussi est écrit dans le journal de l'application (« IMDb import: … ») ; un import
 interrompu ne casse rien (les notes déjà écrites restent, rien n'est enregistré dans
 `imdb_imports`, l'heure suivante recommence).
