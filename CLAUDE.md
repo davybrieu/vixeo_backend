@@ -208,9 +208,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `imdb_episodes`, sinon ses *External IDs* (épisodes diffusés seulement). Sans note IMDb, les
   applis affichent celle de TMDb. **Plus de MDBList, de `GET /catalog/ratings` ni de réglage
   `rating_source`** (supprimés le 21/11/2026, demande du développeur ; ne pas les réintroduire).
-  Les titres des listes qui ont un `summary` (accueil, recherche, recommandations,
-  `catalog/titles`) ont aussi `ratings` (`TitleSummaries` : une requête d'IMDb par réponse) ;
-  ailleurs `ratings: null` (l'appli montre `vote_average`) : aucune note demandée par carte.
+  **Toutes les listes de titres ont `ratings`** (demande du développeur, 21/11/2026 : la note
+  IMDb partout, TMDb seulement en secours) : avec le `summary` (`TitleSummaries::add` : accueil,
+  recherche, discover, recommandations et leur « Voir tout », « Voir tout » des rangées, « Connu
+  pour », `catalog/titles`) ou seule (`TitleSummaries::ratings`, identifiant IMDb gardé 90 jours :
+  filmographie, `person/{id}/credits`) ; une requête d'IMDb par réponse. Sauf les rangées légères
+  de l'accueil (l'appli les complète par `catalog/titles`) : `ratings: null`, l'appli n'affiche
+  alors aucune note. Aucune note demandée par carte.
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`
   (`App\Support\Languages`) et `skip_intro` / `skip_recap` / `skip_credits` / `skip_preview` ;
   recherches récentes synchronisées (`profile_searches`, 20 par profil, une recherche qui en

@@ -283,13 +283,50 @@ it('gives the IMDb rating of the list items that have a summary, in one query', 
     Http::assertSent(fn (Request $request) => str_contains($request->url(), 'tv/1399') && str_contains($request['append_to_response'] ?? '', 'external_ids'));
 });
 
-it('gives no ratings with the list items that have no summary', function () {
+it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback', function () {
     Sanctum::actingAs(User::factory()->create());
-    Http::fake(['api.themoviedb.org/3/movie/popular*' => Http::response(Tmdb::page([Tmdb::movie(550)]))]);
+    imdbRating('tt0137523', 8.8, 2400000);
+    imdbRating('tt0944947', 9.2, 2300000);
+    $server = (object) ['details' => 0];
+    Http::fake(function (Request $request) use ($server) {
+        $path = (string) parse_url($request->url(), PHP_URL_PATH);
 
-    $this->getJson('/api/v1/catalog/movie/lists/popular')
-        ->assertOk()
-        ->assertJsonPath('data.0.ratings', null);
+        return match (true) {
+            str_ends_with($path, '/movie/popular'), str_ends_with($path, '/movie/550/recommendations') => Http::response(Tmdb::page([
+                Tmdb::movie(550), Tmdb::movie(551, ['title' => 'Sans IMDb']),
+            ])),
+            str_ends_with($path, '/person/287') => Http::response([
+                'id' => 287, 'name' => 'Brad Pitt', 'combined_credits' => ['cast' => [
+                    Tmdb::movie(550, ['media_type' => 'movie']),
+                    Tmdb::movie(551, ['media_type' => 'movie', 'title' => 'Sans IMDb']),
+                    Tmdb::show(1399, ['media_type' => 'tv']),
+                ]],
+            ]),
+            str_ends_with($path, '/movie/550') => tap(Http::response(Tmdb::movieDetails()), fn () => $server->details++),
+            str_ends_with($path, '/movie/551') => tap(Http::response(['id' => 551, 'title' => 'Sans IMDb', 'imdb_id' => null]), fn () => $server->details++),
+            str_ends_with($path, '/tv/1399') => tap(Http::response(Tmdb::showDetails()), fn () => $server->details++),
+            default => Http::response([], 404),
+        };
+    });
+    // IMDb rating by TMDb id.
+    $imdb = fn (array $items) => collect($items)->mapWithKeys(fn (array $item) => [$item['id'] => $item['ratings']['imdb']['rating'] ?? null])->sortKeys()->all();
+
+    // All of a person's titles, the IMDb ids already known (kept 90 days): TMDb is not asked for them.
+    Cache::putMany(['imdb-id:movie/550' => 'tt0137523', 'imdb-id:movie/551' => '', 'imdb-id:tv/1399' => 'tt0944947'], 3600);
+    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+        ->and($server->details)->toBe(0);
+    Cache::flush();
+
+    // « Voir tout » of a home row and of « Vous pourriez aussi aimer »: with the summary.
+    $list = $this->getJson('/api/v1/catalog/movie/lists/popular')->assertOk()->json('data');
+    expect($imdb($list))->toBe([550 => 8.8, 551 => null])
+        ->and($list[1]['ratings']['tmdb'])->toBe(['rating' => 8.4, 'votes' => 30000])
+        ->and($imdb($this->getJson('/api/v1/catalog/movie/550/recommendations')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null]);
+
+    // A person's page.
+    $person = $this->getJson('/api/v1/catalog/person/287')->assertOk()->json('data');
+    expect($imdb($person['known_for']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+        ->and($imdb($person['filmography']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2]);
 });
 
 it('never runs two imports at once', function () {

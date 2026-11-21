@@ -71,7 +71,8 @@ class CatalogTitleController extends Controller
         $this->ageGate->authorizeTitle($profile, $this->title($type, $id));
 
         $page = $this->catalog->recommendations($type, $id, $request->page());
-        $page['results'] = $this->ageGate->filter($profile, $page['results']);
+        // Logo, summary and IMDb rating with each title, like the title page (TitleSummaries).
+        $page['results'] = $this->summaries->add($this->ageGate->filter($profile, $page['results']));
 
         return response()->json([
             'data' => MediaItemResource::collection($page['results']),
@@ -130,6 +131,10 @@ class CatalogTitleController extends Controller
             'known_for' => $person['known_for'],
             'filmography' => $person['filmography'],
         ]);
+        // IMDb rating with each title: with the summary for the 10 of « Connu pour », alone for the
+        // 100 of the filmography (TitleSummaries::ratings).
+        $lists['known_for'] = $this->summaries->add($lists['known_for']);
+        $lists['filmography'] = $this->summaries->ratings($lists['filmography']);
 
         return new PersonResource(array_merge($person, $lists));
     }
@@ -143,10 +148,11 @@ class CatalogTitleController extends Controller
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function personCredits(PersonCreditsRequest $request, int $id): JsonResponse
     {
-        $titles = $this->ageGate->filter(
+        // Every title (often more than a hundred): the IMDb rating alone (TitleSummaries::ratings).
+        $titles = $this->summaries->ratings($this->ageGate->filter(
             ResolveProfile::profile($request),
             $this->catalog->personCredits($id, $request->sort()),
-        );
+        ));
 
         return response()->json(['data' => MediaItemResource::collection($titles)]);
     }

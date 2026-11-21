@@ -27,12 +27,19 @@ réglage du profil « Source des notes » (`rating_source`), supprimés le 21/11
   que personne n'a voté.
 - `vote_average` / `vote_count` restent dans les fiches (et `vote_count` est ajouté aux
   épisodes).
-- **Titres des listes** (`MediaItemResource`) : `ratings` est aussi donné avec les titres qui ont
-  un résumé (`summary` : accueil, recherche, recommandations d'une fiche, `GET /catalog/titles`
-  pour « Ma liste », « Continuer à regarder » et les rangées légères) : `TitleSummaries` lit déjà
-  la fiche TMDb de chaque titre (avec `external_ids` pour les séries) et cherche leurs notes IMDb
-  en **une requête** par réponse. Ailleurs (« Voir tout », filmographie…) `ratings` est `null` :
-  les applis montrent `vote_average` (TMDb). Aucune requête de note par carte.
+- **Titres des listes** (`MediaItemResource`) : **toutes les listes de titres ont `ratings`**
+  (demande du développeur, 21/11/2026 : la note IMDb partout, celle de TMDb seulement en secours),
+  avec le résumé (`summary` : accueil, recherche, filtres sans texte, recommandations d'une fiche
+  et leur « Voir tout », « Voir tout » des rangées, « Connu pour », `GET /catalog/titles` pour
+  « Ma liste », « Continuer à regarder » et les rangées légères) ou seule (filmographie de la page
+  d'une personne et `GET /catalog/person/{id}/credits` : `TitleSummaries::ratings`, l'identifiant
+  IMDb de chaque titre gardé 90 jours en cache, TMDb n'est interrogé que pour un titre jamais vu).
+  `TitleSummaries` lit la fiche TMDb de chaque titre (avec `external_ids` pour les séries) et
+  cherche leurs notes IMDb en **une requête** par réponse. Seules exceptions : les **rangées
+  légères** de l'accueil (`light`, sans `summary`), que l'appli complète par `GET /catalog/titles`,
+  et un titre que TMDb n'a pas pu donner : `ratings` est alors `null` et l'appli n'affiche **aucune
+  note** (pas celle de TMDb, qui serait prise pour la note choisie). Aucune requête de note par
+  carte.
 
 ## Recherche : note, votants et « Mieux notés »
 

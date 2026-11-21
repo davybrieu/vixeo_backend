@@ -126,7 +126,8 @@ class CatalogController extends Controller
             $page = $this->catalog->row($row, $request->page());
         }
 
-        $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
+        // Logo, summary and IMDb rating with each title, like the home rows (TitleSummaries).
+        $page['results'] = $this->summaries->add($this->ageGate->filter(ResolveProfile::profile($request), $page['results']));
 
         return response()->json([
             'data' => MediaItemResource::collection($page['results']),

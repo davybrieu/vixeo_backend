@@ -4,6 +4,7 @@ namespace App\Services\Tmdb;
 
 use App\Enums\MediaType;
 use App\Services\Imdb\ImdbRatings;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * What the large-screen hero and the phone carousel show of a title, given with the list items
@@ -12,6 +13,9 @@ use App\Services\Imdb\ImdbRatings;
  * query per list, docs/notes.md). One TMDb call per title (details with images, certifications and
  * External IDs), in batches, cached a day and shared by all accounts: only titles new to the lists
  * cost a request.
+ *
+ * Every list of titles has the IMDb rating (developer's request, 21/11/2026: TMDb's is only a
+ * fallback): with the summary ([add]), or alone for long lists ([ratings], a person's titles).
  */
 class TitleSummaries
 {
@@ -19,6 +23,11 @@ class TitleSummaries
         'movie' => ['append_to_response' => 'images,release_dates', 'include_image_language' => 'fr,en,null'],
         'tv' => ['append_to_response' => 'images,content_ratings,external_ids', 'include_image_language' => 'fr,en,null'],
     ];
+
+    /** Cache of the IMDb id of a TMDb title ('' when IMDb doesn't know it): it never changes. */
+    private const IMDB_ID_KEY = 'imdb-id:';
+
+    private const IMDB_ID_TTL = 60 * 60 * 24 * 90;
 
     public function __construct(private TmdbClient $tmdb, private ImdbRatings $imdb) {}
 
@@ -66,6 +75,39 @@ class TitleSummaries
     public function add(array $items): array
     {
         return $this->addMany([$items])[0];
+    }
+
+    /**
+     * Sets `imdb_rating` only (no logo nor summary) on each movie / TV show, for long lists (all
+     * the titles of a person). The IMDb id of a title is kept 90 days: TMDb is only asked for the
+     * details of titles never seen (same cache as the summaries), the ratings come from the IMDb
+     * tables in one query. A title TMDb could not give keeps no `imdb_rating` (no `ratings`).
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return list<array<string, mixed>>
+     */
+    public function ratings(array $items): array
+    {
+        $paths = [];
+        foreach ($items as $item) {
+            if ($path = self::path($item)) {
+                $paths[$path] = true;
+            }
+        }
+        if ($paths === []) {
+            return $items;
+        }
+        $ids = $this->imdbIds(array_keys($paths));
+        $ratings = $this->imdb->many(array_values(array_filter($ids)));
+
+        return array_map(function (array $item) use ($ids, $ratings) {
+            $path = self::path($item);
+            if ($path !== null && array_key_exists($path, $ids)) {
+                $item['imdb_rating'] = $ids[$path] === '' ? null : ($ratings[$ids[$path]] ?? null);
+            }
+
+            return $item;
+        }, $items);
     }
 
     /**
@@ -146,6 +188,47 @@ class TitleSummaries
         }
 
         return $details;
+    }
+
+    /**
+     * IMDb id of each path ('' when IMDb doesn't know the title): from the cache, else from TMDb's
+     * details, then kept. A title TMDb could not give is left out.
+     *
+     * @param  list<string>  $paths
+     * @return array<string, string>
+     */
+    private function imdbIds(array $paths): array
+    {
+        $cached = Cache::many(array_map(fn (string $path) => self::IMDB_ID_KEY.$path, $paths));
+        $ids = [];
+        $missing = ['movie' => [], 'tv' => []];
+        foreach ($paths as $path) {
+            $id = $cached[self::IMDB_ID_KEY.$path] ?? null;
+            if (is_string($id)) {
+                $ids[$path] = $id;
+            } else {
+                $missing[str_starts_with($path, 'tv/') ? 'tv' : 'movie'][$path] = true;
+            }
+        }
+        if ($missing['movie'] === [] && $missing['tv'] === []) {
+            return $ids;
+        }
+
+        $found = [];
+        foreach ($this->fetch($missing) as $path => $title) {
+            if (is_array($title) && isset($title['id'])) {
+                $id = $title['imdb_id'] ?? $title['external_ids']['imdb_id'] ?? null;
+                $found[$path] = is_string($id) ? $id : '';
+            }
+        }
+        if ($found !== []) {
+            Cache::putMany(array_combine(
+                array_map(fn (string $path) => self::IMDB_ID_KEY.$path, array_keys($found)),
+                array_values($found),
+            ), self::IMDB_ID_TTL);
+        }
+
+        return $ids + $found;
     }
 
     /**
