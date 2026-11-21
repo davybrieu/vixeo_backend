@@ -52,7 +52,7 @@ class SiteController extends Controller
     }
 
     /**
-     * Public page of a profile (www.vixeo.app/@pseudo), the link shared from the app: name,
+     * Public page of a profile (www.vixeo.app/pseudo, like Twitter), the link shared from the app: name,
      *
      * @pseudo, avatar and biography, then « Ouvrir dans Vixeo » (Android) and « Télécharger ».
      * Adult profiles with a username only, as in the app; not indexed by search engines.
@@ -79,11 +79,13 @@ class SiteController extends Controller
                 ],
             ],
             // Android (Chrome): opens the profile in the app when it is installed, else this page.
+            // The old /@pseudo address: the app opens it on every Android version (/pseudo only
+            // from Android 12, vixeo_frontend's manifest).
             'openInApp' => str_contains((string) $request->userAgent(), 'Android')
                 ? sprintf(
-                    'intent://%s%s#Intent;scheme=https;package=%s;S.browser_fallback_url=%s;end',
+                    'intent://%s/@%s#Intent;scheme=https;package=%s;S.browser_fallback_url=%s;end',
                     parse_url($address, PHP_URL_HOST),
-                    parse_url($address, PHP_URL_PATH),
+                    $profile->username,
                     config('vixeo.android.package'),
                     rawurlencode(self::siteUrl().'/#installer'),
                 )
@@ -91,7 +93,7 @@ class SiteController extends Controller
         ])->toResponse($request)->header('X-Robots-Tag', 'noindex');
     }
 
-    /** Android App Links: www.vixeo.app/@pseudo opens in the app signed with our release key. */
+    /** Android App Links: www.vixeo.app/pseudo opens in the app signed with our release key. */
     public function assetLinks(): JsonResponse
     {
         $fingerprints = array_values(array_filter(array_map(
@@ -112,7 +114,7 @@ class SiteController extends Controller
     /** Address of a profile's public page, shared from the app. */
     public static function memberUrl(string $username): string
     {
-        return self::siteUrl().'/@'.$username;
+        return self::siteUrl().'/'.$username;
     }
 
     public function sitemap(): Response

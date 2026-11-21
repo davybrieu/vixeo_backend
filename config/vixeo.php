@@ -35,7 +35,7 @@ return [
         'apk_sha256' => env('VIXEO_ANDROID_APK_SHA256'),
         // minSdk 24 de Flutter (vixeo_frontend/android/app/build.gradle.kts).
         'minimum' => 'Android 7.0',
-        // Liens d'appli Android (/.well-known/assetlinks.json) : un lien www.vixeo.app/@pseudo
+        // Liens d'appli Android (/.well-known/assetlinks.json) : un lien www.vixeo.app/pseudo
         // s'ouvre dans l'appli. Paquet et empreinte SHA-256 du certificat de la clé de release
         // (publique : elle figure dans chaque APK) ; plusieurs empreintes séparées par des virgules.
         'package' => 'app.vixeo.vixeo',

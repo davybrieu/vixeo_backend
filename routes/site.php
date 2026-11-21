@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SiteController;
+use App\Support\Usernames;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,11 +15,15 @@ Route::controller(SiteController::class)->name('site.')->group(function () {
     Route::get('/confidentialite', 'privacy')->name('privacy');
     Route::get('/sitemap.xml', 'sitemap')->name('sitemap');
     Route::get('/robots.txt', 'robots')->name('robots');
-    // Public page of a profile, shared from the app (« Partager »): www.vixeo.app/@pseudo. On
-    // Android, the app opens these links itself (Android App Links, assetlinks.json below).
-    Route::get('/@{username}', 'member')->where('username', '[A-Za-z0-9_]{3,30}')
-        ->middleware('throttle:members')->name('member');
     Route::get('/.well-known/assetlinks.json', 'assetLinks')->name('assetlinks');
+    // Old address of a profile's page (www.vixeo.app/@pseudo): now /pseudo.
+    Route::permanentRedirect('/@{username}', '/{username}')->where('username', Usernames::PATTERN);
+    // Last: public page of a profile, shared from the app (« Partager »): www.vixeo.app/pseudo,
+    // like Twitter (developer's request, 21/11/2026). The pages above come first, and no username
+    // is one of them (Usernames::RESERVED). On Android, the app opens these links itself (Android
+    // App Links, assetlinks.json).
+    Route::get('/{username}', 'member')->where('username', Usernames::PATTERN)
+        ->middleware('throttle:members')->name('member');
 });
 
 // One page: installing and the FAQ are sections of the home page (#installer, #faq). The old

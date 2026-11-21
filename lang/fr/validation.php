@@ -177,6 +177,9 @@ return [
         'name' => [
             'unique' => 'Un profil porte déjà ce nom.',
         ],
+        'username' => [
+            'not_in' => 'Ce pseudo est réservé : choisissez-en un autre.',
+        ],
     ],
 
     /*

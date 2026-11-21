@@ -4,7 +4,7 @@ import Seo from '../components/Seo.vue';
 import VxButton from '../components/VxButton.vue';
 import PixelAvatar from '../mock/PixelAvatar.vue';
 
-// Public page of a Vixeo profile (www.vixeo.app/@pseudo): the link shared from the app
+// Public page of a Vixeo profile (www.vixeo.app/pseudo, like Twitter): the link shared from the app
 // (« Partager » on a profile). With Vixeo installed on Android, the link opens the app instead.
 const props = defineProps({
     member: { type: Object, required: true },

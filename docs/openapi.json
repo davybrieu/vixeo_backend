@@ -6651,6 +6651,7 @@
                     },
                     "username": {
                         "type": "string",
+                        "description": "3 to 30 letters, digits or _; never a page of the site or of the app (`Usernames::RESERVED`).",
                         "pattern": "^[a-zA-Z0-9_]+$",
                         "minLength": 3,
                         "maxLength": 30

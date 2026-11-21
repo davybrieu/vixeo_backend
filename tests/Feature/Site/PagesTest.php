@@ -4,6 +4,7 @@ use App\Enums\AppPlatform;
 use App\Models\Profile;
 use App\Services\GitHubReleases;
 use App\Support\AppRelease;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -239,7 +240,8 @@ it('shows the public page of a profile, shared from the app', function () {
         'name' => 'Léa', 'username' => 'lea', 'bio' => 'Fan de science-fiction.', 'avatar' => 'quest-knight',
     ]);
 
-    $this->get(site('/@lea'))
+    // www.vixeo.app/lea, like Twitter (developer's request, 21/11/2026).
+    $this->get(site('/lea'))
         ->assertOk()
         // Not offered to search engines, nor in the sitemap.
         ->assertHeader('X-Robots-Tag', 'noindex')
@@ -255,7 +257,7 @@ it('shows the public page of a profile, shared from the app', function () {
             ->missing('member.id'));
 
     // The username is found whatever its case; Android gets « Ouvrir dans Vixeo » (intent://).
-    $this->withHeader('User-Agent', ANDROID_UA)->get(site('/@LEA'))
+    $this->withHeader('User-Agent', ANDROID_UA)->get(site('/LEA'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where(
             'openInApp',
@@ -263,7 +265,12 @@ it('shows the public page of a profile, shared from the app', function () {
                 .rawurlencode('https://www.vixeo.test/#installer').';end',
         ));
 
-    $this->get(site('/sitemap.xml'))->assertDontSee('/@lea', false);
+    $this->get(site('/sitemap.xml'))->assertDontSee('/lea', false);
+    // The old /@pseudo address.
+    $this->get(site('/@lea'))->assertStatus(301)->assertRedirect(site('/lea'));
+    // The site's pages come first.
+    expect(app('router')->getRoutes()->match(Request::create(site('/apk')))->getName())->toBe('site.apk');
+    $this->get(site('/confidentialite'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('Privacy'));
     expect($profile->user->email)->not->toBeEmpty();
 });
 
@@ -271,10 +278,13 @@ it('has no public page for a child profile or an unknown username', function () 
     withLatestAndroid(null);
     Profile::factory()->create(['username' => 'petit', 'is_kid' => true]);
 
-    $this->get(site('/@petit'))->assertNotFound();
-    $this->get(site('/@personne'))->assertNotFound();
+    $this->get(site('/petit'))->assertNotFound();
+    $this->get(site('/personne'))->assertNotFound();
     // Not a username: never a profile page.
-    $this->get(site('/@a'))->assertNotFound();
+    $this->get(site('/a'))->assertNotFound();
+    $this->get(site('/lea/autre'))->assertNotFound();
+    // The old pages stay gone.
+    $this->get(site('/installer'))->assertNotFound();
 });
 
 it('publishes the Android app links of the release key', function () {

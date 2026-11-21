@@ -40796,7 +40796,7 @@ var render = (page) => (app ??= createInertiaApp({
 			"./pages/Home.vue": () => import("./assets/Home-2wDEiL5i.js"),
 			"./pages/Legal.vue": () => import("./assets/Legal-CsbVODPh.js"),
 			"./pages/Member.vue": () => import("./assets/Member-DUzeWnZI.js"),
-			"./pages/Privacy.vue": () => import("./assets/Privacy-tXI6vBy7.js")
+			"./pages/Privacy.vue": () => import("./assets/Privacy-CeI6UXzE.js")
 		}))[`./pages/${name}.vue`]?.();
 		if (!module) throw new Error(`Page not found: ${name}`);
 		return module.default ?? module;

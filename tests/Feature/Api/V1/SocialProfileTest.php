@@ -4,6 +4,8 @@ use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\TmdbRating;
 use App\Models\User;
+use App\Support\Usernames;
+use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -52,7 +54,7 @@ it('shows a member\'s public page, with the avatar to draw it', function () {
         ->assertJsonPath('data.avatar', $this->member->avatar)
         ->assertJsonPath('data.bio', 'Fan de science-fiction.')
         // Its page on the site, shared from the app.
-        ->assertJsonPath('data.share_url', 'https://www.vixeo.test/@lea');
+        ->assertJsonPath('data.share_url', 'https://www.vixeo.test/lea');
 
     $this->getJson('/api/v1/social/search?query=le')
         ->assertOk()
@@ -103,4 +105,35 @@ it('lists a member\'s « Favoris » ❤ and the people they follow, with their c
         ->assertJsonPath('data.liked_count', 2)
         ->assertJsonPath('data.people_count', 1)
         ->assertJsonPath('data.list_count', 1);
+});
+
+it('never gives a profile a username that is a page of the site or of the app', function () {
+    $user = User::factory()->create();
+    $profile = Profile::factory()->for($user)->create(['username' => 'maxime']);
+    Sanctum::actingAs($user);
+
+    // www.vixeo.app/pseudo (like Twitter): /apk, /confidentialite, /accueil… stay pages.
+    foreach (['apk', 'Accueil', 'recherche', 'confidentialite'] as $reserved) {
+        $this->withHeader('X-Profile-Id', (string) $profile->id)
+            ->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['username' => 'Ce pseudo est réservé : choisissez-en un autre.']);
+    }
+    $this->withHeader('X-Profile-Id', (string) $profile->id)
+        ->putJson("/api/v1/profiles/{$profile->id}", ['username' => 'accueil_2'])
+        ->assertOk()
+        ->assertJsonPath('data.username', 'accueil_2');
+
+    $this->postJson('/api/v1/auth/register', [
+        'name' => 'Paul', 'username' => 'faq', 'email' => 'paul@example.com',
+        'password' => 'motdepasse-solide-42', 'device_name' => 'Pixel',
+    ])->assertUnprocessable()->assertJsonValidationErrors('username');
+
+    // Every page of the site with a one-word address is reserved; every reserved word could be one.
+    $pages = collect(Route::getRoutes()->getRoutes())
+        ->filter(fn ($route) => str_starts_with((string) $route->getName(), 'site.'))
+        ->map(fn ($route) => $route->uri())
+        ->filter(fn (string $uri) => preg_match('/^'.Usernames::PATTERN.'$/', $uri) === 1);
+    expect($pages->diff(Usernames::RESERVED)->all())->toBe([])
+        ->and(Usernames::RESERVED)->each->toMatch('/^[a-z0-9_]{3,30}$/');
 });

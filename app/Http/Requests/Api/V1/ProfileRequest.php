@@ -7,6 +7,7 @@ use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\ParentalControl;
 use App\Support\Languages;
+use App\Support\Usernames;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -33,8 +34,10 @@ class ProfileRequest extends FormRequest
                     ->where('user_id', $this->user()->id)
                     ->ignore($profile?->id),
             ],
+            /** 3 to 30 letters, digits or _; never a page of the site or of the app (`Usernames::RESERVED`). */
             'username' => [
                 'sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
+                Rule::notIn(Usernames::RESERVED),
                 Rule::unique('profiles', 'username')->ignore($profile?->id),
             ],
             /** Biography of the public profile: 160 characters at most. */

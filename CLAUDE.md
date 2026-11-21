@@ -98,11 +98,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   Installer et FAQ et liens courts supprimés (`/installer`, `/faq`, `/telecharger`, `/android`,
   `/tv` → 404 ; `/apk` reste, adresse à taper sur une TV), barre de navigation
   sans liens ni menu burger (logo + « Télécharger », vers `#installer` : plus d'appli web à ouvrir). Ne pas les recréer.
-  **Pages de profil** (demande du développeur, 21/11/2026) : `/@pseudo` (`SiteController::member`,
-  page `Member`), le lien du bouton « Partager » de l'appli (`share_url` de
-  `GET /social/profiles/{pseudo}`) ; profils adultes avec un pseudo, non indexées ; Android les
-  ouvre dans l'appli (`/.well-known/assetlinks.json`, empreinte du certificat de release dans
-  `vixeo.android.cert_sha256`). Détails : `docs/site.md`.
+  **Pages de profil** (demande du développeur, 21/11/2026) : `/pseudo`, **sans @, comme Twitter**
+  (`SiteController::member`, page `Member`, route `/{username}` déclarée **en dernier**), le lien du
+  bouton « Partager » de l'appli (`share_url` de `GET /social/profiles/{pseudo}`) ; un pseudo n'est
+  jamais une page du site ni de l'appli (`App\Support\Usernames::RESERVED`, à compléter pour toute
+  nouvelle page d'un seul mot) ; l'ancienne adresse `/@pseudo` redirige (301) ; profils adultes avec
+  un pseudo, non indexées ; Android les ouvre dans l'appli (`/.well-known/assetlinks.json`,
+  empreinte du certificat de release dans `vixeo.android.cert_sha256`). Détails : `docs/site.md`.
   **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
   modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.
 
