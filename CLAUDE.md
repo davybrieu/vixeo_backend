@@ -185,8 +185,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Notes IMDb et TMDb** (doc : `docs/notes.md`, demande du développeur, 21/11/2026) : les
   fiches film / série et chaque épisode d'une saison ont `ratings` = `{imdb: {id, rating, votes}
   | null, tmdb: {rating, votes}}` (`RatingsResource`). **IMDb vient de ses jeux de données**
-  (https://datasets.imdbws.com, usage personnel et non commercial) importés chaque jour par
-  `php artisan imdb:import` (`App\Services\Imdb\ImdbDatasets` : `title.ratings` → table
+  (https://datasets.imdbws.com, usage personnel et non commercial) : `php artisan imdb:import`
+  **toutes les heures** compare le `Last-Modified` des fichiers (requêtes `HEAD`) à celui du
+  dernier import (table `imdb_imports`) et n'importe que s'il a changé (`--force` : toujours)
+  (`App\Services\Imdb\ImdbDatasets` : `title.ratings` → table
   `imdb_ratings`, `title.episode` → `imdb_episodes`, épisodes notés seulement ; lecture en flux,
   lots de 2 000, anciennes lignes supprimées après un import complet seulement). Liaison par
   l'identifiant IMDb (`App\Services\Imdb\ImdbRatings`) : `imdb_id` du film / `external_ids` de
@@ -346,7 +348,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   logos de la bibliothèque tv-logos).
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
-- Fait aussi : notes IMDb (jeux de données importés chaque jour, `imdb:import`) et TMDb, avec
+- Fait aussi : notes IMDb (jeux de données vérifiés toutes les heures, importés quand IMDb les
+  met à jour, `imdb:import`) et TMDb, avec
   leurs votants, sur les fiches et les épisodes (MDBList et `rating_source` supprimés).
 - Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
   (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.

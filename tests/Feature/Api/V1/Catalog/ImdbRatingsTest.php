@@ -5,6 +5,7 @@ use App\Services\Imdb\ImdbDatasets;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
@@ -34,25 +35,48 @@ function imdbEpisode(string $tconst, string $show, ?int $season, ?int $episode):
     DB::table('imdb_episodes')->insert(['tconst' => $tconst, 'parent_tconst' => $show, 'season' => $season, 'episode' => $episode, 'import_id' => 1]);
 }
 
+/**
+ * IMDb's datasets server: [files] (name => gzipped TSV) with their Last-Modified ([modified]). The
+ * returned state can be changed between two runs, and counts the downloads (GET) and checks (HEAD).
+ *
+ * @param  array<string, string>  $files
+ */
+function fakeImdb(array $files, string $modified = 'Fri, 20 Nov 2026 08:40:00 GMT'): object
+{
+    $server = (object) ['files' => $files, 'modified' => $modified, 'downloads' => 0, 'checks' => 0];
+    Http::fake(function (Request $request) use ($server) {
+        $file = basename((string) parse_url($request->url(), PHP_URL_PATH));
+        $request->method() === 'HEAD' ? $server->checks++ : $server->downloads++;
+
+        return Http::response(
+            $request->method() === 'HEAD' ? '' : ($server->files[$file] ?? ''),
+            200,
+            ['Last-Modified' => $server->modified],
+        );
+    });
+
+    return $server;
+}
+
 it('imports the ratings and the rated episodes of the IMDb datasets', function () {
     // Rows of a previous import that IMDb no longer has are removed.
     imdbRating('tt0000001', 5.0, 10);
     imdbEpisode('tt0000002', 'tt0000003', 1, 1);
 
-    Http::fake([
-        'datasets.imdbws.com/title.ratings.tsv.gz' => Http::response(imdbDataset("tconst\taverageRating\tnumVotes", [
+    fakeImdb([
+        'title.ratings.tsv.gz' => imdbDataset("tconst\taverageRating\tnumVotes", [
             ['tt0137523', '8.8', '2400000'],
             ['tt0944947', '9.2', '2300000'],
             ['tt1480055', '8.9', '50000'],
             ['broken'],
             ['nm0000093', '7.0', '12'],
-        ])),
-        'datasets.imdbws.com/title.episode.tsv.gz' => Http::response(imdbDataset("tconst\tparentTconst\tseasonNumber\tepisodeNumber", [
+        ]),
+        'title.episode.tsv.gz' => imdbDataset("tconst\tparentTconst\tseasonNumber\tepisodeNumber", [
             ['tt1480055', 'tt0944947', '1', '1'],
             // No rating: not kept.
             ['tt9999999', 'tt0944947', '1', '2'],
             ['tt0000004', 'tt0944947', '\N', '\N'],
-        ])),
+        ]),
     ]);
 
     $this->artisan('imdb:import')->expectsOutputToContain('3 ratings and 1 episodes imported')->assertSuccessful();
@@ -64,16 +88,53 @@ it('imports the ratings and the rated episodes of the IMDb datasets', function (
             ['tconst' => 'tt1480055', 'rating' => 8.9, 'votes' => 50000],
         ])
         ->and(DB::table('imdb_episodes')->get(['tconst', 'parent_tconst', 'season', 'episode'])->map(fn ($row) => (array) $row)->all())
-        ->toEqual([['tconst' => 'tt1480055', 'parent_tconst' => 'tt0944947', 'season' => 1, 'episode' => 1]]);
+        ->toEqual([['tconst' => 'tt1480055', 'parent_tconst' => 'tt0944947', 'season' => 1, 'episode' => 1]])
+        ->and(DB::table('imdb_imports')->count())->toBe(1);
 });
 
-it('keeps the previous ratings when an import fails', function () {
+it('checks every hour with HEAD requests and imports only what IMDb published since', function () {
+    $imdb = fakeImdb([
+        'title.ratings.tsv.gz' => imdbDataset("tconst\taverageRating\tnumVotes", [['tt0137523', '8.8', '2400000']]),
+        'title.episode.tsv.gz' => imdbDataset("tconst\tparentTconst\tseasonNumber\tepisodeNumber", []),
+    ]);
+    $this->artisan('imdb:import')->assertSuccessful();
+    expect($imdb->downloads)->toBe(2);
+
+    // Same Last-Modified an hour later: HEAD requests only, nothing downloaded.
+    $this->artisan('imdb:import')->expectsOutputToContain('unchanged')->assertSuccessful();
+    expect($imdb->downloads)->toBe(2)->and($imdb->checks)->toBe(4);
+
+    // IMDb published new datasets: imported.
+    $imdb->files['title.ratings.tsv.gz'] = imdbDataset("tconst\taverageRating\tnumVotes", [['tt0137523', '8.9', '2400100']]);
+    $imdb->modified = 'Sat, 21 Nov 2026 08:40:00 GMT';
+    $this->artisan('imdb:import')->expectsOutputToContain('1 ratings and 0 episodes imported')->assertSuccessful();
+    expect($imdb->downloads)->toBe(4)
+        ->and((float) DB::table('imdb_ratings')->value('rating'))->toBe(8.9)
+        ->and(DB::table('imdb_imports')->count())->toBe(2);
+
+    // --force: imported whatever the version.
+    $this->artisan('imdb:import --force')->assertSuccessful();
+    expect($imdb->downloads)->toBe(6);
+});
+
+it('keeps the previous ratings when an import fails, and tries again the next hour', function () {
     imdbRating('tt0137523', 8.8, 2400000);
-    Http::fake(['datasets.imdbws.com/*' => Http::response(imdbDataset("tconst\taverageRating\tnumVotes", []))]);
+    fakeImdb(['title.ratings.tsv.gz' => imdbDataset("tconst\taverageRating\tnumVotes", [])]);
 
     $this->artisan('imdb:import')->assertFailed();
 
-    expect(DB::table('imdb_ratings')->count())->toBe(1);
+    expect(DB::table('imdb_ratings')->count())->toBe(1)
+        // Not recorded: the same version is imported again next time.
+        ->and(DB::table('imdb_imports')->count())->toBe(0);
+});
+
+it('does not import when IMDb cannot be reached', function () {
+    Http::fake(['datasets.imdbws.com/*' => Http::response('', 503)]);
+    Sleep::fake();
+
+    $this->artisan('imdb:import')->assertFailed();
+
+    expect(Http::recorded(fn (Request $request) => $request->method() === 'GET'))->toHaveCount(0);
 });
 
 it('checks IMDb title ids', function () {

@@ -53,10 +53,21 @@ TMDb indisponible pour ces identifiants : pas d'erreur, la note d'IMDb manque se
 
 ## Import des jeux de données (`php artisan imdb:import`)
 
-`App\Services\Imdb\ImdbDatasets`, planifié **chaque jour à 05:17** (`routes/console.php`,
-`withoutOverlapping`, en arrière-plan), aussi à lancer à la main (la première fois après le
-déploiement). Source : <https://datasets.imdbws.com> (`IMDB_DATASETS_URL`), mise à jour
-quotidiennement par IMDb.
+`App\Services\Imdb\ImdbDatasets`, planifié **toutes les heures** (à la 17e minute,
+`routes/console.php`, `withoutOverlapping`, en arrière-plan ; demande du développeur, 21/11/2026).
+Source : <https://datasets.imdbws.com> (`IMDB_DATASETS_URL`), mise à jour une fois par jour par IMDb.
+
+1. **Vérification** : une requête `HEAD` par fichier (rien n'est téléchargé) lit son
+   `Last-Modified` (sinon son `ETag` ; ni l'un ni l'autre : la date du jour, donc un import par
+   jour). Les deux valeurs forment la **version** des jeux de données.
+2. Même version que le dernier import réussi (table `imdb_imports`) : rien à faire
+   (« IMDb datasets unchanged »).
+3. Version nouvelle : **import** des deux fichiers, puis la version est enregistrée dans
+   `imdb_imports` (avec le nombre de notes et d'épisodes ; les lignes de plus de 30 jours sont
+   supprimées). Un import qui échoue n'enregistre rien : il recommence l'heure suivante.
+
+`php artisan imdb:import --force` importe quelle que soit la version (par exemple la première fois
+après le déploiement, sans attendre l'heure suivante).
 
 - `title.ratings.tsv.gz` → table `imdb_ratings` (`tconst`, `rating`, `votes`) : films, séries,
   épisodes… (environ 1,6 million de lignes).
@@ -67,7 +78,7 @@ Chaque fichier est téléchargé dans un fichier temporaire (15 min au plus, 2 n
 lu ligne par ligne et enregistré par lots de 2 000 (`upsert`) : la mémoire reste faible. Chaque
 ligne porte le numéro de l'import (`import_id`) ; les lignes qu'IMDb n'a plus sont supprimées à la
 fin d'un import **complet** seulement. Un import qui échoue (réseau, fichier vide) garde les notes
-de la veille et la commande se termine en erreur (journalisée).
+précédentes et la commande se termine en erreur (journalisée).
 
 ## Licence d'IMDb
 
@@ -78,6 +89,8 @@ Un usage commercial demande une licence d'IMDb (AWS Data Exchange).
 ## Tests
 
 `tests/Feature/Api/V1/Catalog/ImdbRatingsTest.php` : import (fichiers TSV gzippés simulés,
-lignes invalides ignorées, anciennes lignes supprimées, échec sans perte), notes d'un film (par
+lignes invalides ignorées, anciennes lignes supprimées, échec sans perte), vérification horaire
+(`HEAD` seulement tant que `Last-Modified` ne change pas, import quand il change, `--force`, IMDb
+injoignable), notes d'un film (par
 `imdb_id` ou par les *External IDs*), d'une série, d'un titre sans note IMDb et des épisodes (par
 numéro, par *External IDs*, épisode pas encore diffusé, TMDb indisponible).
