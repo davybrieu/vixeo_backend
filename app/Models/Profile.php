@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Hash;
  * positions will be attached to a profile, not to the account.
  */
 #[Fillable([
-    'name', 'username', 'bio', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
+    'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
 ])]
 #[Hidden(['pin', 'sync_revision'])]
@@ -56,6 +56,8 @@ class Profile extends Model
     {
         return [
             'is_kid' => 'boolean',
+            'is_private' => 'boolean',
+            'social_links' => 'array',
             'max_age_rating' => 'integer',
             'allow_unrated' => 'boolean',
             'poster_format' => PosterFormat::class,
@@ -81,14 +83,17 @@ class Profile extends Model
     /** @return BelongsToMany<Profile, $this> */
     public function following(): BelongsToMany
     {
-        return $this->belongsToMany(self::class, 'profile_follows', 'follower_profile_id', 'followed_profile_id')->withTimestamps();
+        // Accepted follows only: a request to a private account waits (App\Services\Social\Follows).
+        return $this->belongsToMany(self::class, 'profile_follows', 'follower_profile_id', 'followed_profile_id')
+            ->withTimestamps()->wherePivotNotNull('accepted_at');
     }
 
     /** Profiles following this profile. */
     /** @return BelongsToMany<Profile, $this> */
     public function followers(): BelongsToMany
     {
-        return $this->belongsToMany(self::class, 'profile_follows', 'followed_profile_id', 'follower_profile_id')->withTimestamps();
+        return $this->belongsToMany(self::class, 'profile_follows', 'followed_profile_id', 'follower_profile_id')
+            ->withTimestamps()->wherePivotNotNull('accepted_at');
     }
 
     /** @return HasMany<ProfileItem, $this> */

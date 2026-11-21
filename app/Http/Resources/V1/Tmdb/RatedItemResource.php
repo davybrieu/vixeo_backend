@@ -20,6 +20,8 @@ class RatedItemResource extends JsonResource
         $episode = $this->type === RatedType::Episode;
 
         return [
+            /** The review itself (likes: PUT /social/reviews/{review_id}/like). */
+            'review_id' => (int) $this->getKey(),
             'type' => $this->type,
             /** TMDb id of the movie or TV show (the page to open), also for an episode. */
             'id' => (int) $this->tmdb_id,
@@ -45,6 +47,8 @@ class RatedItemResource extends JsonResource
             'rated_at' => (string) $this->rated_at->toIso8601String(),
             /** TMDb average rating, out of 10. */
             'vote_average' => (float) $this->vote_average,
+            /** Likes of other profiles (« J'aime »). */
+            'likes_count' => (int) ($this->likes_count ?? 0),
         ];
     }
 }

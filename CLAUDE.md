@@ -249,6 +249,18 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   chacun) seulement pour la page d'un membre (`publicProfile(withCounts: true)`).
   Biographie d'un profil : **160 caractères au plus** (`Profile::BIO_MAX_LENGTH`, demande du
   développeur, 21/11/2026), modifiée par `PUT /profiles/{id}`.
+- **Fonctions sociales** (doc : `docs/social.md`, demande du développeur, 21/11/2026, comme
+  Twitter) : **réseaux sociaux** du profil (`social_links` : Instagram, X, TikTok, YouTube,
+  Letterboxd, Threads, Bluesky, site web ; `App\Support\SocialLinks`), **compte privé**
+  (`is_private` : listes, avis, abonnés et abonnements pour les abonnés acceptés seulement, `can_view`,
+  403 « Ce compte est privé. ») avec **demandes d'abonnement** (`profile_follows.accepted_at` nul ;
+  `GET /social/requests`, accepter / refuser ; écritures par `App\Services\Social\Follows`
+  uniquement ; `following()` / `followers()` ne comptent que les acceptés), **J'aime sur les avis**
+  (`review_likes`, `PUT|DELETE /social/reviews/{review_id}/like`), **notifications**
+  (`social_notifications` : `follow`, `follow_request`, `follow_accepted`, `review_like` ;
+  `GET /notifications`, `/count`, `POST /notifications/read`, `GET /notifications/episodes` :
+  prochains épisodes de « Ma liste »), envoyées aussi en push après la réponse (réglage `social`
+  de `PUT /push/device`, canal Android `social`).
 - **Requêtes** : hors production, `Model::preventLazyLoading()` (`AppServiceProvider`) fait
   échouer une relation lue dans une boucle sans `with()` (N+1) : les tests l'attrapent.
 - **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
@@ -368,6 +380,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   logos de la bibliothèque tv-logos).
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
+- Fait aussi : réseaux sociaux du profil, compte privé et demandes d'abonnement, J'aime sur les
+  avis, notifications (page de l'appli et push) et prochains épisodes de « Ma liste »
+  (`docs/social.md`).
 - Fait aussi : notes IMDb (jeux de données vérifiés toutes les heures, importés quand IMDb les
   met à jour, `imdb:import`) et TMDb, avec
   leurs votants, sur les fiches et les épisodes (MDBList et `rating_source` supprimés).

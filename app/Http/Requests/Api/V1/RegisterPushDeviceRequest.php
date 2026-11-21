@@ -15,6 +15,8 @@ class RegisterPushDeviceRequest extends FormRequest
             'platform' => ['required', 'string', Rule::in(['android', 'ios'])],
             /** New episodes of the « Ma liste » TV shows of the active profile (X-Profile-Id). */
             'new_episodes' => ['required', 'boolean'],
+            /** Social activity of the active profile: likes of its reviews, followers, follow requests (default true). */
+            'social' => ['sometimes', 'boolean'],
             /** Device time minus UTC, in minutes (Paris in winter: 60): no episode notification at night. */
             'utc_offset' => ['sometimes', 'integer', 'between:-720,840'],
         ];

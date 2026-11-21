@@ -71,5 +71,9 @@
     ":code “:title” is available.": ":code « :title » est disponible.",
     ":count new episodes of season :season are available.": ":count nouveaux épisodes de la saison :season sont disponibles.",
     ":count new episodes are available.": ":count nouveaux épisodes sont disponibles.",
-    "New episode": "Nouvel épisode"
+    "New episode": "Nouvel épisode",
+    "This account is private.": "Ce compte est privé.",
+    "You cannot like your own review.": "Vous ne pouvez pas aimer votre propre avis.",
+    "This :network account is not valid.": "Ce compte :network n'est pas valide.",
+    "This address is not valid.": "Cette adresse n'est pas valide."
 }

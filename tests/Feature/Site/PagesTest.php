@@ -238,6 +238,7 @@ it('shows the public page of a profile, shared from the app', function () {
     withLatestAndroid(null);
     $profile = Profile::factory()->create([
         'name' => 'Léa', 'username' => 'lea', 'bio' => 'Fan de science-fiction.', 'avatar' => 'quest-knight',
+        'social_links' => ['instagram' => 'lea.films'],
     ]);
 
     // www.vixeo.app/lea, like Twitter (developer's request, 21/11/2026).
@@ -253,6 +254,8 @@ it('shows the public page of a profile, shared from the app', function () {
             ->where('member.avatar.background', '#1E2A3A')
             ->has('member.avatar.pixels', 12)
             ->where('openInApp', null)
+            ->where('member.isPrivate', false)
+            ->where('member.links', [['label' => 'Instagram', 'handle' => 'lea.films', 'url' => 'https://www.instagram.com/lea.films']])
             ->missing('member.email')
             ->missing('member.id'));
 

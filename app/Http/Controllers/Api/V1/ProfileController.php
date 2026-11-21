@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\VerifyPinRequest;
 use App\Http\Resources\V1\ProfileResource;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
+use App\Services\Social\Follows;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -69,11 +70,16 @@ class ProfileController extends Controller
      * `parental_pin` when parental control is on. Changing or removing the profile PIN requires
      * `current_pin` (or `parental_pin`).
      */
-    public function update(ProfileRequest $request, Profile $profile): ProfileResource
+    public function update(ProfileRequest $request, Profile $profile, Follows $follows): ProfileResource
     {
         Gate::authorize('update', $profile);
 
+        $wasPrivate = $profile->is_private;
         $profile->update($request->profileData());
+        // Made public: the follow requests it was waiting with are accepted (docs/social.md).
+        if ($wasPrivate && ! $profile->is_private) {
+            $follows->acceptAll($profile);
+        }
 
         return new ProfileResource($profile);
     }

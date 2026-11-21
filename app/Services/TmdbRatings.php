@@ -31,7 +31,8 @@ class TmdbRatings
      */
     public function all(Profile $profile): Collection
     {
-        $rows = $this->query($profile)->latest('rated_at')->latest('id')->get();
+        // With their likes (« J'aime » of other profiles, docs/social.md).
+        $rows = $this->query($profile)->withCount('likes')->latest('rated_at')->latest('id')->get();
 
         // Saved while TMDb was unreachable: what « Mes avis » shows of the title, now (a few per
         // listing, so a TMDb outage never makes the page slow).

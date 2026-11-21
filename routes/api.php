@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PlaybackController;
@@ -125,6 +126,20 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::middleware(ResolveProfile::class)->prefix('social')->name('social.')->group(function () {
             Route::post('profiles/{username}/follow', [SocialProfileController::class, 'follow'])->name('profiles.follow');
             Route::delete('profiles/{username}/follow', [SocialProfileController::class, 'unfollow'])->name('profiles.unfollow');
+            // Follow requests to a private account (docs/social.md).
+            Route::get('requests', [SocialProfileController::class, 'requests'])->name('requests');
+            Route::post('requests/{username}/accept', [SocialProfileController::class, 'acceptRequest'])->name('requests.accept');
+            Route::delete('requests/{username}', [SocialProfileController::class, 'declineRequest'])->name('requests.decline');
+            // « J'aime » on a member's review.
+            Route::put('reviews/{review}/like', [SocialProfileController::class, 'likeReview'])->whereNumber('review')->name('reviews.like');
+            Route::delete('reviews/{review}/like', [SocialProfileController::class, 'unlikeReview'])->whereNumber('review')->name('reviews.unlike');
+        });
+        // The app's « Notifications » page (docs/social.md).
+        Route::middleware(ResolveProfile::class)->prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('count', [NotificationController::class, 'count'])->name('count');
+            Route::post('read', [NotificationController::class, 'read'])->name('read');
+            Route::get('episodes', [NotificationController::class, 'episodes'])->middleware('throttle:catalog')->name('episodes');
         });
         Route::prefix('auth/device')->name('auth.device.')->middleware('throttle:device-approve')->group(function () {
             Route::post('lookup', [DeviceLoginController::class, 'lookup'])->name('lookup');

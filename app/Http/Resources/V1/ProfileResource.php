@@ -3,6 +3,7 @@
 namespace App\Http\Resources\V1;
 
 use App\Models\Profile;
+use App\Support\SocialLinks;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +17,14 @@ class ProfileResource extends JsonResource
             'name' => $this->name,
             'username' => $this->username,
             'bio' => $this->bio,
+            /** Private account: its lists and reviews are seen by its accepted followers only. */
+            'is_private' => (bool) $this->is_private,
+            /**
+             * Accounts on social networks, in the order of the profile page.
+             *
+             * @var list<array{network: string, label: string, handle: string, url: string}>
+             */
+            'social_links' => SocialLinks::present($this->social_links),
             /** Avatar id (GET /avatars), null = initial letter. */
             'avatar' => $this->avatar,
             'poster_format' => $this->poster_format,

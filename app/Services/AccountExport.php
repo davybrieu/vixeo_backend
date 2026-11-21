@@ -7,8 +7,11 @@ use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\ProfileSearch;
 use App\Models\PushDevice;
+use App\Models\ReviewLike;
+use App\Models\SocialNotification;
 use App\Models\TmdbRating;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
@@ -31,6 +34,26 @@ class AccountExport
             ],
             'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,
+                'username' => $p->username,
+                'bio' => $p->bio,
+                'is_private' => (bool) $p->is_private,
+                'social_links' => $p->social_links ?? [],
+                // Members followed (or asked to follow), followers, likes given, notifications (docs/social.md).
+                'following' => $this->follows('follower_profile_id', 'followed_profile_id', $p),
+                'followers' => $this->follows('followed_profile_id', 'follower_profile_id', $p),
+                'review_likes' => ReviewLike::query()->where('profile_id', $p->id)->with('rating.profile')->get()
+                    ->map(fn (ReviewLike $like) => [
+                        'review_of' => $like->rating->profile->username,
+                        'title' => $like->rating->title,
+                        'liked_at' => $like->created_at?->toIso8601String(),
+                    ])->values()->all(),
+                'notifications' => SocialNotification::query()->where('profile_id', $p->id)->with('actor')
+                    ->latest('created_at')->get()->map(fn (SocialNotification $n) => [
+                        'type' => $n->type,
+                        'from' => $n->actor->username,
+                        'at' => $n->created_at?->toIso8601String(),
+                        'read' => $n->read_at !== null,
+                    ])->values()->all(),
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
                 'max_age_rating' => $p->max_age_rating,
@@ -91,6 +114,7 @@ class AccountExport
                 'platform' => $d->platform,
                 'profile' => $d->profile?->name,
                 'new_episodes' => $d->new_episodes,
+                'social' => (bool) $d->social,
                 'registered_at' => $d->created_at?->toIso8601String(),
                 'last_seen_at' => $d->last_seen_at?->toIso8601String(),
             ])->values()->all(),
@@ -100,5 +124,22 @@ class AccountExport
                 'last_used_at' => $t->last_used_at?->toIso8601String(),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * The members [profile] follows (`$from` = follower) or that follow it, with their status.
+     *
+     * @return list<array{username: string, accepted: bool, since: string}>
+     */
+    private function follows(string $from, string $other, Profile $profile): array
+    {
+        return DB::table('profile_follows')->join('profiles', 'profiles.id', '=', "profile_follows.{$other}")
+            ->where("profile_follows.{$from}", $profile->id)->orderBy('profile_follows.created_at')
+            ->get(['profiles.username', 'profile_follows.accepted_at', 'profile_follows.created_at'])
+            ->map(fn (object $row) => [
+                'username' => (string) $row->username,
+                'accepted' => $row->accepted_at !== null,
+                'since' => (string) $row->created_at,
+            ])->values()->all();
     }
 }

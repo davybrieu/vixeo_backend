@@ -31,7 +31,8 @@ Vérifier : `php artisan vixeo:push "Test" --user=<votre adresse> --force`.
 Connecté (bearer), avec l'en-tête `X-Profile-Id` du profil en cours :
 
 - `PUT /push/device` : `token` (jeton FCM de l'appli), `platform` (`android`, `ios`),
-  `new_episodes` (le profil veut les nouveaux épisodes sur cet appareil), `utc_offset` (heure de
+  `new_episodes` (le profil veut les nouveaux épisodes sur cet appareil), `social` (facultatif, vrai
+  par défaut : J'aime, abonnés et demandes d'abonnement, `docs/social.md`), `utc_offset` (heure de
   l'appareil moins UTC, en minutes). À la connexion, au lancement, quand FCM change le jeton,
   quand on change de profil et quand on active ou désactive les alertes. 201 la première fois,
   200 ensuite.

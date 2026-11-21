@@ -221,6 +221,8 @@ return [
         'year_to' => 'année de fin',
         'min_rating' => 'note minimale',
         'min_votes' => 'nombre minimal de votants',
+        'is_private' => 'compte privé',
+        'social_links' => 'réseaux sociaux',
         'max_rating' => 'note maximale',
         'max_votes' => 'nombre maximal de votants',
         'value' => 'note',

@@ -8,12 +8,19 @@ use App\Http\Middleware\ResolveProfile;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\Profile;
 use App\Models\ProfileItem;
+use App\Models\ReviewLike;
 use App\Models\TmdbRating;
+use App\Services\Social\Follows;
+use App\Services\Social\ReviewLikes;
+use App\Support\SocialLinks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class SocialProfileController extends Controller
 {
+    public function __construct(private Follows $follows, private ReviewLikes $likes) {}
+
     public function search(Request $request): JsonResponse
     {
         $this->assertAdultViewer($request);
@@ -35,38 +42,137 @@ class SocialProfileController extends Controller
         return response()->json(['data' => $profiles->map(fn (Profile $profile) => $this->identity($profile))]);
     }
 
+    /**
+     * A member's page.
+     *
+     * Name, @username, avatar, biography, social networks and counters, also for a private account
+     * (`is_private`). Its lists, reviews, followers and followings need `can_view`: public, the
+     * active profile itself or an accepted follower (403 otherwise). `follow_status`: `none`,
+     * `requested` (waiting for a private account to accept) or `following`.
+     */
     public function show(Request $request, string $username): JsonResponse
     {
         $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username, withCounts: true);
         $viewer = ResolveProfile::profile($request);
+        $status = $this->follows->status($viewer, $profile);
 
         return response()->json(['data' => [
             ...$this->summary($profile),
             'bio' => $profile->bio,
-            'is_following' => $viewer instanceof Profile && $viewer->id !== $profile->id
-                ? $viewer->following()->whereKey($profile->id)->exists() : false,
+            /**
+             * Accounts on social networks (Instagram, X, TikTok, YouTube, Letterboxd, Threads, Bluesky, website).
+             *
+             * @var list<array{network: string, label: string, handle: string, url: string}>
+             */
+            'social_links' => SocialLinks::present($profile->social_links),
+            'is_following' => $status === Follows::FOLLOWING,
+            /** `none`, `requested` (a private account has not accepted yet) or `following`. */
+            'follow_status' => $status,
+            /** The active profile sees the lists and reviews (public account, itself, or an accepted follower). */
+            'can_view' => $this->follows->canView($viewer, $profile),
             'is_self' => $viewer instanceof Profile && $viewer->id === $profile->id,
         ]]);
     }
 
+    /**
+     * Follow a member.
+     *
+     * A public account at once (`follow_status`: `following`); a private one receives a request
+     * it accepts or declines (`requested`). The member is notified.
+     */
     public function follow(Request $request, string $username): JsonResponse
     {
         $follower = $this->activeProfile($request);
         $target = $this->publicProfile($username);
         abort_if($follower->id === $target->id, 422, 'Vous ne pouvez pas vous suivre vous-même.');
-        $follower->following()->syncWithoutDetaching([$target->id]);
+        $status = $this->follows->follow($follower, $target);
 
-        return response()->json(['following' => true]);
+        return response()->json(['following' => $status === Follows::FOLLOWING, 'follow_status' => $status]);
     }
 
+    /**
+     * Unfollow a member, or withdraw a follow request.
+     */
     public function unfollow(Request $request, string $username): JsonResponse
     {
         $follower = $this->activeProfile($request);
         $target = $this->publicProfile($username);
-        $follower->following()->detach($target->id);
+        $this->follows->unfollow($follower, $target);
 
-        return response()->json(['following' => false]);
+        return response()->json(['following' => false, 'follow_status' => Follows::NONE]);
+    }
+
+    /**
+     * Follow requests waiting for the active profile (a private account), the most recent first.
+     */
+    public function requests(Request $request): JsonResponse
+    {
+        $profile = $this->activeProfile($request);
+
+        return response()->json(['data' => array_map(fn (array $row) => [
+            ...$this->identity($row['profile']),
+            'requested_at' => $row['requested_at'],
+        ], $this->follows->requests($profile))]);
+    }
+
+    /**
+     * Accept a follow request: the member now follows the active profile (and is notified).
+     */
+    public function acceptRequest(Request $request, string $username): JsonResponse
+    {
+        $profile = $this->activeProfile($request);
+        abort_unless($this->follows->accept($profile, $this->publicProfile($username)), 404);
+
+        return response()->json(['accepted' => true]);
+    }
+
+    /**
+     * Decline a follow request.
+     */
+    public function declineRequest(Request $request, string $username): Response
+    {
+        $this->follows->decline($this->activeProfile($request), $this->publicProfile($username));
+
+        return response()->noContent();
+    }
+
+    /**
+     * Like a member's review.
+     *
+     * `review` is its `review_id`. Its author is notified; not one's own review (422), nor a
+     * private account's one without following it (403).
+     */
+    public function likeReview(Request $request, int $review): JsonResponse
+    {
+        [$profile, $rating] = $this->likable($request, $review);
+        $this->likes->like($profile, $rating);
+
+        return response()->json(['liked' => true, 'likes_count' => $rating->likes()->count()]);
+    }
+
+    /**
+     * Take back a like.
+     */
+    public function unlikeReview(Request $request, int $review): JsonResponse
+    {
+        [$profile, $rating] = $this->likable($request, $review);
+        $this->likes->unlike($profile, $rating);
+
+        return response()->json(['liked' => false, 'likes_count' => $rating->likes()->count()]);
+    }
+
+    /** @return array{Profile, TmdbRating} */
+    private function likable(Request $request, int $review): array
+    {
+        $profile = $this->activeProfile($request);
+        $rating = TmdbRating::query()->with('profile')->findOrFail($review);
+        $author = $rating->profile;
+        abort_if($author->is_kid || $author->username === null, 404);
+        abort_if($author->id === $profile->id, 422, __('You cannot like your own review.'));
+        abort_unless($this->follows->canView($profile, $author), 403, __('This account is private.'));
+
+        return [$profile, $rating];
     }
 
     public function followers(Request $request, string $username): JsonResponse
@@ -85,13 +191,17 @@ class SocialProfileController extends Controller
      */
     public function reviews(Request $request, string $username): JsonResponse
     {
-        $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
-        $items = TmdbRating::query()->where('profile_id', $profile->id)->latest('rated_at')->paginate(20);
+        $profile = $this->visibleProfile($request, $username);
+        $items = TmdbRating::query()->where('profile_id', $profile->id)->withCount('likes')->latest('rated_at')->paginate(20);
+        $viewer = ResolveProfile::profile($request);
+        $liked = $viewer === null ? [] : ReviewLike::query()->where('profile_id', $viewer->id)
+            ->whereIn('tmdb_rating_id', $items->getCollection()->modelKeys())->pluck('tmdb_rating_id')->all();
 
         return response()->json(['data' => collect($items->items())->map(fn (TmdbRating $rating) => [
             ...(new RatedItemResource($rating))->toArray($request),
             'poster_path' => $rating->poster_path,
+            /** The active profile likes this review. */
+            'liked' => in_array($rating->id, $liked, true),
         ]), 'meta' => [
             'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
         ]]);
@@ -99,8 +209,7 @@ class SocialProfileController extends Controller
 
     public function favoritesList(Request $request, string $username): JsonResponse
     {
-        $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
+        $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_favorite', true)->latest('favorited_at')->paginate(30);
 
@@ -117,8 +226,7 @@ class SocialProfileController extends Controller
      */
     public function liked(Request $request, string $username): JsonResponse
     {
-        $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
+        $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_liked', true)->whereIn('type', ['movie', 'tv'])
             ->latest('liked_at')->latest('id')->paginate(30);
@@ -138,8 +246,7 @@ class SocialProfileController extends Controller
      */
     public function people(Request $request, string $username): JsonResponse
     {
-        $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
+        $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_followed', true)->where('type', 'person')
             ->latest('followed_at')->latest('id')->paginate(30);
@@ -156,13 +263,22 @@ class SocialProfileController extends Controller
 
     private function connections(Request $request, string $username, string $direction): JsonResponse
     {
-        $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
+        $profile = $this->visibleProfile($request, $username);
         $relation = $direction === 'followers' ? $profile->followers() : $profile->following();
         $items = $relation->where('is_kid', false)->paginate(30);
 
         return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->identity($p)),
             'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage()]]);
+    }
+
+    /** A member whose lists and reviews the active profile may see (403: a private account it doesn't follow). */
+    private function visibleProfile(Request $request, string $username): Profile
+    {
+        $this->assertAdultViewer($request);
+        $profile = $this->publicProfile($username);
+        abort_unless($this->follows->canView(ResolveProfile::profile($request), $profile), 403, __('This account is private.'));
+
+        return $profile;
     }
 
     private function assertAdultViewer(Request $request): void
@@ -206,6 +322,8 @@ class SocialProfileController extends Controller
         return [
             'id' => $profile->id, 'username' => $profile->username, 'name' => $profile->name,
             'avatar' => $profile->avatar, 'bio' => $profile->bio,
+            /** Private account: its lists and reviews are seen by its accepted followers only. */
+            'is_private' => (bool) $profile->is_private,
         ];
     }
 

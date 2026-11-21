@@ -36,10 +36,26 @@ const description = computed(
         </div>
 
         <h1 class="mt-6 text-3xl font-extrabold text-text sm:text-4xl">{{ member.name }}</h1>
-        <p class="mt-1 text-lg text-text-muted">@{{ member.username }}</p>
+        <p class="mt-1 text-lg text-text-muted">
+            @{{ member.username }}<span v-if="member.isPrivate"> · Compte privé</span>
+        </p>
         <p v-if="member.bio" class="mt-5 max-w-md text-base leading-relaxed whitespace-pre-line text-text-secondary">
             {{ member.bio }}
         </p>
+        <!-- Social networks: plain links, nothing loaded from them (no third-party service). -->
+        <ul v-if="member.links?.length" class="mt-6 flex flex-wrap justify-center gap-2">
+            <li v-for="link in member.links" :key="link.url">
+                <a
+                    :href="link.url"
+                    rel="me noopener nofollow"
+                    target="_blank"
+                    class="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-accent hover:text-text"
+                >
+                    <span class="text-text">{{ link.label }}</span>
+                    <span v-if="link.label !== 'Site web'" class="text-text-muted">{{ link.handle }}</span>
+                </a>
+            </li>
+        </ul>
 
         <div class="mt-10 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
             <VxButton v-if="openInApp" :href="openInApp" size="lg" icon="play">Ouvrir dans Vixeo</VxButton>
@@ -48,7 +64,12 @@ const description = computed(
             </VxButton>
         </div>
         <p class="mt-6 max-w-md text-sm text-text-muted">
-            Dans Vixeo, retrouvez ce profil, ses avis et sa liste : sur Android, ce lien l’ouvre directement dans l’appli.
+            <template v-if="member.isPrivate">
+                Ce compte est privé : dans Vixeo, demandez à le suivre pour voir ses avis et sa liste.
+            </template>
+            <template v-else>
+                Dans Vixeo, retrouvez ce profil, ses avis et sa liste : sur Android, ce lien l’ouvre directement dans l’appli.
+            </template>
         </p>
     </section>
 </template>

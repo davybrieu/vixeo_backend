@@ -3262,6 +3262,405 @@
                 }
             }
         },
+        "/v1/notifications": {
+            "get": {
+                "operationId": "v1.notifications.index",
+                "description": "The most recent first, 30 per page. `type`: `follow`, `follow_request` (to accept or decline,\n`GET /social/requests`), `follow_accepted`, `review_like` (with `review`). `unread_count`:\nthe badge of the navigation.",
+                "summary": "Notifications of the active profile",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "read": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "actor": {
+                                                        "type": "object",
+                                                        "description": "Who did it.",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "username": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "avatar": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "username",
+                                                            "name",
+                                                            "avatar"
+                                                        ]
+                                                    },
+                                                    "review": {
+                                                        "type": [
+                                                            "object",
+                                                            "null"
+                                                        ],
+                                                        "description": "The review liked (`review_like`).",
+                                                        "properties": {
+                                                            "review_id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "type": {
+                                                                "$ref": "#/components/schemas/RatedType"
+                                                            },
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "season_number": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "episode_number": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "value": {
+                                                                "type": "number"
+                                                            },
+                                                            "poster_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "review_id",
+                                                            "type",
+                                                            "id",
+                                                            "title",
+                                                            "season_number",
+                                                            "episode_number",
+                                                            "value",
+                                                            "poster_url"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "type",
+                                                    "created_at",
+                                                    "read",
+                                                    "actor",
+                                                    "review"
+                                                ]
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page"
+                                            ]
+                                        },
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta",
+                                        "unread_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/count": {
+            "get": {
+                "operationId": "v1.notifications.count",
+                "summary": "Unread notifications (the badge of the navigation)",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "unread_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/read": {
+            "post": {
+                "operationId": "v1.notifications.read",
+                "summary": "Mark every notification as read (the page was opened)",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/episodes": {
+            "get": {
+                "operationId": "v1.notifications.episodes",
+                "description": "`upcoming`: the next episode of each show TMDb knows, the soonest first; `recent`: episodes\nout for less than 7 days, the most recent first. `available_at` is an estimate made not to\nbe early (08:00 UTC on streaming platforms, 21:00 in the show's country otherwise).",
+                "summary": "Next episodes of the \u00ab Ma liste \u00bb TV shows",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "upcoming": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "show": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "poster_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "backdrop_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "name",
+                                                            "poster_url",
+                                                            "backdrop_url"
+                                                        ]
+                                                    },
+                                                    "season_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "episode_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "name": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "still_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "air_date": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "available_at": {
+                                                        "type": "string",
+                                                        "description": "Estimated time it is out, ISO 8601 (UTC)."
+                                                    }
+                                                },
+                                                "required": [
+                                                    "show",
+                                                    "season_number",
+                                                    "episode_number",
+                                                    "name",
+                                                    "still_url",
+                                                    "air_date",
+                                                    "available_at"
+                                                ]
+                                            }
+                                        },
+                                        "recent": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "show": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "poster_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "backdrop_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "name",
+                                                            "poster_url",
+                                                            "backdrop_url"
+                                                        ]
+                                                    },
+                                                    "season_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "episode_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "name": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "still_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "air_date": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "available_at": {
+                                                        "type": "string",
+                                                        "description": "Estimated time it is out, ISO 8601 (UTC)."
+                                                    }
+                                                },
+                                                "required": [
+                                                    "show",
+                                                    "season_number",
+                                                    "episode_number",
+                                                    "name",
+                                                    "still_url",
+                                                    "air_date",
+                                                    "available_at"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "upcoming",
+                                        "recent"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/push/device": {
             "get": {
                 "operationId": "v1.push.device.show",
@@ -4029,6 +4428,10 @@
                                                             "string",
                                                             "null"
                                                         ]
+                                                    },
+                                                    "is_private": {
+                                                        "type": "boolean",
+                                                        "description": "Private account: its lists and reviews are seen by its accepted followers only."
                                                     }
                                                 },
                                                 "required": [
@@ -4036,7 +4439,8 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
-                                                    "bio"
+                                                    "bio",
+                                                    "is_private"
                                                 ]
                                             }
                                         }
@@ -4076,6 +4480,8 @@
         "/v1/social/profiles/{username}": {
             "get": {
                 "operationId": "v1.social.profiles.show",
+                "description": "Name, @username, avatar, biography, social networks and counters, also for a private account\n(`is_private`). Its lists, reviews, followers and followings need `can_view`: public, the\nactive profile itself or an accepted follower (403 otherwise). `follow_status`: `none`,\n`requested` (waiting for a private account to accept) or `following`.",
+                "summary": "A member's page",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -4124,6 +4530,10 @@
                                                         "null"
                                                     ]
                                                 },
+                                                "is_private": {
+                                                    "type": "boolean",
+                                                    "description": "Private account: its lists and reviews are seen by its accepted followers only."
+                                                },
                                                 "share_url": {
                                                     "type": "string",
                                                     "description": "The page of the profile on the site, shared from the app (\u00ab Partager \u00bb)."
@@ -4151,8 +4561,48 @@
                                                     "type": "integer",
                                                     "description": "Followed people (actors, directors\u2026)."
                                                 },
+                                                "social_links": {
+                                                    "type": "array",
+                                                    "description": "Accounts on social networks (Instagram, X, TikTok, YouTube, Letterboxd, Threads, Bluesky, website).",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "network": {
+                                                                "type": "string"
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "handle": {
+                                                                "type": "string"
+                                                            },
+                                                            "url": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "network",
+                                                            "label",
+                                                            "handle",
+                                                            "url"
+                                                        ]
+                                                    }
+                                                },
                                                 "is_following": {
                                                     "type": "boolean"
+                                                },
+                                                "follow_status": {
+                                                    "type": "string",
+                                                    "description": "`none`, `requested` (a private account has not accepted yet) or `following`.",
+                                                    "enum": [
+                                                        "none",
+                                                        "requested",
+                                                        "following"
+                                                    ]
+                                                },
+                                                "can_view": {
+                                                    "type": "boolean",
+                                                    "description": "The active profile sees the lists and reviews (public account, itself, or an accepted follower)."
                                                 },
                                                 "is_self": {
                                                     "type": "boolean"
@@ -4164,6 +4614,7 @@
                                                 "name",
                                                 "avatar",
                                                 "bio",
+                                                "is_private",
                                                 "share_url",
                                                 "followers_count",
                                                 "following_count",
@@ -4172,7 +4623,10 @@
                                                 "list_count",
                                                 "liked_count",
                                                 "people_count",
+                                                "social_links",
                                                 "is_following",
+                                                "follow_status",
+                                                "can_view",
                                                 "is_self"
                                             ]
                                         }
@@ -4239,6 +4693,10 @@
                                                             "string",
                                                             "null"
                                                         ]
+                                                    },
+                                                    "is_private": {
+                                                        "type": "boolean",
+                                                        "description": "Private account: its lists and reviews are seen by its accepted followers only."
                                                     }
                                                 },
                                                 "required": [
@@ -4246,7 +4704,8 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
-                                                    "bio"
+                                                    "bio",
+                                                    "is_private"
                                                 ]
                                             }
                                         },
@@ -4329,6 +4788,10 @@
                                                             "string",
                                                             "null"
                                                         ]
+                                                    },
+                                                    "is_private": {
+                                                        "type": "boolean",
+                                                        "description": "Private account: its lists and reviews are seen by its accepted followers only."
                                                     }
                                                 },
                                                 "required": [
@@ -4336,7 +4799,8 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
-                                                    "bio"
+                                                    "bio",
+                                                    "is_private"
                                                 ]
                                             }
                                         },
@@ -4397,6 +4861,10 @@
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
+                                                    "review_id": {
+                                                        "type": "integer",
+                                                        "description": "The review itself (likes: PUT /social/reviews/{review_id}/like)."
+                                                    },
                                                     "type": {
                                                         "$ref": "#/components/schemas/RatedType"
                                                     },
@@ -4479,14 +4947,23 @@
                                                         "type": "number",
                                                         "description": "TMDb average rating, out of 10."
                                                     },
+                                                    "likes_count": {
+                                                        "type": "integer",
+                                                        "description": "Likes of other profiles (\u00ab J'aime \u00bb)."
+                                                    },
                                                     "poster_path": {
                                                         "type": [
                                                             "string",
                                                             "null"
                                                         ]
+                                                    },
+                                                    "liked": {
+                                                        "type": "boolean",
+                                                        "description": "The active profile likes this review."
                                                     }
                                                 },
                                                 "required": [
+                                                    "review_id",
                                                     "type",
                                                     "id",
                                                     "title",
@@ -4502,7 +4979,9 @@
                                                     "comment",
                                                     "rated_at",
                                                     "vote_average",
-                                                    "poster_path"
+                                                    "likes_count",
+                                                    "poster_path",
+                                                    "liked"
                                                 ]
                                             }
                                         },
@@ -4793,6 +5272,8 @@
         "/v1/social/profiles/{username}/follow": {
             "post": {
                 "operationId": "v1.social.profiles.follow",
+                "description": "A public account at once (`follow_status`: `following`); a private one receives a request\nit accepts or declines (`requested`). The member is notified.",
+                "summary": "Follow a member",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -4816,10 +5297,19 @@
                                     "properties": {
                                         "following": {
                                             "type": "boolean"
+                                        },
+                                        "follow_status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "following",
+                                                "requested",
+                                                "none"
+                                            ]
                                         }
                                     },
                                     "required": [
-                                        "following"
+                                        "following",
+                                        "follow_status"
                                     ]
                                 }
                             }
@@ -4854,6 +5344,7 @@
             },
             "delete": {
                 "operationId": "v1.social.profiles.unfollow",
+                "summary": "Unfollow a member, or withdraw a follow request",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -4877,10 +5368,213 @@
                                     "properties": {
                                         "following": {
                                             "type": "boolean"
+                                        },
+                                        "follow_status": {
+                                            "type": "string",
+                                            "const": "none"
                                         }
                                     },
                                     "required": [
-                                        "following"
+                                        "following",
+                                        "follow_status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/social/requests": {
+            "get": {
+                "operationId": "v1.social.requests",
+                "summary": "Follow requests waiting for the active profile (a private account), the most recent first",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/social/requests/{username}/accept": {
+            "post": {
+                "operationId": "v1.social.requests.accept",
+                "summary": "Accept a follow request: the member now follows the active profile (and is notified)",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "accepted": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "accepted"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/social/requests/{username}": {
+            "delete": {
+                "operationId": "v1.social.requests.decline",
+                "summary": "Decline a follow request",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/social/reviews/{review}/like": {
+            "put": {
+                "operationId": "v1.social.reviews.like",
+                "description": "`review` is its `review_id`. Its author is notified; not one's own review (422), nor a\nprivate account's one without following it (403).",
+                "summary": "Like a member's review",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "liked": {
+                                            "type": "boolean"
+                                        },
+                                        "likes_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "liked",
+                                        "likes_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.social.reviews.unlike",
+                "summary": "Take back a like",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "liked": {
+                                            "type": "boolean"
+                                        },
+                                        "likes_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "liked",
+                                        "likes_count"
                                     ]
                                 }
                             }
@@ -6656,6 +7350,72 @@
                         "minLength": 3,
                         "maxLength": 30
                     },
+                    "is_private": {
+                        "type": "boolean",
+                        "description": "Private account (like Twitter): its lists and reviews are only seen by the followers it\naccepts; following it sends a request. Made public: the waiting requests are accepted."
+                    },
+                    "social_links": {
+                        "type": "object",
+                        "description": "Accounts on social networks, by network (`instagram`, `x`, `tiktok`, `youtube`,\n`letterboxd`, `threads`, `bluesky`: the handle, \u00ab @ \u00bb and the address of the page\naccepted; `website`: an address). Only the networks given change; null removes one.",
+                        "properties": {
+                            "instagram": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "x": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "tiktok": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "youtube": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "letterboxd": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "threads": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "bluesky": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            },
+                            "website": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 200
+                            }
+                        }
+                    },
                     "bio": {
                         "type": [
                             "string",
@@ -6846,6 +7606,37 @@
                             "null"
                         ]
                     },
+                    "is_private": {
+                        "type": "boolean",
+                        "description": "Private account: its lists and reviews are seen by its accepted followers only."
+                    },
+                    "social_links": {
+                        "type": "array",
+                        "description": "Accounts on social networks, in the order of the profile page.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "network": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "handle": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "network",
+                                "label",
+                                "handle",
+                                "url"
+                            ]
+                        }
+                    },
                     "avatar": {
                         "type": [
                             "string",
@@ -6939,6 +7730,8 @@
                     "name",
                     "username",
                     "bio",
+                    "is_private",
+                    "social_links",
                     "avatar",
                     "poster_format",
                     "is_kid",
@@ -7016,6 +7809,10 @@
                     "new_episodes": {
                         "type": "boolean"
                     },
+                    "social": {
+                        "type": "boolean",
+                        "description": "Likes of the profile's reviews, its followers and follow requests."
+                    },
                     "registered_at": {
                         "type": [
                             "string",
@@ -7033,6 +7830,7 @@
                     "platform",
                     "profile_id",
                     "new_episodes",
+                    "social",
                     "registered_at",
                     "last_seen_at"
                 ],
@@ -7064,6 +7862,10 @@
             "RatedItemResource": {
                 "type": "object",
                 "properties": {
+                    "review_id": {
+                        "type": "integer",
+                        "description": "The review itself (likes: PUT /social/reviews/{review_id}/like)."
+                    },
                     "type": {
                         "$ref": "#/components/schemas/RatedType"
                     },
@@ -7145,9 +7947,14 @@
                     "vote_average": {
                         "type": "number",
                         "description": "TMDb average rating, out of 10."
+                    },
+                    "likes_count": {
+                        "type": "integer",
+                        "description": "Likes of other profiles (\u00ab J'aime \u00bb)."
                     }
                 },
                 "required": [
+                    "review_id",
                     "type",
                     "id",
                     "title",
@@ -7162,7 +7969,8 @@
                     "value",
                     "comment",
                     "rated_at",
-                    "vote_average"
+                    "vote_average",
+                    "likes_count"
                 ],
                 "title": "RatedItemResource"
             },
@@ -7258,6 +8066,10 @@
                     "new_episodes": {
                         "type": "boolean",
                         "description": "New episodes of the \u00ab Ma liste \u00bb TV shows of the active profile (X-Profile-Id)."
+                    },
+                    "social": {
+                        "type": "boolean",
+                        "description": "Social activity of the active profile: likes of its reviews, followers, follow requests (default true)."
                     },
                     "utc_offset": {
                         "type": "integer",

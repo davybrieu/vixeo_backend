@@ -7,6 +7,7 @@ use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\ParentalControl;
 use App\Support\Languages;
+use App\Support\SocialLinks;
 use App\Support\Usernames;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,14 @@ class ProfileRequest extends FormRequest
     {
         if ($this->has('username')) {
             $this->merge(['username' => mb_strtolower((string) $this->input('username'))]);
+        }
+        // A handle with or without « @ », or the address of the page: kept as the handle.
+        $links = $this->input('social_links');
+        if (is_array($links)) {
+            $this->merge(['social_links' => collect($links)->map(
+                fn (mixed $value, mixed $network) => is_string($network) && array_key_exists($network, SocialLinks::NETWORKS)
+                    ? SocialLinks::normalize($network, $value) : $value,
+            )->all()]);
         }
     }
 
@@ -40,6 +49,25 @@ class ProfileRequest extends FormRequest
                 Rule::notIn(Usernames::RESERVED),
                 Rule::unique('profiles', 'username')->ignore($profile?->id),
             ],
+            /**
+             * Private account (like Twitter): its lists and reviews are only seen by the followers it
+             * accepts; following it sends a request. Made public: the waiting requests are accepted.
+             */
+            'is_private' => ['sometimes', 'boolean'],
+            /**
+             * Accounts on social networks, by network (`instagram`, `x`, `tiktok`, `youtube`,
+             * `letterboxd`, `threads`, `bluesky`: the handle, « @ » and the address of the page
+             * accepted; `website`: an address). Only the networks given change; null removes one.
+             */
+            'social_links' => ['sometimes', 'nullable', 'array:'.implode(',', array_keys(SocialLinks::NETWORKS))],
+            'social_links.*' => ['nullable', 'string', 'max:200', function (string $attribute, mixed $value, \Closure $fail) {
+                $network = substr($attribute, strlen('social_links.'));
+                if (is_string($value) && ! SocialLinks::valid($network, $value)) {
+                    $fail($network === 'website' ? __('This address is not valid.') : __('This :network account is not valid.', [
+                        'network' => SocialLinks::NETWORKS[$network]['label'] ?? $network,
+                    ]));
+                }
+            }],
             /** Biography of the public profile: 160 characters at most. */
             'bio' => ['sometimes', 'nullable', 'string', 'max:'.Profile::BIO_MAX_LENGTH],
             /** Avatar id from GET /avatars. Null = initial letter. */
@@ -102,6 +130,10 @@ class ProfileRequest extends FormRequest
         $data = $this->safe()->except(['parental_pin', 'current_pin']);
         if (isset($data['username'])) {
             $data['username'] = mb_strtolower($data['username']);
+        }
+        if (array_key_exists('social_links', $data)) {
+            $profile = $this->route('profile');
+            $data['social_links'] = SocialLinks::merge($profile instanceof Profile ? $profile->social_links : null, $data['social_links'] ?? []);
         }
 
         return $data;

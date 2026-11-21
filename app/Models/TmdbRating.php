@@ -6,6 +6,7 @@ use App\Enums\RatedType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A review of the profile (« Mes avis », App\Services\TmdbRatings, docs/avis.md): its rating and
@@ -37,5 +38,11 @@ class TmdbRating extends Model
     public function profile(): BelongsTo
     {
         return $this->belongsTo(Profile::class);
+    }
+
+    /** Likes of this review by other profiles (« J'aime », docs/social.md). @return HasMany<ReviewLike, $this> */
+    public function likes(): HasMany
+    {
+        return $this->hasMany(ReviewLike::class);
     }
 }

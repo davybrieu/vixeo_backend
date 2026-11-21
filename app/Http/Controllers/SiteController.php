@@ -6,6 +6,7 @@ use App\Enums\AppPlatform;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\LatestReleases;
+use App\Support\SocialLinks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -71,6 +72,14 @@ class SiteController extends Controller
                 'name' => $profile->name,
                 'username' => $profile->username,
                 'bio' => $profile->bio,
+                // Private account (docs/social.md): its lists and reviews are for its followers.
+                'isPrivate' => (bool) $profile->is_private,
+                // Its social networks: links only (nothing loaded from them).
+                'links' => array_map(fn (array $link) => [
+                    'label' => $link['label'],
+                    'handle' => $link['handle'],
+                    'url' => $link['url'],
+                ], SocialLinks::present($profile->social_links)),
                 'avatar' => $avatar === null ? null : [
                     'background' => $avatar['background'] ?? null,
                     'palette' => $avatar['palette'] ?? null,

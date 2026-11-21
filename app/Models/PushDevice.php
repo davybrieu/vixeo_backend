@@ -21,6 +21,7 @@ class PushDevice extends Model
         return [
             'token' => 'encrypted',
             'new_episodes' => 'boolean',
+            'social' => 'boolean',
             'new_episodes_since' => 'datetime',
             'utc_offset' => 'integer',
             'last_seen_at' => 'datetime',

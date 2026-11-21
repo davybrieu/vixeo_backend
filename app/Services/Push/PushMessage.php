@@ -13,6 +13,9 @@ final readonly class PushMessage
     /** Android channel of the other messages (announcements, tests). */
     public const GENERAL = 'general';
 
+    /** Android channel of the social activity: likes, followers, follow requests (docs/social.md). */
+    public const SOCIAL = 'social';
+
     public function __construct(
         public string $title,
         public string $body,

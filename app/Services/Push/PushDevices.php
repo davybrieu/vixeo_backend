@@ -33,8 +33,9 @@ class PushDevices
         string $platform,
         bool $newEpisodes,
         int $utcOffset,
+        ?bool $social = null,
     ): PushDevice {
-        return DB::transaction(function () use ($user, $access, $profile, $token, $platform, $newEpisodes, $utcOffset) {
+        return DB::transaction(function () use ($user, $access, $profile, $token, $platform, $newEpisodes, $utcOffset, $social) {
             $hash = PushDevice::hashToken($token);
             // The same app signed in again (new API token): its old registration goes.
             PushDevice::where('token_hash', $hash)->where('personal_access_token_id', '!=', $access->getKey())->delete();
@@ -49,6 +50,8 @@ class PushDevices
                 'token_hash' => $hash,
                 'platform' => $platform,
                 'new_episodes' => $newEpisodes,
+                // Not sent (older apps): unchanged, on for a new registration.
+                'social' => $social ?? ($device->exists ? $device->social : true),
                 'utc_offset' => $utcOffset,
                 'last_seen_at' => now(),
             ]);

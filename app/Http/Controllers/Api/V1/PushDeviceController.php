@@ -60,6 +60,7 @@ class PushDeviceController extends Controller
             $request->string('platform')->toString(),
             $request->boolean('new_episodes'),
             $request->integer('utc_offset'),
+            $request->has('social') ? $request->boolean('social') : null,
         );
 
         return new PushDeviceResource($device);
