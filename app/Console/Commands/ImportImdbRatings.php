@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Imdb\ImdbDatasets;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -35,13 +36,16 @@ class ImportImdbRatings extends Command
             return self::SUCCESS;
         }
 
-        $this->info(sprintf(
+        $message = sprintf(
             '%d ratings and %d episodes imported in %ds (%s).',
             $result['ratings'] ?? 0,
             $result['episodes'] ?? 0,
             (int) round(microtime(true) - $started),
             $result['version'],
-        ));
+        );
+        // In the application log too (Forge's « Logs »): an import runs in the background.
+        Log::info("IMDb import: {$message}");
+        $this->info($message);
 
         return self::SUCCESS;
     }

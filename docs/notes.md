@@ -66,8 +66,19 @@ Source : <https://datasets.imdbws.com> (`IMDB_DATASETS_URL`), mise à jour une f
    `imdb_imports` (avec le nombre de notes et d'épisodes ; les lignes de plus de 30 jours sont
    supprimées). Un import qui échoue n'enregistre rien : il recommence l'heure suivante.
 
-`php artisan imdb:import --force` importe quelle que soit la version (par exemple la première fois
-après le déploiement, sans attendre l'heure suivante).
+`php artisan imdb:import --force` importe quelle que soit la version. Un import complet dure
+plusieurs minutes (environ 1,6 million de notes et des millions de lignes d'épisodes à lire) :
+plus que la limite des « Commands » de Forge, qui arrête la commande (code 143). Depuis Forge, le
+lancer en arrière-plan :
+
+```bash
+nohup php artisan imdb:import --force > storage/logs/imdb-import.log 2>&1 &
+```
+
+ou laisser la tâche planifiée le faire à la 17e minute de l'heure (pas de limite de durée). Un
+import réussi est écrit dans le journal de l'application (« IMDb import: … ») ; un import
+interrompu ne casse rien (les notes déjà écrites restent, rien n'est enregistré dans
+`imdb_imports`, l'heure suivante recommence).
 
 - `title.ratings.tsv.gz` → table `imdb_ratings` (`tconst`, `rating`, `votes`) : films, séries,
   épisodes… (environ 1,6 million de lignes).
