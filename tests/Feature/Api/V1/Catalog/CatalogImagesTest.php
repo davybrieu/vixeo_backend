@@ -175,7 +175,7 @@ it('gives the same at once in search results: seasons of a TV show', function ()
         ->assertJsonPath('shows.data.0.summary.number_of_seasons', 8)
         ->assertJsonPath('shows.data.0.summary.genres', ['Science-Fiction & Fantastique']);
     Http::assertSent(fn (Request $request) => str_contains($request->url(), '/3/tv/1399?')
-        && $request['append_to_response'] === 'images,content_ratings');
+        && $request['append_to_response'] === 'images,content_ratings,external_ids');
 });
 
 it('gives no summary in other lists (the title page has it)', function () {

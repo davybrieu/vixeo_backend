@@ -37,6 +37,11 @@ class MediaItemResource extends JsonResource
             'year' => F::year($date),
             /** Average rating out of 10. */
             'vote_average' => F::float($r, 'vote_average'),
+            /**
+             * IMDb's and TMDb's ratings with their votes, given with the summary (home, search,
+             * recommendations, `catalog/titles`); null elsewhere: the apps show `vote_average`.
+             */
+            'ratings' => array_key_exists('imdb_rating', $r) ? new RatingsResource($r) : null,
             /** @var list<int> */
             'genre_ids' => F::ints($r, 'genre_ids'),
             'poster_path' => $poster,

@@ -5239,6 +5239,17 @@
                         "type": "number",
                         "description": "Average rating out of 10."
                     },
+                    "ratings": {
+                        "anyOf": [
+                            {
+                                "description": "IMDb's and TMDb's ratings with their votes, given with the summary (home, search,\nrecommendations, `catalog/titles`); null elsewhere: the apps show `vote_average`.",
+                                "$ref": "#/components/schemas/RatingsResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
                     "genre_ids": {
                         "type": "array",
                         "items": {
@@ -5338,6 +5349,7 @@
                     "date",
                     "year",
                     "vote_average",
+                    "ratings",
                     "genre_ids",
                     "poster_path",
                     "poster_url",

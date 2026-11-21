@@ -26,8 +26,13 @@ réglage du profil « Source des notes » (`rating_source`), supprimés le 21/11
 - `tmdb` : note sur 10 (arrondie au dixième) et nombre de votants de TMDb ; `rating` à `null` tant
   que personne n'a voté.
 - `vote_average` / `vote_count` restent dans les fiches (et `vote_count` est ajouté aux
-  épisodes) ; les listes (accueil, recherche, recommandations) n'ont que `vote_average` de TMDb :
-  aucune requête de note par carte.
+  épisodes).
+- **Titres des listes** (`MediaItemResource`) : `ratings` est aussi donné avec les titres qui ont
+  un résumé (`summary` : accueil, recherche, recommandations d'une fiche, `GET /catalog/titles`
+  pour « Ma liste », « Continuer à regarder » et les rangées légères) : `TitleSummaries` lit déjà
+  la fiche TMDb de chaque titre (avec `external_ids` pour les séries) et cherche leurs notes IMDb
+  en **une requête** par réponse. Ailleurs (« Voir tout », filmographie…) `ratings` est `null` :
+  les applis montrent `vote_average` (TMDb). Aucune requête de note par carte.
 
 ## Liaison avec IMDb (`App\Services\Imdb\ImdbRatings`)
 

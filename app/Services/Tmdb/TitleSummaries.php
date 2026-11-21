@@ -3,25 +3,27 @@
 namespace App\Services\Tmdb;
 
 use App\Enums\MediaType;
+use App\Services\Imdb\ImdbRatings;
 
 /**
  * What the large-screen hero and the phone carousel show of a title, given with the list items
  * (home, search) so that everything appears at once, without a request per card: title logo,
- * poster without text, length (runtime or seasons), genres and age rating. One TMDb call per title
- * (details with images and certifications), in batches, cached a day and shared by all accounts:
- * only titles new to the lists cost a request.
+ * poster without text, length (runtime or seasons), genres, age rating and IMDb rating (one database
+ * query per list, docs/notes.md). One TMDb call per title (details with images, certifications and
+ * External IDs), in batches, cached a day and shared by all accounts: only titles new to the lists
+ * cost a request.
  */
 class TitleSummaries
 {
     private const QUERY = [
         'movie' => ['append_to_response' => 'images,release_dates', 'include_image_language' => 'fr,en,null'],
-        'tv' => ['append_to_response' => 'images,content_ratings', 'include_image_language' => 'fr,en,null'],
+        'tv' => ['append_to_response' => 'images,content_ratings,external_ids', 'include_image_language' => 'fr,en,null'],
     ];
 
-    public function __construct(private TmdbClient $tmdb) {}
+    public function __construct(private TmdbClient $tmdb, private ImdbRatings $imdb) {}
 
     /**
-     * Sets `logo` and `summary` on each movie / TV show (null when TMDb has
+     * Sets `logo`, `summary` and `imdb_rating` on each movie / TV show (null when TMDb has
      * none, or could not be reached: the app then reads the title page).
      *
      * @param  array<array-key, list<array<string, mixed>>>  $lists
@@ -42,12 +44,16 @@ class TitleSummaries
         if ($details === []) {
             return $lists;
         }
+        $ratings = $this->imdbRatings($details);
 
-        return array_map(fn (array $items) => array_map(function (array $item) use ($details) {
+        return array_map(fn (array $items) => array_map(function (array $item) use ($details, $ratings) {
             $path = self::path($item);
             $title = $path === null ? null : ($details[$path] ?? null);
             $item['logo'] = is_array($title) ? TmdbFormat::logo($title) : null;
             $item['summary'] = is_array($title) ? self::summary($title) : null;
+            if (is_array($title)) {
+                $item['imdb_rating'] = $ratings[$path] ?? null;
+            }
 
             return $item;
         }, $items), $lists);
@@ -76,6 +82,7 @@ class TitleSummaries
             $paths[$type->value]["{$type->value}/{$id}"] = true;
         }
         $details = $this->fetch($paths);
+        $ratings = $this->imdbRatings($details);
 
         $items = [];
         foreach ($titles as [$type, $id]) {
@@ -92,6 +99,7 @@ class TitleSummaries
                 ))),
                 'logo' => TmdbFormat::logo($title),
                 'summary' => self::summary($title),
+                'imdb_rating' => $ratings["{$type->value}/{$id}"] ?? null,
             ]];
         }
 
@@ -138,6 +146,26 @@ class TitleSummaries
         }
 
         return $details;
+    }
+
+    /**
+     * IMDb rating of each title of [details] that IMDb rates, by path, in one query.
+     *
+     * @param  array<string, array<string, mixed>|null>  $details
+     * @return array<string, array{id: string, rating: float, votes: int}>
+     */
+    private function imdbRatings(array $details): array
+    {
+        $ids = [];
+        foreach ($details as $path => $title) {
+            $id = is_array($title) ? ($title['imdb_id'] ?? $title['external_ids']['imdb_id'] ?? null) : null;
+            if (is_string($id)) {
+                $ids[$path] = $id;
+            }
+        }
+        $ratings = $this->imdb->many(array_values($ids));
+
+        return array_filter(array_map(fn (string $id) => $ratings[$id] ?? null, $ids));
     }
 
     /**

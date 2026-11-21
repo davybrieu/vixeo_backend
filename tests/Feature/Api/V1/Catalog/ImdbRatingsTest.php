@@ -197,3 +197,35 @@ it('keeps the TMDb ratings of the episodes when TMDb gives no External IDs', fun
         ->assertOk()
         ->assertJsonPath('data.episodes.0.ratings', ['imdb' => null, 'tmdb' => ['rating' => 7.9, 'votes' => 300]]);
 });
+
+it('gives the IMDb rating of the list items that have a summary, in one query', function () {
+    Sanctum::actingAs(User::factory()->create());
+    imdbRating('tt0137523', 8.8, 2400000);
+    imdbRating('tt0944947', 9.2, 2300000);
+    Http::fake([
+        'api.themoviedb.org/3/movie/550*' => Http::response(['vote_average' => 8.438, 'vote_count' => 30000] + Tmdb::movieDetails()),
+        'api.themoviedb.org/3/movie/551*' => Http::response(['id' => 551, 'title' => 'Sans IMDb', 'imdb_id' => null]),
+        'api.themoviedb.org/3/tv/1399*' => Http::response(Tmdb::showDetails()),
+    ]);
+
+    DB::enableQueryLog();
+    $items = $this->getJson('/api/v1/catalog/titles?ids=movie:550,tv:1399,movie:551')->assertOk()->json('data');
+
+    expect(array_column($items, 'ratings'))->toBe([
+        ['imdb' => ['id' => 'tt0137523', 'rating' => 8.8, 'votes' => 2400000], 'tmdb' => ['rating' => 8.4, 'votes' => 30000]],
+        ['imdb' => ['id' => 'tt0944947', 'rating' => 9.2, 'votes' => 2300000], 'tmdb' => ['rating' => 8.4, 'votes' => 25000]],
+        ['imdb' => null, 'tmdb' => ['rating' => null, 'votes' => 0]],
+    ])->and(collect(DB::getQueryLog())->filter(fn (array $query) => str_contains($query['query'], 'imdb_ratings')))->toHaveCount(1);
+
+    // The show's External IDs come with its details.
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'tv/1399') && str_contains($request['append_to_response'] ?? '', 'external_ids'));
+});
+
+it('gives no ratings with the list items that have no summary', function () {
+    Sanctum::actingAs(User::factory()->create());
+    Http::fake(['api.themoviedb.org/3/movie/popular*' => Http::response(Tmdb::page([Tmdb::movie(550)]))]);
+
+    $this->getJson('/api/v1/catalog/movie/lists/popular')
+        ->assertOk()
+        ->assertJsonPath('data.0.ratings', null);
+});

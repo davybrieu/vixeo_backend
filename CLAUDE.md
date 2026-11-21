@@ -194,7 +194,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `imdb_episodes`, sinon ses *External IDs* (épisodes diffusés seulement). Sans note IMDb, les
   applis affichent celle de TMDb. **Plus de MDBList, de `GET /catalog/ratings` ni de réglage
   `rating_source`** (supprimés le 21/11/2026, demande du développeur ; ne pas les réintroduire).
-  Les listes (accueil, recherche) n'ont que `vote_average` de TMDb : aucune note demandée par carte.
+  Les titres des listes qui ont un `summary` (accueil, recherche, recommandations,
+  `catalog/titles`) ont aussi `ratings` (`TitleSummaries` : une requête d'IMDb par réponse) ;
+  ailleurs `ratings: null` (l'appli montre `vote_average`) : aucune note demandée par carte.
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`
   (`App\Support\Languages`) et `skip_intro` / `skip_recap` / `skip_credits` / `skip_preview` ;
   recherches récentes synchronisées (`profile_searches`, 20 par profil, une recherche qui en
