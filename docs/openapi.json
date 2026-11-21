@@ -1712,6 +1712,301 @@
                 }
             }
         },
+        "/v1/catalog/discover": {
+            "get": {
+                "operationId": "v1.catalog.discover",
+                "description": "First page of movies and of TV shows matching the filters of the search page (genre, years,\nminimum rating) in an order (popularity by default), without a text: the same answer as the\nsearch, never with people. Released titles only. The rating is IMDb's, else TMDb's\n(docs/notes.md).",
+                "summary": "Browse without a text (all types)",
+                "tags": [
+                    "Catalogue",
+                    "CatalogSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "year_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "year_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "min_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Order of text search results (TMDb only gives them by relevance: the API sorts them).\n| |\n|---|\n| `popularity` <br/>  |\n| `rating` <br/> Best rated first: IMDb's rating, else TMDb's (TitleFilters::rating); unrated titles last. |\n| `recent` <br/>  |\n| `oldest` <br/>  |",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "popularity",
+                                "rating",
+                                "recent",
+                                "oldest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "movies": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MediaItemResource"
+                                                    }
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "total_results"
+                                            ]
+                                        },
+                                        "shows": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MediaItemResource"
+                                                    }
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "total_results"
+                                            ]
+                                        },
+                                        "people": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0
+                                                },
+                                                "total_results": {
+                                                    "type": "integer",
+                                                    "const": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "movies",
+                                        "shows",
+                                        "people"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/catalog/discover/{type}": {
+            "get": {
+                "operationId": "v1.catalog.discover.type",
+                "description": "Movies or TV shows matching the filters, in an order, page by page. With a minimum rating, a\npage may hold fewer than 20 titles (even none) while later pages still have some: read\n`meta.total_pages`. `total_results` is then an upper bound.",
+                "summary": "Browse one type without a text (paginated)",
+                "tags": [
+                    "Catalogue",
+                    "CatalogSearch"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "year_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "year_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1870,
+                            "maximum": 2100
+                        }
+                    },
+                    {
+                        "name": "min_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Order of text search results (TMDb only gives them by relevance: the API sorts them).\n| |\n|---|\n| `popularity` <br/>  |\n| `rating` <br/> Best rated first: IMDb's rating, else TMDb's (TitleFilters::rating); unrated titles last. |\n| `recent` <br/>  |\n| `oldest` <br/>  |",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "popularity",
+                                "rating",
+                                "recent",
+                                "oldest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its age limit is applied.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MediaItemResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer"
+                                                },
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/{type}/lists/{list}": {
             "get": {
                 "operationId": "v1.catalog.list",
