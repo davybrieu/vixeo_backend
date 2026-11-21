@@ -55,7 +55,7 @@ committer** les deux dossiers ; `tests/Unit/FrontendBuildTest.php` compare l'emp
 
 | Adresse | Contenu |
 | - | - |
-| `/` | **La seule page de présentation** : accueil, un seul bouton « Installer Vixeo » en haut (vers `#installer`), installation (`#installer`, onglets Android / TV / Windows avec le bouton de l'APK ou de l'installateur Windows, l'empreinte SHA-256 et l'adresse courte pour la TV, puis Mac et iPhone « Bientôt disponible »), fonctionnalités, questions fréquentes (`#faq`, `resources/js/data/faq.js` : **les plus utiles seulement**, six questions, demande du développeur, 21/11/2026) |
+| `/` | **La seule page de présentation** : accueil, un seul bouton « Installer Vixeo » en haut (vers `#installer`), installation (`#installer`, onglets Android / TV / Windows avec le bouton de l'APK ou de l'installateur Windows, l'empreinte SHA-256 et l'adresse courte pour la TV, puis Mac, iPhone et iPad « Bientôt disponible » ; les onglets passent sur plusieurs lignes selon la place, jamais de défilement de côté), fonctionnalités, questions fréquentes (`#faq`, `resources/js/data/faq.js` : **les plus utiles seulement**, six questions, demande du développeur, 21/11/2026) |
 | `/mentions-legales`, `/confidentialite` | Informations légales, confidentialité du site |
 | `/installer`, `/faq`, `/telecharger`, `/android`, `/tv` | Anciennes pages et liens courts, supprimés : **404** (demande du développeur) |
 | `/apk` | Le fichier APK du moment (adresse à taper sur une TV), 404 sans APK |
@@ -108,9 +108,11 @@ complémentaires » → « Exécuter quand même »).
 - **Pas de serveurs multimédias de l'utilisateur** (Jellyfin, Plex, Emby) : la lecture passe par
   les serveurs de Vixeo, via l'API, sans rien à configurer. Ne pas en parler sur le site.
 - **Écarté** (ne pas proposer) : import IPTV / M3U / Xtream, radio, replays.
-- **Mac et iPhone** (demande du développeur, 21/11/2026) : onglets de `#installer` marqués
-  « Bientôt disponible » (sans bouton de téléchargement) ; un Mac ou un iPhone qui visite le site
-  voit son onglet choisi (`Platform::Mac`, `Platform::Iphone`).
+- **Mac, iPhone et iPad** (demande du développeur, 21/11/2026 : affichés même avant leur sortie) :
+  onglets de `#installer` marqués « Bientôt disponible » (sans bouton de téléchargement), listés
+  en haut de l'accueil (« Bientôt : macOS · iPhone · iPad ») et sous la grande image (badge
+  « Bientôt ») ; un Mac, un iPhone ou un iPad qui visite le site voit son onglet choisi
+  (`Platform::Mac`, `Platform::Iphone`, `Platform::Ipad`).
 - **SSR** : pas d'accès à `window` / `document` pendant le rendu (seulement dans `onMounted`).
 - **Appareil du visiteur** détecté côté serveur (`Platform`) : réponses en `Vary: User-Agent`.
 - **Logo et favicon** : copiés de `vixeo_frontend/brand`, ne pas les redessiner ici.

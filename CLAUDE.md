@@ -92,8 +92,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   **aucun cookie**, aucun service tiers, polices servies par le site). Erreurs : pages Inertia
   `Error` sur le site, JSON sur l'hôte de l'API et sous `/api/*` (`Hosts::isApi`). Textes honnêtes
   (ce que l'appli fait aujourd'hui, « Bientôt disponible » sinon), écarté : import IPTV / M3U /
-  Xtream, radio, replays. **Mac et iPhone** : onglets d'installation « Bientôt disponible », sans
-  bouton (demande du développeur, 21/11/2026). Un seul bouton en haut de l'accueil, « Installer
+  Xtream, radio, replays. **Mac, iPhone et iPad** : listés même avant leur sortie, onglets
+  d'installation « Bientôt disponible », sans bouton (demande du développeur, 21/11/2026) ; les
+  onglets passent sur plusieurs lignes selon la place, jamais de défilement de côté. Un seul bouton en haut de l'accueil, « Installer
   Vixeo » (vers `#installer`) ; FAQ réduite aux questions les plus utiles ; **pas de mention TMDb**
   dans le pied de page ni sur l'accueil (seulement dans les mentions légales). SSR : pas de `window` / `document` hors `onMounted`.
   Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.

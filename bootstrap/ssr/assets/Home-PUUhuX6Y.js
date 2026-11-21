@@ -334,7 +334,11 @@ var _sfc_main$7 = {
 		const android = (0, vue_exports.computed)(() => site.android);
 		const windows = (0, vue_exports.computed)(() => site.windows);
 		const onWindows = (0, vue_exports.computed)(() => props.screen === "windows");
-		const comingSoon = (0, vue_exports.computed)(() => ["macos", "ios"].includes(props.screen));
+		const comingSoon = (0, vue_exports.computed)(() => [
+			"macos",
+			"ios",
+			"ipados"
+		].includes(props.screen));
 		const url = (0, vue_exports.computed)(() => {
 			if (comingSoon.value) return null;
 			return onWindows.value ? windows.value.installerUrl : android.value.apkUrl;
@@ -406,8 +410,8 @@ var _sfc_main$6 = {
 			},
 			{
 				id: "macos",
-				label: "Mac",
-				short: "Mac",
+				label: "Ordinateur Mac",
+				short: "macOS",
 				icon: "laptop",
 				soon: true
 			},
@@ -416,6 +420,13 @@ var _sfc_main$6 = {
 				label: "iPhone",
 				short: "iPhone",
 				icon: "phone",
+				soon: true
+			},
+			{
+				id: "ipados",
+				label: "iPad",
+				short: "iPad",
+				icon: "tablet",
 				soon: true
 			}
 		];
@@ -426,7 +437,7 @@ var _sfc_main$6 = {
 		const windows = (0, vue_exports.computed)(() => page.props.site.windows);
 		const apkShort = (0, vue_exports.computed)(() => `${page.props.site.url.replace(/^https?:\/\//, "")}/apk`);
 		return (_ctx, _push, _parent, _attrs) => {
-			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)(_attrs)}><div role="tablist" aria-label="Votre écran" class="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface p-1.5 sm:inline-flex sm:max-w-full"><!--[-->`);
+			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)(_attrs)}><div role="tablist" aria-label="Votre écran" class="flex w-fit max-w-full flex-wrap gap-1 rounded-2xl border border-line bg-surface p-1.5"><!--[-->`);
 			(0, server_renderer_exports.ssrRenderList)(screens, (screen, i) => {
 				_push(`<button${(0, server_renderer_exports.ssrRenderAttr)("id", `onglet-${screen.id}`)} type="button" role="tab"${(0, server_renderer_exports.ssrRenderAttr)("aria-selected", selected.value === screen.id)}${(0, server_renderer_exports.ssrRenderAttr)("aria-controls", `panneau-${screen.id}`)}${(0, server_renderer_exports.ssrRenderAttr)("tabindex", selected.value === screen.id ? 0 : -1)} class="${(0, server_renderer_exports.ssrRenderClass)(["inline-flex h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap transition sm:px-4", selected.value === screen.id ? "bg-accent text-on-accent" : "text-text-secondary hover:bg-white/5 hover:text-text"])}">`);
 				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$16, {
@@ -455,6 +466,7 @@ var _sfc_main$6 = {
 				else if (screen.id === "tv") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Android TV et Google TV</h3><p class="mt-4 leading-relaxed text-text-secondary"> Une interface pensée pour la télécommande, avec de grandes images et un repère vert sur l’élément choisi. Pour vous connecter, tapez sur votre téléphone le code affiché par la TV : aucun mot de passe à taper avec la télécommande. </p><!--]-->`);
 				else if (screen.id === "windows") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Windows</h3><p class="mt-4 leading-relaxed text-text-secondary"> Sur votre ordinateur, à la souris ou au clavier : les flèches et la touche Entrée suffisent, comme une télécommande. Compatible ${(0, server_renderer_exports.ssrInterpolate)(windows.value.minimum)}, sans droits d’administrateur. </p><!--]-->`);
 				else if (screen.id === "macos") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Mac</h3><p class="mt-4 leading-relaxed text-text-secondary"> Vixeo arrive bientôt sur Mac : le même compte, vos profils, votre liste et votre progression, à la souris et au clavier. </p><!--]-->`);
+				else if (screen.id === "ipados") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour iPad</h3><p class="mt-4 leading-relaxed text-text-secondary"> Vixeo arrive bientôt sur iPad : un grand écran pour parcourir le catalogue et reprendre où vous en étiez, avec le même compte que sur vos autres écrans. </p><!--]-->`);
 				else _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour iPhone</h3><p class="mt-4 leading-relaxed text-text-secondary"> Vixeo arrive bientôt sur iPhone : votre liste, votre progression et vos profils dans la poche, avec le même compte que sur vos autres écrans. </p><!--]-->`);
 				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$7, {
 					screen: screen.id,
@@ -500,7 +512,10 @@ var _sfc_main$6 = {
 					}),
 					_: 2
 				}, _parent));
-				else _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: screen.id === "macos" ? "L’accueil de Vixeo sur un ordinateur" : "L’accueil de Vixeo sur un ordinateur Windows" }, {
+				else _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: {
+					macos: "L’accueil de Vixeo sur un ordinateur",
+					ipados: "L’accueil de Vixeo sur une tablette"
+				}[screen.id] ?? "L’accueil de Vixeo sur un ordinateur Windows" }, {
 					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
 						if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$8, null, null, _parent, _scopeId));
 						else return [(0, vue_exports.createVNode)(_sfc_main$8)];
@@ -582,7 +597,7 @@ function faq(site) {
 		{
 			id: "appareils",
 			question: "Sur quels appareils puis-je utiliser Vixeo ?",
-			answer: [`Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et sur les ordinateurs Windows (${escape(site.windows.minimum)}) : ${link("#installer", "installer Vixeo")}.`, "Les versions pour Mac et pour iPhone seront bientôt disponibles. Vixeo n’a pas de version web."]
+			answer: [`Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et sur les ordinateurs Windows (${escape(site.windows.minimum)}) : ${link("#installer", "installer Vixeo")}.`, "Les versions pour Mac, iPhone et iPad seront bientôt disponibles. Vixeo n’a pas de version web."]
 		},
 		{
 			id: "play-store",
@@ -908,7 +923,7 @@ var _sfc_main = {
 				label: "Téléphone Android"
 			},
 			{
-				icon: "phone",
+				icon: "tablet",
 				label: "Tablette Android"
 			},
 			{
@@ -922,12 +937,27 @@ var _sfc_main = {
 			{
 				icon: "monitor",
 				label: "Windows 10 et 11"
+			},
+			{
+				icon: "laptop",
+				label: "macOS",
+				soon: true
+			},
+			{
+				icon: "phone",
+				label: "iPhone",
+				soon: true
+			},
+			{
+				icon: "tablet",
+				label: "iPad",
+				soon: true
 			}
 		];
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<!--[-->`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$19, { description: "Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, votre liste et votre progression sur votre téléphone Android, votre TV et votre PC Windows." }, null, _parent));
-			_push(`<section class="relative overflow-hidden pt-32 pb-16 sm:pt-40"><div class="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(46,229,138,0.16),transparent_60%)]" aria-hidden="true"></div><div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8"><p class="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft"><span class="size-2 rounded-full bg-accent"></span> Android · Android TV · Windows </p><h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl"> Vos films et séries, <span class="text-accent">sur tous vos écrans.</span></h1><p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl"> Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV. </p><div class="mt-9 flex flex-wrap items-center justify-center gap-3">`);
+			_push(`<section class="relative overflow-hidden pt-32 pb-16 sm:pt-40"><div class="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(46,229,138,0.16),transparent_60%)]" aria-hidden="true"></div><div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8"><p class="inline-flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-3xl border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft"><span class="inline-flex items-center gap-2 whitespace-nowrap"><span class="size-2 rounded-full bg-accent"></span> Android · Android TV · Windows </span><span class="inline-flex items-center gap-2 whitespace-nowrap text-text-muted"><span class="size-2 rounded-full border border-current"></span> Bientôt : macOS · iPhone · iPad </span></p><h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl"> Vos films et séries, <span class="text-accent">sur tous vos écrans.</span></h1><p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl"> Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV. </p><div class="mt-9 flex flex-wrap items-center justify-center gap-3">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
 				href: "#installer",
 				icon: "download",
@@ -957,13 +987,16 @@ var _sfc_main = {
 			}, _parent));
 			_push(`</div></div><ul class="relative mx-auto mt-20 flex max-w-5xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-5 text-sm text-text-secondary"><!--[-->`);
 			(0, server_renderer_exports.ssrRenderList)(screens, (screen) => {
-				_push(`<li class="flex items-center gap-2">`);
+				_push(`<li class="${(0, server_renderer_exports.ssrRenderClass)([{ "text-text-muted": screen.soon }, "flex items-center gap-2"])}">`);
 				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$16, {
 					name: screen.icon,
 					size: 18,
 					class: "text-text-muted"
 				}, null, _parent));
-				_push(` ${(0, server_renderer_exports.ssrInterpolate)(screen.label)}</li>`);
+				_push(` ${(0, server_renderer_exports.ssrInterpolate)(screen.label)} `);
+				if (screen.soon) _push(`<span class="rounded-full border border-line px-2 py-0.5 text-xs">Bientôt</span>`);
+				else _push(`<!---->`);
+				_push(`</li>`);
 			});
 			_push(`<!--]--></ul></section><section id="installer" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="titre-ecrans">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$5, {
@@ -971,8 +1004,8 @@ var _sfc_main = {
 				title: "Choisissez votre écran."
 			}, {
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(` Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur l’ordinateur. Mac et iPhone arrivent bientôt. `);
-					else return [(0, vue_exports.createTextVNode)(" Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur l’ordinateur. Mac et iPhone arrivent bientôt. ")];
+					if (_push) _push(` Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur l’ordinateur. Mac, iPhone et iPad arrivent bientôt. `);
+					else return [(0, vue_exports.createTextVNode)(" Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur l’ordinateur. Mac, iPhone et iPad arrivent bientôt. ")];
 				}),
 				_: 1
 			}, _parent));

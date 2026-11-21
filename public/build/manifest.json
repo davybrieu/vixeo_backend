@@ -18,7 +18,7 @@
     "name": "dist"
   },
   "resources/js/app.js": {
-    "file": "assets/app-Df6R9g-6.js",
+    "file": "assets/app-B-sEsMZ5.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -33,11 +33,11 @@
       "resources/js/pages/Privacy.vue"
     ],
     "css": [
-      "assets/app-sFFAIfv6.css"
+      "assets/app-BZuhhwR5.css"
     ]
   },
   "resources/js/pages/Error.vue": {
-    "file": "assets/Error-DlYwODbT.js",
+    "file": "assets/Error-CaMttzWU.js",
     "name": "Error",
     "src": "resources/js/pages/Error.vue",
     "isDynamicEntry": true,
@@ -48,7 +48,7 @@
     ]
   },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-BKq4CH6L.js",
+    "file": "assets/Home-oh8Hf3Pz.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,
@@ -70,7 +70,7 @@
     ]
   },
   "resources/js/pages/Member.vue": {
-    "file": "assets/Member-C--4o1E7.js",
+    "file": "assets/Member-mlZA9lE8.js",
     "name": "Member",
     "src": "resources/js/pages/Member.vue",
     "isDynamicEntry": true,

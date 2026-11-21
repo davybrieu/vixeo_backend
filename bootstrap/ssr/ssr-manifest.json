@@ -95,20 +95,20 @@
   "node_modules/vue/index.mjs": [],
   "node_modules/vue/server-renderer/index.mjs": [],
   "resources/js/components/FaqList.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/components/FeatureRow.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/components/Icon.vue": [],
   "resources/js/components/InstallButtons.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/components/PlatformPicker.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/components/SectionHeading.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/components/Seo.vue": [
     "/build/assets/Seo-BAMcyPOF.js"
@@ -118,50 +118,50 @@
   "resources/js/components/VxButton.vue": [],
   "resources/js/components/VxLogo.vue": [],
   "resources/js/data/avatars.js": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/data/faq.js": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/layouts/SiteLayout.vue": [],
   "resources/js/mock/PhoneFrame.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/PhoneHomeScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/PhoneListScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/PhoneParentalScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/PixelAvatar.vue": [
     "/build/assets/PixelAvatar-DE-ftQk1.js"
   ],
   "resources/js/mock/PosterTile.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/TvCodeScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/TvDetailsScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/TvFrame.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/TvHomeScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/mock/TvWhoScreen.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/pages/Error.vue": [
     "/build/assets/Error-DpTqaR1w.js"
   ],
   "resources/js/pages/Home.vue": [
-    "/build/assets/Home-iQQqls-p.js"
+    "/build/assets/Home-PUUhuX6Y.js"
   ],
   "resources/js/pages/Legal.vue": [
     "/build/assets/Legal-CsbVODPh.js"

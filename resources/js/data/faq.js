@@ -19,7 +19,7 @@ export default function faq(site) {
             question: 'Sur quels appareils puis-je utiliser Vixeo ?',
             answer: [
                 `Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et sur les ordinateurs Windows (${escape(site.windows.minimum)}) : ${link('#installer', 'installer Vixeo')}.`,
-                'Les versions pour Mac et pour iPhone seront bientôt disponibles. Vixeo n’a pas de version web.',
+                'Les versions pour Mac, iPhone et iPad seront bientôt disponibles. Vixeo n’a pas de version web.',
             ],
         },
         {

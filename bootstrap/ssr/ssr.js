@@ -40611,6 +40611,7 @@ var _sfc_main$3 = {
 			bookmark: "M7.25 3.75h9.5v16.5L12 16.5l-4.75 3.75V3.75Z",
 			monitor: "M3.75 4.75h16.5a1 1 0 0 1 1 1v9.5a1 1 0 0 1-1 1H3.75a1 1 0 0 1-1-1v-9.5a1 1 0 0 1 1-1ZM12 16.25v3.5M8 19.75h8",
 			laptop: "M5.75 5.25h12.5a1 1 0 0 1 1 1v9.5H4.75v-9.5a1 1 0 0 1 1-1ZM2.75 18.75h18.5",
+			tablet: "M6.25 2.75h11.5a1.75 1.75 0 0 1 1.75 1.75v15a1.75 1.75 0 0 1-1.75 1.75H6.25A1.75 1.75 0 0 1 4.5 19.5v-15a1.75 1.75 0 0 1 1.75-1.75ZM10.5 18h3",
 			heart: "M12 19.75s-7.25-4.35-7.25-9.5a4 4 0 0 1 7.25-2.3 4 4 0 0 1 7.25 2.3c0 5.15-7.25 9.5-7.25 9.5Z"
 		};
 		return (_ctx, _push, _parent, _attrs) => {
@@ -40794,7 +40795,7 @@ var render = (page) => (app ??= createInertiaApp({
 	resolve: async (name, page) => {
 		const module = await (/* @__PURE__ */ Object.assign({
 			"./pages/Error.vue": () => import("./assets/Error-DpTqaR1w.js"),
-			"./pages/Home.vue": () => import("./assets/Home-iQQqls-p.js"),
+			"./pages/Home.vue": () => import("./assets/Home-PUUhuX6Y.js"),
 			"./pages/Legal.vue": () => import("./assets/Legal-CsbVODPh.js"),
 			"./pages/Member.vue": () => import("./assets/Member-t-cYzmXt.js"),
 			"./pages/Privacy.vue": () => import("./assets/Privacy-CeI6UXzE.js")

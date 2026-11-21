@@ -27,12 +27,16 @@ const page = usePage();
 const site = page.props.site;
 const questions = faq(site);
 
+// Available now, then coming soon (developer's request, 21/11/2026: listed even before they are out).
 const screens = [
     { icon: 'phone', label: 'Téléphone Android' },
-    { icon: 'phone', label: 'Tablette Android' },
+    { icon: 'tablet', label: 'Tablette Android' },
     { icon: 'tv', label: 'Android TV' },
     { icon: 'tv', label: 'Google TV' },
     { icon: 'monitor', label: 'Windows 10 et 11' },
+    { icon: 'laptop', label: 'macOS', soon: true },
+    { icon: 'phone', label: 'iPhone', soon: true },
+    { icon: 'tablet', label: 'iPad', soon: true },
 ];
 </script>
 
@@ -48,8 +52,14 @@ const screens = [
             aria-hidden="true"
         />
         <div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8">
-            <p class="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft">
-                <span class="size-2 rounded-full bg-accent" /> Android · Android TV · Windows
+            <!-- Available, then coming soon: two groups that go on two lines on a narrow screen. -->
+            <p class="inline-flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-3xl border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft">
+                <span class="inline-flex items-center gap-2 whitespace-nowrap">
+                    <span class="size-2 rounded-full bg-accent" /> Android · Android TV · Windows
+                </span>
+                <span class="inline-flex items-center gap-2 whitespace-nowrap text-text-muted">
+                    <span class="size-2 rounded-full border border-current" /> Bientôt : macOS · iPhone · iPad
+                </span>
             </p>
             <h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
                 Vos films et séries, <span class="text-accent">sur tous vos écrans.</span>
@@ -77,8 +87,9 @@ const screens = [
         </div>
 
         <ul class="relative mx-auto mt-20 flex max-w-5xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-5 text-sm text-text-secondary">
-            <li v-for="screen in screens" :key="screen.label" class="flex items-center gap-2">
+            <li v-for="screen in screens" :key="screen.label" class="flex items-center gap-2" :class="{ 'text-text-muted': screen.soon }">
                 <Icon :name="screen.icon" :size="18" class="text-text-muted" /> {{ screen.label }}
+                <span v-if="screen.soon" class="rounded-full border border-line px-2 py-0.5 text-xs">Bientôt</span>
             </li>
         </ul>
     </section>
@@ -87,7 +98,7 @@ const screens = [
     <section id="installer" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="titre-ecrans">
         <SectionHeading id="titre-ecrans" title="Choisissez votre écran.">
             Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au
-            clavier et à la souris sur l’ordinateur. Mac et iPhone arrivent bientôt.
+            clavier et à la souris sur l’ordinateur. Mac, iPhone et iPad arrivent bientôt.
         </SectionHeading>
         <PlatformPicker class="mt-10" :latest-android="latestAndroid" :latest-windows="latestWindows" />
     </section>

@@ -9,9 +9,10 @@ import TvHomeScreen from '../mock/TvHomeScreen.vue';
 import Icon from './Icon.vue';
 import InstallButtons from './InstallButtons.vue';
 
-// "Choisissez votre écran": tabs for Android, TV, Windows, then macOS and iPhone (« Bientôt
-// disponible », developer's request, 21/11/2026). The visitor's device (guessed by the server from
-// the User-Agent) is selected first. No web app any more (developer's request).
+// "Choisissez votre écran": tabs for Android, TV, Windows, then macOS, iPhone and iPad (« Bientôt
+// disponible », developer's request, 21/11/2026). The tabs go on several lines when the width asks
+// for it, never a sideways scroll. The visitor's device (guessed by the server from the
+// User-Agent) is selected first. No web app any more (developer's request).
 const props = defineProps({
     latestAndroid: { type: Object, default: null },
     latestWindows: { type: Object, default: null },
@@ -22,8 +23,9 @@ const screens = [
     { id: 'android', label: 'Téléphone et tablette', short: 'Android', icon: 'phone' },
     { id: 'tv', label: 'TV', short: 'TV', icon: 'tv' },
     { id: 'windows', label: 'Ordinateur Windows', short: 'Windows', icon: 'monitor' },
-    { id: 'macos', label: 'Mac', short: 'Mac', icon: 'laptop', soon: true },
+    { id: 'macos', label: 'Ordinateur Mac', short: 'macOS', icon: 'laptop', soon: true },
     { id: 'ios', label: 'iPhone', short: 'iPhone', icon: 'phone', soon: true },
+    { id: 'ipados', label: 'iPad', short: 'iPad', icon: 'tablet', soon: true },
 ];
 const selected = ref(screens.some((s) => s.id === page.props.platform) ? page.props.platform : 'windows');
 const tabs = ref([]);
@@ -45,11 +47,11 @@ function onKey(event, index) {
 
 <template>
     <div>
-        <!-- Phone: three tabs a row (no sideways scrolling); wider: one row. -->
+        <!-- As many tabs a line as the width allows, then the next line: never a sideways scroll. -->
         <div
             role="tablist"
             aria-label="Votre écran"
-            class="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface p-1.5 sm:inline-flex sm:max-w-full"
+            class="flex w-fit max-w-full flex-wrap gap-1 rounded-2xl border border-line bg-surface p-1.5"
         >
             <button
                 v-for="(screen, i) in screens"
@@ -119,6 +121,13 @@ function onKey(event, index) {
                         souris et au clavier.
                     </p>
                 </template>
+                <template v-else-if="screen.id === 'ipados'">
+                    <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour iPad</h3>
+                    <p class="mt-4 leading-relaxed text-text-secondary">
+                        Vixeo arrive bientôt sur iPad : un grand écran pour parcourir le catalogue et reprendre où vous en
+                        étiez, avec le même compte que sur vos autres écrans.
+                    </p>
+                </template>
                 <template v-else>
                     <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour iPhone</h3>
                     <p class="mt-4 leading-relaxed text-text-secondary">
@@ -167,7 +176,7 @@ function onKey(event, index) {
                 <TvFrame v-else-if="screen.id === 'tv'" label="La connexion de la TV avec un code court">
                     <TvCodeScreen />
                 </TvFrame>
-                <TvFrame v-else :label="screen.id === 'macos' ? 'L’accueil de Vixeo sur un ordinateur' : 'L’accueil de Vixeo sur un ordinateur Windows'">
+                <TvFrame v-else :label="{ macos: 'L’accueil de Vixeo sur un ordinateur', ipados: 'L’accueil de Vixeo sur une tablette' }[screen.id] ?? 'L’accueil de Vixeo sur un ordinateur Windows'">
                     <TvHomeScreen />
                 </TvFrame>
             </div>
