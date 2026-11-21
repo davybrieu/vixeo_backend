@@ -5,7 +5,7 @@ namespace App\Http\Requests\Api\V1\Concerns;
 use App\Services\Tmdb\TitleFilters;
 
 /**
- * Filters of the search page (genre, years, minimum rating).
+ * Filters of the search page (genre, years, minimum rating, minimum number of voters).
  */
 trait FiltersTitles
 {
@@ -23,6 +23,8 @@ trait FiltersTitles
             ])),
             /** Minimum rating out of 10: IMDb's, else TMDb's (docs/notes.md). Unrated titles are left out. */
             'min_rating' => ['sometimes', 'numeric', 'between:0,10'],
+            /** Minimum number of voters of that rating (IMDb's, else TMDb's). Unrated titles are left out. */
+            'min_votes' => ['sometimes', 'integer', 'min:0', 'max:100000000'],
         ];
     }
 
@@ -35,6 +37,7 @@ trait FiltersTitles
             yearFrom: isset($validated['year_from']) ? (int) $validated['year_from'] : null,
             yearTo: isset($validated['year_to']) ? (int) $validated['year_to'] : null,
             minRating: isset($validated['min_rating']) ? (float) $validated['min_rating'] : null,
+            minVotes: isset($validated['min_votes']) ? (int) $validated['min_votes'] : null,
         );
     }
 }

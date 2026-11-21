@@ -3,11 +3,12 @@
 namespace App\Services\Tmdb;
 
 /**
- * Filters of the search page: genre, years and minimum rating. TMDb's text search has no such
- * filters: the API applies them itself to the results.
+ * Filters of the search page: genre, years, minimum rating and minimum number of voters. TMDb's
+ * text search has no such filters: the API applies them itself to the results.
  *
  * The rating of a title ([rating], « Note » filter and « Mieux notés » order, developer's request,
- * 21/11/2026): **IMDb's, else TMDb's**, the one the apps show on the cards.
+ * 21/11/2026): **IMDb's, else TMDb's**, the one the apps show on the cards; its voters ([votes],
+ * « Votants » filter) are those of the same site.
  */
 final readonly class TitleFilters
 {
@@ -16,11 +17,19 @@ final readonly class TitleFilters
         public ?int $yearFrom = null,
         public ?int $yearTo = null,
         public ?float $minRating = null,
+        public ?int $minVotes = null,
     ) {}
 
     public function isEmpty(): bool
     {
-        return $this->genre === null && $this->yearFrom === null && $this->yearTo === null && $this->minRating === null;
+        return $this->genre === null && $this->yearFrom === null && $this->yearTo === null
+            && $this->minRating === null && $this->minVotes === null;
+    }
+
+    /** A minimum the API checks itself on each title (rating or voters): it needs IMDb's. */
+    public function hasMinimums(): bool
+    {
+        return $this->minRating !== null || $this->minVotes !== null;
     }
 
     /**
@@ -31,13 +40,33 @@ final readonly class TitleFilters
      */
     public static function rating(array $item): ?float
     {
-        $imdb = is_array($item['imdb_rating'] ?? null) ? ($item['imdb_rating']['rating'] ?? null) : null;
-        if (is_numeric($imdb) && (float) $imdb > 0) {
-            return (float) $imdb;
+        return self::shown($item)[0] ?? null;
+    }
+
+    /**
+     * Voters of the rating a title shows (IMDb's, else TMDb's); 0 when neither rates it.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public static function votes(array $item): int
+    {
+        return self::shown($item)[1] ?? 0;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @return array{float, int}|null the rating shown and its voters
+     */
+    private static function shown(array $item): ?array
+    {
+        $imdb = is_array($item['imdb_rating'] ?? null) ? $item['imdb_rating'] : [];
+        if (is_numeric($imdb['rating'] ?? null) && (float) $imdb['rating'] > 0) {
+            return [(float) $imdb['rating'], (int) ($imdb['votes'] ?? 0)];
         }
         $tmdb = (float) ($item['vote_average'] ?? 0);
+        $votes = (int) ($item['vote_count'] ?? 0);
 
-        return $tmdb > 0 && (int) ($item['vote_count'] ?? 0) > 0 ? $tmdb : null;
+        return $tmdb > 0 && $votes > 0 ? [$tmdb, $votes] : null;
     }
 
     /**
@@ -60,17 +89,19 @@ final readonly class TitleFilters
             }
         }
 
-        return $this->reachesMinRating($item);
+        return $this->reachesMinimums($item);
     }
 
     /**
-     * Whether a title's rating (IMDb's, else TMDb's) reaches the minimum; true without one.
+     * Whether a title's rating (IMDb's, else TMDb's) and its voters reach the minimums; true
+     * without any.
      *
      * @param  array<string, mixed>  $item
      */
-    public function reachesMinRating(array $item): bool
+    public function reachesMinimums(array $item): bool
     {
-        return $this->minRating === null || (self::rating($item) ?? -1) >= $this->minRating;
+        return ($this->minRating === null || (self::rating($item) ?? -1) >= $this->minRating)
+            && ($this->minVotes === null || self::votes($item) >= $this->minVotes);
     }
 
     /**

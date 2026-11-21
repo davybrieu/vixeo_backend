@@ -325,7 +325,7 @@ class TmdbCatalog
 
             return true;
         }));
-        if ($filters->minRating !== null || $sort === SearchSort::Rating) {
+        if ($filters->hasMinimums() || $sort === SearchSort::Rating) {
             $results = $this->summaries->add($results);
         }
         $results = array_values(array_filter($results, $filters->matches(...)));
@@ -374,16 +374,18 @@ class TmdbCatalog
 
     /**
      * Movies or TV shows matching filters, without a text (TMDb discover): genre and years are
-     * TMDb's filters, released titles only. The rating is IMDb's, else TMDb's (TitleFilters::rating):
-     * with a minimum, TMDb is asked for titles rated at least DISCOVER_RATING_MARGIN lower, and
-     * each page of results reads DISCOVER_DEPTH TMDb pages, keeping those that reach the minimum;
-     * « Mieux notés » is TMDb's order, refined page by page.
+     * TMDb's filters, released titles only. The rating is IMDb's, else TMDb's (TitleFilters::rating),
+     * and so are its voters: with a minimum rating or number of voters, each page of results reads
+     * DISCOVER_DEPTH TMDb pages and keeps the titles that reach them (TMDb is asked for titles rated
+     * at least DISCOVER_RATING_MARGIN lower; not for a number of voters, IMDb's counts being far
+     * higher than TMDb's); « Mieux notés » is TMDb's order, refined page by page.
      *
      * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
      */
     public function discover(MediaType $type, TitleFilters $filters, SearchSort $sort, int $page = 1): array
     {
-        $byRating = $filters->minRating !== null;
+        // A minimum rating or number of voters: checked by the API on IMDb's (else TMDb's).
+        $byRating = $filters->hasMinimums();
         $depth = $byRating ? self::DISCOVER_DEPTH : 1;
         $query = $this->discoverQuery($type, $filters, $sort);
 
@@ -404,7 +406,7 @@ class TmdbCatalog
             // IMDb's rating (and the summary the apps show anyway), from the same cache.
             $results = $this->summaries->add($results);
             // Genre and years: already TMDb's filters.
-            $results = array_values(array_filter($results, $filters->reachesMinRating(...)));
+            $results = array_values(array_filter($results, $filters->reachesMinimums(...)));
             $results = self::sort($results, $sort);
         }
 
@@ -445,6 +447,10 @@ class TmdbCatalog
         }
         if ($filters->minRating !== null) {
             $query['vote_average.gte'] = max(0, $filters->minRating - self::DISCOVER_RATING_MARGIN);
+        }
+        // A minimum (rating or voters): titles barely rated on TMDb are left out; the number of
+        // voters itself is checked by the API, IMDb's counts being far higher than TMDb's.
+        if ($filters->hasMinimums()) {
             $query['vote_count.gte'] = max($query['vote_count.gte'] ?? 0, 10);
         }
 

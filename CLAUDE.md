@@ -140,7 +140,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
     des helpers statiques).
   - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to`,
-    `min_rating` ; requêtes : trait `Concerns\FiltersTitles`). **Filtres sans texte** (demande du
+    `min_rating`, `min_votes` ; requêtes : trait `Concerns\FiltersTitles`). **Filtres sans texte** (demande du
     développeur, 21/11/2026, ex. films d'horreur depuis 2010 notés 8 et plus) :
     `GET /catalog/discover` (films et séries, première page chacun, réponse de la recherche sans
     personnes) et `/catalog/discover/{movie|tv}` (paginé ; `DiscoverRequest`, tri par défaut
@@ -149,7 +149,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     marge, `DISCOVER_DEPTH` = 3 pages TMDb par page, une page peut être courte ou vide). **Note minimale et tri `rating`** (rétablis
     le 21/11/2026, demande du développeur) : **la note d'IMDb, sinon celle de TMDb**, celle que
     montrent les cartes (`TitleFilters::rating`) ; les titres sans note à la fin du tri, écartés par
-    `min_rating`. Les résultats reçoivent leur `summary` (et `imdb_rating`) avant ce filtre. La recherche par
+    `min_rating`. **Nombre minimal de votants** (`min_votes`, demande du développeur, 21/11/2026) :
+    les votants de cette même note (IMDb, sinon TMDb, `TitleFilters::votes`), vérifiés par l'API
+    (pas demandés à TMDb discover). Les résultats reçoivent leur `summary` (et `imdb_rating`) avant ce filtre. La recherche par
     texte de TMDb n'a ni filtres ni tri : avec un filtre ou un tri autre que `relevance`
     (`SearchSort`), l'API lit les `SEARCH_DEPTH` (3) premières pages, filtre, trie et renvoie une
     seule page. Une recherche filtrée ne renvoie pas de personnes.

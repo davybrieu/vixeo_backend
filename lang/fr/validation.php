@@ -217,6 +217,7 @@ return [
         'year_from' => 'année de début',
         'year_to' => 'année de fin',
         'min_rating' => 'note minimale',
+        'min_votes' => 'nombre minimal de votants',
         'value' => 'note',
         'comment' => 'commentaire',
         'bio' => 'biographie',

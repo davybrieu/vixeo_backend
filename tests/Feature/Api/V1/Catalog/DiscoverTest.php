@@ -91,6 +91,29 @@ it('keeps the titles whose rating (IMDb, else TMDb) reaches the minimum, three T
         ->assertJsonPath('data.*.title', ['Page 2']);
 });
 
+it('keeps the titles whose voters (IMDb, else TMDb) reach the minimum', function () {
+    DB::table('imdb_ratings')->insert([
+        ['tconst' => 'tt0000001', 'rating' => 7.0, 'votes' => 250000, 'import_id' => 1],
+        ['tconst' => 'tt0000002', 'rating' => 7.0, 'votes' => 800, 'import_id' => 1],
+    ]);
+    fakeDiscover([
+        // IMDb's 250 000 voters although TMDb has 900: kept.
+        1 => [Tmdb::movie(1, ['title' => 'IMDb 250 000', 'vote_count' => 900])],
+        // IMDb's 800 voters although TMDb has 20 000: left out.
+        2 => [Tmdb::movie(2, ['title' => 'IMDb 800', 'vote_count' => 20000])],
+        // No IMDb rating: TMDb's 15 000 voters.
+        3 => [Tmdb::movie(3, ['title' => 'TMDb 15 000', 'vote_count' => 15000])],
+    ]);
+
+    $this->getJson('/api/v1/catalog/discover/movie?min_votes=10000')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['IMDb 250 000', 'TMDb 15 000']);
+
+    // TMDb is not asked for a number of voters (IMDb's are far higher), only rated titles.
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'discover/movie')
+        && $request['vote_count.gte'] == 10 && ! isset($request->data()['vote_average.gte']) && $request['page'] == 3);
+});
+
 it('browses movies and TV shows at once, never with people', function () {
     fakeDiscover([1 => [Tmdb::movie(1, ['title' => 'Film'])]]);
 
