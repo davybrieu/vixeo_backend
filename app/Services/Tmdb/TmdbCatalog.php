@@ -34,6 +34,16 @@ class TmdbCatalog
     /** Pages of results a filtered or sorted text search reads (20 results each). */
     public const SEARCH_DEPTH = 3;
 
+    /**
+     * Browsing with a minimum rating: TMDb pages read for one page of results. TMDb only knows its
+     * own rating: the API asks it for titles close to the minimum, then keeps those whose rating
+     * (IMDb's, else TMDb's) reaches it.
+     */
+    public const DISCOVER_DEPTH = 3;
+
+    /** Below the minimum rating, TMDb ratings still asked (IMDb's may be higher). */
+    public const DISCOVER_RATING_MARGIN = 1.0;
+
     public function __construct(private TmdbClient $tmdb, private TitleSummaries $summaries) {}
 
     /**
@@ -345,6 +355,100 @@ class TmdbCatalog
         };
 
         return $items;
+    }
+
+    /**
+     * First page of movies and of TV shows matching filters, without a text (the search page with
+     * filters only): see discover.
+     *
+     * @return array<string, array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}>
+     */
+    public function discoverAll(TitleFilters $filters, SearchSort $sort): array
+    {
+        return [
+            'movies' => $this->discover(MediaType::Movie, $filters, $sort),
+            'shows' => $this->discover(MediaType::Tv, $filters, $sort),
+            'people' => ['page' => 1, 'total_pages' => 0, 'total_results' => 0, 'results' => []],
+        ];
+    }
+
+    /**
+     * Movies or TV shows matching filters, without a text (TMDb discover): genre and years are
+     * TMDb's filters, released titles only. The rating is IMDb's, else TMDb's (TitleFilters::rating):
+     * with a minimum, TMDb is asked for titles rated at least DISCOVER_RATING_MARGIN lower, and
+     * each page of results reads DISCOVER_DEPTH TMDb pages, keeping those that reach the minimum;
+     * « Mieux notés » is TMDb's order, refined page by page.
+     *
+     * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
+     */
+    public function discover(MediaType $type, TitleFilters $filters, SearchSort $sort, int $page = 1): array
+    {
+        $byRating = $filters->minRating !== null;
+        $depth = $byRating ? self::DISCOVER_DEPTH : 1;
+        $query = $this->discoverQuery($type, $filters, $sort);
+
+        $results = [];
+        $totalPages = 0;
+        $totalResults = 0;
+        for ($tmdbPage = ($page - 1) * $depth + 1, $last = $tmdbPage + $depth - 1; $tmdbPage <= min($last, self::MAX_PAGE); $tmdbPage++) {
+            $response = $this->page($this->tmdb->get("discover/{$type->value}", $query + ['page' => $tmdbPage], 'lists'), $type->value);
+            $results = [...$results, ...$response['results']];
+            $totalPages = $response['total_pages'];
+            $totalResults = $response['total_results'];
+            if ($tmdbPage >= $totalPages) {
+                break;
+            }
+        }
+
+        if ($byRating || $sort === SearchSort::Rating) {
+            // IMDb's rating (and the summary the apps show anyway), from the same cache.
+            $results = $this->summaries->add($results);
+            // Genre and years: already TMDb's filters.
+            $results = array_values(array_filter($results, $filters->reachesMinRating(...)));
+            $results = self::sort($results, $sort);
+        }
+
+        return [
+            'page' => $page,
+            'total_pages' => (int) ceil($totalPages / $depth),
+            // With a minimum rating: TMDb's count, before the API's own filter (an upper bound).
+            'total_results' => $totalResults,
+            'results' => $results,
+        ];
+    }
+
+    /** @return array<string, int|float|string> TMDb discover parameters */
+    private function discoverQuery(MediaType $type, TitleFilters $filters, SearchSort $sort): array
+    {
+        $date = $type === MediaType::Movie ? 'primary_release_date' : 'first_air_date';
+        $today = now()->toDateString();
+        $query = ['include_adult' => 'false'];
+
+        if ($filters->genre !== null) {
+            $query['with_genres'] = $filters->genre;
+        }
+        if ($filters->yearFrom !== null) {
+            $query["{$date}.gte"] = sprintf('%04d-01-01', $filters->yearFrom);
+        }
+        // Released titles only: « Plus récents » would start with announced ones.
+        $query["{$date}.lte"] = $filters->yearTo !== null ? min(sprintf('%04d-12-31', $filters->yearTo), $today) : $today;
+
+        $query['sort_by'] = match ($sort) {
+            SearchSort::Relevance, SearchSort::Popularity => 'popularity.desc',
+            SearchSort::Rating => 'vote_average.desc',
+            SearchSort::Recent => "{$date}.desc",
+            SearchSort::Oldest => "{$date}.asc",
+        };
+        // TMDb's best rated first would be titles with a single vote of 10.
+        if ($sort === SearchSort::Rating) {
+            $query['vote_count.gte'] = 100;
+        }
+        if ($filters->minRating !== null) {
+            $query['vote_average.gte'] = max(0, $filters->minRating - self::DISCOVER_RATING_MARGIN);
+            $query['vote_count.gte'] = max($query['vote_count.gte'] ?? 0, 10);
+        }
+
+        return $query;
     }
 
     /** @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>} */

@@ -89,6 +89,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
         Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
         Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
+        // The search page with filters only, no text (developer's request, 21/11/2026).
+        Route::get('discover', [CatalogSearchController::class, 'discover'])->name('discover');
+        Route::get('discover/{type}', [CatalogSearchController::class, 'discoverType'])
+            ->whereIn('type', ['movie', 'tv'])->name('discover.type');
         Route::get('{type}/lists/{list}', [CatalogController::class, 'list'])->name('list');
         Route::get('movie/{id}', [CatalogTitleController::class, 'movie'])->whereNumber('id')->name('movie');
         Route::get('tv/{id}', [CatalogTitleController::class, 'show'])->whereNumber('id')->name('show');

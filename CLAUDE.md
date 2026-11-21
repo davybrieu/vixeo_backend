@@ -111,8 +111,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   est autorisé ; renommer/supprimer → nouvelle version. Exception décidée par le développeur
   (seul utilisateur pour l'instant, 21/11/2026) : les routes que l'appli n'appelle plus ont été
   supprimées (plug-ins Stremio, sources, `resolve`, flux favoris / morts, `continue-watching`,
-  `favorites`, `history`, `catalog/config`, `discover`, `people/popular`, `episodes/upcoming`,
-  compatibilité TMDb, `PATCH /social/profile`) ; ne pas les recréer.
+  `favorites`, `history`, `catalog/config`, `{type}/discover`, `people/popular`, `episodes/upcoming`,
+  compatibilité TMDb, `PATCH /social/profile`) ; ne pas les recréer (la recherche par filtres sans
+  texte est revenue le 21/11/2026 sous une autre forme : `GET /catalog/discover`).
 - Contrôleurs dans `app/Http/Controllers/Api/V1`, validation dans des Form Requests
   (`app/Http/Requests/Api/V1`), réponses via des API Resources (`app/Http/Resources/V1`),
   autorisations via des Policies (`Gate::authorize`).
@@ -139,8 +140,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
     des helpers statiques).
   - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to`,
-    `min_rating` ; requêtes : trait `Concerns\FiltersTitles` ; plus d'« Explorer » `/discover`,
-    21/11/2026 : l'appli ne cherche qu'avec un texte). **Note minimale et tri `rating`** (rétablis
+    `min_rating` ; requêtes : trait `Concerns\FiltersTitles`). **Filtres sans texte** (demande du
+    développeur, 21/11/2026, ex. films d'horreur depuis 2010 notés 8 et plus) :
+    `GET /catalog/discover` (films et séries, première page chacun, réponse de la recherche sans
+    personnes) et `/catalog/discover/{movie|tv}` (paginé ; `DiscoverRequest`, tri par défaut
+    `popularity`, pas de `relevance`) : TMDb discover (genre, années, titres déjà sortis), note
+    IMDb sinon TMDb appliquée par l'API (`TmdbCatalog::discover` : TMDb demandé avec 1 point de
+    marge, `DISCOVER_DEPTH` = 3 pages TMDb par page, une page peut être courte ou vide). **Note minimale et tri `rating`** (rétablis
     le 21/11/2026, demande du développeur) : **la note d'IMDb, sinon celle de TMDb**, celle que
     montrent les cartes (`TitleFilters::rating`) ; les titres sans note à la fin du tri, écartés par
     `min_rating`. Les résultats reçoivent leur `summary` (et `imdb_rating`) avant ce filtre. La recherche par

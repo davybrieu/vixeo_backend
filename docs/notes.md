@@ -47,6 +47,24 @@ noté au moins bien noté, les titres sans note à la fin ; à note égale, l'or
 (pertinence). Comme les autres filtres, ils portent sur les 60
 premiers résultats du texte, et une recherche avec `min_rating` ne renvoie pas de personnes.
 
+### Sans texte (`GET /catalog/discover`, `/catalog/discover/{movie|tv}`)
+
+La page de recherche avec des filtres seulement (par exemple : films, « Horreur », depuis 2010,
+« Note ≥ 8 »). TMDb discover applique le genre et les années (titres déjà sortis seulement) ; il ne
+connaît que sa propre note, alors :
+
+- avec `min_rating`, l'API lui demande les titres notés au moins `min_rating - 1` sur TMDb
+  (`DISCOVER_RATING_MARGIN`, la note IMDb peut être plus haute) et au moins 10 votes, lit
+  **3 pages TMDb par page de résultats** (`DISCOVER_DEPTH`), et ne garde que les titres dont la
+  note IMDb, sinon TMDb, atteint le minimum : une page peut avoir moins de 20 titres, voire aucun,
+  sans que ce soit la fin (`meta.total_pages`) ;
+- `sort=rating` suit l'ordre de TMDb (meilleure note TMDb d'abord, 100 votes au moins), affiné page
+  par page avec la note IMDb, sinon TMDb ;
+- sans note minimale ni ce tri, une page de résultats = une page de TMDb.
+
+Un titre que TMDb note plus d'un point sous le minimum n'est pas proposé, même si IMDb le note
+au-dessus (rare).
+
 ## Liaison avec IMDb (`App\Services\Imdb\ImdbRatings`)
 
 La clé est l'**identifiant IMDb** (`tt…`) :

@@ -60,11 +60,17 @@ final readonly class TitleFilters
             }
         }
 
-        if ($this->minRating !== null && (self::rating($item) ?? -1) < $this->minRating) {
-            return false;
-        }
+        return $this->reachesMinRating($item);
+    }
 
-        return true;
+    /**
+     * Whether a title's rating (IMDb's, else TMDb's) reaches the minimum; true without one.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public function reachesMinRating(array $item): bool
+    {
+        return $this->minRating === null || (self::rating($item) ?? -1) >= $this->minRating;
     }
 
     /**
