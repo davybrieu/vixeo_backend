@@ -34,7 +34,7 @@ réglage du profil « Source des notes » (`rating_source`), supprimés le 21/11
   en **une requête** par réponse. Ailleurs (« Voir tout », filmographie…) `ratings` est `null` :
   les applis montrent `vote_average` (TMDb). Aucune requête de note par carte.
 
-## Recherche : note minimale, votants et « Mieux notés »
+## Recherche : note, votants et « Mieux notés »
 
 `GET /catalog/search` et `/catalog/search/{movie|tv}` acceptent `min_rating` (0 à 10) et
 `sort=rating` (rétablis le 21/11/2026, demande du développeur). La note utilisée
@@ -52,25 +52,31 @@ note affichée** (`TitleFilters::votes`) : ceux d'IMDb quand le titre a une note
 de TMDb (`vote_count`). Il écarte les titres qui n'atteignent pas ce nombre et ceux sans note ;
 il se combine avec `min_rating` (« Note ≥ 8 » et « 100 000 votants et plus »).
 
+**Intervalles** (curseurs à deux poignées des applis, demande du développeur, 21/11/2026) :
+`max_rating` (0 à 10, ≥ `min_rating`) et `max_votes` (≥ `min_votes`) bornent la note et les
+votants par le haut, bornes comprises (« Note de 6 à 7,5 », « de 1 000 à 50 000 votants »). Chaque
+borne est facultative ; dès qu'il y en a une, les titres sans note sont écartés
+(`TitleFilters::withinRatingBounds`). Les années ont déjà les leurs (`year_from`, `year_to`).
+
 ### Sans texte (`GET /catalog/discover`, `/catalog/discover/{movie|tv}`)
 
 La page de recherche avec des filtres seulement (par exemple : films, « Horreur », depuis 2010,
 « Note ≥ 8 »). TMDb discover applique le genre et les années (titres déjà sortis seulement) ; il ne
 connaît que sa propre note, alors :
 
-- avec `min_rating` ou `min_votes`, l'API lui demande les titres qui ont au moins 10 votes TMDb
-  (et, avec `min_rating`, notés au moins `min_rating - 1` sur TMDb : `DISCOVER_RATING_MARGIN`, la
-  note IMDb peut être plus haute), lit **3 pages TMDb par page de résultats** (`DISCOVER_DEPTH`),
-  et ne garde que les titres dont la note IMDb, sinon TMDb, et ses votants atteignent les
-  minimums : une page peut avoir moins de 20 titres, voire aucun, sans que ce soit la fin
+- avec une borne de la note ou des votants, l'API lui demande les titres qui ont au moins 10 votes
+  TMDb (et notés sur TMDb au moins `min_rating - 1`, au plus `max_rating + 1` :
+  `DISCOVER_RATING_MARGIN`, la note IMDb peut être différente), lit **3 pages TMDb par page de résultats** (`DISCOVER_DEPTH`),
+  et ne garde que les titres dont la note IMDb, sinon TMDb, et ses votants sont dans les
+  bornes : une page peut avoir moins de 20 titres, voire aucun, sans que ce soit la fin
   (`meta.total_pages`). Le nombre de votants n'est pas demandé à TMDb : ceux d'IMDb sont bien
   plus nombreux (un film à 250 000 votants IMDb peut en avoir 900 sur TMDb) ;
 - `sort=rating` suit l'ordre de TMDb (meilleure note TMDb d'abord, 100 votes au moins), affiné page
   par page avec la note IMDb, sinon TMDb ;
-- sans note minimale ni ce tri, une page de résultats = une page de TMDb.
+- sans borne de la note ou des votants ni ce tri, une page de résultats = une page de TMDb.
 
-Un titre que TMDb note plus d'un point sous le minimum n'est pas proposé, même si IMDb le note
-au-dessus (rare).
+Un titre que TMDb note à plus d'un point hors de l'intervalle n'est pas proposé, même si IMDb le note
+dedans (rare).
 
 ## Liaison avec IMDb (`App\Services\Imdb\ImdbRatings`)
 

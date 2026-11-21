@@ -218,6 +218,8 @@ return [
         'year_to' => 'année de fin',
         'min_rating' => 'note minimale',
         'min_votes' => 'nombre minimal de votants',
+        'max_rating' => 'note maximale',
+        'max_votes' => 'nombre maximal de votants',
         'value' => 'note',
         'comment' => 'commentaire',
         'bio' => 'biographie',

@@ -114,6 +114,20 @@ it('keeps the titles whose voters (IMDb, else TMDb) reach the minimum', function
         && $request['vote_count.gte'] == 10 && ! isset($request->data()['vote_average.gte']) && $request['page'] == 3);
 });
 
+it('asks TMDb for titles rated within a point of the rating range', function () {
+    fakeDiscover([1 => [
+        Tmdb::movie(1, ['title' => 'TMDb 6', 'vote_average' => 6.0]),
+        Tmdb::movie(2, ['title' => 'TMDb 7,8', 'vote_average' => 7.8]),
+    ]]);
+
+    $this->getJson('/api/v1/catalog/discover/movie?min_rating=5&max_rating=7.5&max_votes=50000')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['TMDb 6']);
+
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), 'discover/movie')
+        && $request['vote_average.gte'] == 4 && $request['vote_average.lte'] == 8.5 && $request['vote_count.gte'] == 10);
+});
+
 it('browses movies and TV shows at once, never with people', function () {
     fakeDiscover([1 => [Tmdb::movie(1, ['title' => 'Film'])]]);
 

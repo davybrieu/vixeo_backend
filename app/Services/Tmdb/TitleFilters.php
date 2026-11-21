@@ -3,8 +3,9 @@
 namespace App\Services\Tmdb;
 
 /**
- * Filters of the search page: genre, years, minimum rating and minimum number of voters. TMDb's
- * text search has no such filters: the API applies them itself to the results.
+ * Filters of the search page: genre, years, rating and number of voters, each a range whose ends
+ * are optional (sliders of the apps, developer's request, 21/11/2026). TMDb's text search has no
+ * such filters: the API applies them itself to the results.
  *
  * The rating of a title ([rating], « Note » filter and « Mieux notés » order, developer's request,
  * 21/11/2026): **IMDb's, else TMDb's**, the one the apps show on the cards; its voters ([votes],
@@ -18,18 +19,21 @@ final readonly class TitleFilters
         public ?int $yearTo = null,
         public ?float $minRating = null,
         public ?int $minVotes = null,
+        public ?float $maxRating = null,
+        public ?int $maxVotes = null,
     ) {}
 
     public function isEmpty(): bool
     {
         return $this->genre === null && $this->yearFrom === null && $this->yearTo === null
-            && $this->minRating === null && $this->minVotes === null;
+            && ! $this->hasRatingBounds();
     }
 
-    /** A minimum the API checks itself on each title (rating or voters): it needs IMDb's. */
-    public function hasMinimums(): bool
+    /** A bound the API checks itself on each title (rating or voters): it needs IMDb's. */
+    public function hasRatingBounds(): bool
     {
-        return $this->minRating !== null || $this->minVotes !== null;
+        return $this->minRating !== null || $this->maxRating !== null
+            || $this->minVotes !== null || $this->maxVotes !== null;
     }
 
     /**
@@ -89,19 +93,30 @@ final readonly class TitleFilters
             }
         }
 
-        return $this->reachesMinimums($item);
+        return $this->withinRatingBounds($item);
     }
 
     /**
-     * Whether a title's rating (IMDb's, else TMDb's) and its voters reach the minimums; true
-     * without any.
+     * Whether a title's rating (IMDb's, else TMDb's) and its voters are within the bounds; true
+     * without any, false for an unrated title with one.
      *
      * @param  array<string, mixed>  $item
      */
-    public function reachesMinimums(array $item): bool
+    public function withinRatingBounds(array $item): bool
     {
-        return ($this->minRating === null || (self::rating($item) ?? -1) >= $this->minRating)
-            && ($this->minVotes === null || self::votes($item) >= $this->minVotes);
+        if (! $this->hasRatingBounds()) {
+            return true;
+        }
+        $shown = self::shown($item);
+        if ($shown === null) {
+            return false;
+        }
+        [$rating, $votes] = $shown;
+
+        return ($this->minRating === null || $rating >= $this->minRating)
+            && ($this->maxRating === null || $rating <= $this->maxRating)
+            && ($this->minVotes === null || $votes >= $this->minVotes)
+            && ($this->maxVotes === null || $votes <= $this->maxVotes);
     }
 
     /**

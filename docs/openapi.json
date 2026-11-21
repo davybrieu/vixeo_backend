@@ -1470,7 +1470,25 @@
                         }
                     },
                     {
+                        "name": "max_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
                         "name": "min_votes",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000000
+                        }
+                    },
+                    {
+                        "name": "max_votes",
                         "in": "query",
                         "schema": {
                             "type": "integer",
@@ -1645,7 +1663,25 @@
                         }
                     },
                     {
+                        "name": "max_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
                         "name": "min_votes",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000000
+                        }
+                    },
+                    {
+                        "name": "max_votes",
                         "in": "query",
                         "schema": {
                             "type": "integer",
@@ -1785,7 +1821,25 @@
                         }
                     },
                     {
+                        "name": "max_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
                         "name": "min_votes",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000000
+                        }
+                    },
+                    {
+                        "name": "max_votes",
                         "in": "query",
                         "schema": {
                             "type": "integer",
@@ -1961,7 +2015,25 @@
                         }
                     },
                     {
+                        "name": "max_rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10
+                        }
+                    },
+                    {
                         "name": "min_votes",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000000
+                        }
+                    },
+                    {
+                        "name": "max_votes",
                         "in": "query",
                         "schema": {
                             "type": "integer",

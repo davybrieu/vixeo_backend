@@ -140,7 +140,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
     des helpers statiques).
   - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to`,
-    `min_rating`, `min_votes` ; requêtes : trait `Concerns\FiltersTitles`). **Filtres sans texte** (demande du
+    `min_rating` / `max_rating`, `min_votes` / `max_votes` : des intervalles, bornes facultatives,
+    curseurs à deux poignées des applis ; requêtes : trait `Concerns\FiltersTitles`). **Filtres sans texte** (demande du
     développeur, 21/11/2026, ex. films d'horreur depuis 2010 notés 8 et plus) :
     `GET /catalog/discover` (films et séries, première page chacun, réponse de la recherche sans
     personnes) et `/catalog/discover/{movie|tv}` (paginé ; `DiscoverRequest`, tri par défaut

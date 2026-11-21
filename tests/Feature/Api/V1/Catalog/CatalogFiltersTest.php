@@ -122,9 +122,19 @@ it('filters and sorts by rating: IMDb, else TMDb', function () {
     $this->getJson('/api/v1/catalog/search/movie?query=x&min_votes=1000&min_rating=6')
         ->assertOk()
         ->assertJsonPath('data.*.title', ['IMDb 8']);
+    // Ranges (two-thumb sliders of the apps): both ends included; any bound leaves unrated titles out.
+    $this->getJson('/api/v1/catalog/search/movie?query=x&min_rating=7&max_rating=7.5')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['TMDb 7,5']);
+    $this->getJson('/api/v1/catalog/search/movie?query=x&max_rating=8')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['IMDb 6,5', 'IMDb 8', 'TMDb 7,5']);
+    $this->getJson('/api/v1/catalog/search/movie?query=x&min_votes=3&max_votes=900')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['IMDb 6,5', 'TMDb 7,5']);
     $this->getJson('/api/v1/catalog/search/movie?query=x&min_votes=0')
         ->assertOk()
-        ->assertJsonCount(4, 'data');
+        ->assertJsonPath('data.*.title', ['IMDb 6,5', 'IMDb 8', 'TMDb 7,5']);
 });
 
 it('filters and sorts one type in a single page, but not people', function () {
@@ -155,6 +165,8 @@ it('validates the filters, in French', function (string $query, string $field, s
     ['min_rating=11', 'min_rating', 'Le champ note minimale doit être compris entre 0 et 10.'],
     ['min_votes=-1', 'min_votes', 'Le champ nombre minimal de votants doit être au moins égal à 0.'],
     ['min_votes=beaucoup', 'min_votes', 'Le champ nombre minimal de votants doit être un nombre entier.'],
+    ['min_rating=8&max_rating=6', 'max_rating', 'Le champ note maximale doit être supérieur ou égal à 8.'],
+    ['min_votes=1000&max_votes=10', 'max_votes', 'Le champ nombre maximal de votants doit être supérieur ou égal à 1000.'],
     ['year_from=1500', 'year_from', 'Le champ année de début doit être compris entre 1870 et 2100.'],
 ]);
 
