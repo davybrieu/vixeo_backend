@@ -61,9 +61,6 @@ class AppServiceProvider extends ServiceProvider
         // Public profile pages of the site (www.vixeo.app/@pseudo): no listing by brute force.
         RateLimiter::for('members', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
-        // Ratings of other sites (MDBList, Vixeo's daily quota): a home or a page of cards asks
-        // its ratings in a few requests.
-        RateLimiter::for('ratings', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
 
         // Each new subtitle file uses Vixeo's OpenSubtitles daily quota (cached ones don't).
         RateLimiter::for('subtitles', fn (Request $request) => Limit::perHour(40)->by($request->user()?->id ?: $request->ip()));

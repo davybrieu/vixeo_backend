@@ -182,16 +182,19 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     applis) reste inchangé.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
-- **Notes des autres sites** (doc : `docs/notes.md`, demande du développeur) : IMDb, Rotten
-  Tomatoes, Metacritic, Letterboxd, Trakt, MyAnimeList (et TMDb) depuis **MDBList, clé de Vixeo**
-  (`App\Services\Ratings\MdbListRatings`) ; `GET /catalog/ratings?ids=movie:550,tv:1399` (100 au
-  plus, `throttle:ratings`), chaque note sur l'échelle de son site, `available: false` quand
-  MDBList ne peut pas être interrogé (titres absents, jamais d'erreur). Quota MDBList par compte
-  (gratuit : 1 000 requêtes / jour, toutes clés) : cache partagé 3 jours (inconnu : 1 jour),
-  lots de 200 par type, budget `MDBLIST_DAILY_REQUESTS`, pause 1 h après un 429 / clé refusée,
-  1 min après une panne ; la clé n'est jamais journalisée. Réglage du profil `rating_source`
-  (`RatingSource`, `imdb` par défaut, synchronisé) ; les applis affichent la note du site
-  choisi, sinon celle de TMDb. Pas de note par épisode (ni MDBList, ni affichée par les applis).
+- **Notes IMDb et TMDb** (doc : `docs/notes.md`, demande du développeur, 21/11/2026) : les
+  fiches film / série et chaque épisode d'une saison ont `ratings` = `{imdb: {id, rating, votes}
+  | null, tmdb: {rating, votes}}` (`RatingsResource`). **IMDb vient de ses jeux de données**
+  (https://datasets.imdbws.com, usage personnel et non commercial) importés chaque jour par
+  `php artisan imdb:import` (`App\Services\Imdb\ImdbDatasets` : `title.ratings` → table
+  `imdb_ratings`, `title.episode` → `imdb_episodes`, épisodes notés seulement ; lecture en flux,
+  lots de 2 000, anciennes lignes supprimées après un import complet seulement). Liaison par
+  l'identifiant IMDb (`App\Services\Imdb\ImdbRatings`) : `imdb_id` du film / `external_ids` de
+  la série, sinon les *External IDs* de TMDb ; épisode : série + saison + numéro dans
+  `imdb_episodes`, sinon ses *External IDs* (épisodes diffusés seulement). Sans note IMDb, les
+  applis affichent celle de TMDb. **Plus de MDBList, de `GET /catalog/ratings` ni de réglage
+  `rating_source`** (supprimés le 21/11/2026, demande du développeur ; ne pas les réintroduire).
+  Les listes (accueil, recherche) n'ont que `vote_average` de TMDb : aucune note demandée par carte.
 - **Lecture** (doc : `docs/lecture.md`) : réglages du profil `audio_language`, `subtitle_language`
   (`App\Support\Languages`) et `skip_intro` / `skip_recap` / `skip_credits` / `skip_preview` ;
   recherches récentes synchronisées (`profile_searches`, 20 par profil, une recherche qui en
@@ -341,8 +344,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   logos de la bibliothèque tv-logos).
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
-- Fait aussi : notes des autres sites (MDBList, clé de Vixeo, cache partagé, réglage du profil
-  `rating_source`).
+- Fait aussi : notes IMDb (jeux de données importés chaque jour, `imdb:import`) et TMDb, avec
+  leurs votants, sur les fiches et les épisodes (MDBList et `rating_source` supprimés).
 - Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
   (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
 - Prochaine étape possible : configuration distante (chaînes FAST).

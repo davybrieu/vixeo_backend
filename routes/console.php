@@ -22,6 +22,9 @@ Schedule::command('tv:epg')->everySixHours()->withoutOverlapping(60)->runInBackg
 Schedule::command('vixeo:push-episodes')->everyFifteenMinutes()->withoutOverlapping(30)->runInBackground()
     ->when(fn () => app(Fcm::class)->configured());
 
+// IMDb ratings and episodes (docs/notes.md): IMDb's datasets are updated every day.
+Schedule::command('imdb:import')->dailyAt('05:17')->withoutOverlapping(120)->runInBackground();
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

@@ -76,21 +76,11 @@ return [
     ],
 
     /*
-    | Ratings of other sites (IMDb, Rotten Tomatoes, Letterboxd…): MDBList, with Vixeo's key
-    | (docs/notes.md). Its quota is per MDBList account (free: 1 000 requests a day, all keys
-    | together): titles are asked 200 at a time and kept for every account. No key: no rating.
+    | IMDb ratings (docs/notes.md): the datasets of IMDb (title.ratings, title.episode), imported
+    | every day by `php artisan imdb:import` into imdb_ratings / imdb_episodes.
     */
-    'mdblist' => [
-        'api_key' => env('MDBLIST_API_KEY'),
-        'base_url' => env('MDBLIST_BASE_URL', 'https://api.mdblist.com'),
-        // Requests Vixeo may send a day (UTC), under the plan's quota (a margin for other uses).
-        'daily_requests' => (int) env('MDBLIST_DAILY_REQUESTS', 900),
-        'cache_store' => env('MDBLIST_CACHE_STORE'),
-        // Cache durations in seconds: ratings of a title, title MDBList does not know.
-        'ttl' => [
-            'ratings' => (int) env('MDBLIST_TTL', 259200),
-            'unknown' => 86400,
-        ],
+    'imdb' => [
+        'datasets_url' => env('IMDB_DATASETS_URL', 'https://datasets.imdbws.com'),
     ],
 
     /*

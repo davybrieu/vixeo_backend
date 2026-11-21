@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\RatingSource;
 use App\Models\EpisodeNotification;
 use App\Models\Profile;
 use App\Models\ProfileItem;
@@ -37,7 +36,6 @@ class AccountExport
                 'max_age_rating' => $p->max_age_rating,
                 'allow_unrated' => $p->allow_unrated,
                 'poster_format' => $p->poster_format->value,
-                'rating_source' => ($p->rating_source ?? RatingSource::Imdb)->value,
                 'audio_language' => $p->audio_language,
                 'subtitle_language' => $p->subtitle_language,
                 'no_spoiler' => $p->no_spoiler,

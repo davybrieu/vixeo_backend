@@ -24,6 +24,9 @@ class EpisodeResource extends JsonResource
             /** Duration in minutes. */
             'runtime' => F::int($r, 'runtime'),
             'vote_average' => F::float($r, 'vote_average'),
+            'vote_count' => (int) ($r['vote_count'] ?? 0),
+            /** IMDb's and TMDb's ratings with their votes (docs/notes.md): the apps show IMDb's, else TMDb's. */
+            'ratings' => new RatingsResource($r),
             'still_path' => $still,
             /** Episode image, w300. */
             'still_url' => F::image($still, 'w300'),

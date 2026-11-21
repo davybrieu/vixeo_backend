@@ -13,6 +13,7 @@ use App\Http\Resources\V1\Catalog\MovieResource;
 use App\Http\Resources\V1\Catalog\PersonResource;
 use App\Http\Resources\V1\Catalog\SeasonResource;
 use App\Http\Resources\V1\Catalog\ShowResource;
+use App\Services\Imdb\ImdbRatings;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
@@ -29,6 +30,7 @@ class CatalogTitleController extends Controller
         private TmdbCatalog $catalog,
         private AgeGate $ageGate,
         private TitleSummaries $summaries,
+        private ImdbRatings $imdb,
     ) {}
 
     /**
@@ -40,7 +42,7 @@ class CatalogTitleController extends Controller
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function movie(Request $request, int $id): MovieResource
     {
-        return new MovieResource($this->restricted($request, $this->catalog->movie($id)));
+        return new MovieResource($this->imdb->attach(MediaType::Movie, $id, $this->restricted($request, $this->catalog->movie($id))));
     }
 
     /**
@@ -52,7 +54,7 @@ class CatalogTitleController extends Controller
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function show(Request $request, int $id): ShowResource
     {
-        return new ShowResource($this->restricted($request, $this->catalog->show($id)));
+        return new ShowResource($this->imdb->attach(MediaType::Tv, $id, $this->restricted($request, $this->catalog->show($id))));
     }
 
     /**
@@ -107,7 +109,11 @@ class CatalogTitleController extends Controller
     {
         $this->ageGate->authorizeShow(ResolveProfile::profile($request), $id);
 
-        return new SeasonResource($this->catalog->season($id, $season));
+        $data = $this->catalog->season($id, $season);
+        // Each episode's IMDb rating (docs/notes.md).
+        $data['episodes'] = $this->imdb->attachToEpisodes($id, $season, array_values((array) ($data['episodes'] ?? [])));
+
+        return new SeasonResource($data);
     }
 
     /**

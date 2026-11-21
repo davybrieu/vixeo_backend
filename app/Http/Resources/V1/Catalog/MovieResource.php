@@ -44,6 +44,8 @@ class MovieResource extends JsonResource
             'genres' => GenreResource::collection(F::array($r, 'genres')),
             'vote_average' => F::float($r, 'vote_average'),
             'vote_count' => (int) ($r['vote_count'] ?? 0),
+            /** IMDb's and TMDb's ratings with their votes (docs/notes.md): the apps show IMDb's, else TMDb's. */
+            'ratings' => new RatingsResource($r),
             /** Raw certification, French if available, else American ("12", "PG-13"). */
             'certification' => $certification,
             /** Minimum age derived from the certification (0 = all audiences). Null if unknown. */

@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\V1;
 
-use App\Enums\RatingSource;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,8 +19,6 @@ class ProfileResource extends JsonResource
             /** Avatar id (GET /avatars), null = initial letter. */
             'avatar' => $this->avatar,
             'poster_format' => $this->poster_format,
-            /** Site whose rating titles show (GET /catalog/ratings); `tmdb` = `vote_average`. */
-            'rating_source' => $this->rating_source ?? RatingSource::Imdb,
             'is_kid' => $this->is_kid,
             'max_age_rating' => $this->max_age_rating,
             /** Age limit actually applied (kid profile without `max_age_rating`: 10). Null = no limit. */

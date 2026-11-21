@@ -2,7 +2,6 @@
 
 use App\Models\Profile;
 use App\Models\User;
-use App\Services\AccountExport;
 use App\Services\AvatarCatalog;
 use Laravel\Sanctum\Sanctum;
 
@@ -88,23 +87,10 @@ it('stores the poster format, portrait by default', function () {
         ->assertJsonPath('errors.poster_format.0', "La valeur sélectionnée pour format des affiches n'est pas valide.");
 });
 
-it('stores the source of the ratings, IMDb by default, and exports it', function () {
-    $this->getJson("/api/v1/profiles/{$this->profile->id}")->assertJsonPath('data.rating_source', 'imdb');
-
-    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['rating_source' => 'tomatoes'])
-        ->assertOk()
-        ->assertJsonPath('data.rating_source', 'tomatoes');
-    expect(app(AccountExport::class)->build($this->user->fresh())['profiles'][0]['rating_source'])->toBe('tomatoes');
-
-    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['rating_source' => 'allocine'])
-        ->assertUnprocessable()
-        ->assertJsonPath('errors.rating_source.0', "La valeur sélectionnée pour source des notes n'est pas valide.");
-});
-
 it('does not need the parental PIN to change avatar or poster format', function () {
     $this->putJson('/api/v1/parental-control/pin', ['pin' => '9999'])->assertNoContent();
 
-    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['avatar' => 'arcade-cat', 'poster_format' => 'landscape', 'rating_source' => 'letterboxd'])
+    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['avatar' => 'arcade-cat', 'poster_format' => 'landscape'])
         ->assertOk();
 });
 

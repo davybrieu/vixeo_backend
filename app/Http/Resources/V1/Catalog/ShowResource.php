@@ -48,11 +48,13 @@ class ShowResource extends JsonResource
             'genres' => GenreResource::collection(F::array($r, 'genres')),
             'vote_average' => F::float($r, 'vote_average'),
             'vote_count' => (int) ($r['vote_count'] ?? 0),
+            /** IMDb's and TMDb's ratings with their votes (docs/notes.md): the apps show IMDb's, else TMDb's. */
+            'ratings' => new RatingsResource($r),
             /** Raw certification, French if available, else American ("12", "TV-MA"). */
             'certification' => $certification,
             /** Minimum age derived from the certification (0 = all audiences). Null if unknown. */
             'age_rating' => F::ageRating($certification),
-            'imdb_id' => F::string($externalIds, 'imdb_id'),
+            'imdb_id' => F::string($r, 'imdb_id') ?? F::string($externalIds, 'imdb_id'),
             'tvdb_id' => F::int($externalIds, 'tvdb_id'),
             'poster_path' => $poster,
             'poster_url' => F::image($poster, 'w500'),
