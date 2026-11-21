@@ -21,7 +21,7 @@ trait FiltersTitles
             'year_to' => array_values(array_filter([
                 'sometimes', 'integer', 'between:1870,2100', $this->has('year_from') ? 'gte:year_from' : null,
             ])),
-            /** Minimum rating out of 10: TMDb's, else IMDb's (docs/notes.md). Unrated titles are left out. */
+            /** Minimum rating out of 10: IMDb's, else TMDb's (docs/notes.md). Unrated titles are left out. */
             'min_rating' => ['sometimes', 'numeric', 'between:0,10'],
         ];
     }

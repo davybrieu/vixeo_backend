@@ -6935,7 +6935,7 @@
             },
             "SearchSort": {
                 "type": "string",
-                "description": "Order of text search results (TMDb only gives them by relevance: the API sorts them).\n| |\n|---|\n| `relevance` <br/> TMDb order for the typed text. |\n| `popularity` <br/>  |\n| `rating` <br/> Best rated first: TMDb's rating, else IMDb's (TitleFilters::rating); unrated titles last. |\n| `recent` <br/>  |\n| `oldest` <br/>  |",
+                "description": "Order of text search results (TMDb only gives them by relevance: the API sorts them).\n| |\n|---|\n| `relevance` <br/> TMDb order for the typed text. |\n| `popularity` <br/>  |\n| `rating` <br/> Best rated first: IMDb's rating, else TMDb's (TitleFilters::rating); unrated titles last. |\n| `recent` <br/>  |\n| `oldest` <br/>  |",
                 "enum": [
                     "relevance",
                     "popularity",
