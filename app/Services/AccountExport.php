@@ -51,6 +51,8 @@ class AccountExport
                 'tmdb_ratings' => $p->tmdbRatings->sortByDesc('rated_at')->map(fn (TmdbRating $r) => [
                     'title' => $r->title,
                     'type' => $r->type->value,
+                    'season_number' => $r->season_number,
+                    'episode_number' => $r->episode_number,
                     'value' => $r->value,
                     'comment' => $r->comment,
                     'rated_at' => $r->rated_at?->toIso8601String(),

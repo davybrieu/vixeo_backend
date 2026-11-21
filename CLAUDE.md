@@ -207,8 +207,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   servis en WebVTT depuis notre cache (quota quotidien d'OpenSubtitles). Les applis ne parlent
   jamais à ces services.
 - **Avis du profil** (doc : `docs/avis.md`) : note (0,5 à 10) et commentaire facultatif par
-  profil, **films et séries seulement** (plus de notes d'épisodes : routes, filtre `episode`,
-  colonnes et avis supprimés le 20/11/2026, demande du développeur ; ne pas les réintroduire)
+  profil, sur un film, une série ou **un épisode** (avis d'épisodes supprimés le 20/11/2026 puis
+  **rétablis le 21/11/2026**, demande du développeur : `PUT / DELETE
+  …/ratings/tv/{id}/season/{s}/episode/{e}`, `GET …/ratings/tv/{id}/season/{s}`, filtre
+  `type=episode`, migration `restore_episode_reviews`)
   (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Plus de
   liaison d'un compte TMDb ni de synchronisation des notes** (supprimées, demande du développeur,
   20/11/2026 : table `tmdb_links` et colonne `account_id` supprimées ; ne pas les réintroduire).
@@ -342,8 +344,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   temporaire d'un titre avec le PIN parental.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
-- Fait aussi : avis par profil (notes des films et séries, commentaires), gardés par Vixeo
-  (plus de compte TMDb lié, plus de notes d'épisodes).
+- Fait aussi : avis par profil (notes des films, séries et épisodes, commentaires), gardés par
+  Vixeo (plus de compte TMDb lié).
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos).
 - Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »

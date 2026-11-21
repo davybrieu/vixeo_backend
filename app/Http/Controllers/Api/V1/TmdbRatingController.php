@@ -19,8 +19,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * The profile's reviews: a rating and an optional comment per movie or TV show (docs/avis.md;
- * episodes are not rated). Kept by Vixeo only.
+ * The profile's reviews: a rating and an optional comment per movie, TV show or episode
+ * (docs/avis.md). Kept by Vixeo only.
  *
  * @tags Avis
  */
@@ -44,6 +44,7 @@ class TmdbRatingController extends Controller
             ->sort(self::order($request->sort()))
             ->values();
 
+        // The age limit of the TV show applies to its episodes.
         $allowed = collect($this->ageGate->filter($profile, $rows->map(fn (TmdbRating $r) => [
             'media_type' => $r->type === RatedType::Movie ? 'movie' : 'tv',
             'id' => $r->tmdb_id,
@@ -81,6 +82,26 @@ class TmdbRatingController extends Controller
     }
 
     /**
+     * My ratings of a season's episodes.
+     *
+     * Only the rated episodes, with their comments.
+     */
+    public function season(Profile $profile, int $id, int $season): JsonResponse
+    {
+        Gate::authorize('view', $profile);
+        $rows = $this->ratings->season($profile, $id, $season)->sortKeys();
+
+        return response()->json([
+            'data' => $rows->values()->map(fn (TmdbRating $row) => [
+                'episode_number' => (int) $row->episode_number,
+                /** 0.5 to 10. */
+                'value' => (float) $row->value,
+                'comment' => $row->comment === null ? null : (string) $row->comment,
+            ])->all(),
+        ]);
+    }
+
+    /**
      * Rate a movie or TV show.
      *
      * Creates or updates the review.
@@ -98,6 +119,26 @@ class TmdbRatingController extends Controller
     public function unrate(Profile $profile, MediaType $type, int $id): Response
     {
         return $this->remove($profile, RatingTarget::title($type, $id));
+    }
+
+    /**
+     * Rate an episode.
+     *
+     * Creates or updates the review.
+     */
+    public function rateEpisode(RateRequest $request, Profile $profile, int $id, int $season, int $episode): JsonResponse
+    {
+        return $this->save($request, $profile, RatingTarget::episode($id, $season, $episode));
+    }
+
+    /**
+     * Remove an episode rating.
+     *
+     * Its comment is removed too.
+     */
+    public function unrateEpisode(Profile $profile, int $id, int $season, int $episode): Response
+    {
+        return $this->remove($profile, RatingTarget::episode($id, $season, $episode));
     }
 
     private function save(RateRequest $request, Profile $profile, RatingTarget $target): JsonResponse

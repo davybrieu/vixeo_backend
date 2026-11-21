@@ -176,6 +176,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
         // The profile's reviews (docs/avis.md), under their historical address.
         Route::prefix('profiles/{profile}/tmdb')->name('profiles.tmdb.')->middleware('throttle:reviews')->group(function () {
             Route::get('ratings', [TmdbRatingController::class, 'index'])->name('ratings.index');
+            Route::get('ratings/tv/{id}/season/{season}', [TmdbRatingController::class, 'season'])
+                ->whereNumber(['id', 'season'])->name('ratings.season');
+            Route::put('ratings/tv/{id}/season/{season}/episode/{episode}', [TmdbRatingController::class, 'rateEpisode'])
+                ->whereNumber(['id', 'season', 'episode'])->name('ratings.episode.rate');
+            Route::delete('ratings/tv/{id}/season/{season}/episode/{episode}', [TmdbRatingController::class, 'unrateEpisode'])
+                ->whereNumber(['id', 'season', 'episode'])->name('ratings.episode.unrate');
             Route::get('ratings/{type}/{id}', [TmdbRatingController::class, 'show'])
                 ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('ratings.show');
             Route::put('ratings/{type}/{id}', [TmdbRatingController::class, 'rate'])

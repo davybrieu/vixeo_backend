@@ -18,16 +18,21 @@ it('lists a member\'s reviews with the fields of « Mes avis », images included
         'date' => '1999-10-15', 'poster_path' => '/fc.jpg', 'rated_at' => now()->subDay(),
     ]);
     TmdbRating::forceCreate([
-        'profile_id' => $this->member->id, 'target' => 'tv/1399', 'type' => 'tv', 'tmdb_id' => 1399,
-        'value' => 7, 'title' => 'Game of Thrones', 'date' => '2011-04-17', 'rated_at' => now(),
+        'profile_id' => $this->member->id, 'target' => 'tv/1399/season/1/episode/2',
+        'type' => 'episode', 'tmdb_id' => 1399, 'season_number' => 1, 'episode_number' => 2, 'value' => 7,
+        'title' => 'Game of Thrones', 'episode_name' => 'La route royale', 'still_path' => '/ep.jpg',
+        'rated_at' => now(),
     ]);
 
     $this->getJson('/api/v1/social/profiles/lea/reviews')
         ->assertOk()
         // The most recent first.
-        ->assertJsonPath('data.0.type', 'tv')
+        ->assertJsonPath('data.0.type', 'episode')
         ->assertJsonPath('data.0.id', 1399)
-        ->assertJsonPath('data.0.title', 'Game of Thrones')
+        ->assertJsonPath('data.0.season_number', 1)
+        ->assertJsonPath('data.0.episode_number', 2)
+        ->assertJsonPath('data.0.episode_name', 'La route royale')
+        ->assertJsonPath('data.0.still_url', 'https://image.tmdb.org/t/p/w300/ep.jpg')
         ->assertJsonPath('data.1.title', 'Fight Club')
         ->assertJsonPath('data.1.year', 1999)
         ->assertJsonPath('data.1.value', 8.5)

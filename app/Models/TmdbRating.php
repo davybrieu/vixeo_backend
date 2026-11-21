@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * its comment, kept by Vixeo only. The other columns copy what « Mes avis » shows of the title.
  */
 #[Fillable([
-    'target', 'type', 'tmdb_id', 'value', 'comment',
-    'title', 'date', 'poster_path', 'backdrop_path', 'vote_average', 'rated_at',
+    'target', 'type', 'tmdb_id', 'season_number', 'episode_number', 'value', 'comment',
+    'title', 'episode_name', 'date', 'poster_path', 'backdrop_path', 'still_path', 'vote_average', 'rated_at',
 ])]
 class TmdbRating extends Model
 {
@@ -25,6 +25,8 @@ class TmdbRating extends Model
         return [
             'type' => RatedType::class,
             'tmdb_id' => 'integer',
+            'season_number' => 'integer',
+            'episode_number' => 'integer',
             'value' => 'float',
             'vote_average' => 'float',
             'rated_at' => 'datetime',

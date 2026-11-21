@@ -685,7 +685,7 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Movies or TV shows; both when left out.",
+                        "description": "Movies, TV shows or episodes; every type when left out.",
                         "schema": {
                             "$ref": "#/components/schemas/RatedType"
                         }
@@ -771,6 +771,251 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}": {
+            "get": {
+                "operationId": "v1.profiles.tmdb.ratings.season",
+                "description": "Only the rated episodes, with their comments.",
+                "summary": "My ratings of a season's episodes",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "episode_number": {
+                                                        "type": "integer"
+                                                    },
+                                                    "value": {
+                                                        "type": "number",
+                                                        "description": "0.5 to 10."
+                                                    },
+                                                    "comment": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "episode_number",
+                                                    "value",
+                                                    "comment"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/tmdb/ratings/tv/{id}/season/{season}/episode/{episode}": {
+            "put": {
+                "operationId": "v1.profiles.tmdb.ratings.episode.rate",
+                "description": "Creates or updates the review.",
+                "summary": "Rate an episode",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "number"
+                                                },
+                                                "comment": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "value",
+                                                "comment"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.tmdb.ratings.episode.unrate",
+                "description": "Its comment is removed too.",
+                "summary": "Remove an episode rating",
+                "tags": [
+                    "Avis",
+                    "TmdbRating"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "episode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -3704,7 +3949,7 @@
         "/v1/social/profiles/{username}/reviews": {
             "get": {
                 "operationId": "v1.social.profiles.reviews",
-                "summary": "A member's reviews, the most recently rated first: the fields of \u00ab Mes avis \u00bb\n(`RatedItemResource` : images, year\u2026), plus `poster_path` for older apps",
+                "summary": "A member's reviews, the most recently rated first: the fields of \u00ab Mes avis \u00bb\n(`RatedItemResource` : images, episode, year\u2026), plus `poster_path` for older apps",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -3736,7 +3981,7 @@
                                                     },
                                                     "id": {
                                                         "type": "integer",
-                                                        "description": "TMDb id of the movie or TV show (the page to open)."
+                                                        "description": "TMDb id of the movie or TV show (the page to open), also for an episode."
                                                     },
                                                     "title": {
                                                         "type": "string",
@@ -3747,11 +3992,29 @@
                                                             "string",
                                                             "null"
                                                         ],
-                                                        "description": "Release or first air date, YYYY-MM-DD."
+                                                        "description": "Release, first air or episode air date, YYYY-MM-DD."
                                                     },
                                                     "year": {
                                                         "type": [
                                                             "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "season_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "episode_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "episode_name": {
+                                                        "type": [
+                                                            "string",
                                                             "null"
                                                         ]
                                                     },
@@ -3768,6 +4031,13 @@
                                                             "null"
                                                         ],
                                                         "description": "Backdrop, w1280."
+                                                    },
+                                                    "still_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Episode image, w300."
                                                     },
                                                     "value": {
                                                         "type": "number",
@@ -3801,8 +4071,12 @@
                                                     "title",
                                                     "date",
                                                     "year",
+                                                    "season_number",
+                                                    "episode_number",
+                                                    "episode_name",
                                                     "poster_url",
                                                     "backdrop_url",
+                                                    "still_url",
                                                     "value",
                                                     "comment",
                                                     "rated_at",
@@ -6373,7 +6647,7 @@
                     },
                     "id": {
                         "type": "integer",
-                        "description": "TMDb id of the movie or TV show (the page to open)."
+                        "description": "TMDb id of the movie or TV show (the page to open), also for an episode."
                     },
                     "title": {
                         "type": "string",
@@ -6384,11 +6658,29 @@
                             "string",
                             "null"
                         ],
-                        "description": "Release or first air date, YYYY-MM-DD."
+                        "description": "Release, first air or episode air date, YYYY-MM-DD."
                     },
                     "year": {
                         "type": [
                             "integer",
+                            "null"
+                        ]
+                    },
+                    "season_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "episode_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "episode_name": {
+                        "type": [
+                            "string",
                             "null"
                         ]
                     },
@@ -6405,6 +6697,13 @@
                             "null"
                         ],
                         "description": "Backdrop, w1280."
+                    },
+                    "still_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Episode image, w300."
                     },
                     "value": {
                         "type": "number",
@@ -6432,8 +6731,12 @@
                     "title",
                     "date",
                     "year",
+                    "season_number",
+                    "episode_number",
+                    "episode_name",
                     "poster_url",
                     "backdrop_url",
+                    "still_url",
                     "value",
                     "comment",
                     "rated_at",
@@ -6454,10 +6757,11 @@
             },
             "RatedType": {
                 "type": "string",
-                "description": "What a profile reviews (docs/avis.md): movies and TV shows, never episodes.\n",
+                "description": "What a profile reviews (docs/avis.md).\n",
                 "enum": [
                     "movie",
-                    "tv"
+                    "tv",
+                    "episode"
                 ],
                 "title": "RatedType"
             },

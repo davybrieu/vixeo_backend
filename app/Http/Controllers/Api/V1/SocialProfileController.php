@@ -81,7 +81,7 @@ class SocialProfileController extends Controller
 
     /**
      * A member's reviews, the most recently rated first: the fields of « Mes avis »
-     * (`RatedItemResource` : images, year…), plus `poster_path` for older apps.
+     * (`RatedItemResource` : images, episode, year…), plus `poster_path` for older apps.
      */
     public function reviews(Request $request, string $username): JsonResponse
     {

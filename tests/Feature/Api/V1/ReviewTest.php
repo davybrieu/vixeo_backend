@@ -7,7 +7,6 @@ use App\Services\AccountExport;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
@@ -23,6 +22,7 @@ function fakeTitles(?object $state = null): void
         TMDB.'movie/551?*' => $answer(fn () => Http::response(['id' => 551, 'title' => 'Dune'] + Tmdb::movieDetails())),
         TMDB.'movie/552?*' => $answer(fn () => Http::response(['id' => 552, 'title' => 'Alien'] + Tmdb::movieDetails())),
         TMDB.'tv/1399?*' => $answer(fn () => Http::response(Tmdb::showDetails())),
+        TMDB.'tv/1399/season/1/episode/*' => $answer(fn () => Http::response(['id' => 63057, 'name' => 'La route royale', 'air_date' => '2011-04-24', 'still_path' => '/e2.jpg', 'vote_average' => 8.1])),
         TMDB.'movie/*/release_dates*' => $answer(fn () => Http::response(['results' => []])),
         TMDB.'tv/*/content_ratings*' => $answer(fn () => Http::response(['results' => []])),
     ]);
@@ -49,16 +49,18 @@ beforeEach(function () {
     $this->url = "/api/v1/profiles/{$this->profile->id}/tmdb";
 });
 
-it('rates, updates and removes the review of a movie and a TV show, in Vixeo only', function () {
+it('rates, updates and removes the review of a movie, a TV show and an episode, in Vixeo only', function () {
     fakeTitles();
 
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 8.5])->assertOk()->assertJsonPath('data.value', 8.5);
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 6])->assertOk()->assertJsonPath('data.value', 6);
     $this->putJson("{$this->url}/ratings/tv/1399", ['value' => 10])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/2", ['value' => 7.5])->assertOk();
     expect($this->profile->tmdbRatings()->orderBy('target')->pluck('value', 'target')->all())
-        ->toBe(['movie/550' => 6.0, 'tv/1399' => 10.0]);
+        ->toBe(['movie/550' => 6.0, 'tv/1399' => 10.0, 'tv/1399/season/1/episode/2' => 7.5]);
 
     $this->deleteJson("{$this->url}/ratings/movie/550")->assertNoContent();
+    $this->deleteJson("{$this->url}/ratings/tv/1399/season/1/episode/2")->assertNoContent();
     expect($this->profile->tmdbRatings()->pluck('target')->all())->toBe(['tv/1399']);
 
     // Nothing is sent to a TMDb account: only title pages are read.
@@ -78,28 +80,20 @@ it('removing a review that does not exist changes nothing', function () {
     Http::assertNothingSent();
 });
 
-it('reads my rating of a title', function () {
+it('reads my rating of a title and of the episodes of a season', function () {
     fakeTitles();
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 8, 'comment' => 'Revu.'])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/3", ['value' => 9.5])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/1", ['value' => 7])->assertOk();
 
     $this->getJson("{$this->url}/ratings/movie/550")->assertOk()
         ->assertJsonPath('data.value', 8)
         ->assertJsonPath('data.comment', 'Revu.');
     $this->getJson("{$this->url}/ratings/tv/1399")->assertOk()->assertJsonPath('data.value', null);
-});
-
-it('rates no episode any more: no route, no filter, no field', function () {
-    fakeTitles();
-
-    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/2", ['value' => 7.5])->assertNotFound();
-    $this->deleteJson("{$this->url}/ratings/tv/1399/season/1/episode/2")->assertNotFound();
-    $this->getJson("{$this->url}/ratings/tv/1399/season/1")->assertNotFound();
-    $this->getJson("{$this->url}/ratings?type=episode")->assertUnprocessable()->assertJsonValidationErrors('type');
-
-    $this->putJson("{$this->url}/ratings/tv/1399", ['value' => 9])->assertOk();
-    expect($this->getJson("{$this->url}/ratings")->assertOk()->json('data.0'))
-        ->not->toHaveKeys(['season_number', 'episode_number', 'episode_name', 'still_url']);
-    expect(Schema::hasColumns('tmdb_ratings', ['season_number', 'episode_number', 'episode_name', 'still_path']))->toBeFalse();
+    $this->getJson("{$this->url}/ratings/tv/1399/season/1")->assertOk()->assertExactJson(['data' => [
+        ['episode_number' => 1, 'value' => 7, 'comment' => null],
+        ['episode_number' => 3, 'value' => 9.5, 'comment' => null],
+    ]]);
 });
 
 it('keeps an optional comment with the rating', function () {
@@ -114,9 +108,11 @@ it('keeps an optional comment with the rating', function () {
     $this->getJson("{$this->url}/ratings/movie/550")->assertOk()->assertJsonPath('data.comment', 'Une claque.');
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 9, 'comment' => ''])->assertOk()->assertJsonPath('data.comment', null);
 
-    // Removed: its comment goes with it.
-    $this->deleteJson("{$this->url}/ratings/movie/550")->assertNoContent();
-    expect(TmdbRating::where('target', 'movie/550')->exists())->toBeFalse();
+    // An episode, then removed: its comment goes with it.
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/2", ['value' => 7.5, 'comment' => 'Le meilleur.'])->assertOk();
+    expect(TmdbRating::where('target', 'tv/1399/season/1/episode/2')->value('episode_name'))->toBe('La route royale');
+    $this->deleteJson("{$this->url}/ratings/tv/1399/season/1/episode/2")->assertNoContent();
+    expect(TmdbRating::where('target', 'tv/1399/season/1/episode/2')->exists())->toBeFalse();
 
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 9, 'comment' => str_repeat('a', 2001)])->assertUnprocessable()
         ->assertJsonPath('errors.comment.0', 'Le champ commentaire ne doit pas contenir plus de 2000 caractères.');
@@ -149,6 +145,21 @@ it('lists every review with its comment, the most recently rated first, by page'
         ->assertJsonPath('data.*.title', ['Dune'])
         ->assertJsonPath('meta.total_pages', 2);
     $this->getJson("{$this->url}/ratings?type=person")->assertUnprocessable();
+});
+
+it('lists the reviews of episodes with their show', function () {
+    fakeTitles();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/2", ['value' => 9])->assertOk();
+
+    $this->getJson("{$this->url}/ratings?type=episode")->assertOk()
+        ->assertJsonPath('data.0.type', 'episode')
+        ->assertJsonPath('data.0.id', 1399)
+        ->assertJsonPath('data.0.title', 'Game of Thrones')
+        ->assertJsonPath('data.0.episode_name', 'La route royale')
+        ->assertJsonPath('data.0.season_number', 1)
+        ->assertJsonPath('data.0.episode_number', 2)
+        ->assertJsonPath('data.0.still_url', 'https://image.tmdb.org/t/p/w300/e2.jpg')
+        ->assertJsonPath('data.0.value', 9);
 });
 
 it('sorts my reviews by date or by rating, equal ratings the most recent first', function () {
