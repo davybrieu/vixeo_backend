@@ -138,9 +138,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     (`(int)`, `(string)`, helpers typés) pour que Scramble produise un schéma typé ; pour une liste
     ou un objet, annoter la clé avec `/** @var list<string> */` (Scramble ignore les types de retour
     des helpers statiques).
-  - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to` ;
-    requêtes : trait `Concerns\FiltersTitles` ; plus de `min_rating` ni de tri `rating`, ni
-    d'« Explorer » `/discover`, 21/11/2026 : l'appli ne cherche qu'avec un texte). La recherche par
+  - Filtres et tri de la page Recherche (`TitleFilters` : `genre`, `year_from` / `year_to`,
+    `min_rating` ; requêtes : trait `Concerns\FiltersTitles` ; plus d'« Explorer » `/discover`,
+    21/11/2026 : l'appli ne cherche qu'avec un texte). **Note minimale et tri `rating`** (rétablis
+    le 21/11/2026, demande du développeur) : **la note de TMDb d'abord**, celle d'IMDb quand TMDb a
+    moins de 20 votes (`TitleFilters::rating`, `MIN_TMDB_VOTES`), sinon TMDb même avec peu de votes ;
+    au tri, les notes de peu de votes passent après les autres, les titres sans note à la fin
+    (`ratingOrder`). Les résultats reçoivent leur `summary` (et `imdb_rating`) avant ce filtre. La recherche par
     texte de TMDb n'a ni filtres ni tri : avec un filtre ou un tri autre que `relevance`
     (`SearchSort`), l'API lit les `SEARCH_DEPTH` (3) premières pages, filtre, trie et renvoie une
     seule page. Une recherche filtrée ne renvoie pas de personnes.

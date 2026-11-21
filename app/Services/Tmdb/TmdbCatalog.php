@@ -34,7 +34,7 @@ class TmdbCatalog
     /** Pages of results a filtered or sorted text search reads (20 results each). */
     public const SEARCH_DEPTH = 3;
 
-    public function __construct(private TmdbClient $tmdb) {}
+    public function __construct(private TmdbClient $tmdb, private TitleSummaries $summaries) {}
 
     /**
      * Featured carousel + themed rows. Movies and TV shows mixed when $type is null.
@@ -291,7 +291,9 @@ class TmdbCatalog
 
     /**
      * Movies or TV shows matching a text, filtered and sorted by the API: TMDb's search has
-     * neither. Reads the first SEARCH_DEPTH pages (the most relevant results), in one page.
+     * neither. Reads the first SEARCH_DEPTH pages (the most relevant results), in one page. The
+     * rating (minimum, « Mieux notés ») needs IMDb's when TMDb's has too few votes: the titles get
+     * their summary first (TitleSummaries, cached; the apps show it anyway).
      *
      * @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>}
      */
@@ -304,15 +306,19 @@ class TmdbCatalog
         }
 
         $seen = [];
-        $results = array_values(array_filter($results, function (array $item) use ($filters, &$seen) {
+        $results = array_values(array_filter($results, function (array $item) use (&$seen) {
             $key = (int) $item['id'];
             if (isset($seen[$key])) {
                 return false;
             }
             $seen[$key] = true;
 
-            return $filters->matches($item);
+            return true;
         }));
+        if ($filters->minRating !== null || $sort === SearchSort::Rating) {
+            $results = $this->summaries->add($results);
+        }
+        $results = array_values(array_filter($results, $filters->matches(...)));
 
         $results = self::sort($results, $sort);
 
@@ -329,6 +335,8 @@ class TmdbCatalog
         match ($sort) {
             SearchSort::Relevance => null,
             SearchSort::Popularity => usort($items, fn ($a, $b) => (float) ($b['popularity'] ?? 0) <=> (float) ($a['popularity'] ?? 0)),
+            // TMDb's rating, else IMDb's; ratings of a few TMDb votes, then unrated titles last.
+            SearchSort::Rating => usort($items, fn ($a, $b) => TitleFilters::ratingOrder($b) <=> TitleFilters::ratingOrder($a)),
             // Titles without a date come last.
             SearchSort::Recent => usort($items, fn ($a, $b) => [TitleFilters::date($a) === null, TitleFilters::date($b) ?? '']
                 <=> [TitleFilters::date($b) === null, TitleFilters::date($a) ?? '']),

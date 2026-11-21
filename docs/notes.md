@@ -34,6 +34,22 @@ réglage du profil « Source des notes » (`rating_source`), supprimés le 21/11
   en **une requête** par réponse. Ailleurs (« Voir tout », filmographie…) `ratings` est `null` :
   les applis montrent `vote_average` (TMDb). Aucune requête de note par carte.
 
+## Recherche : note minimale et « Mieux notés »
+
+`GET /catalog/search` et `/catalog/search/{movie|tv}` acceptent `min_rating` (0 à 10) et
+`sort=rating` (rétablis le 21/11/2026, demande du développeur). La note utilisée
+(`App\Services\Tmdb\TitleFilters::rating`) est **celle de TMDb en priorité** :
+
+1. TMDb, si elle a au moins 20 votes (`MIN_TMDB_VOTES`) ;
+2. sinon IMDb (les résultats reçoivent leur `summary` et leur note IMDb avant le filtre, comme
+   ceux qu'affichent les applis : même cache) ;
+3. sinon TMDb avec moins de votes ; sinon aucune note.
+
+`min_rating` écarte les titres sous le seuil et ceux sans note. `sort=rating` classe d'abord les
+titres dont la note a assez de votes (cas 1 et 2), puis ceux du cas 3, puis ceux sans note ; à
+note égale, l'ordre de TMDb (pertinence). Comme les autres filtres, ils portent sur les 60
+premiers résultats du texte, et une recherche avec `min_rating` ne renvoie pas de personnes.
+
 ## Liaison avec IMDb (`App\Services\Imdb\ImdbRatings`)
 
 La clé est l'**identifiant IMDb** (`tt…`) :

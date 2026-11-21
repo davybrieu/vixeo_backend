@@ -2,7 +2,9 @@
 
 use App\Models\User;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
@@ -75,10 +77,48 @@ it('sorts text search results', function (string $sort, array $titles) {
 })->with([
     'relevance' => ['relevance', ['A', 'B', 'C', 'D']],
     'popularity' => ['popularity', ['B', 'D', 'C', 'A']],
+    // A has the best rating, but only 12 TMDb votes and no IMDb rating: after the others.
+    'rating' => ['rating', ['D', 'C', 'B', 'A']],
     // No date: last.
     'recent' => ['recent', ['B', 'A', 'D', 'C']],
     'oldest' => ['oldest', ['D', 'A', 'B', 'C']],
 ]);
+
+it('filters and sorts by rating: TMDb first, IMDb when TMDb has too few votes', function () {
+    DB::table('imdb_ratings')->insert([
+        ['tconst' => 'tt0000002', 'rating' => 8.0, 'votes' => 5000, 'import_id' => 1],
+        ['tconst' => 'tt0000003', 'rating' => 6.5, 'votes' => 900, 'import_id' => 1],
+    ]);
+    fakeMovieSearch([1 => [
+        // TMDb with enough votes: TMDb's 7.5 counts, not IMDb's.
+        Tmdb::movie(1, ['title' => 'TMDb 7,5', 'vote_average' => 7.5, 'vote_count' => 100]),
+        // TMDb 6 with enough votes: IMDb's 8 is not used.
+        Tmdb::movie(2, ['title' => 'TMDb 6', 'vote_average' => 6.0, 'vote_count' => 100]),
+        // 3 TMDb votes: IMDb's 6.5 instead of TMDb's 9.
+        Tmdb::movie(3, ['title' => 'IMDb 6,5', 'vote_average' => 9.0, 'vote_count' => 3]),
+        // 3 TMDb votes and no IMDb rating: TMDb's 8.
+        Tmdb::movie(4, ['title' => 'TMDb 8 peu de votes', 'vote_average' => 8.0, 'vote_count' => 3]),
+        Tmdb::movie(5, ['title' => 'Sans note', 'vote_average' => 0, 'vote_count' => 0]),
+    ]]);
+    Http::fake(['api.themoviedb.org/3/movie/*' => fn (Request $request) => Http::response([
+        'id' => $id = (int) Str::between($request->url(), 'movie/', '?'),
+        'imdb_id' => sprintf('tt%07d', $id),
+    ])]);
+
+    $this->getJson('/api/v1/catalog/search/movie?query=x&sort=rating')
+        ->assertOk()
+        // A rating of a few TMDb votes after those with enough votes, whatever its value.
+        ->assertJsonPath('data.*.title', ['TMDb 7,5', 'IMDb 6,5', 'TMDb 6', 'TMDb 8 peu de votes', 'Sans note']);
+
+    $this->getJson('/api/v1/catalog/search/movie?query=x&min_rating=7')
+        ->assertOk()
+        ->assertJsonPath('data.*.title', ['TMDb 7,5', 'TMDb 8 peu de votes']);
+
+    // The global search too, without people (a filter).
+    $response = $this->getJson('/api/v1/catalog/search?query=x&min_rating=6.5&sort=rating')->assertOk();
+    expect($response->json('movies.data.*.title'))->toBe(['TMDb 7,5', 'IMDb 6,5', 'TMDb 8 peu de votes'])
+        ->and($response->json('people.data'))->toBe([]);
+});
 
 it('filters and sorts one type in a single page, but not people', function () {
     fakeMovieSearch([
@@ -104,7 +144,8 @@ it('validates the filters, in French', function (string $query, string $field, s
         ->assertJsonPath("errors.{$field}.0", $message);
 })->with([
     ['year_from=2000&year_to=1990', 'year_to', 'Le champ année de fin doit être supérieur ou égal à 2000.'],
-    ['sort=rating', 'sort', "La valeur sélectionnée pour tri n'est pas valide."],
+    ['sort=best', 'sort', "La valeur sélectionnée pour tri n'est pas valide."],
+    ['min_rating=11', 'min_rating', 'Le champ note minimale doit être compris entre 0 et 10.'],
     ['year_from=1500', 'year_from', 'Le champ année de début doit être compris entre 1870 et 2100.'],
 ]);
 

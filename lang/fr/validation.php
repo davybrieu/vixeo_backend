@@ -216,6 +216,7 @@ return [
         'sort' => 'tri',
         'year_from' => 'année de début',
         'year_to' => 'année de fin',
+        'min_rating' => 'note minimale',
         'value' => 'note',
         'comment' => 'commentaire',
         'bio' => 'biographie',

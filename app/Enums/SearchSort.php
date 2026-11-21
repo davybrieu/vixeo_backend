@@ -8,6 +8,8 @@ enum SearchSort: string
     /** TMDb order for the typed text. */
     case Relevance = 'relevance';
     case Popularity = 'popularity';
+    /** Best rated first: TMDb's rating, else IMDb's (TitleFilters::rating); unrated titles last. */
+    case Rating = 'rating';
     case Recent = 'recent';
     case Oldest = 'oldest';
 }
