@@ -143,9 +143,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     `TmdbFormat::logo` choisit le logo du titre (français, puis anglais, puis sans langue ; pas de
     SVG) → `logo_url` + `logo_aspect_ratio` ; `TmdbFormat::textlessBackdrop` une image de fond sans
     texte → `textless_backdrop_url`. Null quand TMDb n'en a pas (l'appli écrit le titre / prend
-    `backdrop_url`). Accueil et recherche (`search`, `search/{type}`, `discover`) : `TitleSummaries`
-    ajoute à chaque titre le logo (`logo_url`), une affiche sans texte (`textless_poster_url`,
-    carrousel du téléphone) et `summary` (durée ou nombre de saisons, genres, âge conseillé), pour
+    `backdrop_url`). Accueil et recherche (`search`, `search/{type}`) : `TitleSummaries`
+    ajoute à chaque titre le logo (`logo_url`) et `summary` (durée ou nombre de saisons, genres, âge conseillé), pour
     que la grande image et le carrousel affichent tout d'un coup ; un appel TMDb par titre (fiche
     avec `images` et classifications), en un lot (`getMany`, cache d'un jour, partagé). Les
     recommandations d'une fiche (« Vous pourriez aussi aimer », `recommended`) aussi

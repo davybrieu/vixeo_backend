@@ -23,7 +23,6 @@ class MediaItemResource extends JsonResource
         $poster = F::string($r, 'poster_path');
         $backdrop = F::string($r, 'backdrop_path');
         $logo = is_array($r['logo'] ?? null) ? $r['logo'] : null;
-        $textlessPoster = F::string($r, 'textless_poster');
         $summary = is_array($r['summary'] ?? null) ? $r['summary'] : null;
 
         return [
@@ -50,9 +49,6 @@ class MediaItemResource extends JsonResource
             'logo_url' => F::image(isset($logo['path']) ? (string) $logo['path'] : null, 'w500'),
             /** Logo width / height. */
             'logo_aspect_ratio' => isset($logo['aspect_ratio']) ? (float) $logo['aspect_ratio'] : null,
-            /** Poster without text (to show under the logo), w500. Home and search only; null: use `poster_url`. */
-            'textless_poster_path' => $textlessPoster,
-            'textless_poster_url' => F::image($textlessPoster, 'w500'),
             /**
              * Length, genres and age rating, so that the hero shows them at once. Home and search
              * only; null elsewhere (the title page has them).

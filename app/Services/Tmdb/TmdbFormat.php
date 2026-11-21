@@ -134,17 +134,6 @@ final class TmdbFormat
         return self::textless($title, 'backdrops');
     }
 
-    /**
-     * Best rated poster without text (`images` appended or fetched), to show under the logo
-     * (phone carousel). Null when TMDb has none: the main poster is used.
-     *
-     * @param  array<string, mixed>  $title
-     */
-    public static function textlessPoster(array $title): ?string
-    {
-        return self::textless($title, 'posters');
-    }
-
     /** @param  array<string, mixed>  $title */
     private static function textless(array $title, string $kind): ?string
     {

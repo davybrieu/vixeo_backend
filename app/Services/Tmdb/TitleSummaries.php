@@ -21,7 +21,7 @@ class TitleSummaries
     public function __construct(private TmdbClient $tmdb) {}
 
     /**
-     * Sets `logo`, `textless_poster` and `summary` on each movie / TV show (null when TMDb has
+     * Sets `logo` and `summary` on each movie / TV show (null when TMDb has
      * none, or could not be reached: the app then reads the title page).
      *
      * @param  array<array-key, list<array<string, mixed>>>  $lists
@@ -47,7 +47,6 @@ class TitleSummaries
             $path = self::path($item);
             $title = $path === null ? null : ($details[$path] ?? null);
             $item['logo'] = is_array($title) ? TmdbFormat::logo($title) : null;
-            $item['textless_poster'] = is_array($title) ? TmdbFormat::textlessPoster($title) : null;
             $item['summary'] = is_array($title) ? self::summary($title) : null;
 
             return $item;
@@ -92,7 +91,6 @@ class TitleSummaries
                     TmdbFormat::array($title, 'genres'),
                 ))),
                 'logo' => TmdbFormat::logo($title),
-                'textless_poster' => TmdbFormat::textlessPoster($title),
                 'summary' => self::summary($title),
             ]];
         }

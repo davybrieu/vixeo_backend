@@ -5326,19 +5326,6 @@
                         ],
                         "description": "Logo width / height."
                     },
-                    "textless_poster_path": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Poster without text (to show under the logo), w500. Home and search only; null: use `poster_url`."
-                    },
-                    "textless_poster_url": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
                     "summary": {
                         "type": [
                             "object",
@@ -5399,8 +5386,6 @@
                     "backdrop_url",
                     "logo_url",
                     "logo_aspect_ratio",
-                    "textless_poster_path",
-                    "textless_poster_url",
                     "summary"
                 ],
                 "title": "MediaItemResource"

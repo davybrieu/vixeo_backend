@@ -124,10 +124,8 @@ it('gives the logo, length, genres and age rating of each home item, fetched onc
         ->and($home->json('featured.0.logo_aspect_ratio'))->toEqual(4.0)
         // No logo on TMDb: the app writes the title.
         ->and($home->json('featured.1.logo_url'))->toBeNull()
-        // A poster without text for the phone carousel; none for the second title (only an English one).
-        ->and($home->json('featured.0.textless_poster_url'))->toBe('https://image.tmdb.org/t/p/w500/poster-clean.jpg')
-        ->and($home->json('featured.0.textless_poster_path'))->toBe('/poster-clean.jpg')
-        ->and($home->json('featured.1.textless_poster_url'))->toBeNull()
+        // No poster without text any more: the app never showed it.
+        ->and($home->json('featured.0'))->not->toHaveKey('textless_poster_url')
         ->and($home->json('sections.0.items.0.logo_url'))->toBe('https://image.tmdb.org/t/p/w500/one.png')
         // What the hero shows, at once.
         ->and($home->json('featured.0.summary'))->toBe([
@@ -154,7 +152,6 @@ it('keeps the home when a title lookup fails', function () {
     $this->getJson('/api/v1/catalog/home?type=movie')
         ->assertOk()
         ->assertJsonPath('featured.0.logo_url', null)
-        ->assertJsonPath('featured.0.textless_poster_url', null)
         // The app then reads the title page.
         ->assertJsonPath('featured.0.summary', null)
         ->assertJsonPath('featured.1.logo_url', 'https://image.tmdb.org/t/p/w500/two.png')
