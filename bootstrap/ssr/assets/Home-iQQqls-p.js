@@ -334,7 +334,16 @@ var _sfc_main$7 = {
 		const android = (0, vue_exports.computed)(() => site.android);
 		const windows = (0, vue_exports.computed)(() => site.windows);
 		const onWindows = (0, vue_exports.computed)(() => props.screen === "windows");
-		const url = (0, vue_exports.computed)(() => onWindows.value ? windows.value.installerUrl : android.value.apkUrl);
+		const comingSoon = (0, vue_exports.computed)(() => ["macos", "ios"].includes(props.screen));
+		const url = (0, vue_exports.computed)(() => {
+			if (comingSoon.value) return null;
+			return onWindows.value ? windows.value.installerUrl : android.value.apkUrl;
+		});
+		const pending = (0, vue_exports.computed)(() => {
+			if (comingSoon.value) return "Bientôt disponible";
+			if (onWindows.value) return "Version Windows bientôt disponible";
+			return props.screen === "tv" ? "Version TV bientôt disponible" : "Version Android bientôt disponible";
+		});
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "flex flex-wrap items-center gap-3" }, _attrs))}>`);
 			if (url.value) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
@@ -349,7 +358,7 @@ var _sfc_main$7 = {
 				}),
 				_: 1
 			}, _parent));
-			else _push(`<span class="inline-flex h-11 items-center rounded-xl border border-dashed border-line-strong px-4 text-sm text-text-secondary">${(0, server_renderer_exports.ssrInterpolate)(onWindows.value ? "Version Windows bientôt disponible" : __props.screen === "tv" ? "Version TV bientôt disponible" : "Version Android bientôt disponible")}</span>`);
+			else _push(`<span class="inline-flex h-11 items-center rounded-xl border border-dashed border-line-strong px-4 text-sm text-text-secondary">${(0, server_renderer_exports.ssrInterpolate)(pending.value)}</span>`);
 			_push(`</div>`);
 		};
 	}
@@ -394,6 +403,20 @@ var _sfc_main$6 = {
 				label: "Ordinateur Windows",
 				short: "Windows",
 				icon: "monitor"
+			},
+			{
+				id: "macos",
+				label: "Mac",
+				short: "Mac",
+				icon: "laptop",
+				soon: true
+			},
+			{
+				id: "ios",
+				label: "iPhone",
+				short: "iPhone",
+				icon: "phone",
+				soon: true
 			}
 		];
 		const selected = (0, vue_exports.ref)(screens.some((s) => s.id === page.props.platform) ? page.props.platform : "windows");
@@ -403,14 +426,16 @@ var _sfc_main$6 = {
 		const windows = (0, vue_exports.computed)(() => page.props.site.windows);
 		const apkShort = (0, vue_exports.computed)(() => `${page.props.site.url.replace(/^https?:\/\//, "")}/apk`);
 		return (_ctx, _push, _parent, _attrs) => {
-			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)(_attrs)}><div role="tablist" aria-label="Votre écran" class="inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1.5"><!--[-->`);
+			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)(_attrs)}><div role="tablist" aria-label="Votre écran" class="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface p-1.5 sm:inline-flex sm:max-w-full"><!--[-->`);
 			(0, server_renderer_exports.ssrRenderList)(screens, (screen, i) => {
-				_push(`<button${(0, server_renderer_exports.ssrRenderAttr)("id", `onglet-${screen.id}`)} type="button" role="tab"${(0, server_renderer_exports.ssrRenderAttr)("aria-selected", selected.value === screen.id)}${(0, server_renderer_exports.ssrRenderAttr)("aria-controls", `panneau-${screen.id}`)}${(0, server_renderer_exports.ssrRenderAttr)("tabindex", selected.value === screen.id ? 0 : -1)} class="${(0, server_renderer_exports.ssrRenderClass)(["inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold whitespace-nowrap transition", selected.value === screen.id ? "bg-accent text-on-accent" : "text-text-secondary hover:bg-white/5 hover:text-text"])}">`);
+				_push(`<button${(0, server_renderer_exports.ssrRenderAttr)("id", `onglet-${screen.id}`)} type="button" role="tab"${(0, server_renderer_exports.ssrRenderAttr)("aria-selected", selected.value === screen.id)}${(0, server_renderer_exports.ssrRenderAttr)("aria-controls", `panneau-${screen.id}`)}${(0, server_renderer_exports.ssrRenderAttr)("tabindex", selected.value === screen.id ? 0 : -1)} class="${(0, server_renderer_exports.ssrRenderClass)(["inline-flex h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap transition sm:px-4", selected.value === screen.id ? "bg-accent text-on-accent" : "text-text-secondary hover:bg-white/5 hover:text-text"])}">`);
 				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$16, {
 					name: screen.icon,
 					size: 18
 				}, null, _parent));
-				_push(`<span class="sm:hidden">${(0, server_renderer_exports.ssrInterpolate)(screen.short)}</span><span class="hidden sm:inline">${(0, server_renderer_exports.ssrInterpolate)(screen.label)}</span>`);
+				_push(`<span class="lg:hidden">${(0, server_renderer_exports.ssrInterpolate)(screen.short)}</span><span class="hidden lg:inline">${(0, server_renderer_exports.ssrInterpolate)(screen.label)}</span>`);
+				if (screen.soon) _push(`<span class="sr-only">(bientôt disponible)</span>`);
+				else _push(`<!---->`);
 				if ((0, vue_exports.unref)(page).props.platform === screen.id) _push(`<span class="sr-only">(votre appareil)</span>`);
 				else _push(`<!---->`);
 				_push(`</button>`);
@@ -428,7 +453,9 @@ var _sfc_main$6 = {
 				} else _push(`<!---->`);
 				if (screen.id === "android") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Android</h3><p class="mt-4 leading-relaxed text-text-secondary"> Parcourez le catalogue, tenez votre liste à jour et reprenez où vous en étiez, sur téléphone comme sur tablette. Compatible ${(0, server_renderer_exports.ssrInterpolate)(minimum.value)} et versions plus récentes. </p><!--]-->`);
 				else if (screen.id === "tv") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Android TV et Google TV</h3><p class="mt-4 leading-relaxed text-text-secondary"> Une interface pensée pour la télécommande, avec de grandes images et un repère vert sur l’élément choisi. Pour vous connecter, tapez sur votre téléphone le code affiché par la TV : aucun mot de passe à taper avec la télécommande. </p><!--]-->`);
-				else _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Windows</h3><p class="mt-4 leading-relaxed text-text-secondary"> Sur votre ordinateur, à la souris ou au clavier : les flèches et la touche Entrée suffisent, comme une télécommande. Compatible ${(0, server_renderer_exports.ssrInterpolate)(windows.value.minimum)}, sans droits d’administrateur. </p><!--]-->`);
+				else if (screen.id === "windows") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Windows</h3><p class="mt-4 leading-relaxed text-text-secondary"> Sur votre ordinateur, à la souris ou au clavier : les flèches et la touche Entrée suffisent, comme une télécommande. Compatible ${(0, server_renderer_exports.ssrInterpolate)(windows.value.minimum)}, sans droits d’administrateur. </p><!--]-->`);
+				else if (screen.id === "macos") _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Mac</h3><p class="mt-4 leading-relaxed text-text-secondary"> Vixeo arrive bientôt sur Mac : le même compte, vos profils, votre liste et votre progression, à la souris et au clavier. </p><!--]-->`);
+				else _push(`<!--[--><h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour iPhone</h3><p class="mt-4 leading-relaxed text-text-secondary"> Vixeo arrive bientôt sur iPhone : votre liste, votre progression et vos profils dans la poche, avec le même compte que sur vos autres écrans. </p><!--]-->`);
 				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$7, {
 					screen: screen.id,
 					class: "mt-7"
@@ -447,12 +474,19 @@ var _sfc_main$6 = {
 					else _push(`<!---->`);
 					_push(`</p>`);
 				} else _push(`<!---->`);
-				if (screen.id !== "windows" && __props.latestAndroid) _push(`<p class="mt-4 text-sm text-text-muted"> Dernière version : ${(0, server_renderer_exports.ssrInterpolate)(__props.latestAndroid.version)}</p>`);
+				if (["android", "tv"].includes(screen.id) && __props.latestAndroid) _push(`<p class="mt-4 text-sm text-text-muted"> Dernière version : ${(0, server_renderer_exports.ssrInterpolate)(__props.latestAndroid.version)}</p>`);
 				else _push(`<!---->`);
 				if (screen.id === "windows" && __props.latestWindows) _push(`<p class="mt-4 text-sm text-text-muted"> Dernière version : ${(0, server_renderer_exports.ssrInterpolate)(__props.latestWindows.version)}</p>`);
 				else _push(`<!---->`);
-				_push(`</div><div class="${(0, server_renderer_exports.ssrRenderClass)([screen.id === "android" ? "max-w-[15rem]" : "max-w-xl", "mx-auto w-full"])}">`);
+				_push(`</div><div class="${(0, server_renderer_exports.ssrRenderClass)([["android", "ios"].includes(screen.id) ? "max-w-[15rem]" : "max-w-xl", "mx-auto w-full"])}">`);
 				if (screen.id === "android") _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$13, { label: "L’accueil de Vixeo sur un téléphone Android" }, {
+					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
+						if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$11, null, null, _parent, _scopeId));
+						else return [(0, vue_exports.createVNode)(_sfc_main$11)];
+					}),
+					_: 2
+				}, _parent));
+				else if (screen.id === "ios") _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$13, { label: "L’accueil de Vixeo sur un téléphone" }, {
 					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
 						if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$11, null, null, _parent, _scopeId));
 						else return [(0, vue_exports.createVNode)(_sfc_main$11)];
@@ -466,7 +500,7 @@ var _sfc_main$6 = {
 					}),
 					_: 2
 				}, _parent));
-				else _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: "L’accueil de Vixeo sur un ordinateur Windows" }, {
+				else _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: screen.id === "macos" ? "L’accueil de Vixeo sur un ordinateur" : "L’accueil de Vixeo sur un ordinateur Windows" }, {
 					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
 						if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$8, null, null, _parent, _scopeId));
 						else return [(0, vue_exports.createVNode)(_sfc_main$8)];
@@ -539,31 +573,21 @@ var escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({
 var link = (href, text) => `<a href="${escape(href)}" class="font-semibold text-accent hover:text-accent-hover">${escape(text)}</a>`;
 function faq(site) {
 	const apkShort = `${site.url.replace(/^https?:\/\//, "")}/apk`;
-	const contact = site.contactEmail ? ` Une autre question ? Écrivez-nous à ${link(`mailto:${site.contactEmail}`, site.contactEmail)}.` : "";
 	return [
-		{
-			id: "vixeo",
-			question: "Qu’est-ce que Vixeo ?",
-			answer: ["Vixeo est une application pour vos films et séries : des fiches complètes (résumé, distribution, saisons, bande-annonce), un profil pour chaque personne du foyer, votre liste et votre progression synchronisées sur tous vos écrans."]
-		},
 		{
 			id: "contenus",
 			question: "Vixeo propose-t-il des films ou des séries à regarder ?",
-			answer: ["Non. Vixeo n’héberge, ne stocke et ne diffuse aucun film ni aucune série. Les informations et les images des titres viennent de TMDb."]
+			answer: ["Non. Vixeo n’héberge, ne stocke et ne diffuse aucun film ni aucune série."]
 		},
 		{
 			id: "appareils",
 			question: "Sur quels appareils puis-je utiliser Vixeo ?",
-			answer: [`Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et sur les ordinateurs Windows (${escape(site.windows.minimum)}) : ${link("#installer", "installer Vixeo")}.`, "Vixeo n’a pas de version web. Une version pour iPhone et iPad est en préparation."]
+			answer: [`Sur les téléphones et tablettes Android (${escape(site.android.minimum)} et plus récents), sur les téléviseurs et boîtiers Android TV et Google TV, et sur les ordinateurs Windows (${escape(site.windows.minimum)}) : ${link("#installer", "installer Vixeo")}.`, "Les versions pour Mac et pour iPhone seront bientôt disponibles. Vixeo n’a pas de version web."]
 		},
 		{
 			id: "play-store",
 			question: "Vixeo est-il sur le Play Store ?",
-			answer: [
-				`Non. Sur Android (téléphone, tablette et TV), Vixeo s’installe uniquement depuis ce site, avec un fichier APK : ${link("#installer", "télécharger l’APK")}. Ne l’installez depuis aucune autre source.`,
-				"Le fichier est signé : Android vérifie que chaque mise à jour vient bien de nous. Son empreinte SHA-256 est indiquée sous le bouton de téléchargement.",
-				"La première fois, Android demande d’autoriser votre navigateur à installer des applis (Paramètres, Applications, Accès spécial des applications, Installer des applis inconnues) : acceptez, puis appuyez sur « Installer »."
-			]
+			answer: [`Non. Sur Android (téléphone, tablette et TV), Vixeo s’installe uniquement depuis ce site, avec un fichier APK signé : ${link("#installer", "télécharger l’APK")}. Son empreinte SHA-256 est indiquée sous le bouton.`, "La première fois, Android demande d’autoriser votre navigateur à installer des applis : acceptez, puis appuyez sur « Installer »."]
 		},
 		{
 			id: "installer-tv",
@@ -571,44 +595,14 @@ function faq(site) {
 			answer: [`Sur la TV, installez depuis Google Play une appli qui télécharge des fichiers (un navigateur ou une appli de téléchargement). Dans cette appli, ouvrez l’adresse <strong>${escape(apkShort)}</strong> : le fichier de Vixeo se télécharge. Autorisez cette appli à installer des applis quand Android le demande, puis installez Vixeo.`]
 		},
 		{
-			id: "installer-windows",
-			question: "Comment installer Vixeo sur Windows ?",
-			answer: [`Téléchargez l’installateur depuis ce site (${link("#installer", "version Windows")}) et ouvrez-le : Vixeo s’installe pour votre compte Windows, sans droits d’administrateur.`, "Windows peut afficher « Windows a protégé votre ordinateur » : choisissez « Informations complémentaires », puis « Exécuter quand même »."]
-		},
-		{
 			id: "compte",
 			question: "Faut-il un compte ?",
 			answer: ["Oui : une adresse e-mail et un mot de passe. Le même compte sert sur tous vos écrans et accueille jusqu’à 5 profils. Créez-le dans l’appli, depuis l’écran de connexion (« Créer un compte »)."]
 		},
 		{
-			id: "tv",
-			question: "Comment connecter ma TV sans taper mon mot de passe ?",
-			answer: ["Ouvrez Vixeo sur la TV : l’écran de connexion affiche un code court. Sur votre téléphone (déjà connecté), ouvrez Vixeo, puis « Paramètres » → « Connecter une TV », tapez le code et appuyez sur « Autoriser ». La TV se connecte toute seule."]
-		},
-		{
-			id: "controle-parental",
-			question: "Comment fonctionne le contrôle parental ?",
-			answer: ["Un code PIN parental protège la création des profils et le réglage de leurs restrictions. Pour chaque profil, choisissez un âge maximum : le catalogue et la recherche n’affichent que les titres adaptés."]
-		},
-		{
-			id: "mot-de-passe",
-			question: "J’ai oublié mon mot de passe.",
-			answer: ["Sur l’écran de connexion, choisissez « Mot de passe oublié ? » : vous recevez par e-mail un code à 6 chiffres, valable 15 minutes, pour choisir un nouveau mot de passe."]
-		},
-		{
-			id: "donnees",
-			question: "Que devient mon compte et mes données ?",
-			answer: ["Pas de publicité ni de pistage. Depuis l’appli (Paramètres, puis Compte), vous pouvez recevoir une copie de vos données ou supprimer votre compte à tout moment."]
-		},
-		{
 			id: "mises-a-jour",
 			question: "Comment mettre Vixeo à jour ?",
 			answer: ["Vixeo vous prévient quand une nouvelle version est disponible : il télécharge le fichier et le vérifie. Sur Android, confirmez ensuite l’installation ; sur Windows, elle se fait toute seule et Vixeo redémarre."]
-		},
-		{
-			id: "cookies",
-			question: "Ce site utilise-t-il des cookies ?",
-			answer: [`Non : aucun cookie, aucune mesure d’audience, aucun service tiers. ${link("/confidentialite", "Confidentialité du site")}.${contact}`]
 		}
 	];
 }
@@ -906,9 +900,7 @@ var _sfc_main = {
 		}
 	},
 	setup(__props) {
-		const page = usePage();
-		const site = page.props.site;
-		const onAndroid = (0, vue_exports.computed)(() => page.props.platform !== "windows");
+		const site = usePage().props.site;
 		const questions = faq(site);
 		const screens = [
 			{
@@ -936,59 +928,17 @@ var _sfc_main = {
 			_push(`<!--[-->`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$19, { description: "Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, votre liste et votre progression sur votre téléphone Android, votre TV et votre PC Windows." }, null, _parent));
 			_push(`<section class="relative overflow-hidden pt-32 pb-16 sm:pt-40"><div class="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(46,229,138,0.16),transparent_60%)]" aria-hidden="true"></div><div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8"><p class="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft"><span class="size-2 rounded-full bg-accent"></span> Android · Android TV · Windows </p><h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl"> Vos films et séries, <span class="text-accent">sur tous vos écrans.</span></h1><p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl"> Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV. </p><div class="mt-9 flex flex-wrap items-center justify-center gap-3">`);
-			if (onAndroid.value) {
-				_push(`<!--[-->`);
-				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
-					href: "#installer",
-					icon: "download",
-					size: "lg"
-				}, {
-					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-						if (_push) _push(`${(0, server_renderer_exports.ssrInterpolate)((0, vue_exports.unref)(page).props.platform === "tv" ? "Installer sur la TV" : "Installer sur Android")}`);
-						else return [(0, vue_exports.createTextVNode)((0, vue_exports.toDisplayString)((0, vue_exports.unref)(page).props.platform === "tv" ? "Installer sur la TV" : "Installer sur Android"), 1)];
-					}),
-					_: 1
-				}, _parent));
-				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
-					href: "#installer",
-					icon: "monitor",
-					variant: "outline",
-					size: "lg"
-				}, {
-					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-						if (_push) _push(`Version Windows`);
-						else return [(0, vue_exports.createTextVNode)("Version Windows")];
-					}),
-					_: 1
-				}, _parent));
-				_push(`<!--]-->`);
-			} else {
-				_push(`<!--[-->`);
-				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
-					href: "#installer",
-					icon: "download",
-					size: "lg"
-				}, {
-					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-						if (_push) _push(`Télécharger pour Windows`);
-						else return [(0, vue_exports.createTextVNode)("Télécharger pour Windows")];
-					}),
-					_: 1
-				}, _parent));
-				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
-					href: "#installer",
-					icon: "phone",
-					variant: "outline",
-					size: "lg"
-				}, {
-					default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-						if (_push) _push(`Installer sur Android`);
-						else return [(0, vue_exports.createTextVNode)("Installer sur Android")];
-					}),
-					_: 1
-				}, _parent));
-				_push(`<!--]-->`);
-			}
+			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
+				href: "#installer",
+				icon: "download",
+				size: "lg"
+			}, {
+				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
+					if (_push) _push(`Installer Vixeo`);
+					else return [(0, vue_exports.createTextVNode)("Installer Vixeo")];
+				}),
+				_: 1
+			}, _parent));
 			_push(`</div><p class="mt-5 text-sm text-text-muted">Vixeo n’héberge ni ne diffuse aucun film ni aucune série.</p></div><div class="relative mx-auto mt-16 max-w-5xl px-5 sm:px-8">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: "L’accueil de Vixeo sur une TV : la grande image du titre choisi et la rangée « Continuer à regarder »" }, {
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
@@ -1021,8 +971,8 @@ var _sfc_main = {
 				title: "Choisissez votre écran."
 			}, {
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(` Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur Windows. `);
-					else return [(0, vue_exports.createTextVNode)(" Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur Windows. ")];
+					if (_push) _push(` Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur l’ordinateur. Mac et iPhone arrivent bientôt. `);
+					else return [(0, vue_exports.createTextVNode)(" Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au clavier et à la souris sur l’ordinateur. Mac et iPhone arrivent bientôt. ")];
 				}),
 				_: 1
 			}, _parent));
@@ -1147,7 +1097,7 @@ var _sfc_main = {
 				points: [
 					"Recherche par titre, par acteur ou par genre",
 					"Affiches au format vertical ou horizontal, au choix de chaque profil",
-					"Informations et images fournies par TMDb"
+					"La note IMDb de chaque film, série et épisode"
 				]
 			}, {
 				visual: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
@@ -1240,6 +1190,8 @@ var _sfc_main = {
 				items: (0, vue_exports.unref)(questions),
 				class: "mt-10"
 			}, null, _parent));
+			if ((0, vue_exports.unref)(site).contactEmail) _push(`<p class="mt-8 text-text-secondary"> Une autre question ? Écrivez-nous à <a${(0, server_renderer_exports.ssrRenderAttr)("href", `mailto:${(0, vue_exports.unref)(site).contactEmail}`)} class="font-semibold text-accent hover:text-accent-hover">${(0, server_renderer_exports.ssrInterpolate)((0, vue_exports.unref)(site).contactEmail)}</a>. </p>`);
+			else _push(`<!---->`);
 			_push(`</section><section class="relative overflow-hidden border-t border-line/60 py-24 text-center sm:py-32" aria-labelledby="titre-installer"><div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(46,229,138,0.18),transparent_60%)]" aria-hidden="true"></div><div class="relative mx-auto max-w-3xl px-5"><h2 id="titre-installer" class="text-3xl font-extrabold sm:text-5xl">Installez Vixeo en une minute.</h2><p class="mt-5 text-lg text-text-secondary">Un seul compte pour votre téléphone, votre TV et votre PC.</p><div class="mt-9 flex flex-wrap justify-center gap-3">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
 				href: "#installer",

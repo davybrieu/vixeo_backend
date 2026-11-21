@@ -1,6 +1,5 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import FaqList from '../components/FaqList.vue';
 import FeatureRow from '../components/FeatureRow.vue';
 import Icon from '../components/Icon.vue';
@@ -26,8 +25,6 @@ defineProps({
 
 const page = usePage();
 const site = page.props.site;
-// The visitor's device first: Android (phone, tablet, TV), otherwise Windows. No web app any more.
-const onAndroid = computed(() => page.props.platform !== 'windows');
 const questions = faq(site);
 
 const screens = [
@@ -60,17 +57,9 @@ const screens = [
             <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">
                 Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV.
             </p>
+            <!-- One call: the install section selects the visitor's device itself. -->
             <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
-                <template v-if="onAndroid">
-                    <VxButton href="#installer" icon="download" size="lg">
-                        {{ page.props.platform === 'tv' ? 'Installer sur la TV' : 'Installer sur Android' }}
-                    </VxButton>
-                    <VxButton href="#installer" icon="monitor" variant="outline" size="lg">Version Windows</VxButton>
-                </template>
-                <template v-else>
-                    <VxButton href="#installer" icon="download" size="lg">Télécharger pour Windows</VxButton>
-                    <VxButton href="#installer" icon="phone" variant="outline" size="lg">Installer sur Android</VxButton>
-                </template>
+                <VxButton href="#installer" icon="download" size="lg">Installer Vixeo</VxButton>
             </div>
             <p class="mt-5 text-sm text-text-muted">Vixeo n’héberge ni ne diffuse aucun film ni aucune série.</p>
         </div>
@@ -98,7 +87,7 @@ const screens = [
     <section id="installer" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="titre-ecrans">
         <SectionHeading id="titre-ecrans" title="Choisissez votre écran.">
             Chaque version est pensée pour son écran : au doigt sur le téléphone, à la télécommande sur la TV, au
-            clavier et à la souris sur Windows.
+            clavier et à la souris sur l’ordinateur. Mac et iPhone arrivent bientôt.
         </SectionHeading>
         <PlatformPicker class="mt-10" :latest-android="latestAndroid" :latest-windows="latestWindows" />
     </section>
@@ -151,7 +140,7 @@ const screens = [
                 :points="[
                     'Recherche par titre, par acteur ou par genre',
                     'Affiches au format vertical ou horizontal, au choix de chaque profil',
-                    'Informations et images fournies par TMDb',
+                    'La note IMDb de chaque film, série et épisode',
                 ]"
             >
                 Résumé, distribution, saisons et épisodes, recommandations et bande-annonce : chaque film et chaque série a
@@ -193,6 +182,10 @@ const screens = [
             Tout ce qu’il faut savoir avant d’installer Vixeo.
         </SectionHeading>
         <FaqList :items="questions" class="mt-10" />
+        <p v-if="site.contactEmail" class="mt-8 text-text-secondary">
+            Une autre question ? Écrivez-nous à
+            <a :href="`mailto:${site.contactEmail}`" class="font-semibold text-accent hover:text-accent-hover">{{ site.contactEmail }}</a>.
+        </p>
     </section>
 
     <!-- Final call -->

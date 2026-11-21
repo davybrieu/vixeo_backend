@@ -4,10 +4,10 @@ import { computed } from 'vue';
 import VxButton from './VxButton.vue';
 
 // The buttons of one screen. No store: Android (phones, tablets, TVs) gets the APK of the latest
-// release, Windows its installer, when there is one; otherwise an honest "not yet" note. No web
-// app any more (developer's request).
+// release, Windows its installer, when there is one; otherwise an honest "not yet" note. macOS and
+// iPhone: « Bientôt disponible » (developer's request, 21/11/2026). No web app any more.
 const props = defineProps({
-    screen: { type: String, required: true }, // android | tv | windows
+    screen: { type: String, required: true }, // android | tv | windows | macos | ios
     size: { type: String, default: 'lg' },
 });
 
@@ -15,7 +15,16 @@ const site = usePage().props.site;
 const android = computed(() => site.android);
 const windows = computed(() => site.windows);
 const onWindows = computed(() => props.screen === 'windows');
-const url = computed(() => (onWindows.value ? windows.value.installerUrl : android.value.apkUrl));
+const comingSoon = computed(() => ['macos', 'ios'].includes(props.screen));
+const url = computed(() => {
+    if (comingSoon.value) return null;
+    return onWindows.value ? windows.value.installerUrl : android.value.apkUrl;
+});
+const pending = computed(() => {
+    if (comingSoon.value) return 'Bientôt disponible';
+    if (onWindows.value) return 'Version Windows bientôt disponible';
+    return props.screen === 'tv' ? 'Version TV bientôt disponible' : 'Version Android bientôt disponible';
+});
 </script>
 
 <template>
@@ -27,7 +36,7 @@ const url = computed(() => (onWindows.value ? windows.value.installerUrl : andro
             v-else
             class="inline-flex h-11 items-center rounded-xl border border-dashed border-line-strong px-4 text-sm text-text-secondary"
         >
-            {{ onWindows ? 'Version Windows bientôt disponible' : screen === 'tv' ? 'Version TV bientôt disponible' : 'Version Android bientôt disponible' }}
+            {{ pending }}
         </span>
     </div>
 </template>

@@ -33,8 +33,7 @@ const year = new Date().getFullYear();
         </div>
         <div class="border-t border-line/50">
             <p class="mx-auto max-w-6xl px-5 py-6 text-xs leading-relaxed text-text-muted sm:px-8">
-                © {{ year }} {{ site.publisher || 'Vixeo' }}. Informations et images des titres fournies par TMDb.
-                This product uses the TMDB API but is not endorsed or certified by TMDB.
+                © {{ year }} {{ site.publisher || 'Vixeo' }}.
             </p>
         </div>
     </footer>

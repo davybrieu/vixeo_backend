@@ -91,8 +91,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Site de présentation** (`docs/site.md`) : groupe de middleware `site` (ni session, ni CSRF,
   **aucun cookie**, aucun service tiers, polices servies par le site). Erreurs : pages Inertia
   `Error` sur le site, JSON sur l'hôte de l'API et sous `/api/*` (`Hosts::isApi`). Textes honnêtes
-  (ce que l'appli fait aujourd'hui, « En préparation » sinon), pas de bouton ni page iOS, écarté :
-  import IPTV / M3U / Xtream, radio, replays. SSR : pas de `window` / `document` hors `onMounted`.
+  (ce que l'appli fait aujourd'hui, « Bientôt disponible » sinon), écarté : import IPTV / M3U /
+  Xtream, radio, replays. **Mac et iPhone** : onglets d'installation « Bientôt disponible », sans
+  bouton (demande du développeur, 21/11/2026). Un seul bouton en haut de l'accueil, « Installer
+  Vixeo » (vers `#installer`) ; FAQ réduite aux questions les plus utiles ; **pas de mention TMDb**
+  dans le pied de page ni sur l'accueil (seulement dans les mentions légales). SSR : pas de `window` / `document` hors `onMounted`.
   Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.
   **Une seule page de présentation** : l'accueil, avec les sections `#installer` et `#faq` ; pages
   Installer et FAQ et liens courts supprimés (`/installer`, `/faq`, `/telecharger`, `/android`,

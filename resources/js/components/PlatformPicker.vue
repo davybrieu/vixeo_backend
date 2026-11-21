@@ -9,8 +9,9 @@ import TvHomeScreen from '../mock/TvHomeScreen.vue';
 import Icon from './Icon.vue';
 import InstallButtons from './InstallButtons.vue';
 
-// "Choisissez votre écran": tabs for Android, TV and Windows. The visitor's device (guessed by
-// the server from the User-Agent) is selected first. No web app any more (developer's request).
+// "Choisissez votre écran": tabs for Android, TV, Windows, then macOS and iPhone (« Bientôt
+// disponible », developer's request, 21/11/2026). The visitor's device (guessed by the server from
+// the User-Agent) is selected first. No web app any more (developer's request).
 const props = defineProps({
     latestAndroid: { type: Object, default: null },
     latestWindows: { type: Object, default: null },
@@ -21,6 +22,8 @@ const screens = [
     { id: 'android', label: 'Téléphone et tablette', short: 'Android', icon: 'phone' },
     { id: 'tv', label: 'TV', short: 'TV', icon: 'tv' },
     { id: 'windows', label: 'Ordinateur Windows', short: 'Windows', icon: 'monitor' },
+    { id: 'macos', label: 'Mac', short: 'Mac', icon: 'laptop', soon: true },
+    { id: 'ios', label: 'iPhone', short: 'iPhone', icon: 'phone', soon: true },
 ];
 const selected = ref(screens.some((s) => s.id === page.props.platform) ? page.props.platform : 'windows');
 const tabs = ref([]);
@@ -42,10 +45,11 @@ function onKey(event, index) {
 
 <template>
     <div>
+        <!-- Phone: three tabs a row (no sideways scrolling); wider: one row. -->
         <div
             role="tablist"
             aria-label="Votre écran"
-            class="inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1.5"
+            class="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface p-1.5 sm:inline-flex sm:max-w-full"
         >
             <button
                 v-for="(screen, i) in screens"
@@ -58,15 +62,16 @@ function onKey(event, index) {
                 :aria-controls="`panneau-${screen.id}`"
                 :tabindex="selected === screen.id ? 0 : -1"
                 :class="[
-                    'inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold whitespace-nowrap transition',
+                    'inline-flex h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap transition sm:px-4',
                     selected === screen.id ? 'bg-accent text-on-accent' : 'text-text-secondary hover:bg-white/5 hover:text-text',
                 ]"
                 @click="selected = screen.id"
                 @keydown="onKey($event, i)"
             >
                 <Icon :name="screen.icon" :size="18" />
-                <span class="sm:hidden">{{ screen.short }}</span>
-                <span class="hidden sm:inline">{{ screen.label }}</span>
+                <span class="lg:hidden">{{ screen.short }}</span>
+                <span class="hidden lg:inline">{{ screen.label }}</span>
+                <span v-if="screen.soon" class="sr-only">(bientôt disponible)</span>
                 <span v-if="page.props.platform === screen.id" class="sr-only">(votre appareil)</span>
             </button>
         </div>
@@ -100,11 +105,25 @@ function onKey(event, index) {
                         à taper avec la télécommande.
                     </p>
                 </template>
-                <template v-else>
+                <template v-else-if="screen.id === 'windows'">
                     <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Windows</h3>
                     <p class="mt-4 leading-relaxed text-text-secondary">
                         Sur votre ordinateur, à la souris ou au clavier : les flèches et la touche Entrée suffisent, comme
                         une télécommande. Compatible {{ windows.minimum }}, sans droits d’administrateur.
+                    </p>
+                </template>
+                <template v-else-if="screen.id === 'macos'">
+                    <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour Mac</h3>
+                    <p class="mt-4 leading-relaxed text-text-secondary">
+                        Vixeo arrive bientôt sur Mac : le même compte, vos profils, votre liste et votre progression, à la
+                        souris et au clavier.
+                    </p>
+                </template>
+                <template v-else>
+                    <h3 class="text-2xl font-bold sm:text-3xl">Vixeo pour iPhone</h3>
+                    <p class="mt-4 leading-relaxed text-text-secondary">
+                        Vixeo arrive bientôt sur iPhone : votre liste, votre progression et vos profils dans la poche, avec
+                        le même compte que sur vos autres écrans.
                     </p>
                 </template>
 
@@ -130,7 +149,7 @@ function onKey(event, index) {
                     </span>
                 </p>
 
-                <p v-if="screen.id !== 'windows' && latestAndroid" class="mt-4 text-sm text-text-muted">
+                <p v-if="['android', 'tv'].includes(screen.id) && latestAndroid" class="mt-4 text-sm text-text-muted">
                     Dernière version : {{ latestAndroid.version }}
                 </p>
                 <p v-if="screen.id === 'windows' && latestWindows" class="mt-4 text-sm text-text-muted">
@@ -138,14 +157,17 @@ function onKey(event, index) {
                 </p>
             </div>
 
-            <div class="mx-auto w-full" :class="screen.id === 'android' ? 'max-w-[15rem]' : 'max-w-xl'">
+            <div class="mx-auto w-full" :class="['android', 'ios'].includes(screen.id) ? 'max-w-[15rem]' : 'max-w-xl'">
                 <PhoneFrame v-if="screen.id === 'android'" label="L’accueil de Vixeo sur un téléphone Android">
+                    <PhoneHomeScreen />
+                </PhoneFrame>
+                <PhoneFrame v-else-if="screen.id === 'ios'" label="L’accueil de Vixeo sur un téléphone">
                     <PhoneHomeScreen />
                 </PhoneFrame>
                 <TvFrame v-else-if="screen.id === 'tv'" label="La connexion de la TV avec un code court">
                     <TvCodeScreen />
                 </TvFrame>
-                <TvFrame v-else label="L’accueil de Vixeo sur un ordinateur Windows">
+                <TvFrame v-else :label="screen.id === 'macos' ? 'L’accueil de Vixeo sur un ordinateur' : 'L’accueil de Vixeo sur un ordinateur Windows'">
                     <TvHomeScreen />
                 </TvFrame>
             </div>

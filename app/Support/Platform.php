@@ -3,21 +3,29 @@
 namespace App\Support;
 
 /**
- * The visitor's screen, guessed from the User-Agent: the site shows the matching install option
- * first. No iOS app yet, no web app any more: anything that is not Android is offered Windows.
+ * The visitor's screen, guessed from the User-Agent: the site selects the matching install option
+ * first. macOS and iPhone are shown as « Bientôt disponible » (developer's request, 21/11/2026);
+ * anything else is offered Windows. An iPad in desktop mode says « Macintosh »: it gets macOS.
  */
 enum Platform: string
 {
     case Android = 'android';
     case Tv = 'tv';
     case Windows = 'windows';
+    case Mac = 'macos';
+    case Iphone = 'ios';
 
     public static function fromUserAgent(?string $userAgent): self
     {
         $ua = (string) $userAgent;
 
         if (! preg_match('/Android/i', $ua)) {
-            return self::Windows;
+            // iOS says « like Mac OS X »: read before macOS.
+            return match (true) {
+                (bool) preg_match('/iPhone|iPad|iPod/i', $ua) => self::Iphone,
+                (bool) preg_match('/Macintosh|Mac OS X/i', $ua) => self::Mac,
+                default => self::Windows,
+            };
         }
 
         // Android TV, Google TV, Chromecast, Fire TV (AFT…), Sony Bravia, Xiaomi, Nvidia Shield…
