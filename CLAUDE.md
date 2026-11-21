@@ -215,6 +215,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   ouvre son propre profil par la navigation, « Profil »). Les listes de comptes (recherche,
   abonnés, abonnements) ne donnent que l'identité (`identity`) ; les compteurs (une sous-requête
   chacun) seulement pour la page d'un membre (`publicProfile(withCounts: true)`).
+  Biographie d'un profil : **160 caractères au plus** (`Profile::BIO_MAX_LENGTH`, demande du
+  développeur, 21/11/2026), modifiée par `PUT /profiles/{id}`.
 - **Requêtes** : hors production, `Model::preventLazyLoading()` (`AppServiceProvider`) fait
   échouer une relation lue dans une boucle sans `with()` (N+1) : les tests l'attrapent.
 - **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :

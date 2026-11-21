@@ -219,6 +219,7 @@ return [
         'year_to' => 'année de fin',
         'value' => 'note',
         'comment' => 'commentaire',
+        'bio' => 'biographie',
         'ids' => 'titres',
         'audio_language' => 'langue audio',
         'subtitle_language' => 'langue des sous-titres',

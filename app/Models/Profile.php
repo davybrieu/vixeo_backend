@@ -31,6 +31,9 @@ class Profile extends Model
     /** Maximum number of profiles per account. */
     public const MAX_PER_USER = 5;
 
+    /** Longest biography of a public profile, in characters (developer's request, 21/11/2026). */
+    public const BIO_MAX_LENGTH = 160;
+
     /** Age limit of a kid profile created without an explicit one. */
     public const DEFAULT_KID_MAX_AGE = 10;
 

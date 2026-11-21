@@ -38,7 +38,8 @@ class ProfileRequest extends FormRequest
                 'sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
                 Rule::unique('profiles', 'username')->ignore($profile?->id),
             ],
-            'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
+            /** Biography of the public profile: 160 characters at most. */
+            'bio' => ['sometimes', 'nullable', 'string', 'max:'.Profile::BIO_MAX_LENGTH],
             /** Avatar id from GET /avatars. Null = initial letter. */
             'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
             /** How titles are drawn in rows and grids. Default `portrait`. */

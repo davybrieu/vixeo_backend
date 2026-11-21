@@ -5989,7 +5989,8 @@
                             "string",
                             "null"
                         ],
-                        "maxLength": 500
+                        "description": "Biography of the public profile: 160 characters at most.",
+                        "maxLength": 160
                     },
                     "avatar": {
                         "type": [

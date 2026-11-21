@@ -84,6 +84,18 @@ it('keeps the name when updating other fields', function () {
         ->assertJsonPath('data.avatar', 'arcade-cat');
 });
 
+it('keeps a biography to 160 characters', function () {
+    $profile = Profile::factory()->for($this->user)->create(['name' => 'Davy']);
+
+    $this->patchJson("/api/v1/profiles/{$profile->id}", ['bio' => str_repeat('é', 160)])
+        ->assertOk()
+        ->assertJsonPath('data.bio', str_repeat('é', 160));
+
+    $this->patchJson("/api/v1/profiles/{$profile->id}", ['bio' => str_repeat('a', 161)])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.bio.0', 'Le champ biographie ne doit pas contenir plus de 160 caractères.');
+});
+
 it('forbids access to another account profile', function () {
     $other = Profile::factory()->create();
 
