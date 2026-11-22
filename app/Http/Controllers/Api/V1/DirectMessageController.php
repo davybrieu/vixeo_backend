@@ -54,10 +54,12 @@ class DirectMessageController extends Controller
 
     private function notify(array $profileIds, Profile $sender, int $conversationId, string $body, bool $request = false): void
     {
+        $service = app(PushDevices::class);
+        if (! $service->available()) return;
         $devices = PushDevice::query()->whereIn('profile_id', array_values(array_diff($profileIds, [(int) $sender->id])))
             ->where('social', true)->get();
         if ($devices->isEmpty()) return;
-        app(PushDevices::class)->send($devices, new PushMessage(
+        $service->send($devices, new PushMessage(
             title: $request ? 'Nouvelle demande de message' : $sender->name,
             body: mb_strimwidth($body, 0, 120, '…'),
             path: '/messages/'.$conversationId,
@@ -212,10 +214,15 @@ class DirectMessageController extends Controller
         ]);
     }
 
-    public function send(Request $request, int $conversation, PushDevices $push): JsonResponse
+    public function send(Request $request, int $conversation): JsonResponse
     {
         [$profile, $row] = $this->conversation($request, $conversation);
         abort_if($row->status !== 'accepted' && (int) $row->requested_by_profile_id !== (int) $profile->id, 403, 'En attente de réponse à votre demande de message.');
+        if ($row->type === 'direct') {
+            foreach (array_diff($this->members($conversation), [(int) $profile->id]) as $otherId) {
+                abort_if($this->blocked((int) $profile->id, $otherId), 403, 'Vous ne pouvez plus envoyer de message à ce membre.');
+            }
+        }
         $validated = $request->validate(['body' => ['required', 'string', 'max:5000']]);
         $body = trim($validated['body']);
         if ($body === '') throw ValidationException::withMessages(['body' => 'Le message ne peut pas être vide.']);
@@ -232,6 +239,11 @@ class DirectMessageController extends Controller
     {
         [$profile, $row] = $this->conversation($request, $conversation);
         abort_if($row->status !== 'accepted', 403, 'Cette conversation n’est pas encore acceptée.');
+        if ($row->type === 'direct') {
+            foreach (array_diff($this->members($conversation), [(int) $profile->id]) as $otherId) {
+                abort_if($this->blocked((int) $profile->id, $otherId), 403, 'Vous ne pouvez plus envoyer de pièce jointe à ce membre.');
+            }
+        }
         $request->validate(['file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm', 'max:102400']]);
         $file = $request->file('file');
         $mime = (string) $file->getMimeType();
