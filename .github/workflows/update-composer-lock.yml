@@ -22,7 +22,7 @@ jobs:
           php-version: '8.3'
           tools: composer:v2
       - name: Resolve dependencies
-        run: composer update laravel/reverb --with-all-dependencies --no-interaction --prefer-dist
+        run: composer update laravel/reverb --with-all-dependencies --no-interaction --prefer-dist --no-scripts
       - name: Commit lock file
         run: |
           if git diff --quiet -- composer.lock; then
