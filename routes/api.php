@@ -89,6 +89,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
+        Route::get('ratings', [CatalogController::class, 'ratings'])->middleware('throttle:catalog')->name('ratings');
         Route::get('search', [CatalogSearchController::class, 'search'])->name('search');
         Route::get('search/{type}', [CatalogSearchController::class, 'searchType'])->name('search.type');
         // The search page with filters only, no text (developer's request, 21/11/2026).
