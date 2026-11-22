@@ -61,7 +61,7 @@ class DirectMessageController extends Controller
 
         try {
             event(new MessageSent($conversationId, $messageId, $senderProfileId, $body));
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             report($exception);
         }
     }
