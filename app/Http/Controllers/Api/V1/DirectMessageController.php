@@ -95,10 +95,13 @@ class DirectMessageController extends Controller
                 'updated_at' => (string) ($row->last_message_at ?? $row->created_at),
             ];
         })->values();
+        $requestsCount = $data->where('is_request', true)->count();
+        $unreadCount = $data->sum('unread_count');
+        $data = $data->reject(fn ($conversation) => $conversation['is_request'])->values();
         return response()->json([
             'data' => $data,
-            'unread_count' => $data->sum('unread_count'),
-            'requests_count' => $data->where('is_request', true)->count(),
+            'unread_count' => $unreadCount,
+            'requests_count' => $requestsCount,
         ]);
     }
 
