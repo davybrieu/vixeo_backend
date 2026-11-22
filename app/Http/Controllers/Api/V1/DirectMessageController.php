@@ -8,6 +8,7 @@ use App\Models\Profile;
 use App\Models\PushDevice;
 use App\Services\Push\PushDevices;
 use App\Services\Push\PushMessage;
+use App\Events\MessageSent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -253,6 +254,7 @@ class DirectMessageController extends Controller
             'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::table('direct_conversations')->where('id', $conversation)->update(['last_message_at' => now(), 'updated_at' => now()]);
+        event(new MessageSent($conversation, $id, (int) $profile->id, $body));
         $this->notify($this->members($conversation), $profile, $conversation, $body, $row->status === 'pending');
         return response()->json(['data' => ['id' => (int) $id, 'sender_profile_id' => (int) $profile->id, 'body' => $body, 'read_by' => [], 'created_at' => now()->toIso8601String(), 'attachments' => []]], 201);
     }
@@ -283,6 +285,7 @@ class DirectMessageController extends Controller
             'mime_type' => $mime, 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::table('direct_conversations')->where('id', $conversation)->update(['last_message_at' => now(), 'updated_at' => now()]);
+        event(new MessageSent($conversation, $id, (int) $profile->id, ''));
         $this->notify($this->members($conversation), $profile, $conversation, 'Pièce jointe');
         return response()->json(['data' => ['id' => $id, 'sender_profile_id' => (int) $profile->id, 'body' => '', 'created_at' => now()->toIso8601String(),
             'attachments' => [['id' => $attachmentId, 'name' => $file->getClientOriginalName(), 'mime_type' => $mime, 'size' => $file->getSize(), 'url' => '/messages/attachments/'.$attachmentId]]]], 201);

@@ -3,6 +3,7 @@
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\Hosts;
+use App\Http\Middleware\ResolveProfile;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -40,6 +41,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // vixeo.app → www.vixeo.app is a redirect of the Forge site (docs/deploiement.md).
             Route::middleware('site')->domain(Hosts::siteDomain())->group(base_path('routes/site.php'));
         },
+    )
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum', ResolveProfile::class], 'domain' => Hosts::apiDomain()],
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // The API runs behind Cloudflare and Laravel Forge's Nginx, which terminate TLS. Trust
