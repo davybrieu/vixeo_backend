@@ -9,10 +9,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // MySQL uses the composite unique index to support the profile_low_id
+        // foreign key. Add a replacement index in a separate ALTER before dropping it.
         Schema::table('direct_conversations', function (Blueprint $table) {
-            // MySQL uses the composite unique index to support the profile_low_id
-            // foreign key. Create a replacement index before dropping that unique index.
             $table->index('profile_low_id');
+        });
+
+        Schema::table('direct_conversations', function (Blueprint $table) {
             $table->dropUnique('direct_conversations_profile_low_id_profile_high_id_unique');
 
             $table->string('type', 12)->default('direct')->after('id');
@@ -95,8 +98,8 @@ return new class extends Migration
             $table->dropConstrainedForeignId('requested_by_profile_id');
             $table->dropColumn(['type', 'name', 'status']);
             $table->dropConstrainedForeignId('created_by_profile_id');
-            $table->dropIndex('direct_conversations_profile_low_id_index');
             $table->unique(['profile_low_id', 'profile_high_id']);
+            $table->dropIndex('direct_conversations_profile_low_id_index');
         });
     }
 };
