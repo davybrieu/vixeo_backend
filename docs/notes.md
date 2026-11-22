@@ -1,13 +1,21 @@
-# Notes des titres (IMDb et TMDb)
+# Notes des titres
 
-Les fiches des films, des séries et les épisodes d'une saison donnent **deux notes** : celle
-d'IMDb (importée chaque nuit depuis ses jeux de données) et celle de TMDb, chacune avec son
-nombre de votants (demande du développeur, 21/11/2026). Les applis affichent la note d'IMDb,
-sinon celle de TMDb, et un appui sur la note ouvre une fenêtre avec les deux.
+Les fiches des films et des séries affichent IMDb (importé chaque nuit depuis ses jeux de données),
+sinon TMDb. Un appui ouvre le modal « Notes » : IMDb et TMDb sont immédiats ; les sources
+supplémentaires sont chargées **à l'ouverture seulement** depuis MDBList (Trakt, Letterboxd,
+Rotten Tomatoes critiques et public, Metacritic, MyAnimeList). Aucun réglage « Source des notes »
+n'est utilisé.
 
-Remplace les notes des autres sites (MDBList : Rotten Tomatoes, Metacritic, Letterboxd…) et le
-réglage du profil « Source des notes » (`rating_source`), supprimés le 21/11/2026 avec la route
-`GET /catalog/ratings`.
+## Notes supplémentaires (MDBList)
+
+`GET /catalog/ratings?ids=movie:550` ou `tv:1399` renvoie les notes MDBList sur l'échelle de
+chaque site. Cette route est appelée uniquement à l'ouverture du modal ; IMDb et TMDb ne sont pas
+utilisés depuis cette réponse, car ils viennent déjà de la fiche. Les notes sont mises en cache
+pour tous les comptes pendant 3 jours ; les titres inconnus pendant 1 jour. Les lots MDBList sont
+limités à 200 titres, le paramètre `MDBLIST_DAILY_REQUESTS` borne les appels quotidiens et une
+panne / un quota dépassé suspend temporairement les appels. La clé reste côté serveur dans
+`MDBLIST_API_KEY`.
+
 
 ## Réponse de l'API
 
