@@ -319,6 +319,91 @@ class DirectMessageController extends Controller
         return response()->json(['read' => true]);
     }
 
+
+    public function updateGroup(Request $request, int $conversation): JsonResponse
+    {
+        [$profile, $row] = $this->conversation($request, $conversation);
+        abort_unless($row->type === 'group', 404);
+        $membership = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
+        abort_unless($membership && $membership->role === 'admin', 403, 'Seuls les administrateurs peuvent modifier le groupe.');
+        $validated = $request->validate(['name' => ['required', 'string', 'min:2', 'max:80']]);
+        DB::table('direct_conversations')->where('id', $conversation)->update(['name' => trim($validated['name']), 'updated_at' => now()]);
+        return response()->json(['updated' => true, 'name' => trim($validated['name'])]);
+    }
+
+    public function addGroupMembers(Request $request, int $conversation): JsonResponse
+    {
+        [$profile, $row] = $this->conversation($request, $conversation);
+        abort_unless($row->type === 'group', 404);
+        $membership = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
+        abort_unless($membership && $membership->role === 'admin', 403, 'Seuls les administrateurs peuvent ajouter des membres.');
+        $validated = $request->validate(['usernames' => ['required', 'array', 'min:1', 'max:30'], 'usernames.*' => ['required', 'string', 'distinct']]);
+        $profiles = Profile::query()->whereIn('username', $validated['usernames'])->where('is_kid', false)->get();
+        if ($profiles->count() !== count($validated['usernames'])) throw ValidationException::withMessages(['usernames' => 'Un ou plusieurs membres sont introuvables.']);
+        $activeIds = $this->members($conversation);
+        abort_if(count($activeIds) + $profiles->whereNotIn('id', $activeIds)->count() > 31, 422, 'Un groupe est limité à 31 membres.');
+        foreach ($profiles as $member) abort_if($this->blocked((int) $profile->id, (int) $member->id), 403, 'Un membre sélectionné ne peut pas être ajouté.');
+        DB::transaction(function () use ($profiles, $activeIds, $conversation) {
+            foreach ($profiles as $member) {
+                if (in_array((int) $member->id, $activeIds, true)) continue;
+                DB::table('direct_conversation_members')->updateOrInsert(
+                    ['conversation_id' => $conversation, 'profile_id' => $member->id],
+                    ['role' => 'member', 'joined_at' => now(), 'left_at' => null, 'created_at' => now(), 'updated_at' => now()]
+                );
+            }
+        });
+        return response()->json(['added' => true]);
+    }
+
+    public function removeGroupMember(Request $request, int $conversation, string $username): JsonResponse
+    {
+        [$profile, $row] = $this->conversation($request, $conversation);
+        abort_unless($row->type === 'group', 404);
+        $actor = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
+        abort_unless($actor && $actor->role === 'admin', 403);
+        $target = Profile::query()->where('username', $username)->firstOrFail();
+        abort_if((int) $target->id === (int) $profile->id, 422, 'Utilisez « Quitter le groupe » pour vous retirer.');
+        $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $target->id)->whereNull('left_at')->first();
+        abort_unless($member, 404);
+        if ($member->role === 'admin') {
+            $admins = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('role', 'admin')->whereNull('left_at')->count();
+            abort_if($admins <= 1, 422, 'Transférez les droits administrateur avant de retirer ce membre.');
+        }
+        DB::table('direct_conversation_members')->where('id', $member->id)->update(['left_at' => now(), 'updated_at' => now()]);
+        return response()->json(['removed' => true]);
+    }
+
+    public function leaveGroup(Request $request, int $conversation): JsonResponse
+    {
+        [$profile, $row] = $this->conversation($request, $conversation);
+        abort_unless($row->type === 'group', 404);
+        $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
+        abort_unless($member, 404);
+        if ($member->role === 'admin') {
+            $admins = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('role', 'admin')->whereNull('left_at')->count();
+            abort_if($admins <= 1, 422, 'Transférez les droits administrateur avant de quitter le groupe.');
+        }
+        DB::table('direct_conversation_members')->where('id', $member->id)->update(['left_at' => now(), 'updated_at' => now()]);
+        return response()->json(['left' => true]);
+    }
+
+    public function transferGroupAdmin(Request $request, int $conversation, string $username): JsonResponse
+    {
+        [$profile, $row] = $this->conversation($request, $conversation);
+        abort_unless($row->type === 'group', 404);
+        $actor = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
+        abort_unless($actor && $actor->role === 'admin', 403);
+        $target = Profile::query()->where('username', $username)->firstOrFail();
+        $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $target->id)->whereNull('left_at')->first();
+        abort_unless($member, 404);
+        DB::transaction(function () use ($conversation, $profile, $target) {
+            DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->update(['role' => 'member', 'updated_at' => now()]);
+            DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $target->id)->update(['role' => 'admin', 'updated_at' => now()]);
+            DB::table('direct_conversations')->where('id', $conversation)->update(['created_by_profile_id' => $target->id, 'updated_at' => now()]);
+        });
+        return response()->json(['transferred' => true]);
+    }
+
     public function block(Request $request, string $username): JsonResponse
     {
         $profile = $this->activeProfile($request);

@@ -127,6 +127,11 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::middleware(ResolveProfile::class)->prefix('messages')->name('messages.')->group(function () {
             Route::get('/', [DirectMessageController::class, 'index'])->middleware('throttle:catalog')->name('index');
             Route::post('groups', [DirectMessageController::class, 'createGroup'])->middleware('throttle:catalog')->name('groups.store');
+            Route::put('{conversation}/group', [DirectMessageController::class, 'updateGroup'])->whereNumber('conversation')->name('groups.update');
+            Route::post('{conversation}/group/members', [DirectMessageController::class, 'addGroupMembers'])->whereNumber('conversation')->name('groups.members.store');
+            Route::delete('{conversation}/group/members/{username}', [DirectMessageController::class, 'removeGroupMember'])->whereNumber('conversation')->name('groups.members.destroy');
+            Route::post('{conversation}/group/leave', [DirectMessageController::class, 'leaveGroup'])->whereNumber('conversation')->name('groups.leave');
+            Route::post('{conversation}/group/admin/{username}', [DirectMessageController::class, 'transferGroupAdmin'])->whereNumber('conversation')->name('groups.admin.transfer');
             Route::get('requests', [DirectMessageController::class, 'requests'])->middleware('throttle:catalog')->name('requests');
             Route::post('{conversation}/accept', [DirectMessageController::class, 'accept'])->whereNumber('conversation')->name('accept');
             Route::delete('{conversation}/request', [DirectMessageController::class, 'decline'])->whereNumber('conversation')->name('decline');
