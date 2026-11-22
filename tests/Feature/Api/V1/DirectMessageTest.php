@@ -86,7 +86,7 @@ it('creates group conversations and restricts them to their members', function (
         ->assertOk()
         ->assertJsonPath('conversation.type', 'group')
         ->assertJsonPath('conversation.name', 'Cinéma')
-        ->assertJsonPath('data.0.body', 'Bienvenue !');
+        ->assertJsonPath('data.1.body', 'Bienvenue !');
 
     [$outsiderUser, $outsider] = messagingProfile('david');
     Sanctum::actingAs($outsiderUser);
