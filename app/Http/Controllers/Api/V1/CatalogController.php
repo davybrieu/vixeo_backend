@@ -12,6 +12,8 @@ use App\Http\Requests\Api\V1\CatalogTitlesRequest;
 use App\Http\Resources\V1\Catalog\GenreResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
+use App\Http\Resources\V1\Catalog\TitleRatingsResource;
+use App\Services\Ratings\MdbListRatings;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\CatalogRows;
 use App\Services\Tmdb\TitleSummaries;
@@ -88,6 +90,29 @@ class CatalogController extends Controller
         $titles = $this->ageGate->filter(ResolveProfile::profile($request), $this->summaries->titles($request->titles()));
 
         return response()->json(['data' => MediaItemResource::collection($titles)]);
+    }
+
+    /**
+     * Additional ratings from MDBList, loaded only when the app opens the ratings modal.
+     * IMDb and TMDb remain supplied by the normal title endpoint.
+     */
+    public function ratings(CatalogTitlesRequest $request, MdbListRatings $mdbList): JsonResponse
+    {
+        $titles = $request->titles();
+        $found = $mdbList->for($titles);
+
+        $data = [];
+        foreach ($titles as [$type, $id]) {
+            $ratings = $found['ratings']["{$type->value}:{$id}"] ?? null;
+            if ($ratings !== null) {
+                $data[] = ['type' => $type, 'id' => $id, 'ratings' => $ratings];
+            }
+        }
+
+        return response()->json([
+            'data' => TitleRatingsResource::collection($data),
+            'available' => (bool) $found['available'],
+        ]);
     }
 
     /**
