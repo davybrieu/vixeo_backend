@@ -1,16 +1,20 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::table('direct_conversations', function (Blueprint $table) {
+            // MySQL uses the composite unique index to support the profile_low_id
+            // foreign key. Create a replacement index before dropping that unique index.
+            $table->index('profile_low_id');
             $table->dropUnique('direct_conversations_profile_low_id_profile_high_id_unique');
+
             $table->string('type', 12)->default('direct')->after('id');
             $table->string('name', 80)->nullable()->after('type');
             $table->foreignId('created_by_profile_id')->nullable()->after('name')->constrained('profiles')->nullOnDelete();
@@ -91,6 +95,7 @@ return new class extends Migration
             $table->dropConstrainedForeignId('requested_by_profile_id');
             $table->dropColumn(['type', 'name', 'status']);
             $table->dropConstrainedForeignId('created_by_profile_id');
+            $table->dropIndex('direct_conversations_profile_low_id_index');
             $table->unique(['profile_low_id', 'profile_high_id']);
         });
     }
