@@ -111,7 +111,7 @@ class DirectMessageController extends Controller
         $low = min($profile->id, $target->id);
         $high = max($profile->id, $target->id);
         $conversation = DB::table('direct_conversations')->where('type', 'direct')
-            ->where('profile_low_id', $low)->where('profile_high_id', $high)->first();
+            ->where('profile_low_id', $low)->where('profile_high_id', $high)->where('status', '!=', 'rejected')->first();
         if (! $conversation) {
             $id = DB::table('direct_conversations')->insertGetId([
                 'type' => 'direct', 'profile_low_id' => $low, 'profile_high_id' => $high,
@@ -265,6 +265,7 @@ class DirectMessageController extends Controller
         abort_unless(str_starts_with($mime, 'image/') || str_starts_with($mime, 'video/'), 422, 'Format non pris en charge.');
         if (str_starts_with($mime, 'image/')) abort_if($file->getSize() > 15 * 1024 * 1024, 422, 'Image limitée à 15 Mo.');
         $path = Storage::disk('local')->putFile('message-attachments', $file);
+        abort_unless(is_string($path), 500, 'Le fichier n’a pas pu être enregistré.');
         $id = DB::table('direct_messages')->insertGetId([
             'conversation_id' => $conversation, 'sender_profile_id' => $profile->id, 'body' => '',
             'created_at' => now(), 'updated_at' => now(),
@@ -295,6 +296,11 @@ class DirectMessageController extends Controller
         [$profile] = $this->conversation($request, $conversation);
         $row = DB::table('direct_messages')->where('id', $message)->where('conversation_id', $conversation)->first();
         abort_unless($row && (int) $row->sender_profile_id === (int) $profile->id, 404);
+        $attachments = DB::table('direct_message_attachments')->where('message_id', $message)->get();
+        foreach ($attachments as $attachment) {
+            Storage::disk($attachment->disk)->delete($attachment->path);
+        }
+        DB::table('direct_message_attachments')->where('message_id', $message)->delete();
         DB::table('direct_messages')->where('id', $message)->update(['deleted_at' => now(), 'deleted_by_profile_id' => $profile->id, 'body' => '']);
         return response()->json(['deleted' => true]);
     }
