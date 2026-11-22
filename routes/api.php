@@ -129,6 +129,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('groups', [DirectMessageController::class, 'createGroup'])->middleware('throttle:catalog')->name('groups.store');
             Route::get('requests', [DirectMessageController::class, 'requests'])->middleware('throttle:catalog')->name('requests');
             Route::post('{conversation}/accept', [DirectMessageController::class, 'accept'])->whereNumber('conversation')->name('accept');
+            Route::delete('{conversation}/request', [DirectMessageController::class, 'decline'])->whereNumber('conversation')->name('decline');
             Route::get('attachments/{attachment}', [DirectMessageController::class, 'attachment'])->whereNumber('attachment')->name('attachments.show');
             Route::post('{conversation}/attachments', [DirectMessageController::class, 'attach'])->whereNumber('conversation')->middleware('throttle:catalog')->name('attachments.store');
             Route::delete('{conversation}/{message}', [DirectMessageController::class, 'deleteMessage'])->whereNumber(['conversation', 'message'])->name('messages.destroy');

@@ -192,6 +192,18 @@ class DirectMessageController extends Controller
         return response()->json(['accepted' => true]);
     }
 
+
+    public function decline(Request $request, int $conversation): JsonResponse
+    {
+        [$profile, $row] = $this->conversation($request, $conversation);
+        abort_unless($row->type === 'direct' && $row->status === 'pending'
+            && (int) $row->requested_by_profile_id !== (int) $profile->id, 403);
+        DB::table('direct_conversations')->where('id', $conversation)->update([
+            'status' => 'rejected', 'updated_at' => now(),
+        ]);
+        return response()->json(['declined' => true]);
+    }
+
     public function messages(Request $request, int $conversation): JsonResponse
     {
         [$profile, $row, $others] = $this->conversation($request, $conversation);
