@@ -216,7 +216,11 @@ class DirectMessageController extends Controller
             ->orderByDesc('id')->limit(50)->get()->reverse()->values();
         return response()->json([
             'conversation' => ['id' => (int) $row->id, 'type' => $row->type, 'name' => $row->name, 'status' => $row->status],
-            'participants' => $others->map(fn ($p) => ['id' => (int) $p->id, 'username' => $p->username, 'name' => $p->name, 'avatar' => $p->avatar])->values(),
+            'participants' => $others->map(function ($p) use ($conversation) {
+                $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $p->id)->whereNull('left_at')->first();
+                return ['id' => (int) $p->id, 'username' => $p->username, 'name' => $p->name, 'avatar' => $p->avatar, 'role' => $member?->role];
+            })->values(),
+            'is_admin' => DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->where('role', 'admin')->whereNull('left_at')->exists(),
             'participant' => $row->type === 'direct' ? ($others->first() ? ['id' => (int) $others->first()->id, 'username' => $others->first()->username, 'name' => $others->first()->name, 'avatar' => $others->first()->avatar] : null) : null,
             'data' => $query->map(function ($m) use ($profile) {
                 $attachments = DB::table('direct_message_attachments')->where('message_id', $m->id)->get();
