@@ -185,6 +185,9 @@ class DirectMessageController extends Controller
     {
         [$profile, $row] = $this->conversation($request, $conversation);
         abort_unless($row->status === 'pending' && (int) $row->requested_by_profile_id !== (int) $profile->id, 403);
+        foreach (array_diff($this->members($conversation), [(int) $profile->id]) as $otherId) {
+            abort_if($this->blocked((int) $profile->id, $otherId), 403, 'Cette demande ne peut plus être acceptée.');
+        }
         DB::table('direct_conversations')->where('id', $conversation)->update(['status' => 'accepted', 'updated_at' => now()]);
         return response()->json(['accepted' => true]);
     }
