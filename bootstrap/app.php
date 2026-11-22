@@ -44,7 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withBroadcasting(
         __DIR__.'/../routes/channels.php',
-        ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum', ResolveProfile::class], 'domain' => Hosts::apiDomain()],
+        ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum', ResolveProfile::class]],
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // The API runs behind Cloudflare and Laravel Forge's Nginx, which terminate TLS. Trust
