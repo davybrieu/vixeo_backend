@@ -75,7 +75,7 @@ return new class extends Migration
             $table->foreignId('blocker_profile_id')->constrained('profiles')->cascadeOnDelete();
             $table->foreignId('blocked_profile_id')->constrained('profiles')->cascadeOnDelete();
             $table->timestamps();
-            $table->unique(['blocker_profile_id', 'blocked_profile_id']);
+            $table->unique(['blocker_profile_id', 'blocked_profile_id'], 'dmb_blocker_blocked_unique');
         });
 
         Schema::table('direct_messages', function (Blueprint $table) {
