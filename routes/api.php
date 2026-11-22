@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
+use App\Http\Controllers\Api\V1\DirectMessageController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
@@ -123,6 +124,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+        Route::middleware(ResolveProfile::class)->prefix('messages')->name('messages.')->group(function () {
+            Route::get('/', [DirectMessageController::class, 'index'])->middleware('throttle:catalog')->name('index');
+            Route::post('with/{username}', [DirectMessageController::class, 'start'])->middleware('throttle:catalog')->name('start');
+            Route::get('{conversation}', [DirectMessageController::class, 'messages'])->whereNumber('conversation')->middleware('throttle:catalog')->name('show');
+            Route::post('{conversation}', [DirectMessageController::class, 'send'])->whereNumber('conversation')->middleware('throttle:catalog')->name('send');
+            Route::post('{conversation}/read', [DirectMessageController::class, 'read'])->whereNumber('conversation')->middleware('throttle:catalog')->name('read');
+        });
         Route::middleware(ResolveProfile::class)->prefix('social')->name('social.')->group(function () {
             Route::post('profiles/{username}/follow', [SocialProfileController::class, 'follow'])->name('profiles.follow');
             Route::delete('profiles/{username}/follow', [SocialProfileController::class, 'unfollow'])->name('profiles.unfollow');
