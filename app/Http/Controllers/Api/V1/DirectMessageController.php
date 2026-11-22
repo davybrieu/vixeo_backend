@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DirectMessageController extends Controller
@@ -61,7 +62,7 @@ class DirectMessageController extends Controller
 
         try {
             event(new MessageSent($conversationId, $messageId, $senderProfileId, $body));
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
         }
     }
