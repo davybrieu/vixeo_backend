@@ -76,6 +76,20 @@ return [
     ],
 
     /*
+    | Additional ratings shown only in the title's ratings modal (MDBList).
+    */
+    'mdblist' => [
+        'api_key' => env('MDBLIST_API_KEY', ''),
+        'base_url' => env('MDBLIST_BASE_URL', 'https://api.mdblist.com'),
+        'daily_requests' => (int) env('MDBLIST_DAILY_REQUESTS', 900),
+        'cache_store' => env('MDBLIST_CACHE_STORE'),
+        'ttl' => [
+            'ratings' => 259200,
+            'unknown' => 86400,
+        ],
+    ],
+
+    /*
     | IMDb ratings (docs/notes.md): the datasets of IMDb (title.ratings, title.episode), imported
     | every day by `php artisan imdb:import` into imdb_ratings / imdb_episodes.
     */
