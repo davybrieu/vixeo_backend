@@ -1,0 +1,36 @@
+name: Messaging tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/Http/Controllers/Api/V1/DirectMessageController.php'
+      - 'database/migrations/*direct*'
+      - 'routes/api.php'
+      - 'tests/Feature/Api/V1/DirectMessageTest.php'
+      - '.github/workflows/messaging-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run messaging feature tests
+        run: php artisan test --compact tests/Feature/Api/V1/DirectMessageTest.php
