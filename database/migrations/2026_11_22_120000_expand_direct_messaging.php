@@ -9,14 +9,27 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // MySQL uses the composite unique index to support the profile_low_id
-        // foreign key. Add a replacement index in a separate ALTER before dropping it.
-        Schema::table('direct_conversations', function (Blueprint $table) {
-            $table->index('profile_low_id');
-        });
+        // The migration may be retried after a partial deployment. Keep the
+        // profile_low_id index if it already exists; MySQL needs it for the FK.
+        $indexes = collect(DB::select('SHOW INDEX FROM direct_conversations'))->pluck('Key_name')->unique();
+
+        if (! $indexes->contains('direct_conversations_profile_low_id_index')) {
+            Schema::table('direct_conversations', function (Blueprint $table) {
+                $table->index('profile_low_id');
+            });
+        }
+
+        // The original composite unique may already have been removed by a
+        // previous partial attempt or restored during manual recovery.
+        $indexes = collect(DB::select('SHOW INDEX FROM direct_conversations'))->pluck('Key_name')->unique();
+
+        if ($indexes->contains('direct_conversations_profile_low_id_profile_high_id_unique')) {
+            Schema::table('direct_conversations', function (Blueprint $table) {
+                $table->dropUnique('direct_conversations_profile_low_id_profile_high_id_unique');
+            });
+        }
 
         Schema::table('direct_conversations', function (Blueprint $table) {
-            $table->dropUnique('direct_conversations_profile_low_id_profile_high_id_unique');
 
             $table->string('type', 12)->default('direct')->after('id');
             $table->string('name', 80)->nullable()->after('type');
