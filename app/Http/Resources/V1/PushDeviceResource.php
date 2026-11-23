@@ -12,7 +12,11 @@ class PushDeviceResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            /** Its real-time channel (Windows): `push-devices.{id}`. */
+            'id' => (int) $this->id,
             'platform' => (string) $this->platform,
+            /** How it receives the notifications: Firebase (`fid`, `token` for the older apps) or `realtime` (Windows). */
+            'target' => (string) $this->target,
             /** Profile whose new episodes come to this app. */
             'profile_id' => $this->profile_id === null ? null : (int) $this->profile_id,
             'new_episodes' => (bool) $this->new_episodes,

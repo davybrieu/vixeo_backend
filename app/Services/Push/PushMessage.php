@@ -29,7 +29,24 @@ final readonly class PushMessage
     ) {}
 
     /**
-     * The `message` of FCM's HTTP v1 API, without its token.
+     * The `notification` event of the real-time channel (apps without Firebase): the app shows it.
+     *
+     * @return array{title: string, body: string, path: string|null, channel: string, tag: string|null, image: string|null}
+     */
+    public function toRealtime(): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->body,
+            'path' => $this->path,
+            'channel' => $this->channel,
+            'tag' => $this->tag,
+            'image' => $this->image,
+        ];
+    }
+
+    /**
+     * The `message` of FCM's HTTP v1 API, without its target (token or installation ID).
      *
      * @return array<string, mixed>
      */

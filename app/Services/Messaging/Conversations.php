@@ -12,6 +12,7 @@ use App\Models\Profile;
 use App\Models\PushDevice;
 use App\Services\Push\PushDevices;
 use App\Services\Push\PushMessage;
+use App\Support\Realtime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -504,12 +505,6 @@ class Conversations
         }
     }
 
-    /** Real-time messaging is configured (Reverb, with its application key). */
-    public static function realtime(): bool
-    {
-        return config('broadcasting.default') === 'reverb' && filled(config('broadcasting.connections.reverb.key'));
-    }
-
     /** @return Builder<Conversation> */
     private function requestsQuery(Profile $me): Builder
     {
@@ -657,7 +652,7 @@ class Conversations
         ?int $senderId = null,
         string $body = '',
     ): void {
-        if (! self::realtime()) {
+        if (! Realtime::configured()) {
             return;
         }
         $event = new ConversationChanged($conversation->id, $change, $messageId, $senderId, $body);

@@ -5,6 +5,12 @@ Messaging** (FCM), le service de Google qu'utilisent les téléphones et les Goo
 une appli installée hors Play Store. L'appli ne programme rien elle-même : le serveur décide
 quand prévenir.
 
+**Windows n'a pas FCM** : ses notifications passent par le **canal temps réel** (Reverb,
+`docs/reverb.md`) et l'appli les affiche elle-même, **tant qu'elle est ouverte** (une appli
+installée par Inno Setup, sans identité de paquet MSIX, ne peut pas recevoir de notification
+Windows appli fermée). Mêmes réglages, mêmes messages que sur Android (voir « Le canal temps réel
+de Windows »).
+
 - **Nouveaux épisodes** : une tâche planifiée (`vixeo:push-episodes`, toutes les 15 minutes)
   cherche les épisodes sortis des séries de « Ma liste » et prévient les profils qui l'ont
   demandé.
@@ -22,7 +28,7 @@ quand prévenir.
 3. **Appli** : les valeurs de l'appli Android (fichier `google-services.json` du projet) vont
    dans les secrets GitHub de `vixeo_frontend` (voir `docs/android-release.md` de l'appli).
 4. Le planificateur (`schedule:run` chaque minute) lance `vixeo:push-episodes` ; sans
-   `FCM_CREDENTIALS`, il ne le lance pas.
+   `FCM_CREDENTIALS` ni Reverb, la commande s'arrête tout de suite.
 
 Vérifier : `php artisan vixeo:push "Test" --user=<votre adresse> --force`.
 
@@ -30,23 +36,46 @@ Vérifier : `php artisan vixeo:push "Test" --user=<votre adresse> --force`.
 
 Connecté (bearer), avec l'en-tête `X-Profile-Id` du profil en cours :
 
-- `PUT /push/device` : `token` (jeton FCM de l'appli), `platform` (`android`, `ios`),
-  `new_episodes` (le profil veut les nouveaux épisodes sur cet appareil), `social` (facultatif, vrai
-  par défaut : J'aime, abonnés et demandes d'abonnement, `docs/social.md`), `utc_offset` (heure de
-  l'appareil moins UTC, en minutes). À la connexion, au lancement, quand FCM change le jeton,
-  quand on change de profil et quand on active ou désactive les alertes. 201 la première fois,
-  200 ensuite.
-- `GET /push/device` : `{data, available}` ; `available` = le serveur envoie des notifications
-  (FCM configuré).
+- `PUT /push/device` : `platform` (`android`, `ios`, `windows`), puis sur Android et iOS
+  **`fid`**, l'identifiant d'installation Firebase de l'appli (firebase_messaging 17 :
+  `register()` / `onRegistered`), ou `token`, le jeton FCM des applis d'avant (toujours accepté) ;
+  rien sur Windows. Et `new_episodes` (le profil veut les nouveaux épisodes sur cet appareil),
+  `social` (facultatif, vrai par défaut : J'aime, abonnés, demandes d'abonnement et messages,
+  `docs/social.md`), `utc_offset` (heure de l'appareil moins UTC, en minutes). À la connexion, au
+  lancement, quand Firebase change l'identifiant, quand on change de profil et quand on active ou
+  désactive les alertes. 201 la première fois, 200 ensuite. La réponse donne `id` (le canal temps
+  réel de Windows) et `target` : `fid`, `token` ou `realtime`.
+- `GET /push/device` : `{data, available, realtime}` ; `available` = le serveur envoie les
+  notifications Firebase (FCM configuré), `realtime` = celles du canal temps réel (Reverb
+  configuré).
 - `DELETE /push/device` : désinscrit l'appli.
 - `POST /push/device/test` : une notification de test sur cet appareil (409 s'il n'est pas
-  inscrit, 503 si le serveur n'envoie pas de notification ou si FCM refuse).
+  inscrit, 503 si le serveur n'envoie pas de notification, si FCM refuse ou si l'appli Windows
+  n'écoute pas son canal).
 
 Une inscription par appli connectée (`push_devices`, une ligne par jeton Sanctum) : **se
 déconnecter la supprime** (clé étrangère sur `personal_access_tokens`, comme la suppression du
-compte ou la déconnexion d'un appareil). Le jeton FCM est **chiffré** en base (son SHA-256 sert
-à le retrouver) et n'est jamais renvoyé ; la même appli reconnectée remplace son ancienne
-inscription. Une appli que FCM ne connaît plus (désinstallée) est oubliée au premier envoi.
+compte ou la déconnexion d'un appareil). `target` dit comment elle reçoit : `fid`, `token`
+(applis d'avant l'identifiant d'installation) ou `realtime` (Windows, sans identifiant).
+L'identifiant ou le jeton est **chiffré** en base (son SHA-256 sert à le retrouver) et n'est
+jamais renvoyé ; la même appli reconnectée remplace son ancienne inscription, une appli mise à
+jour remplace son jeton par son identifiant. Une appli que FCM ne connaît plus (désinstallée) est
+oubliée au premier envoi.
+
+## Le canal temps réel de Windows (`App\Services\Push\RealtimePush`)
+
+Une inscription `realtime` a son canal privé **`push-devices.{id}`** (`id` de la réponse de
+`PUT /push/device`), autorisé par `POST /api/broadcasting/auth` pour l'appli connectée avec le
+jeton Sanctum de cette inscription seulement (`routes/channels.php`). Envoyer une notification,
+c'est diffuser l'événement **`notification`** (`App\Events\PushNotified` : `title`, `body`,
+`path`, `channel` = `episodes`, `general` ou `social`, `tag`, `image`) sur le canal de chaque
+appli **qui l'écoute à ce moment** : le serveur demande d'abord à Reverb les canaux occupés
+(`GET /apps/{id}/channels`). Une appli fermée compte comme un **échec** : les nouveaux épisodes
+sont donc annoncés à une tâche suivante (toutes les 15 min, tant qu'ils ont moins de 48 h), dès
+que l'appli est ouverte ; l'activité et les messages restent dans la page « Notifications » et la
+messagerie. Toutes les notifications (épisodes, activité, messages, test, `vixeo:push`) passent
+par `PushDevices::send`, qui choisit FCM ou ce canal pour chaque appli. Sans Reverb
+(`BROADCAST_CONNECTION` ≠ `reverb` ou sans `REVERB_APP_KEY`), rien n'est envoyé à Windows.
 
 ## Les nouveaux épisodes (`App\Services\Push\EpisodePush`)
 
@@ -100,8 +129,10 @@ php artisan vixeo:push "Bonjour !" --user=davy@exemple.fr --user=12 --title="Vix
 
 ## Envoi (`App\Services\Push\Fcm`)
 
-API HTTP v1 de FCM (`projects/{projet}/messages:send`), un appel par appareil, 20 à la fois.
+API HTTP v1 de FCM (`projects/{projet}/messages:send`), un appel par appareil, 20 à la fois ;
+l'appli est désignée par `message.fid` (identifiant d'installation) ou, pour les applis d'avant,
+`message.token` (déprécié par Google, qui accepte encore les deux).
 Connexion par le compte de service : un JWT signé avec sa clé (RS256) contre un jeton d'accès
 Google, gardé en cache jusqu'à 5 minutes avant son expiration. Réponses : envoyé, **invalide**
 (`UNREGISTERED`, 404, `SENDER_ID_MISMATCH` : l'appareil est supprimé) ou échec (réseau, quota,
-5xx : réessayé à la tâche suivante). Les jetons ne sont jamais journalisés.
+5xx : réessayé à la tâche suivante). Ni les identifiants ni les jetons ne sont journalisés.

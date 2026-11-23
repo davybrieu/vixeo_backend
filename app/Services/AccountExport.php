@@ -118,6 +118,7 @@ class AccountExport
             // Apps registered for push notifications (their Firebase token is left out).
             'notification_devices' => $user->pushDevices()->with('profile')->get()->map(fn (PushDevice $d) => [
                 'platform' => $d->platform,
+                'target' => $d->target,
                 'profile' => $d->profile?->name,
                 'new_episodes' => $d->new_episodes,
                 'social' => (bool) $d->social,

@@ -15,7 +15,9 @@ use Throwable;
  * Firebase Cloud Messaging, HTTP v1 API: the only place that sends push notifications
  * (docs/notifications.md). Signs in with the Firebase project's service account
  * (`services.fcm.credentials`): a JWT signed with its key is exchanged for an access token,
- * cached until shortly before it expires. Registration tokens are never logged.
+ * cached until shortly before it expires. An app is targeted by its Firebase installation ID
+ * (`fid`, firebase_messaging 17) or, for the apps before it, its registration token (`token`).
+ * Neither is ever logged.
  */
 class Fcm
 {
@@ -33,20 +35,21 @@ class Fcm
     }
 
     /**
-     * Sends [$message] to each token. The answer, by token: sent, invalid (the app was
-     * uninstalled or the token replaced: forget it) or failed (try again later).
+     * Sends [$message] to each app of [$targets] (installation ID or registration token → `fid` or
+     * `token`). The answer, by installation ID or token: sent, invalid (the app was uninstalled or
+     * its ID replaced: forget it) or failed (try again later).
      *
-     * @param  list<string>  $tokens
+     * @param  array<string, string>  $targets
      * @return array<string, PushResult>
      */
-    public function send(array $tokens, PushMessage $message): array
+    public function send(array $targets, PushMessage $message): array
     {
         $credentials = $this->credentials() ?? throw new RuntimeException('FCM is not configured.');
         $url = "https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send";
         $payload = $message->toFcm();
 
         $results = [];
-        foreach (array_chunk(array_values(array_unique($tokens)), self::CONCURRENCY) as $chunk) {
+        foreach (array_chunk($targets, self::CONCURRENCY, preserve_keys: true) as $chunk) {
             $results += $this->sendChunk($url, $chunk, $payload, retry: true);
         }
 
@@ -54,42 +57,43 @@ class Fcm
     }
 
     /**
-     * @param  list<string>  $tokens
+     * @param  array<string, string>  $targets
      * @param  array<string, mixed>  $payload
      * @return array<string, PushResult>
      */
-    private function sendChunk(string $url, array $tokens, array $payload, bool $retry): array
+    private function sendChunk(string $url, array $targets, array $payload, bool $retry): array
     {
         try {
             $accessToken = $this->accessToken();
         } catch (Throwable $e) {
             Log::warning('FCM sign-in failed: '.$e->getMessage());
 
-            return array_fill_keys($tokens, PushResult::Failed);
+            return array_fill_keys(array_keys($targets), PushResult::Failed);
         }
 
-        $responses = Http::pool(fn (Pool $pool) => array_map(
-            fn (string $token) => $pool->as($token)->withToken($accessToken)->acceptJson()->timeout(10)
-                ->post($url, ['message' => ['token' => $token] + $payload]),
-            $tokens,
-        ));
+        $responses = Http::pool(function (Pool $pool) use ($targets, $accessToken, $url, $payload) {
+            foreach ($targets as $registration => $field) {
+                $pool->as((string) $registration)->withToken($accessToken)->acceptJson()->timeout(10)
+                    ->post($url, ['message' => [$field => (string) $registration] + $payload]);
+            }
+        });
 
         $results = [];
         $expired = [];
-        foreach ($tokens as $token) {
-            $response = $responses[$token] ?? null;
+        foreach ($targets as $registration => $field) {
+            $response = $responses[$registration] ?? null;
             if (! $response instanceof Response) {
                 // Connection error.
-                $results[$token] = PushResult::Failed;
+                $results[$registration] = PushResult::Failed;
 
                 continue;
             }
             if ($response->status() === 401 && $retry) {
-                $expired[] = $token;
+                $expired[$registration] = $field;
 
                 continue;
             }
-            $results[$token] = self::result($response);
+            $results[$registration] = self::result($response);
         }
 
         if ($expired !== []) {
@@ -119,7 +123,7 @@ class Fcm
 
         if ($response->status() === 404 || in_array('UNREGISTERED', $codes, true) || in_array('SENDER_ID_MISMATCH', $codes, true)
             || ($response->status() === 400 && ($status === 'INVALID_ARGUMENT' || in_array('INVALID_ARGUMENT', $codes, true))
-                && str_contains(strtolower($text), 'registration token'))) {
+                && preg_match('/registration token|installation id|\bfid\b/i', $text) === 1)) {
             return PushResult::Invalid;
         }
 

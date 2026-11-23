@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Push\EpisodePush;
-use App\Services\Push\Fcm;
+use App\Services\Push\PushDevices;
 use Illuminate\Console\Command;
 
 /**
@@ -18,11 +18,11 @@ class PushEpisodes extends Command
 
     protected $description = 'Send the new-episode push notifications of the « Ma liste » TV shows';
 
-    public function handle(EpisodePush $push, Fcm $fcm): int
+    public function handle(EpisodePush $push, PushDevices $devices): int
     {
         $dryRun = (bool) $this->option('dry-run');
-        if (! $dryRun && ! $fcm->configured()) {
-            $this->error('Notifications non configurées : FCM_CREDENTIALS est vide ou illisible (docs/notifications.md).');
+        if (! $dryRun && ! $devices->available()) {
+            $this->error('Notifications non configurées : ni FCM_CREDENTIALS ni Reverb (docs/notifications.md).');
 
             return self::FAILURE;
         }

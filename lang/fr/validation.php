@@ -203,6 +203,7 @@ return [
         'code' => 'code',
         'platform' => 'plateforme',
         'token' => 'jeton de notification',
+        'fid' => 'identifiant de notification',
         'new_episodes' => 'nouveaux épisodes',
         'utc_offset' => 'décalage horaire',
         'build' => 'numéro de build',

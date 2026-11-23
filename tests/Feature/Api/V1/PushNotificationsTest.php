@@ -1,15 +1,21 @@
 <?php
 
 use App\Enums\ItemType;
+use App\Events\PushNotified;
 use App\Models\EpisodeNotification;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\PushDevice;
 use App\Models\User;
 use App\Services\AccountExport;
+use App\Services\Push\PushDevices;
+use App\Services\Push\PushMessage;
+use App\Services\Push\RealtimePush;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Mockery\MockInterface;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
 /** A Firebase service account with a real RSA key (the JWT is signed), in base64. */
@@ -46,10 +52,13 @@ function fakePush(array $unregistered = [], array $more = [], array $failing = [
         'fcm.googleapis.com/v1/projects/vixeo-test/messages:send' => function (ClientRequest $request) use ($sent, $unregistered, $failing) {
             expect($request->header('Authorization')[0])->toBe('Bearer ya29.test');
             $message = $request->data()['message'];
-            if (in_array($message['token'], $failing, true)) {
+            // The installation ID (current apps) or the registration token (older ones), never both.
+            $target = $message['fid'] ?? $message['token'];
+            expect(isset($message['fid'], $message['token']))->toBeFalse();
+            if (in_array($target, $failing, true)) {
                 return Http::response(['error' => ['code' => 503, 'status' => 'UNAVAILABLE', 'message' => 'The service is currently unavailable.']], 503);
             }
-            if (in_array($message['token'], $unregistered, true)) {
+            if (in_array($target, $unregistered, true)) {
                 return Http::response(['error' => [
                     'code' => 404,
                     'status' => 'NOT_FOUND',
@@ -233,9 +242,9 @@ describe('the app’s registration', function () {
     it('checks what it receives, in French', function () {
         [, , $bearer] = pushApp();
 
-        $this->withToken($bearer)->putJson('/api/v1/push/device', ['token' => '', 'platform' => 'windows', 'new_episodes' => 'peut-être'])
+        $this->withToken($bearer)->putJson('/api/v1/push/device', ['token' => '', 'platform' => 'web', 'new_episodes' => 'peut-être'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['token', 'platform', 'new_episodes'])
+            ->assertJsonValidationErrors(['token', 'fid', 'platform', 'new_episodes'])
             ->assertJsonPath('errors.platform.0', 'La valeur sélectionnée pour plateforme n\'est pas valide.');
         $this->app['auth']->forgetGuards();
         $this->withoutToken()->putJson('/api/v1/push/device', [])->assertUnauthorized();
@@ -274,6 +283,148 @@ describe('the app’s registration', function () {
 
         $this->withToken($bearer)->postJson('/api/v1/push/device/test')->assertStatus(409);
         expect(PushDevice::count())->toBe(0);
+    });
+});
+
+describe('the Firebase installation ID (firebase_messaging 17)', function () {
+    it('registers the installation ID and sends with it', function () {
+        $sent = fakePush();
+        [, , $bearer] = pushApp();
+
+        $this->withToken($bearer)->putJson('/api/v1/push/device', ['fid' => 'fid-1', 'platform' => 'android', 'new_episodes' => false])
+            ->assertCreated()
+            ->assertJsonPath('data.target', 'fid')
+            ->assertJsonMissingPath('data.fid');
+        expect(PushDevice::sole()->token)->toBe('fid-1')->and(DB::table('push_devices')->value('token'))->not->toContain('fid-1');
+
+        $this->withToken($bearer)->postJson('/api/v1/push/device/test')->assertOk();
+        expect($sent)->toHaveCount(1)->and($sent[0]['fid'])->toBe('fid-1')->and($sent[0])->not->toHaveKey('token');
+    });
+
+    it('replaces the token of an updated app by its installation ID', function () {
+        $sent = fakePush(unregistered: ['fid-gone']);
+        [, , $bearer] = pushApp();
+        $register = fn (array $target) => $this->withToken($bearer)
+            ->putJson('/api/v1/push/device', $target + ['platform' => 'android', 'new_episodes' => false])->assertSuccessful();
+
+        $register(['token' => 'fcm-old']);
+        $register(['fid' => 'fid-new']);
+        expect(PushDevice::count())->toBe(1)->and(PushDevice::sole()->target)->toBe('fid');
+        $this->withToken($bearer)->postJson('/api/v1/push/device/test')->assertOk();
+        expect(collect($sent)->pluck('fid')->all())->toBe(['fid-new']);
+
+        // An installation ID FCM no longer knows: forgotten, like a token.
+        $register(['fid' => 'fid-gone']);
+        $this->withToken($bearer)->postJson('/api/v1/push/device/test')->assertStatus(409);
+        expect(PushDevice::count())->toBe(0);
+    });
+});
+
+describe('the real-time channel of Windows', function () {
+    beforeEach(function () {
+        config([
+            'broadcasting.default' => 'reverb',
+            'broadcasting.connections.reverb.key' => 'key',
+            'broadcasting.connections.reverb.secret' => 'secret',
+            'broadcasting.connections.reverb.app_id' => '1',
+        ]);
+        Event::fake([PushNotified::class]);
+    });
+
+    /** Reverb, faked: the registrations whose app listens to its channel, at each send. */
+    function listeningApps(array ...$answers): void
+    {
+        test()->partialMock(RealtimePush::class, fn (MockInterface $mock) => $mock->shouldReceive('listening')->andReturn(...$answers));
+    }
+
+    it('registers Windows without Firebase', function () {
+        [, $profile, $bearer] = pushApp();
+
+        $id = $this->withToken($bearer)->withHeader('X-Profile-Id', (string) $profile->id)
+            ->putJson('/api/v1/push/device', ['platform' => 'windows', 'token' => 'ignored', 'new_episodes' => true, 'social' => true])
+            ->assertCreated()
+            ->assertJsonPath('data.target', 'realtime')
+            ->assertJsonPath('data.platform', 'windows')
+            ->json('data.id');
+
+        $device = PushDevice::sole();
+        expect($device->id)->toBe($id)->and($device->token)->toBeNull()->and($device->token_hash)->toBeNull();
+        $this->withToken($bearer)->getJson('/api/v1/push/device')->assertOk()->assertJsonPath('realtime', true);
+
+        config(['broadcasting.default' => 'null']);
+        $this->withToken($bearer)->getJson('/api/v1/push/device')->assertOk()->assertJsonPath('realtime', false);
+    });
+
+    it('sends to the app while it listens to its channel', function () {
+        config(['services.fcm.credentials' => null]);
+        [, , $bearer] = pushApp();
+        $id = $this->withToken($bearer)->putJson('/api/v1/push/device', ['platform' => 'windows', 'new_episodes' => false])->json('data.id');
+
+        listeningApps([], [$id, 999]);
+        $this->withToken($bearer)->postJson('/api/v1/push/device/test')->assertStatus(503)
+            ->assertJsonPath('message', 'La notification n’a pas pu être envoyée.');
+        Event::assertNotDispatched(PushNotified::class);
+
+        $this->withToken($bearer)->postJson('/api/v1/push/device/test')->assertOk();
+        Event::assertDispatched(PushNotified::class, function (PushNotified $event) use ($id) {
+            $channels = array_map(fn ($channel) => $channel->name, $event->broadcastOn());
+
+            return $channels === ["private-push-devices.{$id}"]
+                && $event->broadcastAs() === 'notification'
+                && $event->broadcastWith() === [
+                    'title' => 'Notification de test',
+                    'body' => 'Les notifications de Vixeo fonctionnent sur cet appareil.',
+                    'path' => '/profil/notifications',
+                    'channel' => 'general',
+                    'tag' => 'test',
+                    'image' => null,
+                ];
+        });
+    });
+
+    it('authorizes the channel for its app only', function () {
+        [$user, , $bearer] = pushApp();
+        $id = $this->withToken($bearer)->putJson('/api/v1/push/device', ['platform' => 'windows', 'new_episodes' => false])->json('data.id');
+        $other = $user->createToken('Pixel 9')->plainTextToken;
+        // The channels were registered on the broadcaster of the tests (null): again on Reverb's.
+        require base_path('routes/channels.php');
+        $auth = ['socket_id' => '1234.5678', 'channel_name' => "private-push-devices.{$id}"];
+
+        $this->withToken($bearer)->postJson('/api/broadcasting/auth', $auth)->assertOk()->assertJsonStructure(['auth']);
+        $this->app['auth']->forgetGuards();
+        $this->withToken($other)->postJson('/api/broadcasting/auth', $auth)->assertForbidden();
+    });
+
+    it('announces the new episodes once the app is open', function () {
+        $this->travelTo('2026-11-20 14:00:00');
+        $sent = fakeShows();
+        $profile = Profile::factory()->create(['name' => 'Davy']);
+        favoriteShow($profile, 100088);
+        $windows = pushDevice($profile, 'unused', ['token' => null, 'token_hash' => null, 'target' => 'realtime', 'platform' => 'windows']);
+
+        listeningApps([], [$windows->id]);
+        $this->artisan('vixeo:push-episodes')->assertSuccessful();
+        expect(EpisodeNotification::count())->toBe(0)->and($sent)->toHaveCount(0);
+
+        $this->artisan('vixeo:push-episodes')->assertSuccessful();
+        expect(EpisodeNotification::count())->toBe(2);
+        Event::assertDispatched(PushNotified::class, fn (PushNotified $event) => $event->devices === [$windows->id]
+            && $event->message->channel === 'episodes'
+            && $event->message->path === '/titre/tv/100088');
+    });
+
+    it('sends the social activity to the apps of both kinds', function () {
+        $sent = fakePush();
+        $profile = Profile::factory()->create();
+        pushDevice($profile, 'fid-phone', ['target' => 'fid']);
+        $windows = pushDevice($profile, 'unused', ['token' => null, 'token_hash' => null, 'target' => 'realtime', 'platform' => 'windows']);
+        listeningApps([$windows->id]);
+
+        $report = app(PushDevices::class)->send(PushDevice::all(), new PushMessage('Nouvel abonné', 'Léa vous suit.', '/membre/lea', PushMessage::SOCIAL));
+
+        expect($report)->toBe(['sent' => 2, 'failed' => 0, 'removed' => 0])
+            ->and(collect($sent)->pluck('fid')->all())->toBe(['fid-phone']);
+        Event::assertDispatched(PushNotified::class, fn (PushNotified $event) => $event->devices === [$windows->id]);
     });
 });
 
@@ -387,7 +538,7 @@ describe('new episodes (vixeo:push-episodes)', function () {
         expect($sent)->toHaveCount(1)->and(PushDevice::count())->toBe(1)->and(EpisodeNotification::count())->toBe(2);
     });
 
-    it('is not run without FCM', function () {
+    it('is not run without FCM nor Reverb', function () {
         config(['services.fcm.credentials' => null]);
         $this->artisan('vixeo:push-episodes')->assertFailed();
     });

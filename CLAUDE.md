@@ -351,12 +351,21 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Notifications push** (doc : `docs/notifications.md`, demande du développeur : un serveur de
   push, pas de notifications programmées par l'appli) : **Firebase Cloud Messaging**, API HTTP v1
   (`App\Services\Push\Fcm`, compte de service `FCM_CREDENTIALS` hors du dépôt : chemin du JSON
-  ou `base64:…` ; vide = aucune notification). L'appli s'inscrit (`PUT /push/device` : jeton FCM,
-  plateforme, `new_episodes`, `utc_offset`, profil de `X-Profile-Id` ; `GET`, `DELETE`,
+  ou `base64:…` ; vide = aucune notification). L'appli s'inscrit (`PUT /push/device` :
+  **`fid`**, identifiant d'installation Firebase (firebase_messaging 17, le 23/11/2026 ; FCM
+  envoie avec `message.fid`), ou `token` (jeton des applis d'avant, toujours accepté), plateforme,
+  `new_episodes`, `utc_offset`, profil de `X-Profile-Id` ; `GET`, `DELETE`,
   `POST /push/device/test`) ; table `push_devices` (**une ligne par jeton Sanctum**, supprimée à
-  la déconnexion ; jeton FCM **chiffré**, retrouvé par son SHA-256, jamais renvoyé ; oubliée quand
-  FCM ne la connaît plus). `vixeo:push-episodes` (planifiée toutes les 15 min, aussi à la main,
-  `--user=`, `--dry-run`) : `EpisodePush` annonce les épisodes sortis depuis moins de 48 h des
+  la déconnexion ; `target` = `fid`, `token` ou `realtime` ; identifiant **chiffré**, retrouvé par
+  son SHA-256, jamais renvoyé ; oubliée quand FCM ne la connaît plus). **Windows (pas de FCM) :
+  canal temps réel** (demande du développeur, 23/11/2026) : `platform: windows`, sans
+  identifiant (`target: realtime`) ; `App\Services\Push\RealtimePush` diffuse l'événement
+  `notification` (`App\Events\PushNotified`) sur `push-devices.{id}` (autorisé pour le seul jeton
+  Sanctum de l'inscription) aux applis qui l'écoutent (canaux occupés de Reverb) ; appli fermée =
+  échec (épisodes réessayés à la tâche suivante). Tout envoi passe par `PushDevices::send`, qui
+  choisit FCM ou Reverb ; `available()` = l'un des deux configuré, `GET /push/device` donne
+  `available` (FCM) et `realtime` (Reverb). `vixeo:push-episodes` (planifiée toutes les 15 min,
+  aussi à la main, `--user=`, `--dry-run`) : `EpisodePush` annonce les épisodes sortis depuis moins de 48 h des
   séries de « Ma liste » (`UpcomingEpisodes::availableBetween`), jamais avant l'ajout de la série
   ni l'activation des alertes, jamais deux fois (`episode_notifications`), pas la nuit sur
   l'appareil (23 h – 8 h), une notification par série (canal Android `episodes`, `data.path` =
@@ -406,7 +415,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   Vixeo (plus de compte TMDb lié).
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos).
-- Fait aussi : notifications push (FCM) des nouveaux épisodes des séries de « Ma liste »
+- Fait aussi : notifications push (FCM, par identifiant d'installation ; Windows par le canal
+  temps réel, appli ouverte) des nouveaux épisodes des séries de « Ma liste »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
 - Fait aussi : réseaux sociaux du profil, compte privé et demandes d'abonnement, J'aime sur les
   avis, notifications (page de l'appli et push) et prochains épisodes de « Ma liste »

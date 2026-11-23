@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\PushDevice;
 use App\Models\User;
-use App\Services\Push\Fcm;
 use App\Services\Push\PushDevices;
 use App\Services\Push\PushMessage;
 use Illuminate\Console\Command;
@@ -28,10 +27,10 @@ class SendPush extends Command
 
     protected $description = 'Send a push notification to every app, or to the apps of some accounts';
 
-    public function handle(PushDevices $devices, Fcm $fcm): int
+    public function handle(PushDevices $devices): int
     {
-        if (! $fcm->configured()) {
-            $this->error('Notifications non configurées : FCM_CREDENTIALS est vide ou illisible (docs/notifications.md).');
+        if (! $devices->available()) {
+            $this->error('Notifications non configurées : ni FCM_CREDENTIALS ni Reverb (docs/notifications.md).');
 
             return self::FAILURE;
         }

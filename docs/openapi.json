@@ -4727,7 +4727,7 @@
         "/v1/push/device": {
             "get": {
                 "operationId": "v1.push.device.show",
-                "description": "`available`: false when the server sends no notification (not configured); `data` is null\nwhen the app is not registered.",
+                "description": "`available`: false when the server sends no Firebase notification (not configured);\n`realtime`: the same for the real-time channel of Windows; `data` is null when the app is not\nregistered.",
                 "summary": "This app's registration",
                 "tags": [
                     "Notifications",
@@ -4753,12 +4753,17 @@
                                         },
                                         "available": {
                                             "type": "boolean",
-                                            "description": "Notifications sent by the server."
+                                            "description": "Firebase notifications sent by the server (Android, iOS)."
+                                        },
+                                        "realtime": {
+                                            "type": "boolean",
+                                            "description": "Notifications of the real-time channel sent by the server (Windows)."
                                         }
                                     },
                                     "required": [
                                         "data",
-                                        "available"
+                                        "available",
+                                        "realtime"
                                     ]
                                 }
                             }
@@ -4771,7 +4776,7 @@
             },
             "put": {
                 "operationId": "v1.push.device.update",
-                "description": "At sign-in, at launch, when the token changes, when the profile in use changes and when\nthe new-episode alerts are turned on or off. Episodes out before the alerts are turned on\n(or before the profile is used on the app) are not announced. 201 the first time, 200 after.",
+                "description": "At sign-in, at launch, when the installation ID changes, when the profile in use changes and\nwhen the new-episode alerts are turned on or off. `fid` (or `token` for the older apps) on\nAndroid and iOS, neither on Windows. Episodes out before the alerts are turned on (or before\nthe profile is used on the app) are not announced. 201 the first time, 200 after.",
                 "summary": "Register this app",
                 "tags": [
                     "Notifications",
@@ -4834,7 +4839,7 @@
         "/v1/push/device/test": {
             "post": {
                 "operationId": "v1.push.device.test",
-                "description": "409 when the app is not registered (or no longer known by FCM), 503 when the server sends\nno notification or FCM refuses.",
+                "description": "409 when the app is not registered (or no longer known by FCM), 503 when the server sends\nno notification, FCM refuses or (Windows) the app does not listen to its real-time channel.",
                 "summary": "Send a test notification to this app",
                 "tags": [
                     "Notifications",
@@ -9200,8 +9205,16 @@
             "PushDeviceResource": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Its real-time channel (Windows): `push-devices.{id}`."
+                    },
                     "platform": {
                         "type": "string"
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "How it receives the notifications: Firebase (`fid`, `token` for the older apps) or `realtime` (Windows)."
                     },
                     "profile_id": {
                         "type": [
@@ -9231,7 +9244,9 @@
                     }
                 },
                 "required": [
+                    "id",
                     "platform",
+                    "target",
                     "profile_id",
                     "new_episodes",
                     "social",
@@ -9455,17 +9470,24 @@
             "RegisterPushDeviceRequest": {
                 "type": "object",
                 "properties": {
-                    "token": {
-                        "type": "string",
-                        "description": "Firebase Cloud Messaging registration token of the app. Kept encrypted, never sent back.",
-                        "maxLength": 4096
-                    },
                     "platform": {
                         "type": "string",
+                        "description": "`windows`: no Firebase, the notifications come by the real-time channel while the app runs.",
                         "enum": [
                             "android",
-                            "ios"
+                            "ios",
+                            "windows"
                         ]
+                    },
+                    "fid": {
+                        "type": "string",
+                        "description": "Firebase installation ID of the app (firebase_messaging 17). Kept encrypted, never sent back. Not for Windows.",
+                        "maxLength": 4096
+                    },
+                    "token": {
+                        "type": "string",
+                        "description": "Firebase registration token of the apps before the installation ID (still accepted). Not for Windows.",
+                        "maxLength": 4096
                     },
                     "new_episodes": {
                         "type": "boolean",
@@ -9473,7 +9495,7 @@
                     },
                     "social": {
                         "type": "boolean",
-                        "description": "Social activity of the active profile: likes of its reviews, followers, follow requests (default true)."
+                        "description": "Social activity of the active profile: likes of its reviews, followers, follow requests, messages (default true)."
                     },
                     "utc_offset": {
                         "type": "integer",
@@ -9483,7 +9505,6 @@
                     }
                 },
                 "required": [
-                    "token",
                     "platform",
                     "new_episodes"
                 ],

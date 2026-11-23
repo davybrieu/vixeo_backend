@@ -1,8 +1,10 @@
-# Messagerie temps réel (Laravel Reverb)
+# Temps réel (Laravel Reverb)
 
-La messagerie utilise Reverb sur le même domaine que l'API : `api.vixeo.app/app/{key}`.
-Aucun port WebSocket public n'est nécessaire : Nginx termine TLS sur 443 et relaie les
-connexions vers Reverb sur `127.0.0.1:8080`.
+La messagerie et les notifications de Windows (`docs/notifications.md`) utilisent Reverb sur le
+même domaine que l'API : `api.vixeo.app/app/{key}` pour les applis (WebSocket),
+`api.vixeo.app/apps/{id}/…` pour Laravel (API HTTP de Reverb : diffusion des événements, canaux
+écoutés). Aucun port public n'est nécessaire : Nginx termine TLS sur 443 et relaie les deux vers
+Reverb sur `127.0.0.1:8080`.
 
 ## Variables Forge
 
@@ -44,10 +46,12 @@ php artisan reverb:restart
 ## Nginx : proxy WebSocket
 
 Dans la configuration Nginx du site `api.vixeo.app`, ajouter ce bloc dans le serveur HTTPS,
-avant le bloc PHP/Laravel :
+avant le bloc PHP/Laravel. Il relaie `/app/` (les applis) **et `/apps/`** (Laravel, qui envoie
+les événements à `REVERB_HOST` ; sans lui, ses appels arrivent à Laravel lui-même et ne sont
+jamais diffusés) :
 
 ```nginx
-location /app/ {
+location ~ ^/apps?/ {
     proxy_http_version 1.1;
     proxy_set_header Host $http_host;
     proxy_set_header Scheme $scheme;
@@ -80,10 +84,18 @@ la connexion temps réel se reconnecte automatiquement ; il n'y a plus de pollin
 
 ## Ce qui passe par Reverb
 
-Une seule connexion par appli (`MessagesRealtime` dans `vixeo_frontend`), un canal privé par
-conversation ouverte : `private-messages.{id}`, autorisé par `POST /api/broadcasting/auth` (jeton
-Bearer et `X-Profile-Id` ; membres actifs, `routes/channels.php`). Événements
-(`App\Events\ConversationChanged`, envoyés après la réponse) : `message.sent`, `message.deleted`,
-`message.read`, `message.updated` ; l'appli relit alors la conversation (`docs/messagerie.md`).
+Une seule connexion par appli (`Realtime` dans `vixeo_frontend`), autorisée canal par canal par
+`POST /api/broadcasting/auth` (jeton Bearer et `X-Profile-Id`, `routes/channels.php`) :
+
+- **une conversation ouverte** : `private-messages.{id}` (ses membres actifs). Événements
+  (`App\Events\ConversationChanged`, envoyés après la réponse) : `message.sent`,
+  `message.deleted`, `message.read`, `message.updated` ; l'appli relit alors la conversation
+  (`docs/messagerie.md`) ;
+- **les notifications de Windows** : `private-push-devices.{id}` (l'inscription aux
+  notifications de l'appli, pour son seul jeton Sanctum), ouvert tant que l'appli tourne.
+  Événement `notification` (`App\Events\PushNotified`), affiché par l'appli
+  (`docs/notifications.md`).
+
 Sans `REVERB_APP_KEY` côté serveur, rien n'est envoyé ; sans clé dans l'appli (variable GitHub
-`REVERB_APP_KEY` absente), elle ne se connecte pas et relit la conversation à chaque envoi.
+`REVERB_APP_KEY` absente), elle ne se connecte pas : elle relit la conversation à chaque envoi et
+Windows ne reçoit pas de notification.
