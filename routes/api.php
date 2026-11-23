@@ -128,6 +128,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
         // Messaging between adult profiles (docs/messagerie.md); real time: routes/channels.php.
         Route::middleware([ResolveProfile::class, 'throttle:messages'])->prefix('messages')->name('messages.')->group(function () {
             Route::get('/', [DirectMessageController::class, 'index'])->name('index');
+            Route::get('count', [DirectMessageController::class, 'count'])->name('count');
             Route::get('requests', [DirectMessageController::class, 'requests'])->name('requests');
             Route::post('with/{username}', [DirectMessageController::class, 'start'])->name('start');
             Route::post('groups', [DirectMessageController::class, 'createGroup'])->name('groups.store');

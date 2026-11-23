@@ -92,6 +92,20 @@ class Conversations
     }
 
     /**
+     * Messages of the others [me] has not read, in all its conversations, the requests it received
+     * included (the badge of « Messages » in the apps). One query.
+     */
+    public function unreadCount(Profile $me): int
+    {
+        return $this->unread(DirectMessage::query(), $me)
+            ->whereIn('conversation_id', Conversation::query()
+                ->select('id')
+                ->whereIn('id', $this->conversationIdsOf($me))
+                ->where('status', '!=', Conversation::REJECTED))
+            ->count();
+    }
+
+    /**
      * A conversation of [me], with its active members and their profiles. 404 for a conversation
      * it is not (or no longer) a member of, a declined request, or a member that became a child's
      * profile.

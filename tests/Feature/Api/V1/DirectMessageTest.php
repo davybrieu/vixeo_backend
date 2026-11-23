@@ -90,6 +90,36 @@ it('handles message requests, acceptance, read receipts and blocking', function 
     actingAsProfile($alice)->postJson("/api/v1/messages/{$conversation}", ['body' => 'Merci'])->assertCreated();
 });
 
+it('counts the unread messages of every conversation, requests included', function () {
+    $me = messagingProfile('me');
+    $alice = messagingProfile('alice');
+    $bob = messagingProfile('bob');
+    $carol = messagingProfile('carol');
+
+    // Alice's conversation: two messages to read.
+    $withAlice = conversationWith($me, $alice);
+    actingAsProfile($alice)->postJson("/api/v1/messages/{$withAlice}", ['body' => 'Un'])->assertCreated();
+    actingAsProfile($alice)->postJson("/api/v1/messages/{$withAlice}", ['body' => 'Deux'])->assertCreated();
+    // Bob's request, not answered yet: one more.
+    $fromBob = conversationWith($bob, $me, accepted: false);
+    actingAsProfile($bob)->postJson("/api/v1/messages/{$fromBob}", ['body' => 'Salut'])->assertCreated();
+    // My own request to Carol and my own messages: not counted.
+    $toCarol = conversationWith($me, $carol, accepted: false);
+    actingAsProfile($me)->postJson("/api/v1/messages/{$toCarol}", ['body' => 'Coucou'])->assertCreated();
+
+    actingAsProfile($me)->getJson('/api/v1/messages/count')
+        ->assertOk()
+        ->assertExactJson(['unread_count' => 3, 'requests_count' => 1]);
+
+    actingAsProfile($me)->postJson("/api/v1/messages/{$withAlice}/read")->assertOk();
+    actingAsProfile($me)->getJson('/api/v1/messages/count')->assertJsonPath('unread_count', 1);
+
+    // A declined request no longer counts.
+    actingAsProfile($me)->deleteJson("/api/v1/messages/{$fromBob}/request")->assertOk();
+    actingAsProfile($me)->getJson('/api/v1/messages/count')
+        ->assertExactJson(['unread_count' => 0, 'requests_count' => 0]);
+});
+
 it('hides a declined request from both profiles and lets it be made again', function () {
     $alice = messagingProfile('alice');
     $bob = messagingProfile('bob');

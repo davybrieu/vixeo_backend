@@ -51,6 +51,23 @@ class DirectMessageController extends Controller
     }
 
     /**
+     * The unread messages.
+     *
+     * Messages of the others the active profile has not read, in all its conversations, the
+     * requests it received included: the badge of « Messages » in the apps (« 9+ » above 9).
+     * `requests_count`: requests waiting for an answer.
+     */
+    public function count(Request $request): JsonResponse
+    {
+        $me = $this->me($request);
+
+        return response()->json([
+            'unread_count' => $this->conversations->unreadCount($me),
+            'requests_count' => $this->conversations->requestsCount($me),
+        ]);
+    }
+
+    /**
      * The requests received.
      *
      * Direct conversations other profiles started with the active profile, waiting for it to

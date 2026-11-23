@@ -3095,6 +3095,45 @@
                 }
             }
         },
+        "/v1/messages/count": {
+            "get": {
+                "operationId": "v1.messages.count",
+                "description": "Messages of the others the active profile has not read, in all its conversations, the\nrequests it received included: the badge of \u00ab Messages \u00bb in the apps (\u00ab 9+ \u00bb above 9).\n`requests_count`: requests waiting for an answer.",
+                "summary": "The unread messages",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "requests_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "unread_count",
+                                        "requests_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/messages/requests": {
             "get": {
                 "operationId": "v1.messages.requests",
