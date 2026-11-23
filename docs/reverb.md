@@ -67,8 +67,7 @@ autorisés pour le domaine API.
 
 ## Déploiement
 
-1. Déployer le backend et exécuter `composer install --no-interaction --prefer-dist`.
-   Le workflow GitHub met à jour `composer.lock` après l'ajout de Reverb.
+1. Déployer le backend (`composer install --no-interaction --prefer-dist`, `composer.lock` à jour).
 2. Définir les variables Forge ci-dessus.
 3. Ajouter le proxy Nginx et le daemon Reverb.
 4. Définir la variable GitHub Actions `REVERB_APP_KEY` dans `vixeo_frontend`, puis lancer
@@ -78,3 +77,13 @@ autorisés pour le domaine API.
 
 Les messages restent stockés et récupérables par l'API. Si le serveur Reverb est indisponible,
 la connexion temps réel se reconnecte automatiquement ; il n'y a plus de polling périodique.
+
+## Ce qui passe par Reverb
+
+Une seule connexion par appli (`MessagesRealtime` dans `vixeo_frontend`), un canal privé par
+conversation ouverte : `private-messages.{id}`, autorisé par `POST /api/broadcasting/auth` (jeton
+Bearer et `X-Profile-Id` ; membres actifs, `routes/channels.php`). Événements
+(`App\Events\ConversationChanged`, envoyés après la réponse) : `message.sent`, `message.deleted`,
+`message.read`, `message.updated` ; l'appli relit alors la conversation (`docs/messagerie.md`).
+Sans `REVERB_APP_KEY` côté serveur, rien n'est envoyé ; sans clé dans l'appli (variable GitHub
+`REVERB_APP_KEY` absente), elle ne se connecte pas et relit la conversation à chaque envoi.

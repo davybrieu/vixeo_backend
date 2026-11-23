@@ -212,8 +212,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   l'identifiant IMDb (`App\Services\Imdb\ImdbRatings`) : `imdb_id` du film / `external_ids` de
   la série, sinon les *External IDs* de TMDb ; épisode : série + saison + numéro dans
   `imdb_episodes`, sinon ses *External IDs* (épisodes diffusés seulement). Sans note IMDb, les
-  applis affichent celle de TMDb. **Plus de MDBList, de `GET /catalog/ratings` ni de réglage
-  `rating_source`** (supprimés le 21/11/2026, demande du développeur ; ne pas les réintroduire).
+  applis affichent celle de TMDb. **Plus de réglage `rating_source`** (supprimé le 21/11/2026).
+  **MDBList revient pour la fenêtre « Notes » seulement** (le développeur, 22/11/2026) :
+  `GET /catalog/ratings?ids=movie:550` (`App\Services\Ratings\MdbListRatings`,
+  `TitleRatingsResource`) donne Trakt, Letterboxd, Rotten Tomatoes (critiques et public),
+  Metacritic et MyAnimeList, chacun sur son échelle, **appelé seulement à l'ouverture de la
+  fenêtre** (jamais par carte ni par fiche) ; cache commun de 3 jours (1 jour pour un titre
+  inconnu), lots de 200, budget `MDBLIST_DAILY_REQUESTS`, pause après un refus ou une panne ;
+  clé `MDBLIST_API_KEY` (vide : `available: false`). Tests :
+  `tests/Feature/Api/V1/Catalog/MdbListRatingsTest.php`.
   **Toutes les listes de titres ont `ratings`** (demande du développeur, 21/11/2026 : la note
   IMDb partout, TMDb seulement en secours) : avec le `summary` (`TitleSummaries::add` : accueil,
   recherche, discover, recommandations et leur « Voir tout », « Voir tout » des rangées, « Connu
@@ -267,6 +274,20 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   de `PUT /push/device`, canal Android `social`).
 - **Requêtes** : hors production, `Model::preventLazyLoading()` (`AppServiceProvider`) fait
   échouer une relation lue dans une boucle sans `with()` (N+1) : les tests l'attrapent.
+- **Messagerie** (doc : `docs/messagerie.md`, le développeur, 22/11/2026, comme Instagram) :
+  conversations directes (une **demande** d'abord, acceptée ou refusée), **groupes** (administrateurs,
+  31 membres), photos et vidéos (disque privé, servies aux membres seulement), accusés de lecture,
+  suppression d'un message pour tous, blocage ; profils adultes avec un pseudo. Écritures :
+  `App\Services\Messaging\Conversations` **uniquement** (modèles `Conversation`,
+  `ConversationMember`, `DirectMessage`, `MessageAttachment`, `MessageRead`, `MessageBlock` ; tables
+  `direct_*`), listes en un nombre fixe de requêtes. Un groupe n'a pas de paire de profils
+  (`profile_low_id` / `profile_high_id` nuls) : supprimer un profil ne supprime pas le groupe des
+  autres. Supprimer un profil ou un compte passe d'abord par `Conversations::forgetProfiles`
+  (fichiers, nouvel administrateur). **Temps réel : Laravel Reverb** (doc : `docs/reverb.md`) :
+  canal privé `messages.{id}` (`routes/channels.php`, `POST /api/broadcasting/auth`),
+  `App\Events\ConversationChanged` (`message.sent`, `.deleted`, `.read`, `.updated`) envoyé après
+  la réponse ; sans clé Reverb, rien n'est envoyé. Push FCM (canal `social`) aux autres membres.
+  Dates en ISO 8601 avec le fuseau.
 - **Connexion TV par code** (`App\Services\DeviceLogins`, doc : `docs/connexion-tv.md`) :
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; le code se tape dans
   l'appli du téléphone (« Paramètres » → « Connecter une TV »), **plus de QR code** (demande du
@@ -350,8 +371,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 ## Branches et déploiement
 
-- Ce dépôt contient l'API et le site de présentation, **pas de workflow GitHub Actions**
-  (décision du développeur). Lancer Pint, Pest et `npm run build` localement avant chaque push.
+- Ce dépôt contient l'API et le site de présentation. Deux workflows GitHub Actions ajoutés par
+  le développeur le 22/11/2026 : « Messaging tests » (`messaging-tests.yml`, les tests de la
+  messagerie quand ses fichiers changent) et « Update Composer lock » (`update-composer-lock.yml` :
+  met à jour `composer.lock` pour Reverb quand `composer.json` change et pousse sur `main`, ce qui
+  redéploie). Pas de CI complète : lancer Pint, Pest et `npm run build` localement avant chaque push.
 
 - Pour l'instant, le travail se fait **directement sur `main`** (demande du développeur).
 - `main` est déployée automatiquement par Laravel Forge (Push to deploy, un seul site pour
@@ -389,7 +413,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`docs/social.md`).
 - Fait aussi : notes IMDb (jeux de données vérifiés toutes les heures, importés quand IMDb les
   met à jour, `imdb:import`) et TMDb, avec
-  leurs votants, sur les fiches et les épisodes (MDBList et `rating_source` supprimés).
+  leurs votants, sur les fiches et les épisodes (`rating_source` supprimé ; MDBList pour la
+  fenêtre « Notes » seulement, depuis le 22/11/2026).
+- Fait aussi : messagerie (conversations directes et demandes, groupes, photos et vidéos,
+  accusés de lecture, blocage), en temps réel avec Laravel Reverb (`docs/messagerie.md`,
+  `docs/reverb.md`).
 - Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
   (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
 - Prochaine étape possible : configuration distante (chaînes FAST).
