@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\DirectMessage;
 use App\Models\EpisodeNotification;
+use App\Models\MessageBlock;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\ProfileSearch;
@@ -54,6 +56,10 @@ class AccountExport
                         'at' => $n->created_at?->toIso8601String(),
                         'read' => $n->read_at !== null,
                     ])->values()->all(),
+                // Messages the profile sent (docs/messagerie.md), and the members it blocked.
+                'messages' => $this->messages($p),
+                'message_blocks' => MessageBlock::query()->where('blocker_profile_id', $p->id)->with('blocked')->get()
+                    ->map(fn (MessageBlock $block) => $block->blocked?->username)->filter()->values()->all(),
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
                 'max_age_rating' => $p->max_age_rating,
@@ -124,6 +130,29 @@ class AccountExport
                 'last_used_at' => $t->last_used_at?->toIso8601String(),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * The messages [profile] sent and did not delete, oldest first, with their conversation and
+     * the names of their files (the files themselves stay on the server).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function messages(Profile $profile): array
+    {
+        return DirectMessage::query()
+            ->where('sender_profile_id', $profile->id)
+            ->whereNull('deleted_at')
+            ->with(['conversation', 'attachments'])
+            ->orderBy('id')
+            ->get()
+            ->map(fn (DirectMessage $message) => [
+                'conversation_id' => $message->conversation_id,
+                'conversation' => $message->conversation->isGroup() ? $message->conversation->name : null,
+                'body' => $message->body,
+                'attachments' => $message->attachments->pluck('original_name')->all(),
+                'sent_at' => $message->created_at?->toIso8601String(),
+            ])->values()->all();
     }
 
     /**

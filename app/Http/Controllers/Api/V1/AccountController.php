@@ -10,6 +10,7 @@ use App\Http\Resources\V1\DeviceResource;
 use App\Http\Resources\V1\UserResource;
 use App\Notifications\AccountDataExport;
 use App\Services\AccountExport;
+use App\Services\Messaging\Conversations;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -38,6 +39,9 @@ class AccountController extends Controller
         $user = $request->user();
 
         $this->checkPassword($user->password, $request->validated('password'), 'password');
+
+        // The files of the profiles' messages (the rows go with the profiles).
+        app(Conversations::class)->forgetProfiles($user->profiles()->pluck('id')->map(fn ($id) => (int) $id)->all());
 
         DB::transaction(function () use ($user) {
             $user->tokens()->delete();

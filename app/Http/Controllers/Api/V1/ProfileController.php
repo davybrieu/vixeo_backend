@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\VerifyPinRequest;
 use App\Http\Resources\V1\ProfileResource;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
+use App\Services\Messaging\Conversations;
 use App\Services\Social\Follows;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
@@ -95,6 +96,8 @@ class ProfileController extends Controller
     {
         Gate::authorize('delete', $profile);
 
+        // Its photos and videos sent in the messaging go with it (files, not rows).
+        app(Conversations::class)->forgetProfiles([$profile->id]);
         $profile->delete();
 
         return response()->noContent();

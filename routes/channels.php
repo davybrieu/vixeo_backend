@@ -1,19 +1,15 @@
 <?php
 
 use App\Http\Middleware\ResolveProfile;
+use App\Services\Messaging\Conversations;
 use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\DB;
 
+// A conversation's real-time channel (docs/reverb.md): its active members, from the profile of the
+// `X-Profile-Id` header of the authorization request (POST /api/broadcasting/auth).
 Broadcast::channel('messages.{conversation}', function ($user, int $conversation): bool {
     $profile = ResolveProfile::profile(request());
 
-    return $profile !== null
-        && ! $profile->is_kid
-        && $profile->username !== null
+    return Conversations::allowed($profile)
         && (int) $profile->user_id === (int) $user->getAuthIdentifier()
-        && DB::table('direct_conversation_members')
-            ->where('conversation_id', $conversation)
-            ->where('profile_id', $profile->id)
-            ->whereNull('left_at')
-            ->exists();
+        && app(Conversations::class)->isMember($profile, $conversation);
 });

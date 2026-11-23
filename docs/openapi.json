@@ -1406,6 +1406,59 @@
                 }
             }
         },
+        "/v1/catalog/ratings": {
+            "get": {
+                "operationId": "v1.catalog.ratings",
+                "summary": "Additional ratings from MDBList, loaded only when the app opens the ratings modal.\nIMDb and TMDb remain supplied by the normal title endpoint",
+                "tags": [
+                    "Catalogue",
+                    "Catalog"
+                ],
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "description": "Titles, comma-separated: `movie:550,tv:1399` (100 at most).",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^(movie|tv):\\d{1,9}(,(movie|tv):\\d{1,9}){0,99}$",
+                            "maxLength": 2000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TitleRatingsResource"
+                                            }
+                                        },
+                                        "available": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "available"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/catalog/search": {
             "get": {
                 "operationId": "v1.catalog.search",
@@ -2993,6 +3046,977 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages": {
+            "get": {
+                "operationId": "v1.messages.index",
+                "description": "The 100 most recent conversations of the active profile, without the requests it received\n(GET /messages/requests). `unread_count`: unread messages of these conversations;\n`requests_count`: requests waiting for an answer.",
+                "summary": "The conversations",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConversationResource"
+                                            }
+                                        },
+                                        "unread_count": {
+                                            "type": "integer"
+                                        },
+                                        "requests_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "unread_count",
+                                        "requests_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/requests": {
+            "get": {
+                "operationId": "v1.messages.requests",
+                "description": "Direct conversations other profiles started with the active profile, waiting for it to\naccept or decline them.",
+                "summary": "The requests received",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MessageRequestResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/with/{username}": {
+            "post": {
+                "operationId": "v1.messages.start",
+                "description": "The direct conversation with this member; a new one is a request the member accepts or\ndeclines (until then, only the active profile writes, without attachments).",
+                "summary": "Write to a member",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "conversation_id": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "conversation_id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/groups": {
+            "post": {
+                "operationId": "v1.messages.groups.store",
+                "description": "The active profile runs it (`admin`); 31 members at most.",
+                "summary": "Create a group",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "conversation_id": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "conversation_id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/block/{username}": {
+            "post": {
+                "operationId": "v1.messages.block",
+                "description": "Neither can write to the other, start a conversation nor add the other to a group.",
+                "summary": "Block a member",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "blocked": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "blocked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.messages.unblock",
+                "summary": "Unblock a member",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "blocked": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "blocked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/attachments/{attachment}": {
+            "get": {
+                "operationId": "v1.messages.attachments.show",
+                "description": "For the members of its conversation only.",
+                "summary": "Download an attachment",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Transfer-Encoding": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chunked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}": {
+            "get": {
+                "operationId": "v1.messages.show",
+                "description": "Its 50 latest messages (oldest first), or the 50 before `before`; `has_more`: older ones\nexist. `is_request`: a request the active profile received; `blocked`: it blocked the other\nprofile of a direct conversation.",
+                "summary": "A conversation",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "description": "Id of the oldest message shown: the page of messages before it (to scroll up).",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "conversation": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "`direct` or `group`."
+                                                },
+                                                "name": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "description": "`pending` or `accepted`."
+                                                },
+                                                "is_request": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "type",
+                                                "name",
+                                                "status",
+                                                "is_request"
+                                            ]
+                                        },
+                                        "participants": {
+                                            "type": "array",
+                                            "description": "The members besides the active profile.",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ChatMemberResource"
+                                            }
+                                        },
+                                        "is_admin": {
+                                            "type": "boolean",
+                                            "description": "The active profile runs this group."
+                                        },
+                                        "participant": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ChatMemberResource"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        },
+                                        "blocked": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MessageResource"
+                                            }
+                                        },
+                                        "has_more": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "conversation",
+                                        "participants",
+                                        "is_admin",
+                                        "participant",
+                                        "blocked",
+                                        "data",
+                                        "has_more"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.messages.send",
+                "summary": "Send a message",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendMessageRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MessageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/read": {
+            "post": {
+                "operationId": "v1.messages.read",
+                "summary": "Mark the conversation read",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "read": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "read"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/accept": {
+            "post": {
+                "operationId": "v1.messages.accept",
+                "summary": "Accept a request",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "accepted": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "accepted"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/request": {
+            "delete": {
+                "operationId": "v1.messages.decline",
+                "description": "The conversation is hidden from both profiles; the member may ask again.",
+                "summary": "Decline a request",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "declined": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "declined"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/attachments": {
+            "post": {
+                "operationId": "v1.messages.attachments.store",
+                "description": "Multipart field `file`: JPEG, PNG, WebP or GIF (15 MB at most), MP4, MOV or WebM (100 MB at\nmost). Once a request is accepted.",
+                "summary": "Send a photo or a video",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AttachmentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MessageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/{message}": {
+            "delete": {
+                "operationId": "v1.messages.destroy",
+                "description": "One of the active profile's messages, for everybody (its files too).",
+                "summary": "Delete a message",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "message",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "deleted": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "deleted"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/group": {
+            "put": {
+                "operationId": "v1.messages.groups.update",
+                "summary": "Rename a group (its admins)",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupNameRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "updated": {
+                                            "type": "boolean"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "updated",
+                                        "name"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/group/members": {
+            "post": {
+                "operationId": "v1.messages.groups.members.store",
+                "summary": "Add members to a group (its admins)",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupMembersRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "added": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "added"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/group/members/{username}": {
+            "delete": {
+                "operationId": "v1.messages.groups.members.destroy",
+                "summary": "Remove a member from a group (its admins)",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "removed": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "removed"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/group/leave": {
+            "post": {
+                "operationId": "v1.messages.groups.leave",
+                "description": "An only admin names another one first; the last member leaving deletes the group.",
+                "summary": "Leave a group",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "left": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "left"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/messages/{conversation}/group/admin/{username}": {
+            "post": {
+                "operationId": "v1.messages.groups.admin.transfer",
+                "description": "The member becomes its admin; the active profile, a member.",
+                "summary": "Hand a group over",
+                "tags": [
+                    "DirectMessage"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "transferred": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "transferred"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -6183,6 +7207,53 @@
                 ],
                 "title": "AppUpdateStatus"
             },
+            "AttachmentRequest": {
+                "type": "object",
+                "description": "A photo (15 MB at most) or a video (100 MB at most), as a multipart field `file`.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "Maximum file size: 102400 kilobytes."
+                    }
+                },
+                "required": [
+                    "file"
+                ],
+                "title": "AttachmentRequest"
+            },
+            "AttachmentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the file sent."
+                    },
+                    "mime_type": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "description": "Size, in bytes."
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "Where to download it, under /api/v1, with the bearer token and the X-Profile-Id header."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "mime_type",
+                    "size",
+                    "url"
+                ],
+                "title": "AttachmentResource"
+            },
             "AvatarLicenseResource": {
                 "type": "object",
                 "properties": {
@@ -6289,6 +7360,160 @@
                     "profile_url"
                 ],
                 "title": "CastResource"
+            },
+            "ChatMemberResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "avatar": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Id of its avatar in the catalog (GET /avatars)."
+                    },
+                    "role": {
+                        "type": "string",
+                        "description": "`admin` (runs a group) or `member`."
+                    }
+                },
+                "required": [
+                    "id",
+                    "username",
+                    "name",
+                    "avatar",
+                    "role"
+                ],
+                "title": "ChatMemberResource"
+            },
+            "ChatProfileResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "avatar": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Id of its avatar in the catalog (GET /avatars)."
+                    }
+                },
+                "required": [
+                    "id",
+                    "username",
+                    "name",
+                    "avatar"
+                ],
+                "title": "ChatProfileResource"
+            },
+            "ConversationResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "`direct` (two profiles) or `group`."
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Name of a group; null for a direct conversation."
+                    },
+                    "participants": {
+                        "type": "array",
+                        "description": "The members besides the active profile.",
+                        "items": {
+                            "$ref": "#/components/schemas/ChatMemberResource"
+                        }
+                    },
+                    "participant": {
+                        "anyOf": [
+                            {
+                                "description": "The other profile of a direct conversation.",
+                                "$ref": "#/components/schemas/ChatMemberResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "last_message": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "body": {
+                                "type": "string"
+                            },
+                            "sender_profile_id": {
+                                "type": "integer"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "description": "ISO 8601, with the time zone."
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "body",
+                            "sender_profile_id",
+                            "created_at"
+                        ]
+                    },
+                    "unread_count": {
+                        "type": "integer",
+                        "description": "Messages of the others the active profile has not read."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`pending` (a request waiting for an answer) or `accepted`."
+                    },
+                    "is_request": {
+                        "type": "boolean",
+                        "description": "A request the active profile received (listed by GET /messages/requests)."
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "description": "Last message, or creation of the conversation (ISO 8601)."
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "name",
+                    "participants",
+                    "participant",
+                    "last_message",
+                    "unread_count",
+                    "status",
+                    "is_request",
+                    "updated_at"
+                ],
+                "title": "ConversationResource"
             },
             "CreditsResource": {
                 "type": "object",
@@ -6550,6 +7775,69 @@
                 ],
                 "title": "GenreResource"
             },
+            "GroupMembersRequest": {
+                "type": "object",
+                "properties": {
+                    "usernames": {
+                        "type": "array",
+                        "description": "Usernames of the members to add (with or without @).",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 40
+                        },
+                        "minItems": 1,
+                        "maxItems": 30,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "usernames"
+                ],
+                "title": "GroupMembersRequest"
+            },
+            "GroupNameRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "New name of the group.",
+                        "minLength": 2,
+                        "maxLength": 80
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "GroupNameRequest"
+            },
+            "GroupRequest": {
+                "type": "object",
+                "description": "A new group: its name and its members (besides the profile creating it, its admin).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the group.",
+                        "minLength": 2,
+                        "maxLength": 80
+                    },
+                    "usernames": {
+                        "type": "array",
+                        "description": "Usernames of the members (with or without @).",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 40
+                        },
+                        "minItems": 1,
+                        "maxItems": 30,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "usernames"
+                ],
+                "title": "GroupRequest"
+            },
             "ItemType": {
                 "type": "string",
                 "description": "Kind of content a profile item points to (any source: TMDb, live TV channels\u2026).\n| |\n|---|\n| `movie` <br/>  |\n| `tv` <br/> A whole TV show (e.g. favorite series). |\n| `episode` <br/>  |\n| `channel` <br/> Live TV channel (FAST). |\n| `video` <br/> Any other video (local file\u2026). |\n| `person` <br/> A TMDb person (actor, director\u2026) the profile follows: item id \"person:287\". |",
@@ -6757,6 +8045,83 @@
                     "tv"
                 ],
                 "title": "MediaType"
+            },
+            "MessageRequestResource": {
+                "type": "object",
+                "properties": {
+                    "conversation_id": {
+                        "type": "integer"
+                    },
+                    "sender": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ChatProfileResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "preview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Its first message, or null before any."
+                    }
+                },
+                "required": [
+                    "conversation_id",
+                    "sender",
+                    "preview"
+                ],
+                "title": "MessageRequestResource"
+            },
+            "MessageResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "sender_profile_id": {
+                        "type": "integer"
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "The text; empty for an attachment alone. A deleted message says so."
+                    },
+                    "deleted": {
+                        "type": "boolean",
+                        "description": "Deleted by its sender, for everybody."
+                    },
+                    "read_by": {
+                        "type": "array",
+                        "description": "Profiles that read it (read receipts).",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601, with the time zone."
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AttachmentResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "sender_profile_id",
+                    "body",
+                    "deleted",
+                    "read_by",
+                    "created_at",
+                    "attachments"
+                ],
+                "title": "MessageResource"
             },
             "MovieResource": {
                 "type": "object",
@@ -8315,6 +9680,20 @@
                 ],
                 "title": "SectionResource"
             },
+            "SendMessageRequest": {
+                "type": "object",
+                "properties": {
+                    "body": {
+                        "type": "string",
+                        "description": "The text (spaces around it removed).",
+                        "maxLength": 5000
+                    }
+                },
+                "required": [
+                    "body"
+                ],
+                "title": "SendMessageRequest"
+            },
             "ShowResource": {
                 "type": "object",
                 "properties": {
@@ -8905,6 +10284,87 @@
                     "changes"
                 ],
                 "title": "SyncPushRequest"
+            },
+            "TitleRatingsResource": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/MediaType"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "description": "TMDb id."
+                    },
+                    "imdb": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "IMDb, out of 10."
+                    },
+                    "tmdb": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "TMDb, out of 10."
+                    },
+                    "trakt": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Trakt, out of 100."
+                    },
+                    "letterboxd": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Letterboxd, out of 5 (movies)."
+                    },
+                    "tomatoes": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Rotten Tomatoes critics (Tomatometer), percentage."
+                    },
+                    "audience": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Rotten Tomatoes audience (Popcornmeter), percentage."
+                    },
+                    "metacritic": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Metacritic, out of 100."
+                    },
+                    "mal": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "MyAnimeList, out of 10 (anime)."
+                    }
+                },
+                "required": [
+                    "type",
+                    "id",
+                    "imdb",
+                    "tmdb",
+                    "trakt",
+                    "letterboxd",
+                    "tomatoes",
+                    "audience",
+                    "metacritic",
+                    "mal"
+                ],
+                "title": "TitleRatingsResource"
             },
             "UpdateEmailRequest": {
                 "type": "object",

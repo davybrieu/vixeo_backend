@@ -62,6 +62,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('members', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
 
+        // Messaging (docs/messagerie.md): reading, writing, answering; files are rarer and heavier.
+        RateLimiter::for('messages', fn (Request $request) => Limit::perMinute(180)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('message-attachments', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()));
+
         // Each new subtitle file uses Vixeo's OpenSubtitles daily quota (cached ones don't).
         RateLimiter::for('subtitles', fn (Request $request) => Limit::perHour(40)->by($request->user()?->id ?: $request->ip()));
 

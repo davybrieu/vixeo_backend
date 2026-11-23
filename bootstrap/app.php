@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ResolveProfile;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\Hosts;
-use App\Http\Middleware\ResolveProfile;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

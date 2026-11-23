@@ -4,444 +4,300 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
+use App\Http\Requests\Api\V1\Messages\AttachmentRequest;
+use App\Http\Requests\Api\V1\Messages\GroupMembersRequest;
+use App\Http\Requests\Api\V1\Messages\GroupNameRequest;
+use App\Http\Requests\Api\V1\Messages\GroupRequest;
+use App\Http\Requests\Api\V1\Messages\MessagesPageRequest;
+use App\Http\Requests\Api\V1\Messages\SendMessageRequest;
+use App\Http\Resources\V1\Messages\ChatMemberResource;
+use App\Http\Resources\V1\Messages\ConversationResource;
+use App\Http\Resources\V1\Messages\MessageRequestResource;
+use App\Http\Resources\V1\Messages\MessageResource;
+use App\Models\MessageBlock;
 use App\Models\Profile;
-use App\Models\PushDevice;
-use App\Services\Push\PushDevices;
-use App\Services\Push\PushMessage;
-use App\Events\MessageSent;
+use App\Services\Messaging\Conversations;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
-use Throwable;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * The messaging between adult profiles with a username (docs/messagerie.md): direct conversations
+ * (a request first), groups, photos and videos, read receipts and blocks. Every route acts as the
+ * profile of the `X-Profile-Id` header.
+ */
 class DirectMessageController extends Controller
 {
-    private function activeProfile(Request $request): Profile
-    {
-        $profile = ResolveProfile::profile($request);
-        abort_unless($profile instanceof Profile, 422, 'Sélectionnez un profil.');
-        abort_if($profile->is_kid || $profile->username === null, 403, 'La messagerie est réservée aux profils adultes.');
-        return $profile;
-    }
+    public function __construct(private Conversations $conversations) {}
 
-    private function members(int $conversationId): array
-    {
-        return DB::table('direct_conversation_members')->where('conversation_id', $conversationId)
-            ->whereNull('left_at')->pluck('profile_id')->map(fn ($id) => (int) $id)->all();
-    }
-
-    private function conversation(Request $request, int $id): array
-    {
-        $profile = $this->activeProfile($request);
-        $conversation = DB::table('direct_conversations')->where('id', $id)->first();
-        abort_unless($conversation && in_array((int) $profile->id, $this->members($id), true), 404);
-        abort_if($conversation->status === 'rejected', 404);
-        $otherIds = array_values(array_filter($this->members($id), fn ($memberId) => $memberId !== (int) $profile->id));
-        $others = Profile::query()->whereIn('id', $otherIds)->where('is_kid', false)->get(['id', 'username', 'name', 'avatar']);
-        abort_if($others->count() !== count($otherIds), 404);
-        return [$profile, $conversation, $others];
-    }
-
-    private function blocked(int $a, int $b): bool
-    {
-        return DB::table('direct_message_blocks')->where(function ($q) use ($a, $b) {
-            $q->where('blocker_profile_id', $a)->where('blocked_profile_id', $b);
-        })->orWhere(function ($q) use ($a, $b) {
-            $q->where('blocker_profile_id', $b)->where('blocked_profile_id', $a);
-        })->exists();
-    }
-
-    private function broadcastMessage(int $conversationId, int $messageId, int $senderProfileId, string $body): void
-    {
-        if (config('broadcasting.default') !== 'reverb' || blank(config('reverb.apps.apps.0.key'))) {
-            return;
-        }
-
-        try {
-            event(new MessageSent($conversationId, $messageId, $senderProfileId, $body));
-        } catch (Throwable $exception) {
-            report($exception);
-        }
-    }
-
-    private function notify(array $profileIds, Profile $sender, int $conversationId, string $body, bool $request = false): void
-    {
-        $service = app(PushDevices::class);
-        if (! $service->available()) return;
-        $devices = PushDevice::query()->whereIn('profile_id', array_values(array_diff($profileIds, [(int) $sender->id])))
-            ->where('social', true)->get();
-        if ($devices->isEmpty()) return;
-        $service->send($devices, new PushMessage(
-            title: $request ? 'Nouvelle demande de message' : $sender->name,
-            body: mb_strimwidth($body, 0, 120, '…'),
-            path: '/messages/'.$conversationId,
-            channel: PushMessage::SOCIAL,
-            tag: 'message-'.$conversationId,
-        ));
-    }
-
+    /**
+     * The conversations.
+     *
+     * The 100 most recent conversations of the active profile, without the requests it received
+     * (GET /messages/requests). `unread_count`: unread messages of these conversations;
+     * `requests_count`: requests waiting for an answer.
+     */
     public function index(Request $request): JsonResponse
     {
-        $profile = $this->activeProfile($request);
-        $ids = DB::table('direct_conversation_members')->where('profile_id', $profile->id)->whereNull('left_at')->pluck('conversation_id');
-        $rows = DB::table('direct_conversations')->whereIn('id', $ids)
-            ->where('status', '!=', 'rejected')->orderByDesc('last_message_at')->orderByDesc('id')->limit(100)->get();
-        $data = $rows->map(function ($row) use ($profile) {
-            $memberIds = $this->members((int) $row->id);
-            $otherIds = array_values(array_filter($memberIds, fn ($id) => $id !== (int) $profile->id));
-            $participants = Profile::query()->whereIn('id', $otherIds)->get(['id', 'username', 'name', 'avatar'])
-                ->map(fn ($p) => ['id' => (int) $p->id, 'username' => $p->username, 'name' => $p->name, 'avatar' => $p->avatar])->values();
-            $last = DB::table('direct_messages')->where('conversation_id', $row->id)->orderByDesc('id')->first();
-            $unread = DB::table('direct_messages as m')->where('m.conversation_id', $row->id)
-                ->where('m.sender_profile_id', '!=', $profile->id)->whereNull('m.deleted_at')
-                ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('direct_message_reads as r')
-                    ->whereColumn('r.message_id', 'm.id')->where('r.profile_id', $profile->id))->count();
-            return [
-                'id' => (int) $row->id, 'type' => $row->type, 'name' => $row->name,
-                'participants' => $participants,
-                'participant' => $row->type === 'direct' ? ($participants->first() ?? null) : null,
-                'last_message' => $last ? ['id' => (int) $last->id, 'body' => $last->deleted_at ? 'Message supprimé' : (string) $last->body,
-                    'sender_profile_id' => (int) $last->sender_profile_id, 'created_at' => (string) $last->created_at] : null,
-                'unread_count' => $unread, 'status' => $row->status,
-                'is_request' => $row->status === 'pending' && (int) $row->requested_by_profile_id !== (int) $profile->id,
-                'updated_at' => (string) ($row->last_message_at ?? $row->created_at),
-            ];
-        })->values();
-        $requestsCount = $data->where('is_request', true)->count();
-        $unreadCount = $data->sum('unread_count');
-        $data = $data->reject(fn ($conversation) => $conversation['is_request'])->values();
+        $me = $this->me($request);
+        $conversations = $this->conversations->inbox($me);
+
         return response()->json([
-            'data' => $data,
-            'unread_count' => $unreadCount,
-            'requests_count' => $requestsCount,
+            'data' => ConversationResource::collection($conversations),
+            'unread_count' => (int) $conversations->sum('unread_count'),
+            'requests_count' => $this->conversations->requestsCount($me),
         ]);
     }
 
-    public function start(Request $request, string $username): JsonResponse
-    {
-        $profile = $this->activeProfile($request);
-        $target = Profile::query()->where('username', $username)->where('is_kid', false)->firstOrFail();
-        abort_if($target->id === $profile->id, 422, 'Vous ne pouvez pas vous écrire à vous-même.');
-        abort_if($this->blocked((int) $profile->id, (int) $target->id), 403, 'Cette conversation n’est pas disponible.');
-        $low = min($profile->id, $target->id);
-        $high = max($profile->id, $target->id);
-        $conversation = DB::table('direct_conversations')->where('type', 'direct')
-            ->where('profile_low_id', $low)->where('profile_high_id', $high)->where('status', '!=', 'rejected')->first();
-        if (! $conversation) {
-            $id = DB::table('direct_conversations')->insertGetId([
-                'type' => 'direct', 'profile_low_id' => $low, 'profile_high_id' => $high,
-                'status' => 'pending', 'requested_by_profile_id' => $profile->id,
-                'created_at' => now(), 'updated_at' => now(),
-            ]);
-            DB::table('direct_conversation_members')->insert([
-                ['conversation_id' => $id, 'profile_id' => $low, 'role' => 'member', 'joined_at' => now(), 'created_at' => now(), 'updated_at' => now()],
-                ['conversation_id' => $id, 'profile_id' => $high, 'role' => 'member', 'joined_at' => now(), 'created_at' => now(), 'updated_at' => now()],
-            ]);
-        } else {
-            $id = (int) $conversation->id;
-        }
-        return response()->json(['conversation_id' => (int) $id]);
-    }
-
-    public function createGroup(Request $request): JsonResponse
-    {
-        $profile = $this->activeProfile($request);
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'min:2', 'max:80'],
-            'usernames' => ['required', 'array', 'min:1', 'max:30'],
-            'usernames.*' => ['required', 'string', 'distinct'],
-        ]);
-        $others = Profile::query()->whereIn('username', $validated['usernames'])->where('is_kid', false)->get();
-        if ($others->count() !== count($validated['usernames'])) {
-            throw ValidationException::withMessages(['usernames' => 'Un ou plusieurs membres sont introuvables.']);
-        }
-        foreach ($others as $other) {
-            abort_if($this->blocked((int) $profile->id, (int) $other->id), 403, 'Un membre sélectionné ne peut pas être ajouté à ce groupe.');
-        }
-        $ids = $others->pluck('id')->push($profile->id)->unique()->sort()->values()->all();
-        $id = DB::table('direct_conversations')->insertGetId([
-            'type' => 'group', 'name' => trim($validated['name']),
-            'created_by_profile_id' => $profile->id,
-            'profile_low_id' => $ids[0], 'profile_high_id' => $ids[1],
-            'status' => 'accepted', 'created_at' => now(), 'updated_at' => now(),
-        ]);
-        foreach ($ids as $memberId) {
-            DB::table('direct_conversation_members')->insert([
-                'conversation_id' => $id, 'profile_id' => $memberId,
-                'role' => $memberId === (int) $profile->id ? 'admin' : 'member',
-                'joined_at' => now(), 'created_at' => now(), 'updated_at' => now(),
-            ]);
-        }
-        DB::table('direct_messages')->insert([
-            'conversation_id' => $id, 'sender_profile_id' => $profile->id,
-            'body' => $profile->name.' a créé le groupe « '.trim($validated['name']).' ». ',
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
-        DB::table('direct_conversations')->where('id', $id)->update(['last_message_at' => now()]);
-        return response()->json(['conversation_id' => (int) $id], 201);
-    }
-
+    /**
+     * The requests received.
+     *
+     * Direct conversations other profiles started with the active profile, waiting for it to
+     * accept or decline them.
+     */
     public function requests(Request $request): JsonResponse
     {
-        $profile = $this->activeProfile($request);
-        $ids = DB::table('direct_conversation_members')->where('profile_id', $profile->id)->whereNull('left_at')->pluck('conversation_id');
-        $rows = DB::table('direct_conversations')->whereIn('id', $ids)->where('type', 'direct')
-            ->where('status', 'pending')->where('requested_by_profile_id', '!=', $profile->id)->orderByDesc('created_at')->get();
-        return response()->json(['data' => $rows->map(function ($row) use ($profile) {
-            $senderId = (int) $row->requested_by_profile_id;
-            $sender = Profile::query()->find($senderId);
-            return ['conversation_id' => (int) $row->id, 'sender' => $sender ? [
-                'id' => (int) $sender->id, 'username' => $sender->username, 'name' => $sender->name, 'avatar' => $sender->avatar,
-            ] : null, 'preview' => DB::table('direct_messages')->where('conversation_id', $row->id)->orderBy('id')->value('body')];
-        })->filter()->values()]);
+        return response()->json(['data' => MessageRequestResource::collection($this->conversations->requests($this->me($request)))]);
     }
 
+    /**
+     * Write to a member.
+     *
+     * The direct conversation with this member; a new one is a request the member accepts or
+     * declines (until then, only the active profile writes, without attachments).
+     */
+    public function start(Request $request, string $username): JsonResponse
+    {
+        $me = $this->me($request);
+        $conversation = $this->conversations->start($me, $this->member($username));
+
+        return response()->json(['conversation_id' => (int) $conversation->id]);
+    }
+
+    /**
+     * Create a group.
+     *
+     * The active profile runs it (`admin`); 31 members at most.
+     */
+    public function createGroup(GroupRequest $request): JsonResponse
+    {
+        $conversation = $this->conversations->createGroup($this->me($request), $request->name(), $request->usernames());
+
+        return response()->json(['conversation_id' => (int) $conversation->id], 201);
+    }
+
+    /** Accept a request. */
     public function accept(Request $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->status === 'pending' && (int) $row->requested_by_profile_id !== (int) $profile->id, 403);
-        foreach (array_diff($this->members($conversation), [(int) $profile->id]) as $otherId) {
-            abort_if($this->blocked((int) $profile->id, $otherId), 403, 'Cette demande ne peut plus être acceptée.');
-        }
-        DB::table('direct_conversations')->where('id', $conversation)->update(['status' => 'accepted', 'updated_at' => now()]);
+        $me = $this->me($request);
+        $this->conversations->accept($me, $this->conversations->find($me, $conversation));
+
         return response()->json(['accepted' => true]);
     }
 
-
+    /**
+     * Decline a request.
+     *
+     * The conversation is hidden from both profiles; the member may ask again.
+     */
     public function decline(Request $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->type === 'direct' && $row->status === 'pending'
-            && (int) $row->requested_by_profile_id !== (int) $profile->id, 403);
-        DB::table('direct_conversations')->where('id', $conversation)->update([
-            'status' => 'rejected', 'updated_at' => now(),
-        ]);
+        $me = $this->me($request);
+        $this->conversations->decline($me, $this->conversations->find($me, $conversation));
+
         return response()->json(['declined' => true]);
     }
 
-    public function messages(Request $request, int $conversation): JsonResponse
+    /**
+     * A conversation.
+     *
+     * Its 50 latest messages (oldest first), or the 50 before `before`; `has_more`: older ones
+     * exist. `is_request`: a request the active profile received; `blocked`: it blocked the other
+     * profile of a direct conversation.
+     */
+    public function messages(MessagesPageRequest $request, int $conversation): JsonResponse
     {
-        [$profile, $row, $others] = $this->conversation($request, $conversation);
-        $before = $request->integer('before') ?: null;
-        $query = DB::table('direct_messages')->where('conversation_id', $conversation)
-            ->when($before, fn ($q) => $q->where('id', '<', $before))
-            ->orderByDesc('id')->limit(50)->get()->reverse()->values();
+        $me = $this->me($request);
+        $found = $this->conversations->find($me, $conversation);
+        [$messages, $hasMore] = $this->conversations->page($found, $request->before());
+        $others = $this->conversations->others($found, $me);
+        $direct = $found->isGroup() ? null : $others->first();
+
         return response()->json([
-            'conversation' => ['id' => (int) $row->id, 'type' => $row->type, 'name' => $row->name, 'status' => $row->status],
-            'participants' => $others->map(function ($p) use ($conversation) {
-                $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $p->id)->whereNull('left_at')->first();
-                return ['id' => (int) $p->id, 'username' => $p->username, 'name' => $p->name, 'avatar' => $p->avatar, 'role' => $member?->role];
-            })->values(),
-            'is_admin' => DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->where('role', 'admin')->whereNull('left_at')->exists(),
-            'participant' => $row->type === 'direct' ? ($others->first() ? ['id' => (int) $others->first()->id, 'username' => $others->first()->username, 'name' => $others->first()->name, 'avatar' => $others->first()->avatar] : null) : null,
-            'data' => $query->map(function ($m) use ($profile) {
-                $attachments = DB::table('direct_message_attachments')->where('message_id', $m->id)->get();
-                $reads = DB::table('direct_message_reads')->where('message_id', $m->id)->pluck('profile_id')->map(fn ($id) => (int) $id)->all();
-                return [
-                    'id' => (int) $m->id, 'sender_profile_id' => (int) $m->sender_profile_id,
-                    'body' => $m->deleted_at ? 'Ce message a été supprimé.' : (string) $m->body,
-                    'deleted' => $m->deleted_at !== null, 'read_by' => $reads,
-                    'created_at' => (string) $m->created_at,
-                    'attachments' => $attachments->map(fn ($a) => ['id' => (int) $a->id, 'name' => $a->original_name, 'mime_type' => $a->mime_type, 'size' => (int) $a->size, 'url' => '/messages/attachments/'.$a->id])->values(),
-                ];
-            }),
+            'conversation' => [
+                'id' => (int) $found->id,
+                /** `direct` or `group`. */
+                'type' => (string) $found->type,
+                'name' => $found->name === null ? null : (string) $found->name,
+                /** `pending` or `accepted`. */
+                'status' => (string) $found->status,
+                'is_request' => $found->isRequestFor($me),
+            ],
+            /** The members besides the active profile. */
+            'participants' => ChatMemberResource::collection($others),
+            /** The active profile runs this group. */
+            'is_admin' => (bool) $this->conversations->membership($found, $me)?->isAdmin(),
+            'participant' => $direct === null ? null : new ChatMemberResource($direct),
+            'blocked' => $direct !== null && MessageBlock::query()
+                ->where('blocker_profile_id', $me->id)
+                ->where('blocked_profile_id', $direct->profile_id)
+                ->exists(),
+            'data' => MessageResource::collection($messages),
+            'has_more' => $hasMore,
         ]);
     }
 
-    public function send(Request $request, int $conversation): JsonResponse
+    /** Send a message. */
+    public function send(SendMessageRequest $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_if($row->status !== 'accepted' && (int) $row->requested_by_profile_id !== (int) $profile->id, 403, 'En attente de réponse à votre demande de message.');
-        if ($row->type === 'direct') {
-            foreach (array_diff($this->members($conversation), [(int) $profile->id]) as $otherId) {
-                abort_if($this->blocked((int) $profile->id, $otherId), 403, 'Vous ne pouvez plus envoyer de message à ce membre.');
-            }
-        }
-        $validated = $request->validate(['body' => ['required', 'string', 'max:5000']]);
-        $body = trim($validated['body']);
-        if ($body === '') throw ValidationException::withMessages(['body' => 'Le message ne peut pas être vide.']);
-        $id = DB::table('direct_messages')->insertGetId([
-            'conversation_id' => $conversation, 'sender_profile_id' => $profile->id, 'body' => $body,
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
-        DB::table('direct_conversations')->where('id', $conversation)->update(['last_message_at' => now(), 'updated_at' => now()]);
-        $this->broadcastMessage($conversation, $id, (int) $profile->id, $body);
-        $this->notify($this->members($conversation), $profile, $conversation, $body, $row->status === 'pending');
-        return response()->json(['data' => ['id' => (int) $id, 'sender_profile_id' => (int) $profile->id, 'body' => $body, 'read_by' => [], 'created_at' => now()->toIso8601String(), 'attachments' => []]], 201);
+        $me = $this->me($request);
+        $message = $this->conversations->send($me, $this->conversations->find($me, $conversation), $request->body());
+
+        return response()->json(['data' => new MessageResource($message)], 201);
     }
 
-    public function attach(Request $request, int $conversation): JsonResponse
+    /**
+     * Send a photo or a video.
+     *
+     * Multipart field `file`: JPEG, PNG, WebP or GIF (15 MB at most), MP4, MOV or WebM (100 MB at
+     * most). Once a request is accepted.
+     */
+    public function attach(AttachmentRequest $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_if($row->status !== 'accepted', 403, 'Cette conversation n’est pas encore acceptée.');
-        if ($row->type === 'direct') {
-            foreach (array_diff($this->members($conversation), [(int) $profile->id]) as $otherId) {
-                abort_if($this->blocked((int) $profile->id, $otherId), 403, 'Vous ne pouvez plus envoyer de pièce jointe à ce membre.');
-            }
-        }
-        $request->validate(['file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm', 'max:102400']]);
-        $file = $request->file('file');
-        $mime = (string) $file->getMimeType();
-        abort_unless(str_starts_with($mime, 'image/') || str_starts_with($mime, 'video/'), 422, 'Format non pris en charge.');
-        if (str_starts_with($mime, 'image/')) abort_if($file->getSize() > 15 * 1024 * 1024, 422, 'Image limitée à 15 Mo.');
-        $path = Storage::disk('local')->putFile('message-attachments', $file);
-        abort_unless(is_string($path), 500, 'Le fichier n’a pas pu être enregistré.');
-        $id = DB::table('direct_messages')->insertGetId([
-            'conversation_id' => $conversation, 'sender_profile_id' => $profile->id, 'body' => '',
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
-        $attachmentId = DB::table('direct_message_attachments')->insertGetId([
-            'message_id' => $id, 'disk' => 'local', 'path' => $path,
-            'original_name' => mb_substr($file->getClientOriginalName(), 0, 255),
-            'mime_type' => $mime, 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now(),
-        ]);
-        DB::table('direct_conversations')->where('id', $conversation)->update(['last_message_at' => now(), 'updated_at' => now()]);
-        $this->broadcastMessage($conversation, $id, (int) $profile->id, '');
-        $this->notify($this->members($conversation), $profile, $conversation, 'Pièce jointe');
-        return response()->json(['data' => ['id' => $id, 'sender_profile_id' => (int) $profile->id, 'body' => '', 'created_at' => now()->toIso8601String(),
-            'attachments' => [['id' => $attachmentId, 'name' => $file->getClientOriginalName(), 'mime_type' => $mime, 'size' => $file->getSize(), 'url' => '/messages/attachments/'.$attachmentId]]]], 201);
+        $me = $this->me($request);
+        $message = $this->conversations->attach($me, $this->conversations->find($me, $conversation), $request->attachment());
+
+        return response()->json(['data' => new MessageResource($message)], 201);
     }
 
+    /**
+     * Download an attachment.
+     *
+     * For the members of its conversation only.
+     */
     public function attachment(Request $request, int $attachment): StreamedResponse
     {
-        [$profile] = $this->activeProfile($request);
-        $file = DB::table('direct_message_attachments as a')->join('direct_messages as m', 'm.id', '=', 'a.message_id')
-            ->join('direct_conversation_members as cm', 'cm.conversation_id', '=', 'm.conversation_id')
-            ->where('a.id', $attachment)->where('cm.profile_id', $profile->id)->whereNull('cm.left_at')->select('a.*')->first();
-        abort_unless($file, 404);
-        return Storage::disk($file->disk)->download($file->path, $file->original_name, ['Content-Type' => $file->mime_type]);
+        $file = $this->conversations->attachment($this->me($request), $attachment);
+
+        return Storage::disk($file->disk)->response($file->path, $file->original_name, [
+            'Content-Type' => $file->mime_type,
+            // A file never changes: the apps keep it.
+            'Cache-Control' => 'private, max-age=604800, immutable',
+        ]);
     }
 
+    /**
+     * Delete a message.
+     *
+     * One of the active profile's messages, for everybody (its files too).
+     */
     public function deleteMessage(Request $request, int $conversation, int $message): JsonResponse
     {
-        [$profile] = $this->conversation($request, $conversation);
-        $row = DB::table('direct_messages')->where('id', $message)->where('conversation_id', $conversation)->first();
-        abort_unless($row && (int) $row->sender_profile_id === (int) $profile->id, 404);
-        $attachments = DB::table('direct_message_attachments')->where('message_id', $message)->get();
-        foreach ($attachments as $attachment) {
-            Storage::disk($attachment->disk)->delete($attachment->path);
-        }
-        DB::table('direct_message_attachments')->where('message_id', $message)->delete();
-        DB::table('direct_messages')->where('id', $message)->update(['deleted_at' => now(), 'deleted_by_profile_id' => $profile->id, 'body' => '']);
+        $me = $this->me($request);
+        $this->conversations->delete($me, $this->conversations->find($me, $conversation), $message);
+
         return response()->json(['deleted' => true]);
     }
 
+    /** Mark the conversation read. */
     public function read(Request $request, int $conversation): JsonResponse
     {
-        [$profile] = $this->conversation($request, $conversation);
-        $ids = DB::table('direct_messages')->where('conversation_id', $conversation)->where('sender_profile_id', '!=', $profile->id)
-            ->whereNull('deleted_at')->pluck('id');
-        foreach ($ids as $id) {
-            DB::table('direct_message_reads')->updateOrInsert(['message_id' => $id, 'profile_id' => $profile->id], ['read_at' => now()]);
-        }
+        $me = $this->me($request);
+        $this->conversations->markRead($me, $this->conversations->find($me, $conversation));
+
         return response()->json(['read' => true]);
     }
 
-
-    public function updateGroup(Request $request, int $conversation): JsonResponse
+    /** Rename a group (its admins). */
+    public function updateGroup(GroupNameRequest $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->type === 'group', 404);
-        $membership = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
-        abort_unless($membership && $membership->role === 'admin', 403, 'Seuls les administrateurs peuvent modifier le groupe.');
-        $validated = $request->validate(['name' => ['required', 'string', 'min:2', 'max:80']]);
-        DB::table('direct_conversations')->where('id', $conversation)->update(['name' => trim($validated['name']), 'updated_at' => now()]);
-        return response()->json(['updated' => true, 'name' => trim($validated['name'])]);
+        $me = $this->me($request);
+        $this->conversations->rename($me, $this->conversations->find($me, $conversation), $request->name());
+
+        return response()->json(['updated' => true, 'name' => $request->name()]);
     }
 
-    public function addGroupMembers(Request $request, int $conversation): JsonResponse
+    /** Add members to a group (its admins). */
+    public function addGroupMembers(GroupMembersRequest $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->type === 'group', 404);
-        $membership = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
-        abort_unless($membership && $membership->role === 'admin', 403, 'Seuls les administrateurs peuvent ajouter des membres.');
-        $validated = $request->validate(['usernames' => ['required', 'array', 'min:1', 'max:30'], 'usernames.*' => ['required', 'string', 'distinct']]);
-        $profiles = Profile::query()->whereIn('username', $validated['usernames'])->where('is_kid', false)->get();
-        if ($profiles->count() !== count($validated['usernames'])) throw ValidationException::withMessages(['usernames' => 'Un ou plusieurs membres sont introuvables.']);
-        $activeIds = $this->members($conversation);
-        abort_if(count($activeIds) + $profiles->whereNotIn('id', $activeIds)->count() > 31, 422, 'Un groupe est limité à 31 membres.');
-        foreach ($profiles as $member) abort_if($this->blocked((int) $profile->id, (int) $member->id), 403, 'Un membre sélectionné ne peut pas être ajouté.');
-        DB::transaction(function () use ($profiles, $activeIds, $conversation) {
-            foreach ($profiles as $member) {
-                if (in_array((int) $member->id, $activeIds, true)) continue;
-                DB::table('direct_conversation_members')->updateOrInsert(
-                    ['conversation_id' => $conversation, 'profile_id' => $member->id],
-                    ['role' => 'member', 'joined_at' => now(), 'left_at' => null, 'created_at' => now(), 'updated_at' => now()]
-                );
-            }
-        });
+        $me = $this->me($request);
+        $this->conversations->addMembers($me, $this->conversations->find($me, $conversation), $request->usernames());
+
         return response()->json(['added' => true]);
     }
 
+    /** Remove a member from a group (its admins). */
     public function removeGroupMember(Request $request, int $conversation, string $username): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->type === 'group', 404);
-        $actor = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
-        abort_unless($actor && $actor->role === 'admin', 403);
-        $target = Profile::query()->where('username', $username)->firstOrFail();
-        abort_if((int) $target->id === (int) $profile->id, 422, 'Utilisez « Quitter le groupe » pour vous retirer.');
-        $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $target->id)->whereNull('left_at')->first();
-        abort_unless($member, 404);
-        if ($member->role === 'admin') {
-            $admins = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('role', 'admin')->whereNull('left_at')->count();
-            abort_if($admins <= 1, 422, 'Transférez les droits administrateur avant de retirer ce membre.');
-        }
-        DB::table('direct_conversation_members')->where('id', $member->id)->update(['left_at' => now(), 'updated_at' => now()]);
+        $me = $this->me($request);
+        $this->conversations->removeMember($me, $this->conversations->find($me, $conversation), $username);
+
         return response()->json(['removed' => true]);
     }
 
+    /**
+     * Leave a group.
+     *
+     * An only admin names another one first; the last member leaving deletes the group.
+     */
     public function leaveGroup(Request $request, int $conversation): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->type === 'group', 404);
-        $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
-        abort_unless($member, 404);
-        if ($member->role === 'admin') {
-            $admins = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('role', 'admin')->whereNull('left_at')->count();
-            abort_if($admins <= 1, 422, 'Transférez les droits administrateur avant de quitter le groupe.');
-        }
-        DB::table('direct_conversation_members')->where('id', $member->id)->update(['left_at' => now(), 'updated_at' => now()]);
+        $me = $this->me($request);
+        $this->conversations->leave($me, $this->conversations->find($me, $conversation));
+
         return response()->json(['left' => true]);
     }
 
+    /**
+     * Hand a group over.
+     *
+     * The member becomes its admin; the active profile, a member.
+     */
     public function transferGroupAdmin(Request $request, int $conversation, string $username): JsonResponse
     {
-        [$profile, $row] = $this->conversation($request, $conversation);
-        abort_unless($row->type === 'group', 404);
-        $actor = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->whereNull('left_at')->first();
-        abort_unless($actor && $actor->role === 'admin', 403);
-        $target = Profile::query()->where('username', $username)->firstOrFail();
-        $member = DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $target->id)->whereNull('left_at')->first();
-        abort_unless($member, 404);
-        DB::transaction(function () use ($conversation, $profile, $target) {
-            DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $profile->id)->update(['role' => 'member', 'updated_at' => now()]);
-            DB::table('direct_conversation_members')->where('conversation_id', $conversation)->where('profile_id', $target->id)->update(['role' => 'admin', 'updated_at' => now()]);
-            DB::table('direct_conversations')->where('id', $conversation)->update(['created_by_profile_id' => $target->id, 'updated_at' => now()]);
-        });
+        $me = $this->me($request);
+        $this->conversations->transferAdmin($me, $this->conversations->find($me, $conversation), $username);
+
         return response()->json(['transferred' => true]);
     }
 
+    /**
+     * Block a member.
+     *
+     * Neither can write to the other, start a conversation nor add the other to a group.
+     */
     public function block(Request $request, string $username): JsonResponse
     {
-        $profile = $this->activeProfile($request);
-        $target = Profile::query()->where('username', $username)->where('is_kid', false)->firstOrFail();
-        abort_if($target->id === $profile->id, 422);
-        DB::table('direct_message_blocks')->updateOrInsert(
-            ['blocker_profile_id' => $profile->id, 'blocked_profile_id' => $target->id],
-            ['created_at' => now(), 'updated_at' => now()]
-        );
+        $this->conversations->block($this->me($request), $this->member($username));
+
         return response()->json(['blocked' => true]);
     }
 
+    /** Unblock a member. */
     public function unblock(Request $request, string $username): JsonResponse
     {
-        $profile = $this->activeProfile($request);
-        $target = Profile::query()->where('username', $username)->where('is_kid', false)->firstOrFail();
-        DB::table('direct_message_blocks')->where('blocker_profile_id', $profile->id)->where('blocked_profile_id', $target->id)->delete();
+        $this->conversations->unblock($this->me($request), $this->member($username));
+
         return response()->json(['blocked' => false]);
+    }
+
+    /** The active profile, which must be an adult profile with a username. */
+    private function me(Request $request): Profile
+    {
+        $profile = ResolveProfile::profile($request);
+        abort_if($profile === null, 422, __('Select a profile.'));
+        abort_unless(Conversations::allowed($profile), 403, __('Messaging is for adult profiles with a username.'));
+
+        return $profile;
+    }
+
+    /** An adult member, by username (404 otherwise). */
+    private function member(string $username): Profile
+    {
+        return Profile::query()
+            ->where('username', mb_strtolower(ltrim($username, '@')))
+            ->where('is_kid', false)
+            ->firstOrFail();
     }
 }
