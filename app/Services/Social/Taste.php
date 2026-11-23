@@ -32,6 +32,26 @@ class Taste
     }
 
     /**
+     * Compatibility of [viewer] with each of [profiles] (the « Pour toi » feed): profile id →
+     * 0 to 100, or null below MIN_COMMON titles rated by both. Two queries whatever the number.
+     *
+     * @param  list<int>  $profiles
+     * @return array<int, int|null>
+     */
+    public function compatibilities(Profile $viewer, array $profiles): array
+    {
+        $mine = $this->ratings([(int) $viewer->id])[(int) $viewer->id] ?? [];
+        $theirs = $mine === [] || $profiles === [] ? [] : $this->ratings($profiles);
+
+        $scores = [];
+        foreach ($profiles as $id) {
+            $scores[$id] = $mine === [] ? null : self::score($mine, $theirs[$id] ?? [])['score'];
+        }
+
+        return $scores;
+    }
+
+    /**
      * Accounts [viewer] could follow: followed by those it follows, then close tastes, then the
      * most followed; not those it follows or asked to follow, nor blocked ones.
      *

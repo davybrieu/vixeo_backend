@@ -219,6 +219,55 @@ describe('the feed', function () {
         $kinds = array_column(as_($me)->getJson('/api/v1/social/feed')->json('data'), 'kind');
         expect($kinds)->toBe(['list', 'watched']);
     });
+
+    it('« Pour toi »: the reviews and lists of the whole network, the most interesting first', function () {
+        [$me, $lea, $max, $zoe] = [socialMember('me'), socialMember('lea'), socialMember('max'), socialMember('zoe')];
+        $private = socialMember('ana', ['is_private' => true]);
+        // Not followed: Pour toi shows them anyway.
+        as_($lea)->putJson("/api/v1/profiles/{$lea->id}/tmdb/ratings/movie/700", ['value' => 7])->assertOk();
+        as_($max)->putJson("/api/v1/profiles/{$max->id}/tmdb/ratings/movie/701", ['value' => 9, 'comment' => 'Une claque.'])->assertOk();
+        $liked = TmdbRating::query()->where('profile_id', $max->id)->firstOrFail();
+        DB::table('review_likes')->insert([
+            ['profile_id' => $lea->id, 'tmdb_rating_id' => $liked->id, 'created_at' => now()],
+            ['profile_id' => $zoe->id, 'tmdb_rating_id' => $liked->id, 'created_at' => now()],
+        ]);
+        as_($zoe)->postJson('/api/v1/social/lists', ['title' => 'Cultes', 'kind' => 'list', 'items' => ['movie:550']])->assertCreated();
+        // Neither a private account I don't follow, nor mine, nor a watched title.
+        as_($private)->putJson("/api/v1/profiles/{$private->id}/tmdb/ratings/movie/702", ['value' => 8, 'comment' => 'Privé'])->assertOk();
+        as_($me)->putJson("/api/v1/profiles/{$me->id}/tmdb/ratings/movie/703", ['value' => 8, 'comment' => 'Le mien'])->assertOk();
+        watch($lea, 600);
+
+        $feed = as_($me)->getJson('/api/v1/social/feed/for-you')->assertOk()->json();
+        // The liked, written review first; then the list, then the stars alone.
+        expect(array_map(fn ($item) => $item['review']['author']['username'] ?? $item['list']['author']['username'], $feed['data']))
+            ->toBe(['max', 'zoe', 'lea'])
+            ->and(array_column($feed['data'], 'kind'))->toBe(['review', 'list', 'review'])
+            ->and($feed['next'])->toBeNull();
+
+        // Muted or blocked: left out.
+        as_($me)->postJson('/api/v1/social/profiles/max/mute')->assertOk();
+        as_($me)->postJson('/api/v1/social/profiles/zoe/block')->assertOk();
+        expect(array_column(as_($me)->getJson('/api/v1/social/feed/for-you')->json('data'), 'kind'))->toBe(['review']);
+    });
+
+    it('« Pour toi »: pages of 20, several voices on a page', function () {
+        $me = socialMember('me');
+        $busy = socialMember('busy');
+        $other = socialMember('other');
+        foreach (range(1, 22) as $i) {
+            as_($busy)->putJson("/api/v1/profiles/{$busy->id}/tmdb/ratings/movie/".(800 + $i), ['value' => 8, 'comment' => "Avis {$i}"])->assertOk();
+        }
+        as_($other)->putJson("/api/v1/profiles/{$other->id}/tmdb/ratings/movie/900", ['value' => 6])->assertOk();
+
+        $first = as_($me)->getJson('/api/v1/social/feed/for-you')->assertOk()->json();
+        expect($first['data'])->toHaveCount(20)
+            ->and($first['next'])->toBe(2)
+            // The other voice comes high, despite the stars alone.
+            ->and(array_search('other', array_map(fn ($item) => $item['review']['author']['username'], $first['data']), true))
+            ->toBeLessThan(5);
+        $second = as_($me)->getJson('/api/v1/social/feed/for-you?page=2')->assertOk()->json();
+        expect($second['data'])->toHaveCount(3)->and($second['next'])->toBeNull();
+    });
 });
 
 describe('the title page', function () {

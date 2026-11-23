@@ -83,9 +83,20 @@ tout une fois suspendu ou masqué par la modération (`App\Services\Social\Audie
 `docs/moderation.md`). Les profils enfants n'y ont pas accès. Formes JSON communes :
 `App\Services\Social\SocialCards` (un profil, un avis, une liste, un commentaire).
 
-### Fil (`GET /social/feed?before=`)
+### Fil : « Pour toi » et « Abonnements »
 
-Ce qu'ont fait le profil actif et ceux qu'il suit, le plus récent d'abord, 40 activités par page
+Deux onglets dans les applis, **« Pour toi » par défaut** (demande du développeur, 23/11/2026).
+
+**« Pour toi »** (`GET /social/feed/for-you?page=`, `Feed::forYou`) : les avis et les listes de
+tout le réseau que le profil peut voir (pas les siens, ni ceux des profils masqués ou bloqués, ni
+les visionnages), des 30 derniers jours (les 300 plus récents), classés : une liste vaut un peu
+plus qu'un avis, un avis écrit plus que des étoiles seules, chaque J'aime et chaque commentaire
+ajoutent, comme les goûts en commun avec l'auteur (`Taste::compatibilities`) et le fait de le
+suivre ; puis le score baisse avec l'âge (environ de moitié en 2 jours). Plusieurs voix par page :
+chaque publication précédente d'un même auteur fait baisser les suivantes. 20 par page, `next` =
+la page suivante (null à la fin). Même forme d'éléments que les abonnements.
+
+**« Abonnements »** (`GET /social/feed?before=`) : ce qu'ont fait le profil actif et ceux qu'il suit, le plus récent d'abord, 40 activités par page
 (`next` : le `before` de la page suivante, null à la fin). Table `social_activities`
 (`App\Services\Social\Activities`) : un **avis** (nouveau, ou avec un nouveau commentaire : il
 remonte), un **visionnage** (une entrée du journal) et une **liste** (dès son premier titre).

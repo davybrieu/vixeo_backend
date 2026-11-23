@@ -19,7 +19,7 @@ class FeedController extends Controller
     use ResolvesSocialProfiles;
 
     /**
-     * The feed.
+     * The feed, « Abonnements ».
      *
      * What the active profile and those it follows did, the most recent first: `kind` = `review`
      * (with `review`), `list` (with `list`) or `watched` (`title`, the first `profiles` who watched
@@ -29,6 +29,19 @@ class FeedController extends Controller
     public function index(Request $request, Feed $feed): JsonResponse
     {
         return response()->json($feed->page($this->author($request), $request->integer('before') ?: null));
+    }
+
+    /**
+     * The feed, « Pour toi ».
+     *
+     * Reviews and lists of the whole network that the active profile can see (not its own, nor
+     * those of muted or blocked profiles), from the last 30 days, the most interesting first: what
+     * they drew (J'aime, comments), the tastes in common with their author, their age. Same items
+     * as the feed (`review`, `list`). `page`: 1 first; `next`: the following page (null: the end).
+     */
+    public function forYou(Request $request, Feed $feed): JsonResponse
+    {
+        return response()->json($feed->forYou($this->author($request), max(1, $request->integer('page', 1))));
     }
 
     /**

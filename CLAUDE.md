@@ -283,7 +283,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   regroupés par titre), `Lists` (`top` 10 titres / `list` 100, J'aime), `Comments` (avis et
   listes, spoilers), `Diary` (journal **écrit par `ProfileSync`** quand un titre devient vu, bilan
   `stats`), `TitleSocial` (`GET /social/titles/{type}/{id}` : abonnés qui l'ont vu et leur moyenne,
-  avis populaires, listes), `Taste` (compatibilité, `GET /social/suggestions`), `Reports`
+  avis populaires, listes), `Taste` (compatibilité, `GET /social/suggestions`), fil « Pour toi » (`Feed::forYou`,
+  `GET /social/feed/for-you?page=`, onglet par défaut des applis) à côté de « Abonnements », `Reports`
   (signalements, `vixeo:reports`, `vixeo:moderate … hide|dismiss|restore --reason=`),
   `SharedCards` (titre, avis ou liste envoyé dans un message, `share` de `POST /messages/{id}`).
   Bloquer (`…/block`) agit **partout** (même table que la messagerie, abonnements supprimés) ;

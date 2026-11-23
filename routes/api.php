@@ -190,6 +190,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
                 Route::get('hidden', [SocialProfileController::class, 'hidden'])->name('hidden');
                 // The feed and the accounts to follow.
                 Route::get('feed', [FeedController::class, 'index'])->name('feed');
+                Route::get('feed/for-you', [FeedController::class, 'forYou'])->name('feed.for-you');
                 Route::get('suggestions', [FeedController::class, 'suggestions'])->name('suggestions');
                 // Lists and top 10s of the active profile.
                 Route::get('lists', [ListController::class, 'mine'])->name('lists.mine');

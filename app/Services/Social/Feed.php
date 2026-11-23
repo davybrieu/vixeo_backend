@@ -5,21 +5,98 @@ namespace App\Services\Social;
 use App\Models\DiaryEntry;
 use App\Models\Profile;
 use App\Models\SocialActivity;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The feed (« Fil », docs/social.md): what the active profile and the profiles it follows did, the
- * most recent first: reviews, lists and watched titles. Watched titles are grouped by title in a
- * page (« Léa, Max et 1 autre ont vu Severance », « Léa a vu 3 épisodes de Severance »), and left
- * out when the same profile reviewed the same title in the page. Muted, blocked and suspended
- * profiles are left out, and what the moderation hid.
+ * The feed (« Fil », docs/social.md), in two tabs:
+ *
+ * - « Abonnements » ([page]): what the active profile and the profiles it follows did, the most
+ *   recent first: reviews, lists and watched titles. Watched titles are grouped by title in a page
+ *   (« Léa, Max et 1 autre ont vu Severance », « Léa a vu 3 épisodes de Severance »), and left out
+ *   when the same profile reviewed the same title in the page;
+ * - « Pour toi » ([forYou], the default tab of the apps): reviews and lists of the whole network
+ *   that the profile can see, ranked by what they drew (J'aime, comments), the tastes in common
+ *   with their author and their age.
+ *
+ * Muted, blocked and suspended profiles are left out, and what the moderation hid.
  */
 class Feed
 {
     public const PAGE = 40;
 
-    public function __construct(private Audience $audience, private SocialCards $cards) {}
+    /** « Pour toi »: a page, the days looked at and the most recent publications ranked. */
+    public const FOR_YOU_PAGE = 20;
+
+    public const FOR_YOU_DAYS = 30;
+
+    public const FOR_YOU_CANDIDATES = 300;
+
+    public function __construct(private Audience $audience, private SocialCards $cards, private Taste $taste) {}
+
+    /**
+     * A page of « Pour toi » (1 first); `next`: the following page, null at the end.
+     *
+     * Score of a publication: a list counts a little more than a review, a written review more
+     * than stars alone; each J'aime and each comment adds to it, as do the tastes in common with
+     * the author and following them; then the score halves about every 2 days. The same author's
+     * later publications in the ranking count less, so a page shows several voices.
+     *
+     * @return array{data: list<array<string, mixed>>, next: int|null}
+     */
+    public function forYou(Profile $viewer, int $page = 1): array
+    {
+        $page = max(1, $page);
+        $hidden = [...$this->audience->muted($viewer), (int) $viewer->id];
+        $query = SocialActivity::query()
+            ->whereIn('type', [SocialActivity::REVIEW, SocialActivity::LIST])
+            ->where('created_at', '>=', now()->subDays(self::FOR_YOU_DAYS))
+            ->whereNotIn('profile_id', $hidden);
+        $activities = $this->audience->constrain($query, $viewer)
+            ->orderByDesc('id')->limit(self::FOR_YOU_CANDIDATES)
+            ->with(['profile', 'review', 'diaryEntry', 'list'])
+            ->get();
+
+        $items = $this->items($activities, $viewer);
+        $authors = collect($items)->map(fn (array $item) => (int) ($item['review']['author']['id'] ?? $item['list']['author']['id'] ?? 0))
+            ->unique()->values()->all();
+        $compatibility = $this->taste->compatibilities($viewer, $authors);
+        $following = DB::table('profile_follows')->where('follower_profile_id', $viewer->id)
+            ->whereNotNull('accepted_at')->pluck('followed_profile_id')->map(intval(...))->flip();
+
+        $now = now();
+        $ranked = collect($items)->map(function (array $item) use ($compatibility, $following, $now) {
+            $card = $item['review'] ?? $item['list'];
+            $author = (int) $card['author']['id'];
+            $base = $item['kind'] === 'list'
+                ? 1.5 + ($card['items_count'] >= 5 ? 0.5 : 0)
+                : 1 + (trim((string) ($card['comment'] ?? '')) === '' ? 0 : 1);
+            $score = $base
+                + (int) $card['likes_count']
+                + 1.5 * (int) $card['comments_count']
+                + ($compatibility[$author] ?? 0) / 40
+                + ($following->has($author) ? 1 : 0);
+            $hours = abs(Carbon::parse($item['created_at'])->diffInMinutes($now)) / 60;
+
+            return ['item' => $item, 'author' => $author, 'score' => $score / ((1 + $hours / 48) ** 1.5)];
+        })->sortByDesc('score')->values();
+
+        // Several voices: each earlier publication of the same author lowers the next ones.
+        $seen = [];
+        $ranked = $ranked->map(function (array $row) use (&$seen) {
+            $count = $seen[$row['author']] = ($seen[$row['author']] ?? 0) + 1;
+
+            return [...$row, 'score' => $row['score'] * (0.6 ** ($count - 1))];
+        })->sortByDesc('score')->values();
+
+        $slice = $ranked->slice(($page - 1) * self::FOR_YOU_PAGE, self::FOR_YOU_PAGE);
+
+        return [
+            'data' => $slice->pluck('item')->values()->all(),
+            'next' => $ranked->count() > $page * self::FOR_YOU_PAGE ? $page + 1 : null,
+        ];
+    }
 
     /**
      * A page of the feed; `before`: the `next` of the previous page.

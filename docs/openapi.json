@@ -8195,7 +8195,7 @@
             "get": {
                 "operationId": "v1.social.feed",
                 "description": "What the active profile and those it follows did, the most recent first: `kind` = `review`\n(with `review`), `list` (with `list`) or `watched` (`title`, the first `profiles` who watched\nit, `profiles_count`, `episodes_count`). `before`: the `next` of the previous page (null: the\nend).",
-                "summary": "The feed",
+                "summary": "The feed, \u00ab Abonnements \u00bb",
                 "tags": [
                     "Social",
                     "Feed"
@@ -8215,6 +8215,58 @@
                                         "next": {
                                             "type": [
                                                 "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "next"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/social/feed/for-you": {
+            "get": {
+                "operationId": "v1.social.feed.for-you",
+                "description": "Reviews and lists of the whole network that the active profile can see (not its own, nor\nthose of muted or blocked profiles), from the last 30 days, the most interesting first: what\nthey drew (J'aime, comments), the tastes in common with their author, their age. Same items\nas the feed (`review`, `list`). `page`: 1 first; `next`: the following page (null: the end).",
+                "summary": "The feed, \u00ab Pour toi \u00bb",
+                "tags": [
+                    "Social",
+                    "Feed"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "next": {
+                                            "type": [
+                                                "number",
                                                 "null"
                                             ]
                                         }
