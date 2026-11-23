@@ -263,17 +263,18 @@ class Conversations
         $conversation->update(['status' => Conversation::REJECTED]);
     }
 
-    public function send(Profile $me, Conversation $conversation, string $body): DirectMessage
+    /** A text, maybe with a title, a review or a list ([shared], App\Services\Social\SharedCards). */
+    public function send(Profile $me, Conversation $conversation, string $body, ?array $shared = null): DirectMessage
     {
         $this->assertCanWrite($me, $conversation);
-        $message = DB::transaction(function () use ($me, $conversation, $body) {
-            $message = $conversation->messages()->create(['sender_profile_id' => $me->id, 'body' => $body]);
+        $message = DB::transaction(function () use ($me, $conversation, $body, $shared) {
+            $message = $conversation->messages()->create(['sender_profile_id' => $me->id, 'body' => $body, 'shared' => $shared]);
             $conversation->update(['last_message_at' => $message->created_at]);
 
             return $message;
         });
         $message->setRelation('attachments', new Collection)->setRelation('reads', new Collection);
-        $this->announce($me, $conversation, $message, $body);
+        $this->announce($me, $conversation, $message, $body !== '' ? $body : self::sharedPreview($shared));
 
         return $message;
     }
@@ -337,12 +338,33 @@ class Conversations
             ->first();
         abort_if($message === null, 404);
 
-        $this->deleteFiles($message->attachments);
-        DB::transaction(function () use ($me, $message) {
-            $message->attachments()->delete();
-            $message->update(['body' => '', 'deleted_at' => now(), 'deleted_by_profile_id' => $me->id]);
-        });
+        $this->erase($message, $me->id);
         $this->broadcast($conversation, 'deleted', $message->id, $me->id);
+    }
+
+    /** What a message with only a shared card says (a notification, the list of conversations). */
+    public static function sharedPreview(?array $shared): string
+    {
+        return match ($shared['type'] ?? null) {
+            'title' => "A partagé « {$shared['title']} »",
+            'review' => "A partagé un avis sur « {$shared['title']} »",
+            'list' => "A partagé la liste « {$shared['title']} »",
+            default => '',
+        };
+    }
+
+    /**
+     * Empties a message for everyone: its text, what it shared and its files (deleted by its
+     * sender, or hidden by the moderation, docs/moderation.md).
+     */
+    public function erase(DirectMessage $message, ?int $by = null): void
+    {
+        $message->loadMissing('attachments');
+        $this->deleteFiles($message->attachments);
+        DB::transaction(function () use ($message, $by) {
+            $message->attachments()->delete();
+            $message->update(['body' => '', 'shared' => null, 'deleted_at' => now(), 'deleted_by_profile_id' => $by]);
+        });
     }
 
     /** The messages of the others are read by [me]; how many were not yet. */

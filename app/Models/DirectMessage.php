@@ -25,7 +25,8 @@ class DirectMessage extends Model
 
     protected function casts(): array
     {
-        return ['deleted_at' => 'datetime'];
+        // `shared`: a title, a review or a list sent in the message ({type, id}).
+        return ['deleted_at' => 'datetime', 'shared' => 'array'];
     }
 
     public function isDeleted(): bool

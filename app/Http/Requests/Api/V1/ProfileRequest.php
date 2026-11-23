@@ -100,6 +100,17 @@ class ProfileRequest extends FormRequest
             'skip_credits' => ['sometimes', 'boolean'],
             /** The player skips the preview of the next episode by itself. */
             'skip_preview' => ['sometimes', 'boolean'],
+            /** At the end of a movie or an episode, the player proposes to rate it (default true). */
+            'rate_after_watching' => ['sometimes', 'boolean'],
+            /**
+             * « Mes 4 favoris » at the top of the profile, in order (`movie:550`, `tv:1399`); empty: none.
+             *
+             * @var list<string>
+             */
+            'pinned_titles' => ['sometimes', 'array', 'max:'.Profile::MAX_PINNED],
+            'pinned_titles.*' => ['string', 'distinct', 'regex:/^(movie|tv):\d{1,9}$/'],
+            /** The first launch (rate known titles, accounts to follow) was done or skipped. */
+            'onboarded' => ['sometimes', 'accepted'],
             /** Parental PIN: required (when parental control is on) to create a profile or change its restrictions. */
             'parental_pin' => ['sometimes', 'nullable', 'string', 'digits:4'],
             /** Current PIN of the profile: required to change or remove it, unless `parental_pin` is given. */
@@ -127,7 +138,10 @@ class ProfileRequest extends FormRequest
     /** Profile attributes to save (PINs used for authorization are not stored). */
     public function profileData(): array
     {
-        $data = $this->safe()->except(['parental_pin', 'current_pin']);
+        $data = $this->safe()->except(['parental_pin', 'current_pin', 'pinned_titles', 'onboarded']);
+        if ($this->has('onboarded')) {
+            $data['onboarded_at'] = now();
+        }
         if (isset($data['username'])) {
             $data['username'] = mb_strtolower($data['username']);
         }
@@ -137,6 +151,14 @@ class ProfileRequest extends FormRequest
         }
 
         return $data;
+    }
+
+    /** @return list<string>|null `movie:550`…, null when not sent */
+    public function pinnedTitles(): ?array
+    {
+        $titles = $this->validated('pinned_titles');
+
+        return is_array($titles) ? array_values(array_map('strval', $titles)) : null;
     }
 
     private function authorizeSensitiveChanges(): void

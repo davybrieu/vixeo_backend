@@ -5,6 +5,7 @@ namespace App\Http\Resources\V1\Messages;
 use App\Http\Middleware\ResolveProfile;
 use App\Models\Conversation;
 use App\Models\ConversationMember;
+use App\Services\Messaging\Conversations;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,7 +36,8 @@ class ConversationResource extends JsonResource
             'participant' => ! $this->isGroup() && $direct !== null ? new ChatMemberResource($direct) : null,
             'last_message' => $last === null ? null : [
                 'id' => (int) $last->id,
-                'body' => $last->isDeleted() ? __('Message deleted') : (string) $last->body,
+                'body' => $last->isDeleted() ? __('Message deleted')
+                    : ((string) $last->body !== '' ? (string) $last->body : Conversations::sharedPreview(is_array($last->shared) ? $last->shared : null)),
                 'sender_profile_id' => (int) $last->sender_profile_id,
                 /** ISO 8601, with the time zone. */
                 'created_at' => (string) $last->created_at?->toIso8601String(),

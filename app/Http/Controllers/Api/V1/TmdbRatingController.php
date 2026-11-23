@@ -78,6 +78,9 @@ class TmdbRatingController extends Controller
             /** 0.5 to 10, null when not rated. */
             'value' => $row === null ? null : (float) $row->value,
             'comment' => $row?->comment === null ? null : (string) $row->comment,
+            'contains_spoilers' => (bool) ($row?->contains_spoilers ?? false),
+            /** Null when not rated. */
+            'review_id' => $row === null ? null : (int) $row->id,
         ]]);
     }
 
@@ -97,6 +100,8 @@ class TmdbRatingController extends Controller
                 /** 0.5 to 10. */
                 'value' => (float) $row->value,
                 'comment' => $row->comment === null ? null : (string) $row->comment,
+                'contains_spoilers' => (bool) $row->contains_spoilers,
+                'review_id' => (int) $row->id,
             ])->all(),
         ]);
     }
@@ -144,11 +149,14 @@ class TmdbRatingController extends Controller
     private function save(RateRequest $request, Profile $profile, RatingTarget $target): JsonResponse
     {
         Gate::authorize('update', $profile);
-        $row = $this->ratings->save($profile, $target, $request->value(), $request->hasComment(), $request->comment());
+        $row = $this->ratings->save($profile, $target, $request->value(), $request->hasComment(), $request->comment(), $request->spoilers());
 
         return response()->json(['data' => [
             'value' => (float) $row->value,
             'comment' => $row->comment === null ? null : (string) $row->comment,
+            'contains_spoilers' => (bool) $row->contains_spoilers,
+            /** The review itself: its page, its likes and comments (`/social/reviews/{review_id}`). */
+            'review_id' => (int) $row->id,
         ]]);
     }
 

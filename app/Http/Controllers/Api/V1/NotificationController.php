@@ -7,6 +7,8 @@ use App\Http\Middleware\ResolveProfile;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\SocialNotification;
+use App\Services\Social\Audience;
+use App\Services\Social\SocialNotifications;
 use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbFormat as F;
@@ -30,14 +32,17 @@ class NotificationController extends Controller
      * Notifications of the active profile.
      *
      * The most recent first, 30 per page. `type`: `follow`, `follow_request` (to accept or decline,
-     * `GET /social/requests`), `follow_accepted`, `review_like` (with `review`). `unread_count`:
-     * the badge of the navigation.
+     * `GET /social/requests`), `follow_accepted`, `review_like` (with `review`), `review_comment`
+     * (with `review` and `comment`), `list_like` (with `list`), `list_comment` (with `list` and
+     * `comment`), `moderation` (a decision of the moderation, `text`). `unread_count`: the badge
+     * of the navigation.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, Audience $audience): JsonResponse
     {
         $profile = $this->profile($request);
         $page = SocialNotification::query()->where('profile_id', $profile->id)
-            ->with(['actor', 'rating'])->latest('created_at')->latest('id')->paginate(30);
+            ->whereNotIn('actor_profile_id', $audience->blocked($profile))
+            ->with(['actor', 'rating', 'list', 'comment'])->latest('created_at')->latest('id')->paginate(30);
 
         return response()->json([
             'data' => collect($page->items())->map(fn (SocialNotification $n) => [
@@ -63,6 +68,20 @@ class NotificationController extends Controller
                     'value' => (float) $n->rating->value,
                     'poster_url' => F::image($n->rating->poster_path === null ? null : (string) $n->rating->poster_path, 'w342'),
                 ],
+                /** The list liked or commented (`list_like`, `list_comment`). */
+                'list' => $n->list === null ? null : [
+                    'id' => (int) $n->list->id,
+                    'title' => (string) $n->list->title,
+                    'kind' => (string) $n->list->kind,
+                ],
+                /** The comment written (`review_comment`, `list_comment`). */
+                'comment' => $n->comment === null ? null : [
+                    'id' => (int) $n->comment->id,
+                    'body' => SocialNotifications::excerpt($n->comment->body, 140),
+                    'contains_spoilers' => (bool) $n->comment->contains_spoilers,
+                ],
+                /** A decision of the moderation (`moderation`). */
+                'text' => $n->type === SocialNotification::MODERATION ? (string) ($n->data['text'] ?? '') : null,
             ]),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
             'unread_count' => $this->unread($profile),

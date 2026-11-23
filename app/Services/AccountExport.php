@@ -2,14 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\DiaryEntry;
 use App\Models\DirectMessage;
 use App\Models\EpisodeNotification;
+use App\Models\ListLike;
 use App\Models\MessageBlock;
 use App\Models\Profile;
 use App\Models\ProfileItem;
+use App\Models\ProfileList;
+use App\Models\ProfileMute;
 use App\Models\ProfileSearch;
 use App\Models\PushDevice;
+use App\Models\Report;
 use App\Models\ReviewLike;
+use App\Models\SocialComment;
 use App\Models\SocialNotification;
 use App\Models\TmdbRating;
 use App\Models\User;
@@ -60,6 +66,42 @@ class AccountExport
                 'messages' => $this->messages($p),
                 'message_blocks' => MessageBlock::query()->where('blocker_profile_id', $p->id)->with('blocked')->get()
                     ->map(fn (MessageBlock $block) => $block->blocked?->username)->filter()->values()->all(),
+                // The social network (docs/social.md): lists, comments, diary, muted members, reports.
+                'lists' => ProfileList::query()->where('profile_id', $p->id)->with('items')->get()->map(fn (ProfileList $l) => [
+                    'title' => $l->title,
+                    'description' => $l->description,
+                    'kind' => $l->kind,
+                    'created_at' => $l->created_at?->toIso8601String(),
+                    'titles' => $l->items->map(fn ($i) => ['item_id' => $i->itemId(), 'title' => $i->title])->values()->all(),
+                ])->values()->all(),
+                'list_likes' => ListLike::query()->where('profile_id', $p->id)->with('list')->get()
+                    ->map(fn (ListLike $like) => ['list' => $like->list?->title, 'liked_at' => $like->created_at?->toIso8601String()])->values()->all(),
+                'comments' => SocialComment::query()->where('profile_id', $p->id)->with(['review', 'list'])->get()->map(fn (SocialComment $c) => [
+                    'on' => $c->review !== null ? "Avis sur {$c->review->title}" : 'Liste « '.($c->list?->title ?? '').' »',
+                    'body' => $c->body,
+                    'contains_spoilers' => (bool) $c->contains_spoilers,
+                    'created_at' => $c->created_at?->toIso8601String(),
+                ])->values()->all(),
+                'diary' => DiaryEntry::query()->where('profile_id', $p->id)->orderBy('watched_at')->get()->map(fn (DiaryEntry $e) => [
+                    'item_id' => "{$e->media_type}:{$e->tmdb_id}",
+                    'title' => $e->title,
+                    'season_number' => $e->season_number,
+                    'episode_number' => $e->episode_number,
+                    'watched_at' => $e->watched_at->toIso8601String(),
+                    'rewatch' => (bool) $e->rewatch,
+                ])->values()->all(),
+                'muted' => ProfileMute::query()->where('profile_id', $p->id)->pluck('muted_profile_id')
+                    ->map(fn ($id) => Profile::query()->find($id)?->username)->filter()->values()->all(),
+                'reports' => Report::query()->where('reporter_profile_id', $p->id)->get()->map(fn (Report $r) => [
+                    'type' => $r->subject_type,
+                    'reason' => $r->reason,
+                    'details' => $r->details,
+                    'status' => $r->status,
+                    'decision' => $r->decision,
+                    'created_at' => $r->created_at?->toIso8601String(),
+                ])->values()->all(),
+                'pinned_titles' => array_values(array_map(fn (array $t) => "{$t['type']}:{$t['id']}", $p->pinned_titles ?? [])),
+                'rate_after_watching' => (bool) $p->rate_after_watching,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,
                 'max_age_rating' => $p->max_age_rating,

@@ -17,6 +17,7 @@ use App\Http\Resources\V1\Messages\MessageResource;
 use App\Models\MessageBlock;
 use App\Models\Profile;
 use App\Services\Messaging\Conversations;
+use App\Services\Social\SharedCards;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -165,11 +166,19 @@ class DirectMessageController extends Controller
         ]);
     }
 
-    /** Send a message. */
+    /**
+     * Send a message.
+     *
+     * A text, and / or a title, a review or a list (`share`, « Recommander à un ami ») the sender
+     * can see.
+     */
     public function send(SendMessageRequest $request, int $conversation): JsonResponse
     {
         $me = $this->me($request);
-        $message = $this->conversations->send($me, $this->conversations->find($me, $conversation), $request->body());
+        $found = $this->conversations->find($me, $conversation);
+        $share = $request->share();
+        $shared = $share === null ? null : app(SharedCards::class)->snapshot($me, $share['type'], $share['id']);
+        $message = $this->conversations->send($me, $found, $request->body(), $shared);
 
         return response()->json(['data' => new MessageResource($message)], 201);
     }

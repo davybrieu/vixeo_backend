@@ -90,9 +90,10 @@ it('reads my rating of a title and of the episodes of a season', function () {
         ->assertJsonPath('data.value', 8)
         ->assertJsonPath('data.comment', 'Revu.');
     $this->getJson("{$this->url}/ratings/tv/1399")->assertOk()->assertJsonPath('data.value', null);
+    $ids = TmdbRating::query()->where('type', 'episode')->pluck('id', 'episode_number');
     $this->getJson("{$this->url}/ratings/tv/1399/season/1")->assertOk()->assertExactJson(['data' => [
-        ['episode_number' => 1, 'value' => 7, 'comment' => null],
-        ['episode_number' => 3, 'value' => 9.5, 'comment' => null],
+        ['episode_number' => 1, 'value' => 7, 'comment' => null, 'contains_spoilers' => false, 'review_id' => $ids[1]],
+        ['episode_number' => 3, 'value' => 9.5, 'comment' => null, 'contains_spoilers' => false, 'review_id' => $ids[3]],
     ]]);
 });
 

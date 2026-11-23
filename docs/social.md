@@ -1,4 +1,4 @@
-# Fonctions sociales : réseaux, compte privé, J'aime, notifications
+# Fonctions sociales : réseaux, compte privé, J'aime, notifications, fil, listes, journal
 
 Demande du développeur, 21/11/2026, sur le modèle de Twitter. Le reste des pages de profil (pseudo,
 biographie, abonnés, listes publiques, « Partager ») est décrit dans `CLAUDE.md` (« Recherche de
@@ -51,6 +51,10 @@ par un autre profil, la dernière gardée (aimer de nouveau = la même notificat
 | `follow_request` | quelqu'un demande à suivre le compte privé | « Demande d'abonnement » |
 | `follow_accepted` | le compte privé accepte la demande du profil | « Demande acceptée » |
 | `review_like` | quelqu'un aime un avis du profil (`review`) | « J'aime » |
+| `review_comment` | quelqu'un commente un avis du profil (`review`, `comment`) | « Nouveau commentaire » |
+| `list_like` | quelqu'un aime une liste du profil (`list`) | « J'aime » |
+| `list_comment` | quelqu'un commente une liste du profil (`list`, `comment`) | « Nouveau commentaire » |
+| `moderation` | une décision de la modération (`text`, `docs/moderation.md`) | « Modération » |
 
 Une action annulée (désabonnement, demande retirée ou refusée, J'aime retiré) retire sa
 notification. Routes (profil actif `X-Profile-Id`, pas de profil enfant) : `GET /notifications`
@@ -69,8 +73,101 @@ chacune (TMDb `next_episode_to_air`), le plus proche d'abord, et `recent` = les 
 depuis moins de 7 jours. `available_at` est l'heure estimée de `UpcomingEpisodes::availableAt`
 (jamais trop tôt), comme les notifications des nouveaux épisodes (`docs/notifications.md`).
 
+## Le réseau social des films et séries (23/11/2026)
+
+Demande du développeur : « un réseau social comme Twitter, mais sans tweet de texte ». **Toute
+publication porte sur une œuvre** : un avis, un visionnage (journal), une liste ou un top 10 ; on
+discute dans les commentaires. Tout ce qu'un profil publie est vu de tous s'il est public, de ses
+abonnés acceptés s'il est privé, jamais d'un profil bloqué (dans un sens ou l'autre), et plus du
+tout une fois suspendu ou masqué par la modération (`App\Services\Social\Audience`,
+`docs/moderation.md`). Les profils enfants n'y ont pas accès. Formes JSON communes :
+`App\Services\Social\SocialCards` (un profil, un avis, une liste, un commentaire).
+
+### Fil (`GET /social/feed?before=`)
+
+Ce qu'ont fait le profil actif et ceux qu'il suit, le plus récent d'abord, 40 activités par page
+(`next` : le `before` de la page suivante, null à la fin). Table `social_activities`
+(`App\Services\Social\Activities`) : un **avis** (nouveau, ou avec un nouveau commentaire : il
+remonte), un **visionnage** (une entrée du journal) et une **liste** (dès son premier titre).
+`kind` = `review` (`review`), `list` (`list`) ou `watched` (`title`, les 3 premiers `profiles`,
+`profiles_count`, `episodes_count`, `rewatch`) : les visionnages d'un même titre sont regroupés dans
+une page (« Léa, Max et 1 autre ont vu… »), et omis quand le même profil a publié un avis du même
+titre dans la page. Profils masqués, bloqués ou suspendus et contenus masqués : absents.
+
+### Listes et top 10 (`/social/lists…`)
+
+`profile_lists` + `profile_list_items` (`App\Services\Social\Lists`) : `kind` = `top` (numéroté,
+10 titres au plus) ou `list` (dans l'ordre choisi, 100 au plus) ; titre (100 caractères),
+description (1 000). Chaque titre garde ce que la liste en montre (nom, année, images), tiré de
+TMDb à l'ajout (`TitleSnapshots`, cache de `TitleSummaries`) : afficher une liste n'interroge pas
+TMDb. Routes : `GET /social/lists?item=movie:550` (mes listes, `contains`), `POST /social/lists`,
+`GET|PUT|DELETE /social/lists/{id}` (`items` : la liste entière dans le nouvel ordre),
+`POST /social/lists/{id}/items` (`item`), `DELETE /social/lists/{id}/items/{type}/{id}`,
+`PUT|DELETE /social/lists/{id}/like` (`list_likes`), `GET|POST /social/lists/{id}/comments`,
+`GET /social/profiles/{pseudo}/lists` (celles qui ont un titre, sauf pour leur auteur).
+
+### Avis : spoilers et commentaires
+
+`contains_spoilers` sur un avis (`PUT …/ratings…`, gardé s'il n'est pas envoyé) et sur un
+commentaire : les applis masquent le texte derrière « Afficher ». `GET /social/reviews/{id}`
+(l'avis comme publication : auteur, J'aime, `comments_count`), `GET|POST
+/social/reviews/{id}/comments` (les 50 derniers, du plus ancien au plus récent ; `before` pour les
+précédents), `DELETE /social/comments/{id}` (son auteur, ou l'auteur de l'avis ou de la liste).
+Table `social_comments` (`App\Services\Social\Comments`, 1 000 caractères), l'auteur est notifié.
+
+### Journal et bilan de l'année
+
+`diary_entries` (`App\Services\Social\Diary`) : **écrit tout seul** quand un film ou une série
+devient « vu » par la synchronisation (le lecteur à la fin, le bouton « Vu » ;
+`ProfileSync::push`, après la transaction), daté du `watched_at` du changement ; un nouveau
+visionnage s'ajoute par `POST /profiles/{id}/diary` (`item`, saison et épisode facultatifs,
+`watched_at`), marqué `rewatch` quand le journal a déjà le titre ; `DELETE
+/profiles/{id}/diary/{entrée}`. Lecture : `GET /social/profiles/{pseudo}/diary` (30 par page, avec
+la note du profil) et `GET /social/profiles/{pseudo}/stats?year=` (« Bilan de l'année » : titres,
+films, épisodes, séries, revisionnages, minutes, mois, 5 genres, meilleures notes, série la plus
+vue ; durée et genres tirés de TMDb à l'écriture, complétés à la lecture si TMDb était en panne).
+
+### Page d'un titre (`GET /social/titles/{type}/{id}`)
+
+`friends` : les profils suivis qui l'ont vu ou noté (`rating` null s'ils l'ont seulement vu), notés
+d'abord, et `friends_average` ; `reviews` : les 3 avis avec commentaire les plus aimés
+(`reviews_count`) ; `lists` : les listes qui l'ont, les plus aimées d'abord. Tous les avis :
+`GET /social/titles/{type}/{id}/reviews?sort=popular|recent`.
+
+### Goûts en commun et comptes à suivre
+
+`App\Services\Social\Taste` : `compatibility` de `GET /social/profiles/{pseudo}` (`score` 0 à
+100 : 100 − 20 × l'écart moyen des notes des films et séries notés par les deux, null en dessous de
+5 titres communs ; `common`). `GET /social/suggestions` : suivis par mes abonnements, puis goûts
+proches, puis les plus suivis ; jamais ceux que je suis ou bloque ; avec la `reason` à afficher.
+
+### Bloquer, masquer
+
+`POST|DELETE /social/profiles/{pseudo}/block` : **partout** (table `direct_message_blocks`, la
+même que la messagerie) : les abonnements dans les deux sens sont supprimés, ni l'un ni l'autre ne
+voit, ne suit, n'aime, ne commente ni n'écrit à l'autre ; la page d'un membre qui m'a bloqué
+répond 404, celle d'un membre que j'ai bloqué dit `is_blocked`. `POST|DELETE …/mute` (« Masquer »,
+`profile_mutes`) : hors de mon fil seulement, toujours suivi, sans le lui dire. `GET
+/social/hidden` : comptes bloqués et masqués (réglages de l'appli).
+
+### Profil : 4 favoris, note en fin de lecture, premier lancement
+
+`PUT /profiles/{id}` : `pinned_titles` (« Mes 4 favoris », `movie:550`… dans l'ordre, gardés avec
+ce que le profil en montre ; `pinned` de `GET /social/profiles/{pseudo}`), `rate_after_watching`
+(le lecteur propose de noter à la fin, vrai par défaut) et `onboarded: true` (le premier lancement
+a été fait ou passé ; `onboarded` de la réponse ; les profils existants le sont déjà, un nouveau
+non).
+
+### Partager dans un message
+
+`POST /messages/{id}` accepte `share` = `{type: title|review|list, id}` (« Recommander à un
+ami »), avec ou sans texte : ce que la conversation montre (titre, affiche, note, extrait sans
+spoiler, auteur, couverture d'une liste) est gardé avec le message (`direct_messages.shared`,
+`SharedCards`) ; l'expéditeur doit le voir (404 sinon).
+
 ## Données du compte
 
 Les nouvelles tables sont supprimées avec le profil (clés étrangères `cascadeOnDelete`) et
 figurent dans l'export (`AccountExport` : `username`, `bio`, `is_private`, `social_links`,
-`following`, `followers`, `review_likes`, `notifications`).
+`following`, `followers`, `review_likes`, `notifications`, `lists`, `list_likes`, `comments`,
+`diary`, `muted`, `reports`, `pinned_titles`, `rate_after_watching`).

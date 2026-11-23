@@ -49,6 +49,8 @@ class RatedItemResource extends JsonResource
             'vote_average' => (float) $this->vote_average,
             /** Likes of other profiles (« J'aime »). */
             'likes_count' => (int) ($this->likes_count ?? 0),
+            /** The comment reveals the story (hidden behind « Afficher » for the others). */
+            'contains_spoilers' => (bool) $this->contains_spoilers,
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Profile;
 use App\Models\ProfileItem;
+use App\Services\Social\Diary;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -30,6 +31,8 @@ class ProfileSync
 
     private const METADATA = ['type', 'title', 'year', 'poster_url', 'backdrop_url', 'parent_item_id', 'season_number', 'episode_number'];
 
+    public function __construct(private Diary $diary) {}
+
     /**
      * Apply changes (validated by SyncPushRequest) and return the merged state of each item.
      *
@@ -38,7 +41,8 @@ class ProfileSync
      */
     public function push(Profile $profile, array $changes): array
     {
-        return DB::transaction(function () use ($profile, $changes) {
+        $watched = [];
+        $result = DB::transaction(function () use ($profile, $changes, &$watched) {
             // Serializes pushes of the same profile: revisions stay strictly increasing.
             $locked = Profile::whereKey($profile->id)->lockForUpdate()->firstOrFail();
             $revision = $locked->sync_revision;
@@ -53,7 +57,11 @@ class ProfileSync
                 $key = self::key($change['source'], $change['item_id']);
                 $item = $items->get($key) ?? $locked->items()->make(Arr::only($change, ['source', 'item_id']));
 
+                $wasWatched = (bool) $item->is_watched;
                 $this->apply($item, $change);
+                if (! $wasWatched && $item->is_watched) {
+                    $watched[$key] = $item;
+                }
 
                 if (! $item->exists || $item->isDirty()) {
                     $item->revision = ++$revision;
@@ -71,6 +79,14 @@ class ProfileSync
 
             return ['items' => collect(array_values($touched)), 'revision' => $revision];
         });
+
+        // A title that became watched goes to the diary (« Journal ») and the feed, after the
+        // transaction (TMDb may be asked what the diary shows of it).
+        if ($watched !== []) {
+            $this->diary->watched($profile, array_values($watched));
+        }
+
+        return $result;
     }
 
     /**

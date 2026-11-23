@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * its comment, kept by Vixeo only. The other columns copy what « Mes avis » shows of the title.
  */
 #[Fillable([
-    'target', 'type', 'tmdb_id', 'season_number', 'episode_number', 'value', 'comment',
+    'target', 'type', 'tmdb_id', 'season_number', 'episode_number', 'value', 'comment', 'contains_spoilers',
     'title', 'episode_name', 'date', 'poster_path', 'backdrop_path', 'still_path', 'vote_average', 'rated_at',
 ])]
 class TmdbRating extends Model
@@ -31,6 +31,8 @@ class TmdbRating extends Model
             'value' => 'float',
             'vote_average' => 'float',
             'rated_at' => 'datetime',
+            'contains_spoilers' => 'boolean',
+            'hidden_at' => 'datetime',
         ];
     }
 
@@ -44,5 +46,17 @@ class TmdbRating extends Model
     public function likes(): HasMany
     {
         return $this->hasMany(ReviewLike::class);
+    }
+
+    /** Comments of other profiles (docs/social.md). @return HasMany<SocialComment, $this> */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(SocialComment::class);
+    }
+
+    /** `movie:550` or `tv:1399` (the show of an episode). */
+    public function titleId(): string
+    {
+        return ($this->type->value === 'movie' ? 'movie' : 'tv').':'.$this->tmdb_id;
     }
 }

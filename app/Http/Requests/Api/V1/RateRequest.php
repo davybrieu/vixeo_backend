@@ -14,6 +14,8 @@ class RateRequest extends FormRequest
             'value' => ['required', 'numeric', 'min:0.5', 'max:10', 'multiple_of:0.5'],
             /** Optional comment. Null or empty removes it; left out, it is kept. */
             'comment' => ['sometimes', 'nullable', 'string', 'max:'.TmdbRating::MAX_COMMENT],
+            /** The comment reveals the story: hidden behind « Afficher » for the others. Left out, kept. */
+            'contains_spoilers' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -34,6 +36,12 @@ class RateRequest extends FormRequest
     public function hasComment(): bool
     {
         return array_key_exists('comment', $this->validated());
+    }
+
+    /** Null when not sent (kept). */
+    public function spoilers(): ?bool
+    {
+        return $this->has('contains_spoilers') ? $this->boolean('contains_spoilers') : null;
     }
 
     public function comment(): ?string

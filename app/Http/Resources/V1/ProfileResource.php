@@ -3,6 +3,7 @@
 namespace App\Http\Resources\V1;
 
 use App\Models\Profile;
+use App\Services\Social\TitleSnapshots;
 use App\Support\SocialLinks;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -47,6 +48,16 @@ class ProfileResource extends JsonResource
             'skip_recap' => (bool) $this->skip_recap,
             'skip_credits' => (bool) $this->skip_credits,
             'skip_preview' => (bool) $this->skip_preview,
+            /** At the end of a movie or an episode, the player proposes to rate it. */
+            'rate_after_watching' => (bool) $this->rate_after_watching,
+            /**
+             * « Mes 4 favoris » at the top of the profile.
+             *
+             * @var list<array{type: string, id: int, item_id: string, title: string, year: int|null, poster_url: string|null, backdrop_url: string|null}>
+             */
+            'pinned_titles' => array_map(TitleSnapshots::card(...), array_values($this->pinned_titles ?? [])),
+            /** The first launch (rate known titles, accounts to follow) was done or skipped. */
+            'onboarded' => $this->onboarded_at !== null,
             'position' => $this->position,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

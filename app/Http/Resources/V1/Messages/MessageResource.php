@@ -33,6 +33,13 @@ class MessageResource extends JsonResource
             /** ISO 8601, with the time zone. */
             'created_at' => (string) $this->created_at?->toIso8601String(),
             'attachments' => AttachmentResource::collection($this->attachments),
+            /**
+             * A title, a review or a list sent with it: `type` (`title`, `review`, `list`) and what
+             * the card shows, as when it was sent.
+             *
+             * @var array<string, mixed>|null
+             */
+            'shared' => $deleted || ! is_array($this->shared) ? null : $this->shared,
         ];
     }
 }

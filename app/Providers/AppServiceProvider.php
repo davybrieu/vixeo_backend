@@ -71,6 +71,9 @@ class AppServiceProvider extends ServiceProvider
 
         // The profile's reviews: title pages read them, « Mes avis » lists them.
         RateLimiter::for('reviews', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+        // Comments, lists, likes, blocks (docs/social.md); reports (docs/moderation.md).
+        RateLimiter::for('social', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('reports', fn (Request $request) => Limit::perHour(30)->by($request->user()?->id ?: $request->ip()));
 
         // Apps register for push notifications at launch and when the profile changes.
         RateLimiter::for('push', fn (Request $request) => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));

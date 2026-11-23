@@ -272,6 +272,26 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `GET /notifications`, `/count`, `POST /notifications/read`, `GET /notifications/episodes` :
   prochains épisodes de « Ma liste »), envoyées aussi en push après la réponse (réglage `social`
   de `PUT /push/device`, canal Android `social`).
+- **Réseau social des films et séries** (demande du développeur, 23/11/2026, « comme Twitter mais
+  sans tweet de texte » ; doc : `docs/social.md`, `docs/moderation.md`) : **toute publication porte
+  sur une œuvre** (avis, visionnage, liste / top 10), la conversation est dans les commentaires.
+  Services `App\Services\Social\…` : `Audience` (qui voit quoi : public, abonnés d'un compte
+  privé, jamais un profil bloqué dans un sens ou l'autre, rien d'un profil suspendu ni d'un contenu
+  masqué ; `constrain()` pour une requête), `SocialCards` (formes JSON communes : profil, avis,
+  liste, commentaire), `TitleSnapshots` (ce qu'on garde d'un titre, depuis le cache de
+  `TitleSummaries`), `Activities` + `Feed` (`social_activities`, `GET /social/feed` : visionnages
+  regroupés par titre), `Lists` (`top` 10 titres / `list` 100, J'aime), `Comments` (avis et
+  listes, spoilers), `Diary` (journal **écrit par `ProfileSync`** quand un titre devient vu, bilan
+  `stats`), `TitleSocial` (`GET /social/titles/{type}/{id}` : abonnés qui l'ont vu et leur moyenne,
+  avis populaires, listes), `Taste` (compatibilité, `GET /social/suggestions`), `Reports`
+  (signalements, `vixeo:reports`, `vixeo:moderate … hide|dismiss|restore --reason=`),
+  `SharedCards` (titre, avis ou liste envoyé dans un message, `share` de `POST /messages/{id}`).
+  Bloquer (`…/block`) agit **partout** (même table que la messagerie, abonnements supprimés) ;
+  masquer (`…/mute`) retire seulement du fil. Profil : `pinned_titles` (4 favoris),
+  `rate_after_watching` (note proposée en fin de lecture, vrai par défaut), `onboarded_at`
+  (premier lancement ; les profils existants l'ont déjà), `suspended_at`. Contrôleurs : trait
+  `Concerns\ResolvesSocialProfiles` (`viewer`, `author`, `visibleMember`, `assertVisible`).
+  Tests : `tests/Feature/Api/V1/SocialNetworkTest.php`.
 - **Requêtes** : hors production, `Model::preventLazyLoading()` (`AppServiceProvider`) fait
   échouer une relation lue dans une boucle sans `with()` (N+1) : les tests l'attrapent.
 - **Messagerie** (doc : `docs/messagerie.md`, le développeur, 22/11/2026, comme Instagram) :
@@ -430,6 +450,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `docs/reverb.md`).
 - Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
   (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
+- Fait aussi (23/11/2026) : réseau social des films et séries : fil, listes et top 10, commentaires
+  et spoilers, journal et bilan de l'année, fiche sociale d'un titre, goûts en commun et comptes à
+  suivre, blocage partout et masquage, signalements et modération, partage dans les messages,
+  4 favoris, note en fin de lecture, premier lancement (`docs/social.md`, `docs/moderation.md`).
 - Prochaine étape possible : configuration distante (chaînes FAST).
 - Écarté : serveurs multimédias de l'utilisateur (Jellyfin / Plex / Emby), la lecture passe par
   les serveurs de Vixeo.

@@ -8,7 +8,10 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
+use App\Http\Controllers\Api\V1\DiaryController;
 use App\Http\Controllers\Api\V1\DirectMessageController;
+use App\Http\Controllers\Api\V1\FeedController;
+use App\Http\Controllers\Api\V1\ListController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
@@ -17,7 +20,10 @@ use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\PushDeviceController;
+use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ReviewSocialController;
 use App\Http\Controllers\Api\V1\SocialProfileController;
+use App\Http\Controllers\Api\V1\TitleSocialController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
 use App\Http\Middleware\ResolveProfile;
@@ -69,6 +75,18 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('profiles/{username}/list', [SocialProfileController::class, 'favoritesList'])->name('profiles.list');
         Route::get('profiles/{username}/liked', [SocialProfileController::class, 'liked'])->name('profiles.liked');
         Route::get('profiles/{username}/people', [SocialProfileController::class, 'people'])->name('profiles.people');
+        // The social network of movies and TV shows (docs/social.md): lists, diary, reviews and
+        // their comments, the social part of a title page.
+        Route::get('profiles/{username}/lists', [SocialProfileController::class, 'lists'])->name('profiles.lists');
+        Route::get('profiles/{username}/diary', [DiaryController::class, 'index'])->name('profiles.diary');
+        Route::get('profiles/{username}/stats', [DiaryController::class, 'stats'])->name('profiles.stats');
+        Route::get('reviews/{review}', [ReviewSocialController::class, 'show'])->whereNumber('review')->name('reviews.show');
+        Route::get('reviews/{review}/comments', [ReviewSocialController::class, 'comments'])->whereNumber('review')->name('reviews.comments');
+        Route::get('titles/{type}/{id}', [TitleSocialController::class, 'show'])->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('titles.show');
+        Route::get('titles/{type}/{id}/reviews', [TitleSocialController::class, 'reviews'])->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('titles.reviews');
+        Route::get('lists/{list}', [ListController::class, 'show'])->whereNumber('list')->name('lists.show');
+        Route::get('lists/{list}/comments', [ListController::class, 'comments'])->whereNumber('list')->name('lists.comments');
+        Route::get('report-reasons', [ReportController::class, 'reasons'])->name('reports.reasons');
     });
 
     // Public browsing and playback: no account or profile is required.
@@ -160,6 +178,35 @@ Route::prefix('v1')->name('v1.')->group(function () {
             // « J'aime » on a member's review.
             Route::put('reviews/{review}/like', [SocialProfileController::class, 'likeReview'])->whereNumber('review')->name('reviews.like');
             Route::delete('reviews/{review}/like', [SocialProfileController::class, 'unlikeReview'])->whereNumber('review')->name('reviews.unlike');
+            Route::middleware('throttle:social')->group(function () {
+                // Comments (docs/social.md).
+                Route::post('reviews/{review}/comments', [ReviewSocialController::class, 'comment'])->whereNumber('review')->name('reviews.comment');
+                Route::delete('comments/{comment}', [ReviewSocialController::class, 'deleteComment'])->whereNumber('comment')->name('comments.destroy');
+                // Blocked everywhere, or hidden from the feed only.
+                Route::post('profiles/{username}/block', [SocialProfileController::class, 'block'])->name('profiles.block');
+                Route::delete('profiles/{username}/block', [SocialProfileController::class, 'unblock'])->name('profiles.unblock');
+                Route::post('profiles/{username}/mute', [SocialProfileController::class, 'mute'])->name('profiles.mute');
+                Route::delete('profiles/{username}/mute', [SocialProfileController::class, 'unmute'])->name('profiles.unmute');
+                Route::get('hidden', [SocialProfileController::class, 'hidden'])->name('hidden');
+                // The feed and the accounts to follow.
+                Route::get('feed', [FeedController::class, 'index'])->name('feed');
+                Route::get('suggestions', [FeedController::class, 'suggestions'])->name('suggestions');
+                // Lists and top 10s of the active profile.
+                Route::get('lists', [ListController::class, 'mine'])->name('lists.mine');
+                Route::post('lists', [ListController::class, 'store'])->name('lists.store');
+                Route::whereNumber('list')->group(function () {
+                    Route::put('lists/{list}', [ListController::class, 'update'])->name('lists.update');
+                    Route::delete('lists/{list}', [ListController::class, 'destroy'])->name('lists.destroy');
+                    Route::post('lists/{list}/items', [ListController::class, 'addItem'])->name('lists.items.store');
+                    Route::delete('lists/{list}/items/{type}/{id}', [ListController::class, 'removeItem'])
+                        ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('lists.items.destroy');
+                    Route::put('lists/{list}/like', [ListController::class, 'like'])->name('lists.like');
+                    Route::delete('lists/{list}/like', [ListController::class, 'unlike'])->name('lists.unlike');
+                    Route::post('lists/{list}/comments', [ListController::class, 'comment'])->name('lists.comment');
+                });
+            });
+            // Reports to the moderation (docs/moderation.md).
+            Route::post('reports', [ReportController::class, 'store'])->middleware('throttle:reports')->name('reports.store');
         });
         // The app's « Notifications » page (docs/social.md).
         Route::middleware(ResolveProfile::class)->prefix('notifications')->name('notifications.')->group(function () {
@@ -217,6 +264,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('searches/clear', [ProfileSearchController::class, 'clear'])->name('searches.clear');
             Route::delete('searches/{search}', [ProfileSearchController::class, 'destroy'])
                 ->scopeBindings()->whereNumber('search')->name('searches.destroy');
+
+            // The diary (« Journal »): another viewing, or removing an entry (docs/social.md).
+            Route::post('diary', [DiaryController::class, 'store'])->name('diary.store');
+            Route::delete('diary/{entry}', [DiaryController::class, 'destroy'])->whereNumber('entry')->name('diary.destroy');
         });
 
         // The profile's reviews (docs/avis.md), under their historical address.

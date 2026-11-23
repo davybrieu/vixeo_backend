@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\RatedType;
 use App\Models\Profile;
 use App\Models\TmdbRating;
+use App\Services\Social\Activities;
 use App\Services\Tmdb\RatingTarget;
 use App\Services\Tmdb\TmdbClient;
 use App\Services\Tmdb\TmdbFormat as F;
@@ -22,7 +23,7 @@ class TmdbRatings
     /** Reviews without their title (saved while TMDb was down) completed per listing, at most. */
     private const DESCRIBE_PER_LISTING = 10;
 
-    public function __construct(private TmdbClient $tmdb) {}
+    public function __construct(private TmdbClient $tmdb, private Activities $activities) {}
 
     /**
      * Every review of the profile, the most recent first.
@@ -67,12 +68,20 @@ class TmdbRatings
             ->keyBy('episode_number');
     }
 
-    /** Saves a review. [$comment] is only changed when given (null removes it). */
-    public function save(Profile $profile, RatingTarget $target, float $value, bool $withComment, ?string $comment): TmdbRating
+    /**
+     * Saves a review. [$comment] is only changed when given (null removes it), [$spoilers] too.
+     * A new review, or a new comment, goes to the feed of the profile's followers.
+     */
+    public function save(Profile $profile, RatingTarget $target, float $value, bool $withComment, ?string $comment, ?bool $spoilers = null): TmdbRating
     {
         $row = $this->query($profile)->firstOrNew(['target' => $target->path]);
+        $fresh = ! $row->exists;
+        $previousComment = $row->comment;
         if (! $row->exists || $row->value !== $value) {
             $row->rated_at = now();
+        }
+        if ($spoilers !== null) {
+            $row->contains_spoilers = $spoilers;
         }
         $row->fill([
             'type' => $target->type,
@@ -89,6 +98,11 @@ class TmdbRatings
         }
         $row->profile()->associate($profile);
         $row->save();
+
+        $newComment = $row->comment !== null && $row->comment !== $previousComment;
+        if (! $profile->is_kid && ($fresh || $newComment)) {
+            $this->activities->review($row);
+        }
 
         return $row;
     }
