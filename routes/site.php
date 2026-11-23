@@ -16,8 +16,6 @@ Route::controller(SiteController::class)->name('site.')->group(function () {
     Route::get('/sitemap.xml', 'sitemap')->name('sitemap');
     Route::get('/robots.txt', 'robots')->name('robots');
     Route::get('/.well-known/assetlinks.json', 'assetLinks')->name('assetlinks');
-    // Old address of a profile's page (www.vixeo.app/@pseudo): now /pseudo.
-    Route::permanentRedirect('/@{username}', '/{username}')->where('username', Usernames::PATTERN);
     // Last: public page of a profile, shared from the app (« Partager »): www.vixeo.app/pseudo,
     // like Twitter (developer's request, 21/11/2026). The pages above come first, and no username
     // is one of them (Usernames::RESERVED). On Android, the app opens these links itself (Android

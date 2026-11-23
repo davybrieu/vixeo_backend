@@ -88,11 +88,11 @@ class SiteController extends Controller
                 ],
             ],
             // Android (Chrome): opens the profile in the app when it is installed, else this page.
-            // The old /@pseudo address: the app opens it on every Android version (/pseudo only
-            // from Android 12, vixeo_frontend's manifest).
+            // The app's own page of the member (/membre/pseudo, no page of the site): the app opens
+            // it on every Android version (/pseudo only from Android 12, vixeo_frontend's manifest).
             'openInApp' => str_contains((string) $request->userAgent(), 'Android')
                 ? sprintf(
-                    'intent://%s/@%s#Intent;scheme=https;package=%s;S.browser_fallback_url=%s;end',
+                    'intent://%s/membre/%s#Intent;scheme=https;package=%s;S.browser_fallback_url=%s;end',
                     parse_url($address, PHP_URL_HOST),
                     $profile->username,
                     config('vixeo.android.package'),

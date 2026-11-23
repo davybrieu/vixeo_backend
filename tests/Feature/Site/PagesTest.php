@@ -264,13 +264,13 @@ it('shows the public page of a profile, shared from the app', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where(
             'openInApp',
-            'intent://www.vixeo.test/@lea#Intent;scheme=https;package=app.vixeo.vixeo;S.browser_fallback_url='
+            'intent://www.vixeo.test/membre/lea#Intent;scheme=https;package=app.vixeo.vixeo;S.browser_fallback_url='
                 .rawurlencode('https://www.vixeo.test/#installer').';end',
         ));
 
     $this->get(site('/sitemap.xml'))->assertDontSee('/lea', false);
-    // The old /@pseudo address.
-    $this->get(site('/@lea'))->assertStatus(301)->assertRedirect(site('/lea'));
+    // No old address (/@pseudo): never kept after a change (developer's request, 23/11/2026).
+    $this->get(site('/@lea'))->assertNotFound();
     // The site's pages come first.
     expect(app('router')->getRoutes()->match(Request::create(site('/apk')))->getName())->toBe('site.apk');
     $this->get(site('/confidentialite'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('Privacy'));

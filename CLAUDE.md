@@ -106,12 +106,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`SiteController::member`, page `Member`, route `/{username}` déclarée **en dernier**), le lien du
   bouton « Partager » de l'appli (`share_url` de `GET /social/profiles/{pseudo}`) ; un pseudo n'est
   jamais une page du site ni de l'appli (`App\Support\Usernames::RESERVED`, à compléter pour toute
-  nouvelle page d'un seul mot) ; l'ancienne adresse `/@pseudo` redirige (301) ; profils adultes avec
+  nouvelle page d'un seul mot) ; « Ouvrir dans Vixeo » (Android) ouvre `/membre/pseudo` dans l'appli ; profils adultes avec
   un pseudo, non indexées ; Android les ouvre dans l'appli (`/.well-known/assetlinks.json`,
   empreinte du certificat de release dans `vixeo.android.cert_sha256`). Détails : `docs/site.md`.
   **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
   modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.
 
+- **Jamais d'ancienne adresse** (demande du développeur, 23/11/2026) : quand une page du site ou de
+  l'appli, ou une route, change d'adresse, l'ancienne est supprimée (ni redirection ni alias ; elle
+  répond 404).
 - Toutes les routes sous `/api/v1` (`routes/api.php`). **Pas de changement cassant en v1** :
   les applis installées ne se mettent pas à jour en même temps que l'API. Ajouter des champs
   est autorisé ; renommer/supprimer → nouvelle version. Exception décidée par le développeur
@@ -243,14 +246,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Plus de
   liaison d'un compte TMDb ni de synchronisation des notes** (supprimées, demande du développeur,
   20/11/2026 : table `tmdb_links` et colonne `account_id` supprimées ; ne pas les réintroduire).
-  Routes sous `/profiles/{id}/tmdb/ratings…` (nom historique). Pour les anciennes applis,
-  `GET /profiles/{id}/tmdb` répond toujours « non lié » et `POST …/tmdb/link` 410
-  (`TmdbAccountController`, obsolète).
+  Routes sous `/profiles/{id}/tmdb/ratings…` (nom historique).
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
   dans `ProfileSync` (révision et dates de changement). Fusion par groupe (« Ma liste » =
-  `favorite`, progression, vu, « Favoris » ❤ = `liked` (films, séries ; rétablis le 20/11/2026,
-  demande du développeur), personnes suivies = `followed` (items `person:<id>`, type `person`)),
+  `favorite`, progression, vu, « J'aime » ❤ = `liked` (films, séries ; rétablis le 20/11/2026,
+  demande du développeur ; un J'aime, pas des favoris), personnes suivies = `followed` (items `person:<id>`, type `person`)),
   le plus récent gagne ; listes publiques d'un membre : `/social/profiles/{username}/liked` et
   `/people` ; chaque écriture prend `++profiles.sync_revision` sous verrou.
 - **Recherche de membres** (`GET /social/search`, `SocialProfileController`) : profils adultes
