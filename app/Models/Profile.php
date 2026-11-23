@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Hash;
 #[Fillable([
     'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'poster_format', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
-    'pinned_titles', 'rate_after_watching', 'onboarded_at',
+    'rate_after_watching', 'onboarded_at',
 ])]
 #[Hidden(['pin', 'sync_revision'])]
 class Profile extends Model
@@ -39,9 +39,6 @@ class Profile extends Model
 
     /** Fields guarded by the parental PIN once parental control is on. */
     public const RESTRICTION_FIELDS = ['is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources'];
-
-    /** « Mes 4 favoris » at the top of the profile. */
-    public const MAX_PINNED = 4;
 
     /** Playback settings: segments the player skips by itself (else it shows "Passer"). */
     public const SKIP_FIELDS = ['skip_intro', 'skip_recap', 'skip_credits', 'skip_preview'];
@@ -75,7 +72,6 @@ class Profile extends Model
             'skip_recap' => 'boolean',
             'skip_credits' => 'boolean',
             'skip_preview' => 'boolean',
-            'pinned_titles' => 'array',
             'rate_after_watching' => 'boolean',
             'onboarded_at' => 'datetime',
             'suspended_at' => 'datetime',

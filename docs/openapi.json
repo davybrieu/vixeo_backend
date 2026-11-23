@@ -6636,28 +6636,6 @@
                             }
                         }
                     },
-                    "503": {
-                        "description": "An error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview.",
-                                            "examples": [
-                                                "Le catalogue n\u2019est pas disponible pour le moment. R\u00e9essayez dans quelques instants."
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
                     },
@@ -8780,54 +8758,6 @@
                                                     "type": "boolean",
                                                     "description": "Hidden from the active profile's feed (\u00ab Masquer \u00bb)."
                                                 },
-                                                "pinned": {
-                                                    "type": "array",
-                                                    "description": "\u00ab Mes 4 favoris \u00bb, shown at the top of the profile.",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "type": {
-                                                                "type": "string"
-                                                            },
-                                                            "id": {
-                                                                "type": "integer"
-                                                            },
-                                                            "item_id": {
-                                                                "type": "string"
-                                                            },
-                                                            "title": {
-                                                                "type": "string"
-                                                            },
-                                                            "year": {
-                                                                "type": [
-                                                                    "integer",
-                                                                    "null"
-                                                                ]
-                                                            },
-                                                            "poster_url": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
-                                                            },
-                                                            "backdrop_url": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "type",
-                                                            "id",
-                                                            "item_id",
-                                                            "title",
-                                                            "year",
-                                                            "poster_url",
-                                                            "backdrop_url"
-                                                        ]
-                                                    }
-                                                },
                                                 "compatibility": {
                                                     "type": [
                                                         "object",
@@ -8874,7 +8804,6 @@
                                                 "is_self",
                                                 "is_blocked",
                                                 "is_muted",
-                                                "pinned",
                                                 "compatibility"
                                             ]
                                         }
@@ -12744,14 +12673,6 @@
                         "type": "boolean",
                         "description": "At the end of a movie or an episode, the player proposes to rate it (default true)."
                     },
-                    "pinned_titles": {
-                        "type": "array",
-                        "description": "\u00ab Mes 4 favoris \u00bb at the top of the profile, in order (`movie:550`, `tv:1399`); empty: none.",
-                        "items": {
-                            "type": "string",
-                            "pattern": "^(movie|tv):\\d{1,9}$"
-                        }
-                    },
                     "onboarded": {
                         "description": "The first launch (rate known titles, accounts to follow) was done or skipped.",
                         "enum": [
@@ -12906,54 +12827,6 @@
                         "type": "boolean",
                         "description": "At the end of a movie or an episode, the player proposes to rate it."
                     },
-                    "pinned_titles": {
-                        "type": "array",
-                        "description": "\u00ab Mes 4 favoris \u00bb at the top of the profile.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string"
-                                },
-                                "id": {
-                                    "type": "integer"
-                                },
-                                "item_id": {
-                                    "type": "string"
-                                },
-                                "title": {
-                                    "type": "string"
-                                },
-                                "year": {
-                                    "type": [
-                                        "integer",
-                                        "null"
-                                    ]
-                                },
-                                "poster_url": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
-                                },
-                                "backdrop_url": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
-                                }
-                            },
-                            "required": [
-                                "type",
-                                "id",
-                                "item_id",
-                                "title",
-                                "year",
-                                "poster_url",
-                                "backdrop_url"
-                            ]
-                        }
-                    },
                     "onboarded": {
                         "type": "boolean",
                         "description": "The first launch (rate known titles, accounts to follow) was done or skipped."
@@ -12999,7 +12872,6 @@
                     "skip_credits",
                     "skip_preview",
                     "rate_after_watching",
-                    "pinned_titles",
                     "onboarded",
                     "position",
                     "created_at",

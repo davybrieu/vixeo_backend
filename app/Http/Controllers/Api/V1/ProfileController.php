@@ -11,7 +11,6 @@ use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\Messaging\Conversations;
 use App\Services\Social\Follows;
-use App\Services\Social\TitleSnapshots;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -78,15 +77,6 @@ class ProfileController extends Controller
 
         $wasPrivate = $profile->is_private;
         $data = $request->profileData();
-        $pinned = $request->pinnedTitles();
-        if ($pinned !== null) {
-            // What the profile shows of them, from TMDb (in the order chosen; unknown ones left out).
-            $snapshots = app(TitleSnapshots::class)->of($pinned);
-            abort_if($pinned !== [] && $snapshots === [], 503, __('The catalog is not available right now.'));
-            $data['pinned_titles'] = array_values(array_filter(array_map(fn (string $id) => isset($snapshots[$id])
-                ? array_intersect_key($snapshots[$id], array_flip(['type', 'id', 'title', 'year', 'poster_path', 'backdrop_path']))
-                : null, $pinned)));
-        }
         $profile->update($data);
         // Made public: the follow requests it was waiting with are accepted (docs/social.md).
         if ($wasPrivate && ! $profile->is_private) {

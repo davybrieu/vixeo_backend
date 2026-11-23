@@ -221,8 +221,6 @@ return [
         'id' => 'identifiant',
         'reason' => 'raison',
         'details' => 'précisions',
-        'pinned_titles' => 'favoris du profil',
-        'pinned_titles.*' => 'favori',
         'rate_after_watching' => 'note en fin de lecture',
         'onboarded' => 'premier lancement',
         'new_episodes' => 'nouveaux épisodes',

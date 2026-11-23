@@ -18,7 +18,6 @@ use App\Services\Social\Follows;
 use App\Services\Social\ReviewLikes;
 use App\Services\Social\SocialCards;
 use App\Services\Social\Taste;
-use App\Services\Social\TitleSnapshots;
 use App\Support\SocialLinks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,12 +96,6 @@ class SocialProfileController extends Controller
             'is_blocked' => $blocked,
             /** Hidden from the active profile's feed (« Masquer »). */
             'is_muted' => $viewer !== null && ! $self && $this->audience->isMuted($viewer, $profile),
-            /**
-             * « Mes 4 favoris », shown at the top of the profile.
-             *
-             * @var list<array{type: string, id: int, item_id: string, title: string, year: int|null, poster_url: string|null, backdrop_url: string|null}>
-             */
-            'pinned' => $canView ? array_map(TitleSnapshots::card(...), array_values($profile->pinned_titles ?? [])) : [],
             /**
              * Tastes in common with the active profile: `score` 0 to 100 (null below 5 titles
              * rated by both), `common` titles rated by both. Null for one's own page.

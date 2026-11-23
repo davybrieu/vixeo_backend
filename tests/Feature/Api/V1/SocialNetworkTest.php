@@ -399,22 +399,19 @@ describe('tastes, blocks and the member page', function () {
         as_($me)->getJson("/api/v1/social/reviews/{$review->id}")->assertOk();
     });
 
-    it('shows the 4 favorites, the rating prompt setting and the first launch', function () {
+    it('keeps the rating prompt setting and the first launch, no 4 favorites', function () {
         $lea = socialMember('lea');
         as_($lea)->putJson("/api/v1/profiles/{$lea->id}", [
-            'pinned_titles' => ['tv:1399', 'movie:550'],
             'rate_after_watching' => false,
             'onboarded' => true,
         ])->assertOk()
-            ->assertJsonPath('data.pinned_titles.*.item_id', ['tv:1399', 'movie:550'])
+            ->assertJsonMissingPath('data.pinned_titles')
             ->assertJsonPath('data.rate_after_watching', false)
             ->assertJsonPath('data.onboarded', true);
-        as_($lea)->putJson("/api/v1/profiles/{$lea->id}", ['pinned_titles' => ['movie:1', 'movie:2', 'movie:3', 'movie:4', 'movie:5']])
-            ->assertUnprocessable();
 
+        // « Mes 4 favoris » removed (developer's request, 23/11/2026).
         as_(socialMember('max'))->getJson('/api/v1/social/profiles/lea')->assertOk()
-            ->assertJsonPath('data.pinned.1.title', 'Fight Club')
-            ->assertJsonPath('data.pinned.1.poster_url', 'https://image.tmdb.org/t/p/w342/p550.jpg');
+            ->assertJsonMissingPath('data.pinned');
         // A new profile has its first launch to do.
         expect(socialMember('new')->onboarded_at)->toBeNull();
     });

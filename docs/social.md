@@ -192,13 +192,14 @@ répond 404, celle d'un membre que j'ai bloqué dit `is_blocked`. `POST|DELETE �
 `profile_mutes`) : hors de mon fil seulement, toujours suivi, sans le lui dire. `GET
 /social/hidden` : comptes bloqués et masqués (réglages de l'appli).
 
-### Profil : 4 favoris, note en fin de lecture, premier lancement
+### Profil : note en fin de lecture, premier lancement
 
-`PUT /profiles/{id}` : `pinned_titles` (« Mes 4 favoris », `movie:550`… dans l'ordre, gardés avec
-ce que le profil en montre ; `pinned` de `GET /social/profiles/{pseudo}`), `rate_after_watching`
-(le lecteur propose de noter à la fin, vrai par défaut) et `onboarded: true` (le premier lancement
-a été fait ou passé ; `onboarded` de la réponse ; les profils existants le sont déjà, un nouveau
-non).
+`PUT /profiles/{id}` : `rate_after_watching` (le lecteur propose de noter à la fin, vrai par
+défaut) et `onboarded: true` (le premier lancement a été fait ou passé ; `onboarded` de la
+réponse ; les profils existants le sont déjà, un nouveau non). Les applis changent la biographie,
+les réseaux sociaux et le compte privé depuis leurs paramètres (`bio`, `social_links`,
+`is_private`). « Mes 4 favoris » (`pinned_titles`, `pinned`) a été supprimé le 23/11/2026 (demande
+du développeur, migration `drop_pinned_titles`).
 
 ### Partager dans un message
 
@@ -212,4 +213,4 @@ spoiler, auteur, couverture d'une liste) est gardé avec le message (`direct_mes
 Les nouvelles tables sont supprimées avec le profil (clés étrangères `cascadeOnDelete`) et
 figurent dans l'export (`AccountExport` : `username`, `bio`, `is_private`, `social_links`,
 `following`, `followers`, `review_likes`, `notifications`, `lists`, `list_likes`, `comments`,
-`diary`, `muted`, `reports`, `pinned_titles`, `rate_after_watching`).
+`diary`, `muted`, `reports`, `rate_after_watching`).

@@ -67,6 +67,31 @@ it('rates, updates and removes the review of a movie, a TV show and an episode, 
     Http::assertNotSent(fn (Request $r) => $r->method() !== 'GET' || str_contains($r->url(), '/rating') || str_contains($r->url(), 'account'));
 });
 
+it('marks the reviewed movie, TV show or episode watched, once', function () {
+    fakeTitles();
+
+    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 8])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399", ['value' => 9])->assertOk();
+    $this->putJson("{$this->url}/ratings/tv/1399/season/1/episode/2", ['value' => 7])->assertOk();
+
+    $items = $this->profile->items()->get()->keyBy('item_id');
+    expect($items->keys()->sort()->values()->all())->toBe(['episode:1399:1:2', 'movie:550', 'tv:1399'])
+        ->and($items->every(fn ($item) => $item->is_watched))->toBeTrue()
+        ->and($items['movie:550']->title)->toBe('Fight Club')
+        ->and($items['episode:1399:1:2']->parent_item_id)->toBe('tv:1399')
+        ->and($items['episode:1399:1:2']->season_number)->toBe(1)
+        ->and($items['episode:1399:1:2']->episode_number)->toBe(2);
+
+    // The apps get it at their next pull.
+    $this->getJson("/api/v1/profiles/{$this->profile->id}/sync?cursor=0")->assertOk()
+        ->assertJsonFragment(['item_id' => 'movie:550', 'is_watched' => true]);
+
+    // Changing the review is not a new review: « Vu » removed by the profile stays removed.
+    $this->profile->items()->where('item_id', 'movie:550')->update(['is_watched' => false]);
+    $this->putJson("{$this->url}/ratings/movie/550", ['value' => 6])->assertOk();
+    expect($this->profile->items()->where('item_id', 'movie:550')->first()->is_watched)->toBeFalse();
+});
+
 it('refuses ratings outside the scale, in French', function () {
     $this->putJson("{$this->url}/ratings/movie/550", ['value' => 7.3])->assertUnprocessable()
         ->assertJsonPath('errors.value.0', 'Le champ note doit être un multiple de 0.5.');

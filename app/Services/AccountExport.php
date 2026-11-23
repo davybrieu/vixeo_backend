@@ -99,7 +99,6 @@ class AccountExport
                     'decision' => $r->decision,
                     'created_at' => $r->created_at?->toIso8601String(),
                 ])->values()->all(),
-                'pinned_titles' => array_values(array_map(fn (array $t) => "{$t['type']}:{$t['id']}", $p->pinned_titles ?? [])),
                 'rate_after_watching' => (bool) $p->rate_after_watching,
                 'avatar' => $p->avatar,
                 'is_kid' => $p->is_kid,

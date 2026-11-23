@@ -16,14 +16,15 @@ use Throwable;
 /**
  * The profile's reviews (« Mes avis », docs/avis.md): a rating and an optional comment per movie,
  * TV show or episode. They live in Vixeo only: nothing is sent to or read from a TMDb account.
- * TMDb only gives what « Mes avis » shows of the title (name, images, date).
+ * TMDb only gives what « Mes avis » shows of the title (name, images, date). A new review marks
+ * its movie, TV show or episode watched (developer's request, 23/11/2026).
  */
 class TmdbRatings
 {
     /** Reviews without their title (saved while TMDb was down) completed per listing, at most. */
     private const DESCRIBE_PER_LISTING = 10;
 
-    public function __construct(private TmdbClient $tmdb, private Activities $activities) {}
+    public function __construct(private TmdbClient $tmdb, private Activities $activities, private ProfileSync $sync) {}
 
     /**
      * Every review of the profile, the most recent first.
@@ -70,7 +71,8 @@ class TmdbRatings
 
     /**
      * Saves a review. [$comment] is only changed when given (null removes it), [$spoilers] too.
-     * A new review, or a new comment, goes to the feed of the profile's followers.
+     * A new review, or a new comment, goes to the feed of the profile's followers; a new review
+     * marks its title watched.
      */
     public function save(Profile $profile, RatingTarget $target, float $value, bool $withComment, ?string $comment, ?bool $spoilers = null): TmdbRating
     {
@@ -99,12 +101,54 @@ class TmdbRatings
         $row->profile()->associate($profile);
         $row->save();
 
+        // Watched first: the feed shows the review, not « a vu » next to it.
+        if ($fresh) {
+            $this->markWatched($profile, $row);
+        }
         $newComment = $row->comment !== null && $row->comment !== $previousComment;
         if (! $profile->is_kid && ($fresh || $newComment)) {
             $this->activities->review($row);
         }
 
         return $row;
+    }
+
+    /**
+     * A new review marks its movie, TV show or episode watched, through the synchronisation (as
+     * the « Vu » button or the player would: out of « Continuer à regarder », in the diary and
+     * the feed), unless it already is.
+     */
+    private function markWatched(Profile $profile, TmdbRating $row): void
+    {
+        $itemId = match ($row->type) {
+            RatedType::Movie => "movie:{$row->tmdb_id}",
+            RatedType::Tv => "tv:{$row->tmdb_id}",
+            RatedType::Episode => "episode:{$row->tmdb_id}:{$row->season_number}:{$row->episode_number}",
+        };
+        $watched = $profile->items()->where('source', 'tmdb')->where('item_id', $itemId)->where('is_watched', true)->exists();
+        if ($watched) {
+            return;
+        }
+
+        $at = now()->toIso8601String();
+        $change = [
+            'source' => 'tmdb',
+            'item_id' => $itemId,
+            'type' => $row->type->value,
+            'title' => (string) $row->title,
+            'poster_url' => F::image($row->poster_path === null ? null : (string) $row->poster_path, 'w342'),
+            'backdrop_url' => F::image($row->backdrop_path === null ? null : (string) $row->backdrop_path, 'w1280'),
+            'watched' => ['value' => true, 'at' => $at],
+        ];
+        if ($row->type === RatedType::Episode) {
+            $change += ['parent_item_id' => "tv:{$row->tmdb_id}", 'season_number' => $row->season_number, 'episode_number' => $row->episode_number];
+        } else {
+            $change['year'] = F::year($row->date === null ? null : (string) $row->date);
+        }
+        if ($row->type !== RatedType::Tv) {
+            $change['progress'] = ['position_ms' => 0, 'continue_watching' => false, 'at' => $at];
+        }
+        $this->sync->push($profile, [$change]);
     }
 
     /** Removes a review, and its comment. */

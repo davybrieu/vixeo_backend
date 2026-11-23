@@ -35,6 +35,11 @@ l'utilisent), limite `throttle:reviews` (120 requêtes par minute et par compte 
 - TMDb injoignable à l'écriture : l'avis est enregistré sans son titre ; « Mes avis » le complète
   à l'affichage suivant (10 avis au plus par affichage, pour ne jamais ralentir la page).
 - `comment` absent du PUT : le commentaire est gardé ; `null` ou vide : il est supprimé.
+- **Un nouvel avis marque le titre vu** (demande du développeur, 23/11/2026) : le film, la série
+  ou l'épisode (`movie:550`, `tv:1399`, `episode:1399:1:2` sous `tv:1399`), par la synchro
+  (`ProfileSync::push`, comme le bouton « Vu » : hors de « Continuer à regarder », visionnage et
+  fil), sauf s'il l'est déjà. Modifier un avis ne remarque rien : un « Vu » retiré le reste. Les
+  applis le reçoivent à leur synchro suivante.
 - La liste filtre selon l'âge maximum du profil (`AgeGate`) ; pour un épisode, c'est sa série qui
   compte.
 - Supprimer un avis qui n'existe pas répond 204.

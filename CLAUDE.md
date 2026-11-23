@@ -243,7 +243,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   **rétablis le 21/11/2026**, demande du développeur : `PUT / DELETE
   …/ratings/tv/{id}/season/{s}/episode/{e}`, `GET …/ratings/tv/{id}/season/{s}`, filtre
   `type=episode`, migration `restore_episode_reviews`)
-  (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Plus de
+  (`tmdb_ratings`, `App\Services\TmdbRatings`), **gardés par Vixeo seulement**. **Un nouvel avis
+  marque le film, la série ou l'épisode vu** (par `ProfileSync`, sauf s'il l'est déjà ; demande du
+  développeur, 23/11/2026). **Plus de
   liaison d'un compte TMDb ni de synchronisation des notes** (supprimées, demande du développeur,
   20/11/2026 : table `tmdb_links` et colonne `account_id` supprimées ; ne pas les réintroduire).
   Routes sous `/profiles/{id}/tmdb/ratings…` (nom historique).
@@ -293,8 +295,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (signalements, `vixeo:reports`, `vixeo:moderate … hide|dismiss|restore --reason=`),
   `SharedCards` (titre, avis ou liste envoyé dans un message, `share` de `POST /messages/{id}`).
   Bloquer (`…/block`) agit **partout** (même table que la messagerie, abonnements supprimés) ;
-  masquer (`…/mute`) retire seulement du fil. Profil : `pinned_titles` (4 favoris),
-  `rate_after_watching` (note proposée en fin de lecture, vrai par défaut), `onboarded_at`
+  masquer (`…/mute`) retire seulement du fil. Profil : `rate_after_watching` (note proposée en fin de lecture, vrai par défaut), `onboarded_at`
   (premier lancement ; les profils existants l'ont déjà), `suspended_at`. Contrôleurs : trait
   `Concerns\ResolvesSocialProfiles` (`viewer`, `author`, `visibleMember`, `assertVisible`).
   **« À voir »** (anciennement « Ma liste », demande du développeur, 23/11/2026) = le groupe
