@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Log;
  * - titles missing from the cache are asked together, 200 per request (MDBList's batch);
  * - at most `daily_requests` requests a day (UTC); after a 429 or a refused key, none for an hour;
  *   after a network error or a 5xx, none for a minute.
- * Titles that could not be asked are left out and `available` is false: the apps show TMDb's
- * rating meanwhile and ask again later.
+ * Titles that could not be asked are left out and `available` is false: the « Notes » window
+ * shows IMDb and TMDb only (from the title) and asks again when opened later.
  */
 class MdbListRatings
 {
@@ -112,7 +112,7 @@ class MdbListRatings
             $response = Http::baseUrl(rtrim((string) config('services.mdblist.base_url'), '/'))
                 ->acceptJson()
                 ->withUserAgent('Vixeo')
-                // Short: the apps wait for the ratings before showing a title's facts.
+                // Short: the « Notes » window waits for them (with IMDb and TMDb shown already).
                 ->connectTimeout(2)
                 ->timeout(5)
                 // The key travels in the query string (MDBList's way): never log the URL.
