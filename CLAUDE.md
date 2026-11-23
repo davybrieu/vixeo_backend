@@ -142,6 +142,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   - `TmdbClient` : seul point d'appel à TMDb, met en cache les réponses réussies (durées dans
     `config/services.php` → `tmdb.ttl`), réessaie 2 fois sur erreur réseau / 5xx / 429.
     TMDb 404 → notre 404 ; autre échec ou clé absente → 503 (message traduit).
+  - **Accueil préparé à l'avance** (demande du développeur, 23/11/2026 : l'accueil attendait TMDb,
+    ~180 requêtes, à chaque expiration du cache) : `php artisan catalog:warm` (`CatalogWarmer`,
+    planifiée toutes les 30 min, plus souvent que les listes n'expirent) redemande à TMDb les listes
+    et rangées de l'accueil (`TmdbClient::refreshing()` : la réponse en cache est remplacée, gardée
+    si TMDb échoue) et les fiches des titres résumés (`TmdbCatalog::summarized`) quand elles
+    manquent, toutes redemandées toutes les 12 h (cache d'un jour ; `--details` : tout de suite).
+    L'accueil répond alors sans appeler TMDb. Pas préparés : classifications des profils avec
+    limite d'âge (`AgeGate`), titres des rangées légères. Tests : `Catalog/CatalogWarmTest.php`.
   - `TmdbCatalog` : ce qu'on demande à TMDb ; pose `media_type` sur chaque élément.
   - Les ressources `app/Http/Resources/V1/Catalog` transforment le JSON de TMDb (chaînes vides
     → `null`, URL d'images, âge minimum, bande-annonce…) via `TmdbFormat`. Caster chaque valeur

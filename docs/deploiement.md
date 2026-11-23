@@ -242,7 +242,9 @@ Un port déjà pris (`EADDRINUSE`) : souvent l'ancien daemon SSR d'un autre site
   les jetons expirés ; toutes les 6 h, `tv:epg` télécharge le guide des programmes et la
   bibliothèque de logos de la TV en direct ; toutes les 15 minutes, `vixeo:push-episodes` envoie
   les notifications des nouveaux épisodes, si `FCM_CREDENTIALS` est rempli : voir
-  `docs/notifications.md`).
+  `docs/notifications.md` ; toutes les 30 minutes, `catalog:warm` prépare l'accueil dans le cache
+  (listes TMDb et fiches de ses titres) pour que l'ouverture de l'appli n'attende pas TMDb ; à la
+  main : `php artisan catalog:warm`, `--details` pour redemander aussi toutes les fiches).
 
 ## 8. Vérifier après le déploiement
 

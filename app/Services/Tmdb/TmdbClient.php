@@ -24,9 +24,31 @@ class TmdbClient
 {
     private Cache $cache;
 
+    /** Asks TMDb again even when the cache has an answer ([refreshing]). */
+    private bool $refresh = false;
+
     public function __construct()
     {
         $this->cache = CacheFactory::store(config('services.tmdb.cache_store'));
+    }
+
+    /** Whether a TMDb key is set (`TMDB_READ_ACCESS_TOKEN` or `TMDB_API_KEY`). */
+    public static function configured(): bool
+    {
+        return (bool) (config('services.tmdb.token') || config('services.tmdb.api_key'));
+    }
+
+    /**
+     * The same client, but asking TMDb again for everything it is asked and caching the new
+     * answers, even when the cache still has one (`catalog:warm`, CatalogWarmer): what it asks
+     * no longer expires. When TMDb fails, the cached answer stays and is given.
+     */
+    public function refreshing(): static
+    {
+        $client = clone $this;
+        $client->refresh = true;
+
+        return $client;
     }
 
     /**
@@ -39,17 +61,29 @@ class TmdbClient
         ksort($query);
 
         $key = 'tmdb:'.sha1($path.'?'.http_build_query($query));
+        $seconds = (int) config("services.tmdb.ttl.{$ttl}", 3600);
+
+        if ($this->refresh) {
+            try {
+                $value = $this->fetch($path, $query);
+            } catch (TmdbUnavailableException $e) {
+                return $this->cache->get($key) ?? throw $e;
+            }
+            $this->cache->put($key, $value, $seconds);
+
+            return $value;
+        }
 
         return $this->cache->remember(
             $key,
-            (int) config("services.tmdb.ttl.{$ttl}", 3600),
+            $seconds,
             fn () => $this->fetch($path, $query),
         );
     }
 
     /**
      * Several paths at once (cache first, missing ones fetched concurrently, no retry).
-     * A path that fails or does not exist maps to null.
+     * A path that fails or does not exist maps to null (to its cached answer when refreshing).
      *
      * @param  list<string>  $paths
      * @param  array<string, string>  $query  Extra parameters, the same for every path.
@@ -67,7 +101,7 @@ class TmdbClient
             $results[$path] = $this->cache->get($keys[$path]);
         }
 
-        $missing = array_keys(array_filter($results, fn ($value) => $value === null));
+        $missing = array_keys(array_filter($results, fn ($value) => $this->refresh || $value === null));
 
         if ($missing === []) {
             return $results;
@@ -104,7 +138,7 @@ class TmdbClient
     /**
      * Several requests at once, each with its own query (cache first, missing ones fetched
      * concurrently, no retry), under the same cache keys as `get`. A request that fails maps to
-     * null.
+     * null (to its cached answer when refreshing).
      *
      * @param  array<string, array{string, array<string, scalar>}>  $requests  name => [path, query]
      * @return array<string, array<string, mixed>|null>
@@ -123,7 +157,7 @@ class TmdbClient
             $results[$name] = $this->cache->get($keys[$name]);
         }
 
-        $missing = array_keys(array_filter($results, fn ($value) => $value === null));
+        $missing = array_keys(array_filter($results, fn ($value) => $this->refresh || $value === null));
 
         if ($missing === []) {
             return $results;
@@ -214,7 +248,7 @@ class TmdbClient
 
     private function ensureConfigured(): void
     {
-        if (! config('services.tmdb.token') && ! config('services.tmdb.api_key')) {
+        if (! self::configured()) {
             Log::error('TMDb is not configured: set TMDB_READ_ACCESS_TOKEN or TMDB_API_KEY.');
 
             throw new TmdbUnavailableException;

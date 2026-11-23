@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Push\Fcm;
+use App\Services\Tmdb\TmdbClient;
 use App\Services\Tv\ChannelLogos;
 use App\Services\Tv\ChannelName;
 use App\Services\Tv\Epg;
@@ -25,6 +26,11 @@ Schedule::command('vixeo:push-episodes')->everyFifteenMinutes()->withoutOverlapp
 // IMDb ratings and episodes (docs/notes.md): every hour, imported only when IMDb published new
 // datasets since the last import (Last-Modified of the files, HEAD requests).
 Schedule::command('imdb:import')->hourlyAt(17)->withoutOverlapping(180)->runInBackground();
+
+// The home prepared in the cache (CatalogWarmer): opening the app never waits for TMDb. More often
+// than its lists expire (services.tmdb.ttl.lists, an hour).
+Schedule::command('catalog:warm')->everyThirtyMinutes()->withoutOverlapping(10)->runInBackground()
+    ->when(fn () => TmdbClient::configured());
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

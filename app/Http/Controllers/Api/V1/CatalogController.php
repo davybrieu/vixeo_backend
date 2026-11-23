@@ -56,13 +56,9 @@ class CatalogController extends Controller
             ...array_map(fn (array $section) => $section['items'], $home['sections']),
         ]);
 
-        // Logo and summary for the carousel and the curated rows only: the many other rows
-        // (platforms, networks, studios, languages) are `light`, the app reads the title page.
-        $rich = array_filter(
-            $filtered,
-            fn (int|string $index) => $index === 'featured' || empty($home['sections'][$index]['light']),
-            ARRAY_FILTER_USE_KEY,
-        );
+        // Logo and summary for the carousel and the curated rows only (prepared in advance by
+        // `catalog:warm`, CatalogWarmer).
+        $rich = array_filter($filtered, fn (int|string $index) => TmdbCatalog::summarized($home, $index), ARRAY_FILTER_USE_KEY);
         $filtered = $this->summaries->addMany($rich) + $filtered;
 
         $home['featured'] = $filtered['featured'];

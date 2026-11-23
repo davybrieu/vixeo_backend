@@ -88,6 +88,18 @@ class TmdbCatalog
         ];
     }
 
+    /**
+     * Whether a list of the home (`featured`, or the index of a section) is given with the logo
+     * and summary of its titles: the carousel and the curated rows. The many other rows
+     * (platforms, networks, studios, languages) are `light`: the app completes them.
+     *
+     * @param  array{featured: list<array<string, mixed>>, sections: list<array<string, mixed>>}  $home
+     */
+    public static function summarized(array $home, int|string $list): bool
+    {
+        return $list === 'featured' || empty($home['sections'][$list]['light']);
+    }
+
     /** @return array{page: int, total_pages: int, total_results: int, results: list<array<string, mixed>>} */
     public function list(MediaType $type, CatalogList $list, int $page = 1): array
     {
