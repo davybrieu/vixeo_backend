@@ -627,7 +627,7 @@ var _sfc_main$4 = {
 	__ssrInlineRender: true,
 	setup(__props) {
 		return (_ctx, _push, _parent, _attrs) => {
-			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "absolute inset-0 flex flex-col px-[6cqw] pt-[14cqw]" }, _attrs))}><div class="font-display text-[7.5cqw] font-bold">Ma liste</div><div class="mt-[2cqw] flex gap-[2cqw] text-[3.2cqw]"><span class="rounded-full bg-accent px-[3cqw] py-[1cqw] font-semibold text-on-accent">Tout</span><span class="rounded-full bg-white/10 px-[3cqw] py-[1cqw]">Films</span><span class="rounded-full bg-white/10 px-[3cqw] py-[1cqw]">Séries</span></div><div class="mt-[5cqw] grid grid-cols-3 gap-[3cqw]"><!--[-->`);
+			_push(`<div${(0, server_renderer_exports.ssrRenderAttrs)((0, vue_exports.mergeProps)({ class: "absolute inset-0 flex flex-col px-[6cqw] pt-[14cqw]" }, _attrs))}><div class="font-display text-[7.5cqw] font-bold">À voir</div><div class="mt-[2cqw] flex gap-[2cqw] text-[3.2cqw]"><span class="rounded-full bg-accent px-[3cqw] py-[1cqw] font-semibold text-on-accent">Tout</span><span class="rounded-full bg-white/10 px-[3cqw] py-[1cqw]">Films</span><span class="rounded-full bg-white/10 px-[3cqw] py-[1cqw]">Séries</span></div><div class="mt-[5cqw] grid grid-cols-3 gap-[3cqw]"><!--[-->`);
 			(0, server_renderer_exports.ssrRenderList)(9, (i) => {
 				_push(`<div class="relative">`);
 				_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$12, { seed: i * 5 + 1 }, null, _parent));
@@ -956,8 +956,8 @@ var _sfc_main = {
 		];
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(`<!--[-->`);
-			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$19, { description: "Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, votre liste et votre progression sur votre téléphone Android, votre TV et votre PC Windows." }, null, _parent));
-			_push(`<section class="relative overflow-hidden pt-32 pb-16 sm:pt-40"><div class="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(46,229,138,0.16),transparent_60%)]" aria-hidden="true"></div><div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8"><p class="inline-flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-3xl border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft"><span class="inline-flex items-center gap-2 whitespace-nowrap"><span class="size-2 rounded-full bg-accent"></span> Android · Android TV · Windows </span><span class="inline-flex items-center gap-2 whitespace-nowrap text-text-muted"><span class="size-2 rounded-full border border-current"></span> Bientôt : macOS · iPhone · iPad </span></p><h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl"> Vos films et séries, <span class="text-accent">sur tous vos écrans.</span></h1><p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl"> Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV. </p><div class="mt-9 flex flex-wrap items-center justify-center gap-3">`);
+			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$19, { description: "Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, vos titres « À voir » et votre progression sur votre téléphone Android, votre TV et votre PC Windows." }, null, _parent));
+			_push(`<section class="relative overflow-hidden pt-32 pb-16 sm:pt-40"><div class="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(46,229,138,0.16),transparent_60%)]" aria-hidden="true"></div><div class="relative mx-auto max-w-6xl px-5 text-center sm:px-8"><p class="inline-flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-3xl border border-line bg-surface/70 px-4 py-1.5 text-sm text-text-soft"><span class="inline-flex items-center gap-2 whitespace-nowrap"><span class="size-2 rounded-full bg-accent"></span> Android · Android TV · Windows </span><span class="inline-flex items-center gap-2 whitespace-nowrap text-text-muted"><span class="size-2 rounded-full border border-current"></span> Bientôt : macOS · iPhone · iPad </span></p><h1 class="mx-auto mt-7 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl"> Vos films et séries, <span class="text-accent">sur tous vos écrans.</span></h1><p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl"> Des fiches complètes, un profil pour chaque personne et vos listes qui vous suivent du téléphone à la TV. </p><div class="mt-9 flex flex-wrap items-center justify-center gap-3">`);
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$18, {
 				href: "#installer",
 				icon: "download",
@@ -1045,8 +1045,8 @@ var _sfc_main = {
 					})];
 				}),
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(` « Qui regarde ? » s’affiche à l’ouverture : chacun retrouve sa liste, sa progression et son avatar. Un code PIN protège un profil si besoin, et un profil enfant ne voit que les titres de son âge. `);
-					else return [(0, vue_exports.createTextVNode)(" « Qui regarde ? » s’affiche à l’ouverture : chacun retrouve sa liste, sa progression et son avatar. Un code PIN protège un profil si besoin, et un profil enfant ne voit que les titres de son âge. ")];
+					if (_push) _push(` « Qui regarde ? » s’affiche à l’ouverture : chacun retrouve ses listes, sa progression et son avatar. Un code PIN protège un profil si besoin, et un profil enfant ne voit que les titres de son âge. `);
+					else return [(0, vue_exports.createTextVNode)(" « Qui regarde ? » s’affiche à l’ouverture : chacun retrouve ses listes, sa progression et son avatar. Un code PIN protège un profil si besoin, et un profil enfant ne voit que les titres de son âge. ")];
 				}),
 				_: 1
 			}, _parent));
@@ -1075,14 +1075,14 @@ var _sfc_main = {
 				_: 1
 			}, _parent));
 			_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$14, {
-				title: "Votre liste vous suit",
+				title: "Vos listes vous suivent",
 				icon: "bookmark"
 			}, {
 				visual: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
 					if (_push) {
 						_push(`<div class="mx-auto flex max-w-[22rem] items-end justify-center gap-5 pt-8"${_scopeId}>`);
 						_push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$13, {
-							label: "Ma liste sur le téléphone",
+							label: "La liste « À voir » sur le téléphone",
 							class: "w-1/2"
 						}, {
 							default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
@@ -1103,7 +1103,7 @@ var _sfc_main = {
 						}, _parent, _scopeId));
 						_push(`</div>`);
 					} else return [(0, vue_exports.createVNode)("div", { class: "mx-auto flex max-w-[22rem] items-end justify-center gap-5 pt-8" }, [(0, vue_exports.createVNode)(_sfc_main$13, {
-						label: "Ma liste sur le téléphone",
+						label: "La liste « À voir » sur le téléphone",
 						class: "w-1/2"
 					}, {
 						default: (0, vue_exports.withCtx)(() => [(0, vue_exports.createVNode)(_sfc_main$4)]),
@@ -1117,8 +1117,8 @@ var _sfc_main = {
 					})])];
 				}),
 				default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push(` Ajoutez un titre à votre liste sur le téléphone, retrouvez-le le soir sur la TV. « Continuer à regarder », titres vus et liste sont synchronisés pour chaque profil. `);
-					else return [(0, vue_exports.createTextVNode)(" Ajoutez un titre à votre liste sur le téléphone, retrouvez-le le soir sur la TV. « Continuer à regarder », titres vus et liste sont synchronisés pour chaque profil. ")];
+					if (_push) _push(` Ajoutez un titre à « À voir » sur le téléphone, retrouvez-le le soir sur la TV. « Continuer à regarder », titres vus et listes sont synchronisés pour chaque profil. `);
+					else return [(0, vue_exports.createTextVNode)(" Ajoutez un titre à « À voir » sur le téléphone, retrouvez-le le soir sur la TV. « Continuer à regarder », titres vus et listes sont synchronisés pour chaque profil. ")];
 				}),
 				_: 1
 			}, _parent));
@@ -1134,14 +1134,14 @@ var _sfc_main = {
 				]
 			}, {
 				visual: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
-					if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: "La fiche d’un film : grande image, informations, boutons Ma liste, Vu et Bande-annonce, distribution" }, {
+					if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$9, { label: "La fiche d’un film : grande image, informations, boutons À voir, Vu et Bande-annonce, distribution" }, {
 						default: (0, vue_exports.withCtx)((_, _push, _parent, _scopeId) => {
 							if (_push) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$2, null, null, _parent, _scopeId));
 							else return [(0, vue_exports.createVNode)(_sfc_main$2)];
 						}),
 						_: 1
 					}, _parent, _scopeId));
-					else return [(0, vue_exports.createVNode)(_sfc_main$9, { label: "La fiche d’un film : grande image, informations, boutons Ma liste, Vu et Bande-annonce, distribution" }, {
+					else return [(0, vue_exports.createVNode)(_sfc_main$9, { label: "La fiche d’un film : grande image, informations, boutons À voir, Vu et Bande-annonce, distribution" }, {
 						default: (0, vue_exports.withCtx)(() => [(0, vue_exports.createVNode)(_sfc_main$2)]),
 						_: 1
 					})];

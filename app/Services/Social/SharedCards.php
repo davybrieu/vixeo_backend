@@ -68,7 +68,6 @@ class SharedCards
             'type' => 'list',
             'list_id' => (int) $list->id,
             'title' => (string) $list->title,
-            'kind' => (string) $list->kind,
             'items_count' => (int) $list->items_count,
             'cover' => $list->items->map(fn ($item) => F::image($item->poster_path, 'w342'))->filter()->values()->all(),
             'author' => SocialCards::identity($list->profile),

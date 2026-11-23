@@ -42,7 +42,7 @@ const screens = [
 
 <template>
     <Seo
-        description="Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, votre liste et votre progression sur votre téléphone Android, votre TV et votre PC Windows."
+        description="Vixeo rassemble vos films et séries : fiches complètes, un profil par personne, vos titres « À voir » et votre progression sur votre téléphone Android, votre TV et votre PC Windows."
     />
 
     <!-- Hero -->
@@ -65,7 +65,7 @@ const screens = [
                 Vos films et séries, <span class="text-accent">sur tous vos écrans.</span>
             </h1>
             <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">
-                Des fiches complètes, un profil pour chaque personne et votre liste qui vous suit du téléphone à la TV.
+                Des fiches complètes, un profil pour chaque personne et vos listes qui vous suivent du téléphone à la TV.
             </p>
             <!-- One call: the install section selects the visitor's device itself. -->
             <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -112,7 +112,7 @@ const screens = [
 
             <div class="mt-20 space-y-24 sm:space-y-32">
                 <FeatureRow title="Un profil pour chaque personne" icon="users">
-                    « Qui regarde ? » s’affiche à l’ouverture : chacun retrouve sa liste, sa progression et son avatar. Un
+                    « Qui regarde ? » s’affiche à l’ouverture : chacun retrouve ses listes, sa progression et son avatar. Un
                     code PIN protège un profil si besoin, et un profil enfant ne voit que les titres de son âge.
                     <template #visual>
                         <TvFrame label="L’écran « Qui regarde ? » avec quatre profils et leurs avatars en pixel art"><TvWhoScreen /></TvFrame>
@@ -127,12 +127,12 @@ const screens = [
                     </template>
                 </FeatureRow>
 
-                <FeatureRow title="Votre liste vous suit" icon="bookmark">
-                    Ajoutez un titre à votre liste sur le téléphone, retrouvez-le le soir sur la TV. « Continuer à
-                    regarder », titres vus et liste sont synchronisés pour chaque profil.
+                <FeatureRow title="Vos listes vous suivent" icon="bookmark">
+                    Ajoutez un titre à « À voir » sur le téléphone, retrouvez-le le soir sur la TV. « Continuer à
+                    regarder », titres vus et listes sont synchronisés pour chaque profil.
                     <template #visual>
                         <div class="mx-auto flex max-w-[22rem] items-end justify-center gap-5 pt-8">
-                            <PhoneFrame label="Ma liste sur le téléphone" class="w-1/2"><PhoneListScreen /></PhoneFrame>
+                            <PhoneFrame label="La liste « À voir » sur le téléphone" class="w-1/2"><PhoneListScreen /></PhoneFrame>
                             <PhoneFrame label="L’accueil et « Continuer à regarder » sur le téléphone" class="w-1/2 -translate-y-8"><PhoneHomeScreen /></PhoneFrame>
                         </div>
                     </template>
@@ -157,7 +157,7 @@ const screens = [
                 Résumé, distribution, saisons et épisodes, recommandations et bande-annonce : chaque film et chaque série a
                 sa fiche. Touchez un acteur pour voir sa filmographie.
                 <template #visual>
-                    <TvFrame label="La fiche d’un film : grande image, informations, boutons Ma liste, Vu et Bande-annonce, distribution"><TvDetailsScreen /></TvFrame>
+                    <TvFrame label="La fiche d’un film : grande image, informations, boutons À voir, Vu et Bande-annonce, distribution"><TvDetailsScreen /></TvFrame>
                 </template>
             </FeatureRow>
         </div>

@@ -21,7 +21,7 @@ use Illuminate\Http\Response;
 /**
  * The app's « Notifications » page (docs/social.md): what other profiles did for the active profile
  * (followed it, asked to follow it, accepted its request, liked a review) and the next episodes of
- * the TV shows of its « Ma liste ».
+ * the TV shows of its « À voir ».
  */
 class NotificationController extends Controller
 {
@@ -72,7 +72,6 @@ class NotificationController extends Controller
                 'list' => $n->list === null ? null : [
                     'id' => (int) $n->list->id,
                     'title' => (string) $n->list->title,
-                    'kind' => (string) $n->list->kind,
                 ],
                 /** The comment written (`review_comment`, `list_comment`). */
                 'comment' => $n->comment === null ? null : [
@@ -108,7 +107,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Next episodes of the « Ma liste » TV shows.
+     * Next episodes of the « À voir » TV shows.
      *
      * `upcoming`: the next episode of each show TMDb knows, the soonest first; `recent`: episodes
      * out for less than 7 days, the most recent first. `available_at` is an estimate made not to

@@ -1389,7 +1389,7 @@
         "/v1/catalog/titles": {
             "get": {
                 "operationId": "v1.catalog.titles",
-                "description": "Movies and TV shows by id (Ma liste, Continuer \u00e0 regarder), with their logo, length, genres\nand age rating, in the order asked: one request instead of one per title. Respects the\nactive profile's age limit; titles TMDb doesn't know are left out.",
+                "description": "Movies and TV shows by id (\u00ab \u00c0 voir \u00bb, Continuer \u00e0 regarder), with their logo, length, genres\nand age rating, in the order asked: one request instead of one per title. Respects the\nactive profile's age limit; titles TMDb doesn't know are left out.",
                 "summary": "Several titles at once",
                 "tags": [
                     "Catalogue",
@@ -4443,10 +4443,6 @@
                                                         "null"
                                                     ]
                                                 },
-                                                "kind": {
-                                                    "type": "string",
-                                                    "description": "`top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most."
-                                                },
                                                 "items_count": {
                                                     "type": "integer"
                                                 },
@@ -4533,7 +4529,6 @@
                                                 "author",
                                                 "title",
                                                 "description",
-                                                "kind",
                                                 "items_count",
                                                 "cover",
                                                 "likes_count",
@@ -4557,7 +4552,7 @@
             },
             "put": {
                 "operationId": "v1.social.lists.update",
-                "description": "Its title, description, kind and, when given, its titles in their new order.",
+                "description": "Its title, description and, when given, its titles in their new order.",
                 "summary": "Change a list",
                 "tags": [
                     "Listes",
@@ -4644,10 +4639,6 @@
                                                         "null"
                                                     ]
                                                 },
-                                                "kind": {
-                                                    "type": "string",
-                                                    "description": "`top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most."
-                                                },
                                                 "items_count": {
                                                     "type": "integer"
                                                 },
@@ -4734,7 +4725,6 @@
                                                 "author",
                                                 "title",
                                                 "description",
-                                                "kind",
                                                 "items_count",
                                                 "cover",
                                                 "likes_count",
@@ -5064,7 +5054,8 @@
             },
             "post": {
                 "operationId": "v1.social.lists.store",
-                "summary": "Create a list or a top 10",
+                "description": "A title, maybe a description and titles in order (a \u00ab Top 10 \u00bb is a list like the others).",
+                "summary": "Create a list",
                 "tags": [
                     "Listes",
                     "List"
@@ -5139,10 +5130,6 @@
                                                         "string",
                                                         "null"
                                                     ]
-                                                },
-                                                "kind": {
-                                                    "type": "string",
-                                                    "description": "`top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most."
                                                 },
                                                 "items_count": {
                                                     "type": "integer"
@@ -5230,7 +5217,6 @@
                                                 "author",
                                                 "title",
                                                 "description",
-                                                "kind",
                                                 "items_count",
                                                 "cover",
                                                 "likes_count",
@@ -5358,10 +5344,6 @@
                                                         "null"
                                                     ]
                                                 },
-                                                "kind": {
-                                                    "type": "string",
-                                                    "description": "`top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most."
-                                                },
                                                 "items_count": {
                                                     "type": "integer"
                                                 },
@@ -5448,7 +5430,6 @@
                                                 "author",
                                                 "title",
                                                 "description",
-                                                "kind",
                                                 "items_count",
                                                 "cover",
                                                 "likes_count",
@@ -5572,10 +5553,6 @@
                                                         "null"
                                                     ]
                                                 },
-                                                "kind": {
-                                                    "type": "string",
-                                                    "description": "`top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most."
-                                                },
                                                 "items_count": {
                                                     "type": "integer"
                                                 },
@@ -5662,7 +5639,6 @@
                                                 "author",
                                                 "title",
                                                 "description",
-                                                "kind",
                                                 "items_count",
                                                 "cover",
                                                 "likes_count",
@@ -5907,15 +5883,11 @@
                                                             },
                                                             "title": {
                                                                 "type": "string"
-                                                            },
-                                                            "kind": {
-                                                                "type": "string"
                                                             }
                                                         },
                                                         "required": [
                                                             "id",
-                                                            "title",
-                                                            "kind"
+                                                            "title"
                                                         ]
                                                     },
                                                     "comment": {
@@ -6051,7 +6023,7 @@
             "get": {
                 "operationId": "v1.notifications.episodes",
                 "description": "`upcoming`: the next episode of each show TMDb knows, the soonest first; `recent`: episodes\nout for less than 7 days, the most recent first. `available_at` is an estimate made not to\nbe early (08:00 UTC on streaming platforms, 21:00 in the show's country otherwise).",
-                "summary": "Next episodes of the \u00ab Ma liste \u00bb TV shows",
+                "summary": "Next episodes of the \u00ab \u00c0 voir \u00bb TV shows",
                 "tags": [
                     "Notification"
                 ],
@@ -6990,14 +6962,14 @@
                 }
             }
         },
-        "/v1/social/profiles/{username}/diary": {
+        "/v1/social/profiles/{username}/activity": {
             "get": {
-                "operationId": "v1.social.profiles.diary",
-                "description": "What it watched, the most recent first (30 per page), with its rating. Written by itself\nwhen a title becomes watched.",
-                "summary": "A member's diary",
+                "operationId": "v1.social.profiles.activity",
+                "description": "Its reviews, lists, watched titles and titles liked, each with its date (`created_at`), the\nmost recent first; the same items as the feed (episodes of a show watched the same day\ntogether). `before`: the `next` of the previous page (null: the end). 403: a private account\nthe active profile doesn't follow; 404: blocked.",
+                "summary": "A member's activity",
                 "tags": [
                     "Social",
-                    "Diary"
+                    "Feed"
                 ],
                 "parameters": [
                     {
@@ -7019,106 +6991,18 @@
                                     "properties": {
                                         "data": {
                                             "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "type": {
-                                                        "type": "string"
-                                                    },
-                                                    "tmdb_id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "item_id": {
-                                                        "type": "string"
-                                                    },
-                                                    "title": {
-                                                        "type": "string"
-                                                    },
-                                                    "year": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "season_number": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "episode_number": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "episode_name": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "poster_url": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "watched_at": {
-                                                        "type": "string",
-                                                        "description": "When it was watched, ISO 8601."
-                                                    },
-                                                    "rewatch": {
-                                                        "type": "boolean",
-                                                        "description": "Watched again."
-                                                    },
-                                                    "rating": {
-                                                        "type": [
-                                                            "number",
-                                                            "null"
-                                                        ],
-                                                        "description": "The profile's rating of the title (or episode), 0.5 to 10."
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "type",
-                                                    "tmdb_id",
-                                                    "item_id",
-                                                    "title",
-                                                    "year",
-                                                    "season_number",
-                                                    "episode_number",
-                                                    "episode_name",
-                                                    "poster_url",
-                                                    "watched_at",
-                                                    "rewatch",
-                                                    "rating"
-                                                ]
-                                            }
+                                            "items": {}
                                         },
-                                        "meta": {
-                                            "type": "object",
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer"
-                                                },
-                                                "last_page": {
-                                                    "type": "integer"
-                                                }
-                                            },
-                                            "required": [
-                                                "current_page",
-                                                "last_page"
+                                        "next": {
+                                            "type": [
+                                                "integer",
+                                                "null"
                                             ]
                                         }
                                     },
                                     "required": [
                                         "data",
-                                        "meta"
+                                        "next"
                                     ]
                                 }
                             }
@@ -8194,7 +8078,7 @@
         "/v1/social/feed": {
             "get": {
                 "operationId": "v1.social.feed",
-                "description": "What the active profile and those it follows did, the most recent first: `kind` = `review`\n(with `review`), `list` (with `list`) or `watched` (`title`, the first `profiles` who watched\nit, `profiles_count`, `episodes_count`). `before`: the `next` of the previous page (null: the\nend).",
+                "description": "What the active profile and those it follows did, the most recent first: `kind` = `review`\n(with `review`), `list` (with `list`), `watched` (`title`, the first `profiles` who watched\nit, `profiles_count`, `episodes_count`) or `liked` (a title liked, \u00ab J'aime \u00bb : `title`,\n`profiles`, `profiles_count`). `before`: the `next` of the previous page (null: the end).",
                 "summary": "The feed, \u00ab Abonnements \u00bb",
                 "tags": [
                     "Social",
@@ -8236,7 +8120,7 @@
         "/v1/social/feed/for-you": {
             "get": {
                 "operationId": "v1.social.feed.for-you",
-                "description": "Reviews and lists of the whole network that the active profile can see (not its own, nor\nthose of muted or blocked profiles), from the last 30 days, the most interesting first: what\nthey drew (J'aime, comments), the tastes in common with their author, their age. Same items\nas the feed (`review`, `list`). `page`: 1 first; `next`: the following page (null: the end).",
+                "description": "Reviews and lists of the whole network that the active profile can see (not its own, nor\nthose of muted or blocked profiles), and the titles the profiles it follows watched or liked,\nfrom the last 30 days, the most interesting first: what they drew (J'aime, comments), the\ntastes in common with their author, their age. Same items as the feed. `page`: 1 first;\n`next`: the following page (null: the end).",
                 "summary": "The feed, \u00ab Pour toi \u00bb",
                 "tags": [
                     "Social",
@@ -8491,7 +8375,7 @@
         "/v1/profiles/{profile}/diary": {
             "post": {
                 "operationId": "v1.profiles.diary.store",
-                "description": "Another viewing (\u00ab Revu \u00bb) or a past one: `item` (`movie:550`, `tv:1399`), maybe\n`season_number` and `episode_number`, `watched_at` (now by default). `rewatch` when the diary\nalready has it.",
+                "description": "An episode watched to the end, another viewing (\u00ab Revu \u00bb) or a past one: `item`\n(`movie:550`, `tv:1399`), maybe `season_number` and `episode_number`, `watched_at` (now by\ndefault). `rewatch` when it was already watched. It goes to the profile's \u00ab Activit\u00e9 \u00bb and to\nthe feed.",
                 "summary": "Log a viewing",
                 "tags": [
                     "Social",
@@ -8668,49 +8552,6 @@
                 }
             }
         },
-        "/v1/profiles/{profile}/diary/{entry}": {
-            "delete": {
-                "operationId": "v1.profiles.diary.destroy",
-                "summary": "Remove an entry of the diary",
-                "tags": [
-                    "Social",
-                    "Diary"
-                ],
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "required": true,
-                        "description": "The profile ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "entry",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
         "/v1/social/search": {
             "get": {
                 "operationId": "v1.social.search",
@@ -8870,11 +8711,12 @@
                                                     "type": "integer"
                                                 },
                                                 "list_count": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "description": "Titles \u00ab \u00c0 voir \u00bb."
                                                 },
                                                 "liked_count": {
                                                     "type": "integer",
-                                                    "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
+                                                    "description": "\u00ab J'aime \u00bb \u2764 (movies and TV shows)."
                                                 },
                                                 "people_count": {
                                                     "type": "integer",
@@ -8882,11 +8724,7 @@
                                                 },
                                                 "lists_count": {
                                                     "type": "integer",
-                                                    "description": "Lists and top 10s with a title."
-                                                },
-                                                "diary_count": {
-                                                    "type": "integer",
-                                                    "description": "Entries of the diary (\u00ab Journal \u00bb)."
+                                                    "description": "Lists with a title (\u00ab \u00c0 voir \u00bb apart)."
                                                 },
                                                 "social_links": {
                                                     "type": "array",
@@ -9029,7 +8867,6 @@
                                                 "liked_count",
                                                 "people_count",
                                                 "lists_count",
-                                                "diary_count",
                                                 "social_links",
                                                 "is_following",
                                                 "follow_status",
@@ -9432,6 +9269,7 @@
         "/v1/social/profiles/{username}/list": {
             "get": {
                 "operationId": "v1.social.profiles.list",
+                "summary": "A member's \u00ab \u00c0 voir \u00bb (its `favorite` group), the most recently added first",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -9519,7 +9357,7 @@
         "/v1/social/profiles/{username}/liked": {
             "get": {
                 "operationId": "v1.social.profiles.liked",
-                "summary": "A member's \u00ab Favoris \u00bb \u2764 (movies and TV shows), the most recently added first",
+                "summary": "A member's \u00ab J'aime \u00bb \u2764 (movies and TV shows), the most recently added first",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -9574,6 +9412,101 @@
                                                     "title",
                                                     "year",
                                                     "poster_url"
+                                                ]
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/social/profiles/{username}/watched": {
+            "get": {
+                "operationId": "v1.social.profiles.watched",
+                "summary": "The movies and TV shows a member watched (\u00ab Vus \u00bb), the most recently watched first, with\nthe date (`watched_at`, ISO 8601)",
+                "tags": [
+                    "SocialProfile"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {
+                                                        "$ref": "#/components/schemas/ItemType"
+                                                    },
+                                                    "item_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "year": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "poster_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "watched_at": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "type",
+                                                    "item_id",
+                                                    "title",
+                                                    "year",
+                                                    "poster_url",
+                                                    "watched_at"
                                                 ]
                                             }
                                         },
@@ -9690,7 +9623,7 @@
             "get": {
                 "operationId": "v1.social.profiles.lists",
                 "description": "The most recently changed first (those without a title are only shown to their author).",
-                "summary": "A member's lists and top 10s",
+                "summary": "A member's lists",
                 "tags": [
                     "SocialProfile"
                 ],
@@ -9767,10 +9700,6 @@
                                                             "null"
                                                         ]
                                                     },
-                                                    "kind": {
-                                                        "type": "string",
-                                                        "description": "`top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most."
-                                                    },
                                                     "items_count": {
                                                         "type": "integer"
                                                     },
@@ -9805,7 +9734,6 @@
                                                     "author",
                                                     "title",
                                                     "description",
-                                                    "kind",
                                                     "items_count",
                                                     "cover",
                                                     "likes_count",
@@ -12506,7 +12434,7 @@
                     },
                     "is_liked": {
                         "type": "boolean",
-                        "description": "\u00ab Favoris \u00bb \u2764 (movies and TV shows)."
+                        "description": "\u00ab J'aime \u00bb \u2764 (movies and TV shows)."
                     },
                     "liked_at": {
                         "type": [
@@ -13417,7 +13345,7 @@
                     },
                     "new_episodes": {
                         "type": "boolean",
-                        "description": "New episodes of the \u00ab Ma liste \u00bb TV shows of the active profile (X-Profile-Id)."
+                        "description": "New episodes of the \u00ab \u00c0 voir \u00bb TV shows of the active profile (X-Profile-Id)."
                     },
                     "social": {
                         "type": "boolean",
@@ -13514,17 +13442,9 @@
                         ],
                         "maxLength": 1000
                     },
-                    "kind": {
-                        "type": "string",
-                        "description": "`top`: numbered, 10 titles at most (\u00ab Mon top 10 \u00bb); `list`: in the chosen order, 100 at most.",
-                        "enum": [
-                            "top",
-                            "list"
-                        ]
-                    },
                     "items": {
                         "type": "array",
-                        "description": "The titles, in order (`movie:550`, `tv:1399`). Left out when changing a list: kept.",
+                        "description": "The titles, in order (`movie:550`, `tv:1399`), 100 at most. Left out when changing a\nlist: kept.",
                         "items": {
                             "type": "string",
                             "pattern": "^(movie|tv):\\d{1,9}$"
@@ -13532,8 +13452,7 @@
                     }
                 },
                 "required": [
-                    "title",
-                    "kind"
+                    "title"
                 ],
                 "title": "SaveListRequest"
             },
@@ -14233,7 +14152,7 @@
                                 },
                                 "favorite": {
                                     "type": "object",
-                                    "description": "\"Ma liste\": added or removed. At least one of favorite, progress, watched, liked, followed is required.",
+                                    "description": "\u00ab \u00c0 voir \u00bb: added or removed. At least one of favorite, progress, watched, liked, followed is required.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"
@@ -14287,7 +14206,7 @@
                                 },
                                 "liked": {
                                     "type": "object",
-                                    "description": "\u00ab Favoris \u00bb \u2764 (a movie or a TV show): added or removed.",
+                                    "description": "\u00ab J'aime \u00bb \u2764 (a movie or a TV show): added or removed.",
                                     "properties": {
                                         "value": {
                                             "type": "boolean"

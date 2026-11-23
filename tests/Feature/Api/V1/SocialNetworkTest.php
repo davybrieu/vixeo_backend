@@ -15,8 +15,8 @@ use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
 /*
- * The social network of movies and TV shows (docs/social.md, docs/moderation.md): lists and top
- * 10s, comments, spoilers, diary, feed, the social part of a title page, tastes in common, blocks,
+ * The social network of movies and TV shows (docs/social.md, docs/moderation.md): lists, comments,
+ * spoilers, viewings, feed, activity, the social part of a title page, tastes in common, blocks,
  * reports, titles sent in a message and the profile's settings.
  */
 
@@ -80,14 +80,25 @@ function watch(Profile $profile, int $movie, string $at = '2026-11-20T20:00:00Z'
     ]]])->assertOk();
 }
 
-describe('lists and top 10s', function () {
-    it('creates a top 10 with its titles, in order, and caps it at 10', function () {
+/** Likes (« J'aime ») a movie, or no longer, through the synchronisation. */
+function like(Profile $profile, int $movie, bool $value = true, ?string $at = null): void
+{
+    as_($profile)->postJson("/api/v1/profiles/{$profile->id}/sync", ['changes' => [[
+        'source' => 'tmdb', 'item_id' => "movie:{$movie}", 'type' => 'movie', 'title' => "Film {$movie}",
+        'poster_url' => "https://image.tmdb.org/t/p/w342/p{$movie}.jpg",
+        'liked' => ['value' => $value, 'at' => $at ?? now()->toIso8601String()],
+    ]]])->assertOk();
+}
+
+describe('lists', function () {
+    it('creates a list with its titles, in order, and caps it at 100', function () {
         $lea = socialMember('lea');
 
         $list = as_($lea)->postJson('/api/v1/social/lists', [
-            'title' => 'Mon top 10 de 2026', 'kind' => 'top', 'items' => ['movie:551', 'movie:550', 'tv:1399', 'movie:550'],
+            'title' => 'Mon top 10 de 2026', 'description' => 'Dans l’ordre.', 'items' => ['movie:551', 'movie:550', 'tv:1399', 'movie:550'],
         ])->assertCreated()
-            ->assertJsonPath('data.kind', 'top')
+            ->assertJsonMissingPath('data.kind')
+            ->assertJsonPath('data.description', 'Dans l’ordre.')
             ->assertJsonPath('data.items_count', 3)
             ->assertJsonPath('data.items.*.item_id', ['movie:551', 'movie:550', 'tv:1399'])
             ->assertJsonPath('data.items.1.title', 'Fight Club')
@@ -97,8 +108,8 @@ describe('lists and top 10s', function () {
         // In the feed once it has a title.
         expect(SocialActivity::query()->where('profile_list_id', $list['id'])->count())->toBe(1);
 
-        as_($lea)->postJson('/api/v1/social/lists', ['title' => 'Trop', 'kind' => 'top', 'items' => array_map(fn ($i) => "movie:{$i}", range(1, 11))])
-            ->assertUnprocessable()->assertJsonPath('message', 'Un top 10 contient 10 titres au plus.');
+        as_($lea)->postJson('/api/v1/social/lists', ['title' => 'Trop', 'items' => array_map(fn ($i) => "movie:{$i}", range(1, 101))])
+            ->assertUnprocessable()->assertJsonValidationErrors('items');
 
         // Reordered, then a title added at the end and one removed.
         as_($lea)->putJson("/api/v1/social/lists/{$list['id']}", ['title' => 'Mon top', 'items' => ['tv:1399', 'movie:551']])
@@ -116,7 +127,7 @@ describe('lists and top 10s', function () {
     it('is seen by those who see the account, liked and commented', function () {
         $lea = socialMember('lea', ['is_private' => true]);
         $max = socialMember('max');
-        $list = ProfileList::query()->create(['profile_id' => $lea->id, 'title' => 'Horreur', 'kind' => 'list', 'items_count' => 0]);
+        $list = ProfileList::query()->create(['profile_id' => $lea->id, 'title' => 'Horreur', 'items_count' => 0]);
 
         as_($max)->getJson("/api/v1/social/lists/{$list->id}")->assertForbidden();
         as_($max)->putJson("/api/v1/social/lists/{$list->id}/like")->assertForbidden();
@@ -163,7 +174,7 @@ describe('reviews: spoilers and comments', function () {
     });
 });
 
-describe('the diary', function () {
+describe('viewings', function () {
     it('logs a title that becomes watched, then another viewing, and counts the year', function () {
         $lea = socialMember('lea');
         watch($lea, 550, '2026-03-10T20:00:00Z');
@@ -177,10 +188,7 @@ describe('the diary', function () {
             ->assertCreated()->assertJsonPath('data.rewatch', true)->assertJsonPath('data.item_id', 'movie:550');
         socialReview($lea, 550, 8.5);
 
-        as_($lea)->getJson('/api/v1/social/profiles/lea/diary')->assertOk()
-            ->assertJsonPath('data.0.watched_at', '2026-06-01T21:00:00+00:00')
-            ->assertJsonPath('data.0.rating', 8.5)
-            ->assertJsonCount(2, 'data');
+        expect(DiaryEntry::query()->count())->toBe(2);
         as_($lea)->getJson('/api/v1/social/profiles/lea/stats?year=2026')->assertOk()
             ->assertJsonPath('data.entries_count', 2)
             ->assertJsonPath('data.movies_count', 2)
@@ -190,8 +198,9 @@ describe('the diary', function () {
             ->assertJsonPath('data.genres.0', ['name' => 'Drame', 'count' => 2])
             ->assertJsonPath('data.best_rated.0.value', 8.5);
 
-        as_($lea)->deleteJson("/api/v1/profiles/{$lea->id}/diary/{$entry->id}")->assertNoContent();
-        expect(DiaryEntry::query()->count())->toBe(1);
+        // No « Journal » any more: neither read nor deleted by the app.
+        as_($lea)->getJson('/api/v1/social/profiles/lea/diary')->assertNotFound();
+        as_($lea)->deleteJson("/api/v1/profiles/{$lea->id}/diary/{$entry->id}")->assertNotFound();
     });
 });
 
@@ -206,18 +215,71 @@ describe('the feed', function () {
         // Lea also reviewed what she watched: the review only.
         watch($lea, 700);
         as_($lea)->putJson("/api/v1/profiles/{$lea->id}/tmdb/ratings/movie/700", ['value' => 7, 'comment' => 'Bien'])->assertOk();
-        as_($me)->postJson('/api/v1/social/lists', ['title' => 'Ma liste', 'kind' => 'list', 'items' => ['movie:550']])->assertCreated();
+        as_($me)->postJson('/api/v1/social/lists', ['title' => 'Cultes', 'items' => ['movie:550']])->assertCreated();
+        // Likes (« J'aime »), grouped by title like the watched ones.
+        like($lea, 800);
+        like($max, 800);
+        like($zoe, 800);
 
         $feed = as_($me)->getJson('/api/v1/social/feed')->assertOk()->json();
-        expect(array_column($feed['data'], 'kind'))->toBe(['list', 'review', 'watched'])
-            ->and($feed['data'][1]['review']['author']['username'])->toBe('lea')
-            ->and($feed['data'][2]['title']['item_id'])->toBe('movie:600')
-            ->and($feed['data'][2]['profiles_count'])->toBe(2)
+        expect(array_column($feed['data'], 'kind'))->toBe(['liked', 'list', 'review', 'watched'])
+            ->and($feed['data'][0]['title'])->toMatchArray(['item_id' => 'movie:800', 'type' => 'movie', 'id' => 800, 'title' => 'Film 800'])
+            ->and($feed['data'][0]['title']['poster_url'])->toBe('https://image.tmdb.org/t/p/w342/p800.jpg')
+            ->and(array_column($feed['data'][0]['profiles'], 'username'))->toBe(['max', 'lea'])
+            ->and($feed['data'][0]['profiles_count'])->toBe(2)
+            ->and($feed['data'][2]['review']['author']['username'])->toBe('lea')
+            ->and($feed['data'][3]['title']['item_id'])->toBe('movie:600')
+            ->and($feed['data'][3]['profiles_count'])->toBe(2)
             ->and($feed['next'])->toBeNull();
+
+        // Unliked: no longer in the feed.
+        like($max, 800, false);
+        expect(as_($me)->getJson('/api/v1/social/feed')->json('data.0.profiles_count'))->toBe(1);
 
         as_($me)->postJson('/api/v1/social/profiles/lea/mute')->assertOk();
         $kinds = array_column(as_($me)->getJson('/api/v1/social/feed')->json('data'), 'kind');
         expect($kinds)->toBe(['list', 'watched']);
+    });
+
+    it('lists a member\'s activity, each action with its date', function () {
+        [$me, $lea] = [socialMember('me'), socialMember('lea')];
+        $this->travelTo('2026-11-20 20:00:00');
+        watch($lea, 600, '2026-11-20T20:00:00Z');
+        $this->travelTo('2026-11-21 10:00:00');
+        like($lea, 600);
+        $this->travelTo('2026-11-22 18:30:00');
+        as_($lea)->putJson("/api/v1/profiles/{$lea->id}/tmdb/ratings/movie/600", ['value' => 8, 'comment' => 'Bien'])->assertOk();
+        as_($lea)->postJson('/api/v1/social/lists', ['title' => 'Top 10', 'items' => ['movie:600']])->assertCreated();
+        // Episodes of the same show the same day: together.
+        foreach ([1, 2] as $episode) {
+            as_($lea)->postJson("/api/v1/profiles/{$lea->id}/diary", ['item' => 'tv:1399', 'season_number' => 1, 'episode_number' => $episode])->assertCreated();
+        }
+
+        $activity = as_($me)->getJson('/api/v1/social/profiles/lea/activity')->assertOk()->json();
+        expect(array_column($activity['data'], 'kind'))->toBe(['watched', 'list', 'review', 'liked', 'watched'])
+            ->and($activity['data'][0]['episodes_count'])->toBe(2)
+            ->and($activity['data'][0]['title']['item_id'])->toBe('tv:1399')
+            ->and($activity['data'][3]['created_at'])->toBe('2026-11-21T10:00:00+00:00')
+            // The review and the watched title both stay: it is the list of her actions.
+            ->and($activity['data'][4]['title']['item_id'])->toBe('movie:600')
+            ->and($activity['data'][4]['created_at'])->toBe('2026-11-20T20:00:00+00:00')
+            ->and($activity['next'])->toBeNull();
+
+        // A private account: its followers only.
+        $lea->forceFill(['is_private' => true])->save();
+        as_($me)->getJson('/api/v1/social/profiles/lea/activity')->assertForbidden();
+        follows($me, $lea);
+        as_($me)->getJson('/api/v1/social/profiles/lea/activity')->assertOk()->assertJsonCount(5, 'data');
+    });
+
+    it('lists the titles a member watched, with the date', function () {
+        $lea = socialMember('lea');
+        watch($lea, 600, '2026-11-20T20:00:00Z');
+        watch($lea, 601, '2026-11-21T20:00:00Z');
+
+        as_(socialMember('me'))->getJson('/api/v1/social/profiles/lea/watched')->assertOk()
+            ->assertJsonPath('data.*.item_id', ['movie:601', 'movie:600'])
+            ->assertJsonPath('data.1.watched_at', '2026-11-20T20:00:00+00:00');
     });
 
     it('« Pour toi »: the reviews and lists of the whole network, the most interesting first', function () {
@@ -231,7 +293,7 @@ describe('the feed', function () {
             ['profile_id' => $lea->id, 'tmdb_rating_id' => $liked->id, 'created_at' => now()],
             ['profile_id' => $zoe->id, 'tmdb_rating_id' => $liked->id, 'created_at' => now()],
         ]);
-        as_($zoe)->postJson('/api/v1/social/lists', ['title' => 'Cultes', 'kind' => 'list', 'items' => ['movie:550']])->assertCreated();
+        as_($zoe)->postJson('/api/v1/social/lists', ['title' => 'Cultes', 'items' => ['movie:550']])->assertCreated();
         // Neither a private account I don't follow, nor mine, nor a watched title.
         as_($private)->putJson("/api/v1/profiles/{$private->id}/tmdb/ratings/movie/702", ['value' => 8, 'comment' => 'Privé'])->assertOk();
         as_($me)->putJson("/api/v1/profiles/{$me->id}/tmdb/ratings/movie/703", ['value' => 8, 'comment' => 'Le mien'])->assertOk();
@@ -248,6 +310,12 @@ describe('the feed', function () {
         as_($me)->postJson('/api/v1/social/profiles/max/mute')->assertOk();
         as_($me)->postJson('/api/v1/social/profiles/zoe/block')->assertOk();
         expect(array_column(as_($me)->getJson('/api/v1/social/feed/for-you')->json('data'), 'kind'))->toBe(['review']);
+
+        // What the followed profiles watched and liked comes too.
+        follows($me, $lea);
+        like($lea, 601);
+        expect(array_column(as_($me)->getJson('/api/v1/social/feed/for-you')->json('data'), 'kind'))
+            ->toEqualCanonicalizing(['review', 'watched', 'liked']);
     });
 
     it('« Pour toi »: pages of 20, several voices on a page', function () {
@@ -280,7 +348,7 @@ describe('the title page', function () {
         $popular = socialReview($zoe, 550, 9, 'Chef-d’œuvre');
         DB::table('review_likes')->insert(['profile_id' => $lea->id, 'tmdb_rating_id' => $popular->id, 'created_at' => now()]);
         socialReview(socialMember('ana', ['is_private' => true]), 550, 2, 'Privé');
-        as_($lea)->postJson('/api/v1/social/lists', ['title' => 'Cultes', 'kind' => 'list', 'items' => ['movie:550']])->assertCreated();
+        as_($lea)->postJson('/api/v1/social/lists', ['title' => 'Cultes', 'items' => ['movie:550']])->assertCreated();
 
         as_($me)->getJson('/api/v1/social/titles/movie/550')->assertOk()
             ->assertJsonPath('data.friends.*.username', ['max', 'lea'])

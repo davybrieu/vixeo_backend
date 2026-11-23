@@ -40795,7 +40795,7 @@ var render = (page) => (app ??= createInertiaApp({
 	resolve: async (name, page) => {
 		const module = await (/* @__PURE__ */ Object.assign({
 			"./pages/Error.vue": () => import("./assets/Error-DpTqaR1w.js"),
-			"./pages/Home.vue": () => import("./assets/Home-PUUhuX6Y.js"),
+			"./pages/Home.vue": () => import("./assets/Home-z7kr2OmE.js"),
 			"./pages/Legal.vue": () => import("./assets/Legal-CsbVODPh.js"),
 			"./pages/Member.vue": () => import("./assets/Member-t-cYzmXt.js"),
 			"./pages/Privacy.vue": () => import("./assets/Privacy-CeI6UXzE.js")

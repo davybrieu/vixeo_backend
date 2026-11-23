@@ -248,6 +248,9 @@ class SocialProfileController extends Controller
         ]]);
     }
 
+    /**
+     * A member's « À voir » (its `favorite` group), the most recently added first.
+     */
     public function favoritesList(Request $request, string $username): JsonResponse
     {
         $profile = $this->visibleProfile($request, $username);
@@ -263,7 +266,7 @@ class SocialProfileController extends Controller
     }
 
     /**
-     * A member's « Favoris » ❤ (movies and TV shows), the most recently added first.
+     * A member's « J'aime » ❤ (movies and TV shows), the most recently added first.
      */
     public function liked(Request $request, string $username): JsonResponse
     {
@@ -275,6 +278,26 @@ class SocialProfileController extends Controller
         return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
             'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
             'year' => $item->year, 'poster_url' => $item->poster_url,
+        ]), 'meta' => [
+            'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
+        ]]);
+    }
+
+    /**
+     * The movies and TV shows a member watched (« Vus »), the most recently watched first, with
+     * the date (`watched_at`, ISO 8601).
+     */
+    public function watched(Request $request, string $username): JsonResponse
+    {
+        $profile = $this->visibleProfile($request, $username);
+        $items = ProfileItem::query()->where('profile_id', $profile->id)
+            ->where('is_watched', true)->whereIn('type', ['movie', 'tv'])
+            ->latest('watched_at')->latest('id')->paginate(30);
+
+        return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
+            'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
+            'year' => $item->year, 'poster_url' => $item->poster_url,
+            'watched_at' => $item->watched_at?->toIso8601String(),
         ]), 'meta' => [
             'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
         ]]);
@@ -325,7 +348,7 @@ class SocialProfileController extends Controller
     }
 
     /**
-     * A member's lists and top 10s.
+     * A member's lists.
      *
      * The most recently changed first (those without a title are only shown to their author).
      */
@@ -431,7 +454,6 @@ class SocialProfileController extends Controller
             ->where('is_kid', false)->whereNull('suspended_at')
             ->when($withCounts, fn ($query) => $query->withCount([
                 'lists as lists_count' => fn ($query) => $query->whereNull('hidden_at')->where('items_count', '>', 0),
-                'diaryEntries as diary_count',
                 'followers',
                 'following',
                 'tmdbRatings as reviews_count',
@@ -460,15 +482,14 @@ class SocialProfileController extends Controller
             'following_count' => (int) ($profile->following_count ?? 0),
             'reviews_count' => (int) ($profile->reviews_count ?? 0),
             'watched_count' => (int) ($profile->watched_count ?? 0),
+            /** Titles « À voir ». */
             'list_count' => (int) ($profile->list_count ?? 0),
-            /** « Favoris » ❤ (movies and TV shows). */
+            /** « J'aime » ❤ (movies and TV shows). */
             'liked_count' => (int) ($profile->liked_count ?? 0),
             /** Followed people (actors, directors…). */
             'people_count' => (int) ($profile->people_count ?? 0),
-            /** Lists and top 10s with a title. */
+            /** Lists with a title (« À voir » apart). */
             'lists_count' => (int) ($profile->lists_count ?? 0),
-            /** Entries of the diary (« Journal »). */
-            'diary_count' => (int) ($profile->diary_count ?? 0),
         ];
     }
 }

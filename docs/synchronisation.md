@@ -1,6 +1,6 @@
 # Synchronisation par profil
 
-« Ma liste », progression de lecture (« Continuer à regarder », reprise), contenus vus,
+« À voir » (anciennement « Ma liste »), progression de lecture (« Continuer à regarder », reprise), contenus vus,
 « Favoris » ❤ et personnes suivies sont synchronisés **par profil** entre tous les appareils du compte. L'appli garde une copie
 locale (drift) et fonctionne hors ligne ; l'API sert de point de rendez-vous.
 
@@ -32,16 +32,18 @@ Et cinq **groupes d'état**, chacun avec la date du dernier changement :
 
 | Groupe | Champs | Date du changement |
 | - | - | - |
-| Ma liste (« favori » historique) | `is_favorite`, `favorited_at` | `favorite_changed_at` |
+| À voir (« favori » historique) | `is_favorite`, `favorited_at` | `favorite_changed_at` |
 | Progression | `position_ms`, `duration_ms`, `last_engaged_at` | `progress_changed_at` |
 | Vu | `is_watched`, `watched_at` | `watched_changed_at` |
-| Favoris ❤ (films, séries) | `is_liked`, `liked_at` | `liked_changed_at` |
+| J'aime ❤ (films, séries) | `is_liked`, `liked_at` | `liked_changed_at` |
 | Personne suivie (`person`) | `is_followed`, `followed_at` | `followed_changed_at` |
 
-- « Ma liste » (à regarder plus tard) porte le nom historique `favorite` dans l'API.
-- « Favoris » ❤ (`liked`) : les films et séries aimés, indépendants de « Ma liste » (supprimés le
-  11/11/2026, rétablis le 20/11/2026 à la demande du développeur). Remettre en favori garde la
-  première date.
+- « À voir » (à regarder plus tard ; « Ma liste » jusqu'au 23/11/2026, désormais rangée en tête
+  des listes du profil, jamais supprimée : `docs/social.md`) porte le nom historique `favorite`
+  dans l'API.
+- « J'aime » ❤ (`liked`) : les films et séries aimés, indépendants de « À voir » (supprimés le
+  11/11/2026, rétablis le 20/11/2026 à la demande du développeur). Aimer de nouveau garde la
+  première date. Un titre aimé va au fil d'actualité des abonnés (`social_activities`, `liked`).
 - Personnes suivies (`followed`) : items de type `person` (`person:<id TMDb>`), « Suivre » sur la
   page d'une personne. Suivre de nouveau garde la première date.
 - « Continuer à regarder » = `last_engaged_at` non nul et `is_watched` faux, du plus récent
@@ -105,8 +107,8 @@ Actions de l'appui long :
 
 | Action | Changement |
 | - | - |
-| Ajouter à / retirer de « Ma liste » | `favorite: { value: true/false, at }` |
-| Ajouter aux / retirer des favoris ❤ | `liked: { value: true/false, at }` |
+| Ajouter à / retirer de « À voir » | `favorite: { value: true/false, at }` |
+| Aimer / ne plus aimer ❤ | `liked: { value: true/false, at }` |
 | Suivre / ne plus suivre une personne | `followed: { value: true/false, at }` (type `person`) |
 | Marquer vu / non vu | `watched: { value: true/false, at }` |
 | Vu jusqu'ici (épisodes) | un changement `watched` par épisode précédent, dans le même envoi |
@@ -121,11 +123,12 @@ Actions de l'appui long :
 
 ## Pages publiques d'un membre
 
-`GET /api/v1/social/profiles/{username}` donne aussi `liked_count` (favoris ❤) et `people_count`
+`GET /api/v1/social/profiles/{username}` donne aussi `liked_count` (J'aime ❤) et `people_count`
 (personnes suivies). Listes paginées (30 par page, les plus récents d'abord) :
 
 | Route | Contenu |
 | - | - |
-| `GET /api/v1/social/profiles/{username}/list` | « Ma liste » (`is_favorite`) |
-| `GET /api/v1/social/profiles/{username}/liked` | Favoris ❤ : `type`, `item_id`, `title`, `year`, `poster_url` |
+| `GET /api/v1/social/profiles/{username}/list` | « À voir » (`is_favorite`) |
+| `GET /api/v1/social/profiles/{username}/liked` | J'aime ❤ : `type`, `item_id`, `title`, `year`, `poster_url` |
+| `GET /api/v1/social/profiles/{username}/watched` | Vus (films et séries) : mêmes champs et `watched_at` |
 | `GET /api/v1/social/profiles/{username}/people` | Personnes suivies : `id` (TMDb), `item_id`, `name`, `profile_url` |

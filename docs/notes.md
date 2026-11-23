@@ -39,7 +39,7 @@ panne / un quota dépassé suspend temporairement les appels. La clé reste côt
   (demande du développeur, 21/11/2026 : la note IMDb partout, celle de TMDb seulement en secours),
   avec le résumé (`summary` : accueil, recherche, filtres sans texte, recommandations d'une fiche
   et leur « Voir tout », « Voir tout » des rangées, « Connu pour », `GET /catalog/titles` pour
-  « Ma liste », « Continuer à regarder » et les rangées légères) ou seule (filmographie de la page
+  « À voir », « Continuer à regarder » et les rangées légères) ou seule (filmographie de la page
   d'une personne et `GET /catalog/person/{id}/credits` : `TitleSummaries::ratings`, l'identifiant
   IMDb de chaque titre gardé 90 jours en cache, TMDb n'est interrogé que pour un titre jamais vu).
   `TitleSummaries` lit la fiche TMDb de chaque titre (avec `external_ids` pour les séries) et

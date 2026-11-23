@@ -40,7 +40,7 @@ class ProfileItemResource extends JsonResource
             'watched_at' => $this->watched_at,
             'watched_changed_at' => $this->watched_changed_at,
 
-            /** « Favoris » ❤ (movies and TV shows). */
+            /** « J'aime » ❤ (movies and TV shows). */
             'is_liked' => $this->is_liked,
             'liked_at' => $this->liked_at,
             'liked_changed_at' => $this->liked_changed_at,

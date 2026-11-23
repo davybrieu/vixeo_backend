@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\ItemType;
 use App\Models\Profile;
 use App\Models\ProfileItem;
+use App\Services\Social\Activities;
 use App\Services\Social\Diary;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
@@ -11,7 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Per-profile sync of "Ma liste" (favorite), playback progress, watched state, « Favoris » ❤
+ * Per-profile sync of « À voir » (favorite), playback progress, watched state, « J'aime » ❤
  * (liked) and followed people (followed).
  *
  * - Every write gives the item a new revision (per-profile counter). Clients pull
@@ -31,7 +33,7 @@ class ProfileSync
 
     private const METADATA = ['type', 'title', 'year', 'poster_url', 'backdrop_url', 'parent_item_id', 'season_number', 'episode_number'];
 
-    public function __construct(private Diary $diary) {}
+    public function __construct(private Diary $diary, private Activities $activities) {}
 
     /**
      * Apply changes (validated by SyncPushRequest) and return the merged state of each item.
@@ -42,7 +44,8 @@ class ProfileSync
     public function push(Profile $profile, array $changes): array
     {
         $watched = [];
-        $result = DB::transaction(function () use ($profile, $changes, &$watched) {
+        $liked = [];
+        $result = DB::transaction(function () use ($profile, $changes, &$watched, &$liked) {
             // Serializes pushes of the same profile: revisions stay strictly increasing.
             $locked = Profile::whereKey($profile->id)->lockForUpdate()->firstOrFail();
             $revision = $locked->sync_revision;
@@ -58,9 +61,13 @@ class ProfileSync
                 $item = $items->get($key) ?? $locked->items()->make(Arr::only($change, ['source', 'item_id']));
 
                 $wasWatched = (bool) $item->is_watched;
+                $wasLiked = (bool) $item->is_liked;
                 $this->apply($item, $change);
                 if (! $wasWatched && $item->is_watched) {
                     $watched[$key] = $item;
+                }
+                if ($wasLiked !== (bool) $item->is_liked) {
+                    $liked[$key] = $item;
                 }
 
                 if (! $item->exists || $item->isDirty()) {
@@ -84,6 +91,14 @@ class ProfileSync
         // transaction (TMDb may be asked what the diary shows of it).
         if ($watched !== []) {
             $this->diary->watched($profile, array_values($watched));
+        }
+        // A movie or TV show liked (« J'aime ») goes to the feed; unliked, it leaves it.
+        $titles = array_values(array_filter($liked, fn (ProfileItem $item) => in_array($item->type, [ItemType::Movie, ItemType::Tv], true)));
+        if ($titles !== [] && ! $profile->is_kid) {
+            $this->activities->liked(
+                array_values(array_filter($titles, fn (ProfileItem $item) => $item->is_liked)),
+                array_values(array_filter($titles, fn (ProfileItem $item) => ! $item->is_liked)),
+            );
         }
 
         return $result;

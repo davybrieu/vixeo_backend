@@ -135,7 +135,7 @@ class Profile extends Model
         return $this->hasMany(TmdbRating::class);
     }
 
-    /** The profile's lists and top 10s. @return HasMany<ProfileList, $this> */
+    /** The profile's lists. @return HasMany<ProfileList, $this> */
     public function lists(): HasMany
     {
         return $this->hasMany(ProfileList::class);

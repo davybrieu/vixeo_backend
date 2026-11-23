@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Synced state of one content for one profile (Ma liste, progress, watched, « Favoris » ❤, a
+ * Synced state of one content for one profile (« À voir », progress, watched, « J'aime » ❤, a
  * followed person).
  * Written only through App\Services\ProfileSync.
  */
@@ -63,7 +63,7 @@ class ProfileItem extends Model
         return $this->belongsTo(Profile::class);
     }
 
-    /** Items that carry some state (an item can be fully reset: not in Ma liste, no progress, not watched, not liked, not followed). */
+    /** Items that carry some state (an item can be fully reset: not in « À voir », no progress, not watched, not liked, not followed). */
     #[Scope]
     protected function notEmpty(Builder $query): void
     {

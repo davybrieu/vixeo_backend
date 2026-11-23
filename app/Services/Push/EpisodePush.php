@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
 
 /**
  * New-episode push notifications (docs/notifications.md), run by `vixeo:push-episodes` every
- * 15 minutes: for each profile whose app wants them, the episodes of its « Ma liste » shows
+ * 15 minutes: for each profile whose app wants them, the episodes of its « À voir » shows
  * that came out in the last LOOKBACK_HOURS hours and were not announced yet, one notification
  * per show. Never an episode out before the show was added or the alerts turned on, never at
  * night on the device (the notification waits for 08:00), never twice.
@@ -59,7 +59,7 @@ class EpisodePush
             return $report;
         }
 
-        // The shows of each profile's « Ma liste », with when they were added.
+        // The shows of each profile's « À voir », with when they were added.
         $favorites = [];
         ProfileItem::query()
             ->whereIn('profile_id', $byProfile->keys()->all())

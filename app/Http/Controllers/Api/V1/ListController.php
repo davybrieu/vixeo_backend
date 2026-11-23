@@ -17,8 +17,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Lists and top 10s (docs/social.md): created and changed by the active profile, seen by those who
- * see its content, liked and commented.
+ * Lists (docs/social.md): created and changed by the active profile (a title, a description, titles
+ * in the chosen order), seen by those who see its content, liked and commented. « À voir » is the
+ * `favorite` group of the synchronisation, not one of them.
  *
  * @tags Listes
  */
@@ -48,7 +49,9 @@ class ListController extends Controller
     }
 
     /**
-     * Create a list or a top 10.
+     * Create a list.
+     *
+     * A title, maybe a description and titles in order (a « Top 10 » is a list like the others).
      */
     public function store(SaveListRequest $request): JsonResponse
     {
@@ -58,7 +61,6 @@ class ListController extends Controller
             $profile,
             (string) $request->validated('title'),
             $request->validated('description'),
-            (string) $request->validated('kind'),
             $request->items() ?? [],
         );
 
@@ -81,7 +83,7 @@ class ListController extends Controller
     /**
      * Change a list.
      *
-     * Its title, description, kind and, when given, its titles in their new order.
+     * Its title, description and, when given, its titles in their new order.
      */
     public function update(SaveListRequest $request, int $list): JsonResponse
     {
@@ -90,7 +92,6 @@ class ListController extends Controller
             $row,
             (string) $request->validated('title'),
             $request->validated('description'),
-            (string) ($request->validated('kind') ?? $row->kind),
             $request->items(),
         );
 

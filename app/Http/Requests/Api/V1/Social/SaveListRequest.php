@@ -4,25 +4,21 @@ namespace App\Http\Requests\Api\V1\Social;
 
 use App\Models\ProfileList;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class SaveListRequest extends FormRequest
 {
     public function rules(): array
     {
-        $creating = $this->isMethod('post');
-
         return [
             'title' => ['required', 'string', 'max:'.ProfileList::MAX_TITLE],
             'description' => ['sometimes', 'nullable', 'string', 'max:'.ProfileList::MAX_DESCRIPTION],
-            /** `top`: numbered, 10 titles at most (« Mon top 10 »); `list`: in the chosen order, 100 at most. */
-            'kind' => [$creating ? 'required' : 'sometimes', 'string', Rule::in([ProfileList::TOP, ProfileList::LIST])],
             /**
-             * The titles, in order (`movie:550`, `tv:1399`). Left out when changing a list: kept.
+             * The titles, in order (`movie:550`, `tv:1399`), 100 at most. Left out when changing a
+             * list: kept.
              *
              * @var list<string>
              */
-            'items' => ['sometimes', 'array', 'max:'.ProfileList::MAX_LIST],
+            'items' => ['sometimes', 'array', 'max:'.ProfileList::MAX_ITEMS],
             'items.*' => ['string', 'regex:/^(movie|tv):\d{1,9}$/'],
         ];
     }

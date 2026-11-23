@@ -9,14 +9,14 @@ use App\Models\ProfileItem;
 use App\Models\TmdbRating;
 use App\Services\Tmdb\TmdbFormat as F;
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 /**
- * The diary of a profile (« Journal », docs/social.md): each movie, TV show or episode watched, on
- * its day. Written by itself when a title becomes watched (the synchronisation: the player at the
- * end, or the « Vu » button) and when the app logs another viewing (`rewatch`). Each entry goes to
- * the feed; the « Bilan de l'année » counts them.
+ * The viewings of a profile (docs/social.md): each movie, TV show or episode watched, on its day.
+ * Written by itself when a title becomes watched (the synchronisation: the player at the end, or
+ * the « Vu » button) and when the app logs an episode or another viewing (`rewatch`). Each entry
+ * goes to the feed and to the « Activité » of the profile; the « Bilan de l'année » counts them.
+ * The app no longer shows them as a « Journal » (developer's request, 23/11/2026).
  */
 class Diary
 {
@@ -71,22 +71,6 @@ class Diary
             'runtime' => $snapshot['runtime'],
             'genres' => $snapshot['genres'],
         ], $at ?? CarbonImmutable::now(), null);
-    }
-
-    public function remove(DiaryEntry $entry): void
-    {
-        $entry->delete();
-    }
-
-    /**
-     * The diary of [profile], the most recent first.
-     *
-     * @return LengthAwarePaginator<int, DiaryEntry>
-     */
-    public function page(Profile $profile)
-    {
-        return DiaryEntry::query()->where('profile_id', $profile->id)
-            ->latest('watched_at')->latest('id')->paginate(30);
     }
 
     /**

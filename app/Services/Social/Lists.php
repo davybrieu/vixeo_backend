@@ -11,8 +11,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The lists of a profile (docs/social.md): a top 10 (`top`, numbered) or a list (`list`, 100
- * titles at most), with likes. A title is kept with what the list shows of it (TitleSnapshots), so
+ * The lists of a profile (docs/social.md): a title, a description and up to 100 titles in the
+ * chosen order, with likes. A title is kept with what the list shows of it (TitleSnapshots), so
  * showing a list never asks TMDb. A list goes to the feed once it has a title.
  */
 class Lists
@@ -24,14 +24,13 @@ class Lists
     ) {}
 
     /** @param  list<string>  $itemIds  `movie:550`, in order */
-    public function create(Profile $profile, string $title, ?string $description, string $kind, array $itemIds = []): ProfileList
+    public function create(Profile $profile, string $title, ?string $description, array $itemIds = []): ProfileList
     {
-        $list = DB::transaction(function () use ($profile, $title, $description, $kind, $itemIds) {
+        $list = DB::transaction(function () use ($profile, $title, $description, $itemIds) {
             $list = ProfileList::query()->create([
                 'profile_id' => $profile->id,
                 'title' => $title,
                 'description' => $description,
-                'kind' => $kind,
             ]);
             $this->replaceItems($list, $itemIds);
 
@@ -43,15 +42,14 @@ class Lists
     }
 
     /**
-     * Changes the title, description, kind and, when given, the titles (in their new order).
+     * Changes the title, the description and, when given, the titles (in their new order).
      *
      * @param  list<string>|null  $itemIds
      */
-    public function update(ProfileList $list, string $title, ?string $description, string $kind, ?array $itemIds): ProfileList
+    public function update(ProfileList $list, string $title, ?string $description, ?array $itemIds): ProfileList
     {
-        DB::transaction(function () use ($list, $title, $description, $kind, $itemIds) {
-            $list->fill(['title' => $title, 'description' => $description, 'kind' => $kind]);
-            abort_if($itemIds === null && $list->items_count > $list->maxItems(), 422, __('A top 10 has 10 titles at most.'));
+        DB::transaction(function () use ($list, $title, $description, $itemIds) {
+            $list->fill(['title' => $title, 'description' => $description]);
             if ($itemIds !== null) {
                 $this->replaceItems($list, $itemIds);
             }
@@ -72,8 +70,7 @@ class Lists
     {
         $current = $list->items()->get()->map(fn (ProfileListItem $item) => $item->itemId())->all();
         if (! in_array($itemId, $current, true)) {
-            abort_if(count($current) >= $list->maxItems(), 422, $list->kind === ProfileList::TOP
-                ? __('A top 10 has 10 titles at most.') : __('A list has 100 titles at most.'));
+            abort_if(count($current) >= ProfileList::MAX_ITEMS, 422, __('A list has 100 titles at most.'));
             DB::transaction(function () use ($list, $current, $itemId) {
                 $this->replaceItems($list, [...$current, $itemId]);
                 $list->touch();
@@ -151,8 +148,7 @@ class Lists
     private function replaceItems(ProfileList $list, array $itemIds): void
     {
         $itemIds = array_values(array_unique(array_filter($itemIds, fn (string $id) => TitleSnapshots::parse($id) !== null)));
-        abort_if(count($itemIds) > $list->maxItems(), 422, $list->kind === ProfileList::TOP
-            ? __('A top 10 has 10 titles at most.') : __('A list has 100 titles at most.'));
+        abort_if(count($itemIds) > ProfileList::MAX_ITEMS, 422, __('A list has 100 titles at most.'));
 
         $known = $list->exists
             ? ProfileListItem::query()->where('profile_list_id', $list->id)->get()->keyBy(fn (ProfileListItem $i) => $i->itemId())

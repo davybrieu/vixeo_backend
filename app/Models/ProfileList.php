@@ -7,19 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A list of a profile (docs/social.md): a top 10 (`top`, numbered, 10 titles at most) or a list
- * (`list`, in the chosen order, 100 at most), with its likes and comments. Written only through
+ * A list of a profile (docs/social.md): a title, a description and up to 100 titles in the order
+ * its author chose (a « Top 10 » is a list like the others), with its likes and comments. « À voir »
+ * is not one of them: it is the `favorite` group of the synchronisation. Written only through
  * App\Services\Social\Lists.
  */
 class ProfileList extends Model
 {
-    public const TOP = 'top';
-
-    public const LIST = 'list';
-
-    public const MAX_TOP = 10;
-
-    public const MAX_LIST = 100;
+    public const MAX_ITEMS = 100;
 
     public const MAX_TITLE = 100;
 
@@ -34,11 +29,6 @@ class ProfileList extends Model
             'published_at' => 'datetime',
             'hidden_at' => 'datetime',
         ];
-    }
-
-    public function maxItems(): int
-    {
-        return $this->kind === self::TOP ? self::MAX_TOP : self::MAX_LIST;
     }
 
     /** @return BelongsTo<Profile, $this> */

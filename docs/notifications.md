@@ -12,7 +12,7 @@ Windows appli fermée). Mêmes réglages, mêmes messages que sur Android (voir 
 de Windows »).
 
 - **Nouveaux épisodes** : une tâche planifiée (`vixeo:push-episodes`, toutes les 15 minutes)
-  cherche les épisodes sortis des séries de « Ma liste » et prévient les profils qui l'ont
+  cherche les épisodes sortis des séries de « À voir » et prévient les profils qui l'ont
   demandé.
 - **Messages à la main** : `php artisan vixeo:push` (à tout le monde ou à un compte).
 
@@ -81,7 +81,7 @@ par `PushDevices::send`, qui choisit FCM ou ce canal pour chaque appli. Sans Rev
 
 Pour chaque profil qui a au moins un appareil avec `new_episodes` :
 
-1. les séries de « Ma liste » (`profile_items` TMDb, type `tv`, `is_favorite`) ;
+1. les séries de « À voir » (`profile_items` TMDb, type `tv`, `is_favorite`) ;
 2. leurs épisodes **sortis dans les 48 dernières heures** (`UpcomingEpisodes::availableBetween` :
    la fiche de la série, cache d'un jour, et la saison du dernier et du prochain épisode) ;
 3. sans ceux sortis **avant l'ajout de la série** à la liste, **avant l'activation des

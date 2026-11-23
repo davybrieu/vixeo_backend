@@ -1,4 +1,4 @@
-# Fonctions sociales : réseaux, compte privé, J'aime, notifications, fil, listes, journal
+# Fonctions sociales : réseaux, compte privé, J'aime, notifications, fil d'actualité, listes, activité
 
 Demande du développeur, 21/11/2026, sur le modèle de Twitter. Le reste des pages de profil (pseudo,
 biographie, abonnés, listes publiques, « Partager ») est décrit dans `CLAUDE.md` (« Recherche de
@@ -68,7 +68,7 @@ la page du membre (`follow`, `follow_accepted`) ou `/notifications`.
 
 **Prochains épisodes** : `GET /notifications/episodes` (demande du développeur : la page
 Notifications de l'appli les montre ; ce n'est pas l'ancienne route `episodes/upcoming`) : pour les
-séries de « Ma liste » du profil (`AgeGate` appliqué), `upcoming` = le prochain épisode connu de
+séries de « À voir » du profil (`AgeGate` appliqué), `upcoming` = le prochain épisode connu de
 chacune (TMDb `next_episode_to_air`), le plus proche d'abord, et `recent` = les épisodes sortis
 depuis moins de 7 jours. `available_at` est l'heure estimée de `UpcomingEpisodes::availableAt`
 (jamais trop tôt), comme les notifications des nouveaux épisodes (`docs/notifications.md`).
@@ -76,44 +76,75 @@ depuis moins de 7 jours. `available_at` est l'heure estimée de `UpcomingEpisode
 ## Le réseau social des films et séries (23/11/2026)
 
 Demande du développeur : « un réseau social comme Twitter, mais sans tweet de texte ». **Toute
-publication porte sur une œuvre** : un avis, un visionnage (journal), une liste ou un top 10 ; on
-discute dans les commentaires. Tout ce qu'un profil publie est vu de tous s'il est public, de ses
+publication porte sur une œuvre** : un avis, un visionnage, un J'aime ou une liste ; on discute
+dans les commentaires. Tout ce qu'un profil publie est vu de tous s'il est public, de ses
 abonnés acceptés s'il est privé, jamais d'un profil bloqué (dans un sens ou l'autre), et plus du
 tout une fois suspendu ou masqué par la modération (`App\Services\Social\Audience`,
 `docs/moderation.md`). Les profils enfants n'y ont pas accès. Formes JSON communes :
 `App\Services\Social\SocialCards` (un profil, un avis, une liste, un commentaire).
 
-### Fil : « Pour toi » et « Abonnements »
+### Fil d'actualité : « Pour toi » et « Abonnements »
 
-Deux onglets dans les applis, **« Pour toi » par défaut** (demande du développeur, 23/11/2026).
+« Fil d'actualité » dans les applis (renommé le 23/11/2026, demande du développeur ; l'adresse de
+l'appli reste `/fil`). Deux onglets, **« Pour toi » par défaut** (demande du développeur,
+23/11/2026). Le fil montre **les avis, les titres vus, les J'aime et les listes** (demande du
+développeur, 23/11/2026).
+
+Table `social_activities` (`App\Services\Social\Activities`) : un **avis** (nouveau, ou avec un
+nouveau commentaire : il remonte), un **visionnage** (une entrée de `diary_entries`), un **J'aime**
+(`liked`, `profile_item_id` : l'item de la synchro ; écrit par `ProfileSync::push` quand un film ou
+une série devient aimé, supprimé quand il ne l'est plus ; aimé de nouveau, il remonte) et une
+**liste** (dès son premier titre). `kind` = `review` (`review`), `list` (`list`), `watched`
+(`title`, les 3 premiers `profiles`, `profiles_count`, `episodes_count`, `rewatch`) ou `liked`
+(`title`, `profiles`, `profiles_count`) : les visionnages et les J'aime d'un même titre sont
+regroupés dans une page (« Léa, Max et 1 autre ont vu… », « Léa et Max aiment… »), et omis quand le
+même profil a publié un avis du même titre dans la page.
 
 **« Pour toi »** (`GET /social/feed/for-you?page=`, `Feed::forYou`) : les avis et les listes de
-tout le réseau que le profil peut voir (pas les siens, ni ceux des profils masqués ou bloqués, ni
-les visionnages), des 30 derniers jours (les 300 plus récents), classés : une liste vaut un peu
-plus qu'un avis, un avis écrit plus que des étoiles seules, chaque J'aime et chaque commentaire
-ajoutent, comme les goûts en commun avec l'auteur (`Taste::compatibilities`) et le fait de le
-suivre ; puis le score baisse avec l'âge (environ de moitié en 2 jours). Plusieurs voix par page :
-chaque publication précédente d'un même auteur fait baisser les suivantes. 20 par page, `next` =
-la page suivante (null à la fin). Même forme d'éléments que les abonnements.
+tout le réseau que le profil peut voir (pas les siens, ni ceux des profils masqués ou bloqués ; les
+300 plus récents), plus les titres vus et aimés **des profils qu'il suit** (les 200 plus récents),
+des 30 derniers jours, classés : une liste vaut un peu plus qu'un avis, un avis écrit plus que des
+étoiles seules, un titre vu ou aimé moins (davantage quand plusieurs abonnements l'ont vu ou
+aimé) ; chaque J'aime et chaque commentaire ajoutent, comme les goûts en commun avec l'auteur
+(`Taste::compatibilities`) et le fait de le suivre ; puis le score baisse avec l'âge (environ de
+moitié en 2 jours). Plusieurs voix par page : chaque publication précédente d'un même auteur fait
+baisser les suivantes. 20 par page, `next` = la page suivante (null à la fin).
 
-**« Abonnements »** (`GET /social/feed?before=`) : ce qu'ont fait le profil actif et ceux qu'il suit, le plus récent d'abord, 40 activités par page
-(`next` : le `before` de la page suivante, null à la fin). Table `social_activities`
-(`App\Services\Social\Activities`) : un **avis** (nouveau, ou avec un nouveau commentaire : il
-remonte), un **visionnage** (une entrée du journal) et une **liste** (dès son premier titre).
-`kind` = `review` (`review`), `list` (`list`) ou `watched` (`title`, les 3 premiers `profiles`,
-`profiles_count`, `episodes_count`, `rewatch`) : les visionnages d'un même titre sont regroupés dans
-une page (« Léa, Max et 1 autre ont vu… »), et omis quand le même profil a publié un avis du même
-titre dans la page. Profils masqués, bloqués ou suspendus et contenus masqués : absents.
+**« Abonnements »** (`GET /social/feed?before=`) : ce qu'ont fait le profil actif et ceux qu'il
+suit, le plus récent d'abord, 40 activités par page (`next` : le `before` de la page suivante, null
+à la fin). Profils masqués, bloqués ou suspendus et contenus masqués : absents.
 
-### Listes et top 10 (`/social/lists…`)
+### Activité d'un profil (`GET /social/profiles/{pseudo}/activity?before=`)
 
-`profile_lists` + `profile_list_items` (`App\Services\Social\Lists`) : `kind` = `top` (numéroté,
-10 titres au plus) ou `list` (dans l'ordre choisi, 100 au plus) ; titre (100 caractères),
-description (1 000). Chaque titre garde ce que la liste en montre (nom, année, images), tiré de
-TMDb à l'ajout (`TitleSnapshots`, cache de `TitleSummaries`) : afficher une liste n'interroge pas
-TMDb. Routes : `GET /social/lists?item=movie:550` (mes listes, `contains`), `POST /social/lists`,
-`GET|PUT|DELETE /social/lists/{id}` (`items` : la liste entière dans le nouvel ordre),
-`POST /social/lists/{id}/items` (`item`), `DELETE /social/lists/{id}/items/{type}/{id}`,
+L'onglet « Activité » de la page d'un profil (demande du développeur, 23/11/2026 : « la liste de
+tes actions avec la date ») : ses avis, listes, titres vus et J'aime, **chacun avec sa date**
+(`created_at`), le plus récent d'abord, 40 activités par page ; mêmes éléments que le fil, mais
+rien n'est omis (un avis et le visionnage du même titre restent tous deux) et les épisodes d'une
+même série vus le même jour sont regroupés (`episodes_count`). Compte privé : ses abonnés
+acceptés seulement (403), bloqué : 404 (`Feed::activity`).
+
+### Pages d'un profil : « À voir », J'aime, vus
+
+Les onglets de la page d'un profil dans les applis : Activité, Listes, Avis, Aimés, Vus. **« À voir »**
+(anciennement « Ma liste », renommée et rangée parmi les listes le 23/11/2026) est le groupe
+`favorite` de la synchronisation (`docs/synchronisation.md`), pas une ligne de `profile_lists` :
+toujours là, jamais supprimée, sans titre ni description à choisir, triée par date d'ajout ;
+`GET /social/profiles/{pseudo}/list`. J'aime : `…/liked` ; **vus** : `GET
+/social/profiles/{pseudo}/watched` (films et séries vus, le plus récent d'abord, avec
+`watched_at`). Le « Journal » a été supprimé (demande du développeur, 23/11/2026) : ni page, ni
+`GET /social/profiles/{pseudo}/diary`, ni `DELETE /profiles/{id}/diary/{entrée}`.
+
+### Listes (`/social/lists…`)
+
+`profile_lists` + `profile_list_items` (`App\Services\Social\Lists`) : un titre (100 caractères),
+une description (1 000) et jusqu'à 100 titres **dans l'ordre choisi par l'auteur** ; un « Top 10 »
+est une liste comme les autres (plus de `kind` `top` / `list` depuis le 23/11/2026, demande du
+développeur). Chaque titre garde ce que la liste en montre (nom, année, images), tiré de TMDb à
+l'ajout (`TitleSnapshots`, cache de `TitleSummaries`) : afficher une liste n'interroge pas TMDb.
+Routes : `GET /social/lists?item=movie:550` (mes listes, `contains` : la fenêtre « Ajouter à une
+liste » des applis, avec « À voir » en tête), `POST /social/lists`, `GET|PUT|DELETE
+/social/lists/{id}` (`items` : la liste entière dans le nouvel ordre), `POST
+/social/lists/{id}/items` (`item`, ajouté à la fin), `DELETE /social/lists/{id}/items/{type}/{id}`,
 `PUT|DELETE /social/lists/{id}/like` (`list_likes`), `GET|POST /social/lists/{id}/comments`,
 `GET /social/profiles/{pseudo}/lists` (celles qui ont un titre, sauf pour leur auteur).
 
@@ -126,17 +157,17 @@ commentaire : les applis masquent le texte derrière « Afficher ». `GET /socia
 précédents), `DELETE /social/comments/{id}` (son auteur, ou l'auteur de l'avis ou de la liste).
 Table `social_comments` (`App\Services\Social\Comments`, 1 000 caractères), l'auteur est notifié.
 
-### Journal et bilan de l'année
+### Visionnages et bilan de l'année
 
 `diary_entries` (`App\Services\Social\Diary`) : **écrit tout seul** quand un film ou une série
 devient « vu » par la synchronisation (le lecteur à la fin, le bouton « Vu » ;
-`ProfileSync::push`, après la transaction), daté du `watched_at` du changement ; un nouveau
-visionnage s'ajoute par `POST /profiles/{id}/diary` (`item`, saison et épisode facultatifs,
-`watched_at`), marqué `rewatch` quand le journal a déjà le titre ; `DELETE
-/profiles/{id}/diary/{entrée}`. Lecture : `GET /social/profiles/{pseudo}/diary` (30 par page, avec
-la note du profil) et `GET /social/profiles/{pseudo}/stats?year=` (« Bilan de l'année » : titres,
-films, épisodes, séries, revisionnages, minutes, mois, 5 genres, meilleures notes, série la plus
-vue ; durée et genres tirés de TMDb à l'écriture, complétés à la lecture si TMDb était en panne).
+`ProfileSync::push`, après la transaction), daté du `watched_at` du changement ; un épisode vu
+jusqu'au bout ou un nouveau visionnage s'ajoute par `POST /profiles/{id}/diary` (`item`, saison et
+épisode facultatifs, `watched_at`), marqué `rewatch` quand le titre était déjà vu. Chaque entrée va
+au fil et à l'« Activité » du profil. `GET /social/profiles/{pseudo}/stats?year=` (« Bilan de
+l'année » : titres, films, épisodes, séries, revisionnages, minutes, mois, 5 genres, meilleures
+notes, série la plus vue ; durée et genres tirés de TMDb à l'écriture, complétés à la lecture si
+TMDb était en panne).
 
 ### Page d'un titre (`GET /social/titles/{type}/{id}`)
 

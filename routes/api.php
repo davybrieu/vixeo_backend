@@ -74,11 +74,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('profiles/{username}/reviews', [SocialProfileController::class, 'reviews'])->name('profiles.reviews');
         Route::get('profiles/{username}/list', [SocialProfileController::class, 'favoritesList'])->name('profiles.list');
         Route::get('profiles/{username}/liked', [SocialProfileController::class, 'liked'])->name('profiles.liked');
+        Route::get('profiles/{username}/watched', [SocialProfileController::class, 'watched'])->name('profiles.watched');
         Route::get('profiles/{username}/people', [SocialProfileController::class, 'people'])->name('profiles.people');
-        // The social network of movies and TV shows (docs/social.md): lists, diary, reviews and
-        // their comments, the social part of a title page.
+        // The social network of movies and TV shows (docs/social.md): activity, lists, the « Bilan
+        // de l'année », reviews and their comments, the social part of a title page.
+        Route::get('profiles/{username}/activity', [FeedController::class, 'activity'])->name('profiles.activity');
         Route::get('profiles/{username}/lists', [SocialProfileController::class, 'lists'])->name('profiles.lists');
-        Route::get('profiles/{username}/diary', [DiaryController::class, 'index'])->name('profiles.diary');
         Route::get('profiles/{username}/stats', [DiaryController::class, 'stats'])->name('profiles.stats');
         Route::get('reviews/{review}', [ReviewSocialController::class, 'show'])->whereNumber('review')->name('reviews.show');
         Route::get('reviews/{review}/comments', [ReviewSocialController::class, 'comments'])->whereNumber('review')->name('reviews.comments');
@@ -266,9 +267,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::delete('searches/{search}', [ProfileSearchController::class, 'destroy'])
                 ->scopeBindings()->whereNumber('search')->name('searches.destroy');
 
-            // The diary (« Journal »): another viewing, or removing an entry (docs/social.md).
+            // Viewings: an episode watched to the end, another viewing (docs/social.md).
             Route::post('diary', [DiaryController::class, 'store'])->name('diary.store');
-            Route::delete('diary/{entry}', [DiaryController::class, 'destroy'])->whereNumber('entry')->name('diary.destroy');
         });
 
         // The profile's reviews (docs/avis.md), under their historical address.

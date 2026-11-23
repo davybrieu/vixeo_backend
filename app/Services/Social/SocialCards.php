@@ -93,8 +93,6 @@ class SocialCards
             'author' => self::identity($list->profile),
             'title' => (string) $list->title,
             'description' => $list->description === null ? null : (string) $list->description,
-            /** `top`: numbered, 10 titles at most; `list`: in the chosen order, 100 at most. */
-            'kind' => (string) $list->kind,
             'items_count' => (int) $list->items_count,
             /**
              * Posters of the first 4 titles, w342.

@@ -111,7 +111,7 @@ class TitleSummaries
     }
 
     /**
-     * Titles by type and id, as list items with their logo and summary (Ma liste, Continuer à
+     * Titles by type and id, as list items with their logo and summary (« À voir », Continuer à
      * regarder), in the order asked. Titles TMDb doesn't know are left out.
      *
      * @param  list<array{MediaType, int}>  $titles

@@ -80,7 +80,7 @@ class CatalogController extends Controller
     /**
      * Several titles at once.
      *
-     * Movies and TV shows by id (Ma liste, Continuer à regarder), with their logo, length, genres
+     * Movies and TV shows by id (« À voir », Continuer à regarder), with their logo, length, genres
      * and age rating, in the order asked: one request instead of one per title. Respects the
      * active profile's age limit; titles TMDb doesn't know are left out.
      */

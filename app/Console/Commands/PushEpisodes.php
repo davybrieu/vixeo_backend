@@ -16,7 +16,7 @@ class PushEpisodes extends Command
         {--user= : ID ou adresse e-mail d\'un compte (tous les comptes sinon)}
         {--dry-run : afficher les notifications sans les envoyer}';
 
-    protected $description = 'Send the new-episode push notifications of the « Ma liste » TV shows';
+    protected $description = 'Send the new-episode push notifications of the « À voir » TV shows';
 
     public function handle(EpisodePush $push, PushDevices $devices): int
     {

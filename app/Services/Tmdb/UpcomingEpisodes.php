@@ -8,7 +8,7 @@ use ValueError;
 
 /**
  * Episodes coming out soon in some TV shows: what the apps' "nouvel épisode" notifications
- * announce, for the shows of « Ma liste » (docs/notifications.md). Reads each show's details (the
+ * announce, for the shows of « À voir » (docs/notifications.md). Reads each show's details (the
  * cache of TitleSummaries) and the season of its next episode (cached a day, like the title page).
  *
  * TMDb only gives a date (`air_date`, in the show's country). The time is a guess made not to be

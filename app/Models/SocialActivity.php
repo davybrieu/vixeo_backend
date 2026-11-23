@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Something a profile did that its followers see in their feed (docs/social.md): a review, a
- * watched title (a diary entry) or a list. Written only through App\Services\Social\Activities.
+ * Something a profile did (docs/social.md): a review, a watched title (a diary entry), a list or a
+ * title liked (« J'aime », a synced item). Its followers see it in their « Fil d'actualité », and
+ * the « Activité » tab of its page lists them with their date. Written only through
+ * App\Services\Social\Activities.
  */
 class SocialActivity extends Model
 {
@@ -18,6 +20,8 @@ class SocialActivity extends Model
     public const WATCHED = 'watched';
 
     public const LIST = 'list';
+
+    public const LIKED = 'liked';
 
     protected $guarded = [];
 
@@ -43,5 +47,11 @@ class SocialActivity extends Model
     public function list(): BelongsTo
     {
         return $this->belongsTo(ProfileList::class, 'profile_list_id');
+    }
+
+    /** The title liked (`liked`). @return BelongsTo<ProfileItem, $this> */
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(ProfileItem::class, 'profile_item_id');
     }
 }

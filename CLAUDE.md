@@ -177,7 +177,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     (`CatalogTitleController::restricted`), pour le logo des vignettes. Les autres listes n'en ont
     pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
     plus, `TitleSummaries::titles`, même cache) donne plusieurs titres d'un coup avec ces champs :
-    « Ma liste » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
+    « À voir » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
   - **« Voir tout » des fiches et des personnes** (demande du développeur, 20/11/2026) : la fiche
     ne donne que 20 recommandations et 20 membres de la distribution, la page d'une personne
     10 titres « Connu pour » et 100 de filmographie ; les listes entières viennent de
@@ -249,7 +249,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   Routes sous `/profiles/{id}/tmdb/ratings…` (nom historique).
 - **Synchro par profil** (`app/Services/ProfileSync.php`, doc : `docs/synchronisation.md`) :
   un `ProfileItem` par profil + `source` + `item_id`. Ne jamais écrire ces items ailleurs que
-  dans `ProfileSync` (révision et dates de changement). Fusion par groupe (« Ma liste » =
+  dans `ProfileSync` (révision et dates de changement). Fusion par groupe (« À voir » =
   `favorite`, progression, vu, « J'aime » ❤ = `liked` (films, séries ; rétablis le 20/11/2026,
   demande du développeur ; un J'aime, pas des favoris), personnes suivies = `followed` (items `person:<id>`, type `person`)),
   le plus récent gagne ; listes publiques d'un membre : `/social/profiles/{username}/liked` et
@@ -271,18 +271,22 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   (`review_likes`, `PUT|DELETE /social/reviews/{review_id}/like`), **notifications**
   (`social_notifications` : `follow`, `follow_request`, `follow_accepted`, `review_like` ;
   `GET /notifications`, `/count`, `POST /notifications/read`, `GET /notifications/episodes` :
-  prochains épisodes de « Ma liste »), envoyées aussi en push après la réponse (réglage `social`
+  prochains épisodes de « À voir »), envoyées aussi en push après la réponse (réglage `social`
   de `PUT /push/device`, canal Android `social`).
 - **Réseau social des films et séries** (demande du développeur, 23/11/2026, « comme Twitter mais
   sans tweet de texte » ; doc : `docs/social.md`, `docs/moderation.md`) : **toute publication porte
-  sur une œuvre** (avis, visionnage, liste / top 10), la conversation est dans les commentaires.
+  sur une œuvre** (avis, visionnage, J'aime, liste), la conversation est dans les commentaires.
   Services `App\Services\Social\…` : `Audience` (qui voit quoi : public, abonnés d'un compte
   privé, jamais un profil bloqué dans un sens ou l'autre, rien d'un profil suspendu ni d'un contenu
   masqué ; `constrain()` pour une requête), `SocialCards` (formes JSON communes : profil, avis,
   liste, commentaire), `TitleSnapshots` (ce qu'on garde d'un titre, depuis le cache de
-  `TitleSummaries`), `Activities` + `Feed` (`social_activities`, `GET /social/feed` : visionnages
-  regroupés par titre), `Lists` (`top` 10 titres / `list` 100, J'aime), `Comments` (avis et
-  listes, spoilers), `Diary` (journal **écrit par `ProfileSync`** quand un titre devient vu, bilan
+  `TitleSummaries`), `Activities` + `Feed` (`social_activities` : avis, visionnages, J'aime (`liked`,
+  `profile_item_id`, écrits et retirés par `ProfileSync`) et listes ; « Fil d'actualité »
+  `GET /social/feed` : visionnages et J'aime regroupés par titre ; « Activité » d'un profil
+  `GET /social/profiles/{pseudo}/activity`, chaque action avec sa date), `Lists` (titre,
+  description, 100 titres **dans l'ordre choisi** ; plus de `kind` top / liste depuis le 23/11/2026 :
+  un « Top 10 » est une liste comme les autres ; J'aime), `Comments` (avis et
+  listes, spoilers), `Diary` (visionnages **écrits par `ProfileSync`** quand un titre devient vu, bilan
   `stats`), `TitleSocial` (`GET /social/titles/{type}/{id}` : abonnés qui l'ont vu et leur moyenne,
   avis populaires, listes), `Taste` (compatibilité, `GET /social/suggestions`), fil « Pour toi » (`Feed::forYou`,
   `GET /social/feed/for-you?page=`, onglet par défaut des applis) à côté de « Abonnements », `Reports`
@@ -293,6 +297,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `rate_after_watching` (note proposée en fin de lecture, vrai par défaut), `onboarded_at`
   (premier lancement ; les profils existants l'ont déjà), `suspended_at`. Contrôleurs : trait
   `Concerns\ResolvesSocialProfiles` (`viewer`, `author`, `visibleMember`, `assertVisible`).
+  **« À voir »** (anciennement « Ma liste », demande du développeur, 23/11/2026) = le groupe
+  `favorite` de la synchro, montré par les applis en tête des listes, jamais supprimé, sans titre
+  ni description ; pas une ligne de `profile_lists`. Onglets de la page d'un profil : Activité,
+  Listes, Avis, Aimés, Vus (`GET /social/profiles/{pseudo}/watched`) ; **plus de « Journal »**
+  (supprimé le 23/11/2026 : ni `GET …/diary` ni `DELETE /profiles/{id}/diary/{entrée}` ;
+  `diary_entries` reste la source des visionnages, du fil et du bilan).
   Tests : `tests/Feature/Api/V1/SocialNetworkTest.php`.
 - **Requêtes** : hors production, `Model::preventLazyLoading()` (`AppServiceProvider`) fait
   échouer une relation lue dans une boucle sans `with()` (N+1) : les tests l'attrapent.
@@ -388,7 +398,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   choisit FCM ou Reverb ; `available()` = l'un des deux configuré, `GET /push/device` donne
   `available` (FCM) et `realtime` (Reverb). `vixeo:push-episodes` (planifiée toutes les 15 min,
   aussi à la main, `--user=`, `--dry-run`) : `EpisodePush` annonce les épisodes sortis depuis moins de 48 h des
-  séries de « Ma liste » (`UpcomingEpisodes::availableBetween`), jamais avant l'ajout de la série
+  séries de « À voir » (`UpcomingEpisodes::availableBetween`), jamais avant l'ajout de la série
   ni l'activation des alertes, jamais deux fois (`episode_notifications`), pas la nuit sur
   l'appareil (23 h – 8 h), une notification par série (canal Android `episodes`, `data.path` =
   fiche). `vixeo:push "texte" --all | --user=…` (`SendPush`) : un message écrit à la main
@@ -438,10 +448,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait aussi : TV en direct (API neutre, fournisseurs côté serveur, guide des programmes XMLTV,
   logos de la bibliothèque tv-logos).
 - Fait aussi : notifications push (FCM, par identifiant d'installation ; Windows par le canal
-  temps réel, appli ouverte) des nouveaux épisodes des séries de « Ma liste »
+  temps réel, appli ouverte) des nouveaux épisodes des séries de « À voir »
   (tâche planifiée) et messages envoyés à la main (`vixeo:push`).
 - Fait aussi : réseaux sociaux du profil, compte privé et demandes d'abonnement, J'aime sur les
-  avis, notifications (page de l'appli et push) et prochains épisodes de « Ma liste »
+  avis, notifications (page de l'appli et push) et prochains épisodes de « À voir »
   (`docs/social.md`).
 - Fait aussi : notes IMDb (jeux de données vérifiés toutes les heures, importés quand IMDb les
   met à jour, `imdb:import`) et TMDb, avec
@@ -453,7 +463,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
   (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
 - Fait aussi (23/11/2026) : réseau social des films et séries : fil, listes et top 10, commentaires
-  et spoilers, journal et bilan de l'année, fiche sociale d'un titre, goûts en commun et comptes à
+  et spoilers, bilan de l'année, fiche sociale d'un titre, goûts en commun et comptes à
   suivre, blocage partout et masquage, signalements et modération, partage dans les messages,
   4 favoris, note en fin de lecture, premier lancement (`docs/social.md`, `docs/moderation.md`).
 - Prochaine étape possible : configuration distante (chaînes FAST).

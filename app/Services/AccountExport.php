@@ -70,7 +70,6 @@ class AccountExport
                 'lists' => ProfileList::query()->where('profile_id', $p->id)->with('items')->get()->map(fn (ProfileList $l) => [
                     'title' => $l->title,
                     'description' => $l->description,
-                    'kind' => $l->kind,
                     'created_at' => $l->created_at?->toIso8601String(),
                     'titles' => $l->items->map(fn ($i) => ['item_id' => $i->itemId(), 'title' => $i->title])->values()->all(),
                 ])->values()->all(),
