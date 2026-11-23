@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PlaybackController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfilePhotoController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\PushDeviceController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Api\V1\TitleSocialController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
 use App\Http\Middleware\ResolveProfile;
+use App\Services\ProfilePhotos;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -55,6 +57,13 @@ Route::prefix('v1')->name('v1.')->group(function () {
     // (a <video> element and ExoPlayer send none), so the signed, opaque token in the path is what
     // authorises it. Public on purpose: kept out of the `auth:sanctum` group and of
     // `throttle:catalog` (a live stream fires one request per segment). See docs/tv-direct.md.
+    // Profile photos (App\Services\ProfilePhotos): public, loaded without a bearer token like any
+    // image; the random name changes with each photo.
+    Route::get('profile-photos/{name}', [ProfilePhotoController::class, 'show'])
+        ->where('name', ProfilePhotos::NAME_PATTERN)
+        ->middleware('throttle:profile-photos')
+        ->name('profile-photos.show');
+
     Route::prefix('tv')->name('tv.')->group(function () {
         Route::get('stream/{token}', [TvController::class, 'media'])->name('stream.media');
         // Channel logos, from our origin (App\Services\Tv\ChannelLogos). Public too: images are
@@ -254,6 +263,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
             ->middleware('throttle:pin')
             ->name('profiles.verify-pin');
+        // Its own photo, instead of its avatar (docs/social.md).
+        Route::post('profiles/{profile}/photo', [ProfilePhotoController::class, 'store'])
+            ->middleware('throttle:profile-photo-upload')
+            ->name('profiles.photo.store');
+        Route::delete('profiles/{profile}/photo', [ProfilePhotoController::class, 'destroy'])
+            ->name('profiles.photo.destroy');
 
         // Per-profile sync (favorites, progress, watched): see docs/synchronisation.md.
         Route::prefix('profiles/{profile}')->name('profiles.')->middleware('throttle:sync')->group(function () {

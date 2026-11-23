@@ -9,6 +9,7 @@ use App\Models\Report;
 use App\Models\SocialComment;
 use App\Models\TmdbRating;
 use App\Services\Messaging\Conversations;
+use App\Services\ProfilePhotos;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -81,6 +82,24 @@ class Reports
                 : "{$label} a été masqué par la modération : {$decision}");
         }
         $this->close($report, Report::HIDDEN, $decision, 'Merci pour votre signalement : le contenu a été retiré.');
+    }
+
+    /**
+     * The moderation removes the photo of a reported profile (`vixeo:moderate … photo`), which
+     * stays visible with its avatar; its open reports are closed. Its author and who reported it
+     * are told why. False when [report] is not about a profile with a photo.
+     */
+    public function removePhoto(Report $report, string $decision): bool
+    {
+        [$subject] = $this->subject($report->subject_type, $report->subject_id);
+        if (! $subject instanceof Profile || $subject->photo_path === null) {
+            return false;
+        }
+        app(ProfilePhotos::class)->remove($subject);
+        $this->notifications->moderation($subject, "Votre photo de profil a été retirée par la modération : {$decision}");
+        $this->close($report, Report::HIDDEN, $decision, 'Merci pour votre signalement : la photo a été retirée.');
+
+        return true;
     }
 
     /** Nothing against the rules: the report is closed, who reported it is told. */

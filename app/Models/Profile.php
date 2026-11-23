@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PosterFormat;
+use App\Services\ProfilePhotos;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -176,6 +177,12 @@ class Profile extends Model
     public function isRestricted(): bool
     {
         return $this->maxAge() !== null;
+    }
+
+    /** Address of its own photo (App\Services\ProfilePhotos), null = its avatar is shown. */
+    public function photoUrl(): ?string
+    {
+        return ProfilePhotos::url($this->photo_path);
     }
 
     public function hasPin(): bool

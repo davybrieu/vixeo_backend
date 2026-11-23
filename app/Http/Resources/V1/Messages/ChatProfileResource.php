@@ -21,6 +21,8 @@ class ChatProfileResource extends JsonResource
             'name' => (string) $this->name,
             /** Id of its avatar in the catalog (GET /avatars). */
             'avatar' => $this->avatar,
+            /** Its own photo, shown instead of the avatar; null = the avatar. */
+            'photo_url' => $this->photoUrl(),
         ];
     }
 }

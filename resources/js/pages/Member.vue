@@ -23,7 +23,9 @@ const description = computed(
     <Seo :title="`${member.name} (@${member.username})`" :description="description" noindex />
     <section class="mx-auto flex max-w-xl flex-col items-center px-5 pt-32 pb-24 text-center sm:px-8 sm:pt-40">
         <div class="size-32 overflow-hidden rounded-full bg-surface-high ring-4 ring-line sm:size-36">
-            <PixelAvatar v-if="pixelAvatar" :avatar="pixelAvatar" />
+            <!-- Its own photo, served by the API (our domain), instead of the avatar. -->
+            <img v-if="member.photoUrl" :src="member.photoUrl" alt="" class="size-full object-cover" />
+            <PixelAvatar v-else-if="pixelAvatar" :avatar="pixelAvatar" />
             <img
                 v-else-if="member.avatar?.imageUrl"
                 :src="member.avatar.imageUrl"

@@ -10,6 +10,7 @@ use App\Http\Resources\V1\ProfileResource;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
 use App\Services\Messaging\Conversations;
+use App\Services\ProfilePhotos;
 use App\Services\Social\Follows;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
@@ -97,8 +98,9 @@ class ProfileController extends Controller
     {
         Gate::authorize('delete', $profile);
 
-        // Its photos and videos sent in the messaging go with it (files, not rows).
+        // Its photos and videos sent in the messaging, and its own photo, go with it (files, not rows).
         app(Conversations::class)->forgetProfiles([$profile->id]);
+        app(ProfilePhotos::class)->forget([$profile->photo_path]);
         $profile->delete();
 
         return response()->noContent();

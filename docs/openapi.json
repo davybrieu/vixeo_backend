@@ -4414,6 +4414,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -4430,6 +4437,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -4610,6 +4618,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -4626,6 +4641,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -4832,6 +4848,13 @@
                                                                     "null"
                                                                 ]
                                                             },
+                                                            "photo_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                            },
                                                             "bio": {
                                                                 "type": [
                                                                     "string",
@@ -4848,6 +4871,7 @@
                                                             "username",
                                                             "name",
                                                             "avatar",
+                                                            "photo_url",
                                                             "bio",
                                                             "is_private"
                                                         ]
@@ -4954,6 +4978,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -4970,6 +5001,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -5102,6 +5134,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -5118,6 +5157,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -5315,6 +5355,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -5331,6 +5378,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -5524,6 +5572,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -5540,6 +5595,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -5810,13 +5866,20 @@
                                                                     "string",
                                                                     "null"
                                                                 ]
+                                                            },
+                                                            "photo_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
                                                             }
                                                         },
                                                         "required": [
                                                             "id",
                                                             "username",
                                                             "name",
-                                                            "avatar"
+                                                            "avatar",
+                                                            "photo_url"
                                                         ]
                                                     },
                                                     "review": {
@@ -6420,6 +6483,54 @@
                 }
             }
         },
+        "/v1/profile-photos/{name}": {
+            "get": {
+                "operationId": "v1.profile-photos.show",
+                "description": "Public (images are loaded without a bearer token), at the address `photo_url` gives; cached\nfor a year: a new photo has a new address.",
+                "summary": "A profile photo",
+                "tags": [
+                    "Profils",
+                    "ProfilePhoto"
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "public, max-age=31536000, immutable"
+                                }
+                            },
+                            "X-Content-Type-Options": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "nosniff"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/avatars": {
             "get": {
                 "operationId": "v1.avatars",
@@ -6741,6 +6852,119 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/photo": {
+            "post": {
+                "operationId": "v1.profiles.photo.store",
+                "description": "Multipart field `photo`. Shown instead of its avatar (`photo_url` of the profile, of its\ncards in the social network and the messaging); replaces the previous photo. The app sends\nthe square it framed; the API keeps the central square anyway, 512 pixels, re-encoded\nwithout the metadata of the file (location\u2026).",
+                "summary": "Set the profile's photo",
+                "tags": [
+                    "Profils",
+                    "ProfilePhoto"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProfilePhotoRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ProfileResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.photo.destroy",
+                "description": "Its avatar is shown again.",
+                "summary": "Remove the profile's photo",
+                "tags": [
+                    "Profils",
+                    "ProfilePhoto"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProfileResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -7333,6 +7557,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -7349,6 +7580,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -7452,6 +7684,13 @@
                                                                     "null"
                                                                 ]
                                                             },
+                                                            "photo_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                            },
                                                             "bio": {
                                                                 "type": [
                                                                     "string",
@@ -7468,6 +7707,7 @@
                                                             "username",
                                                             "name",
                                                             "avatar",
+                                                            "photo_url",
                                                             "bio",
                                                             "is_private"
                                                         ]
@@ -7574,6 +7814,13 @@
                                                                 "null"
                                                             ]
                                                         },
+                                                        "photo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                        },
                                                         "bio": {
                                                             "type": [
                                                                 "string",
@@ -7590,6 +7837,7 @@
                                                         "username",
                                                         "name",
                                                         "avatar",
+                                                        "photo_url",
                                                         "bio",
                                                         "is_private"
                                                     ]
@@ -7892,6 +8140,13 @@
                                                                     "null"
                                                                 ]
                                                             },
+                                                            "photo_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                            },
                                                             "bio": {
                                                                 "type": [
                                                                     "string",
@@ -7908,6 +8163,7 @@
                                                             "username",
                                                             "name",
                                                             "avatar",
+                                                            "photo_url",
                                                             "bio",
                                                             "is_private"
                                                         ]
@@ -8184,6 +8440,13 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                    },
                                                     "bio": {
                                                         "type": [
                                                             "string",
@@ -8225,6 +8488,7 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
+                                                    "photo_url",
                                                     "bio",
                                                     "is_private",
                                                     "followers_count",
@@ -8564,6 +8828,13 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                    },
                                                     "bio": {
                                                         "type": [
                                                             "string",
@@ -8580,6 +8851,7 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
+                                                    "photo_url",
                                                     "bio",
                                                     "is_private"
                                                 ]
@@ -8661,6 +8933,13 @@
                                                         "string",
                                                         "null"
                                                     ]
+                                                },
+                                                "photo_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Its own photo, shown instead of the avatar; null = the avatar."
                                                 },
                                                 "bio": {
                                                     "type": [
@@ -8786,6 +9065,7 @@
                                                 "username",
                                                 "name",
                                                 "avatar",
+                                                "photo_url",
                                                 "bio",
                                                 "is_private",
                                                 "share_url",
@@ -8865,6 +9145,13 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                    },
                                                     "bio": {
                                                         "type": [
                                                             "string",
@@ -8881,6 +9168,7 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
+                                                    "photo_url",
                                                     "bio",
                                                     "is_private"
                                                 ]
@@ -8957,6 +9245,13 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                    },
                                                     "bio": {
                                                         "type": [
                                                             "string",
@@ -8973,6 +9268,7 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
+                                                    "photo_url",
                                                     "bio",
                                                     "is_private"
                                                 ]
@@ -9600,6 +9896,13 @@
                                                                     "null"
                                                                 ]
                                                             },
+                                                            "photo_url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                            },
                                                             "bio": {
                                                                 "type": [
                                                                     "string",
@@ -9616,6 +9919,7 @@
                                                             "username",
                                                             "name",
                                                             "avatar",
+                                                            "photo_url",
                                                             "bio",
                                                             "is_private"
                                                         ]
@@ -10242,6 +10546,13 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                    },
                                                     "bio": {
                                                         "type": [
                                                             "string",
@@ -10258,6 +10569,7 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
+                                                    "photo_url",
                                                     "bio",
                                                     "is_private"
                                                 ]
@@ -10283,6 +10595,13 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                                                    },
                                                     "bio": {
                                                         "type": [
                                                             "string",
@@ -10299,6 +10618,7 @@
                                                     "username",
                                                     "name",
                                                     "avatar",
+                                                    "photo_url",
                                                     "bio",
                                                     "is_private"
                                                 ]
@@ -11089,6 +11409,13 @@
                         ],
                         "description": "Id of its avatar in the catalog (GET /avatars)."
                     },
+                    "photo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
+                    },
                     "role": {
                         "type": "string",
                         "description": "`admin` (runs a group) or `member`."
@@ -11099,6 +11426,7 @@
                     "username",
                     "name",
                     "avatar",
+                    "photo_url",
                     "role"
                 ],
                 "title": "ChatMemberResource"
@@ -11121,13 +11449,21 @@
                             "null"
                         ],
                         "description": "Id of its avatar in the catalog (GET /avatars)."
+                    },
+                    "photo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Its own photo, shown instead of the avatar; null = the avatar."
                     }
                 },
                 "required": [
                     "id",
                     "username",
                     "name",
-                    "avatar"
+                    "avatar",
+                    "photo_url"
                 ],
                 "title": "ChatProfileResource"
             },
@@ -12437,6 +12773,22 @@
                 ],
                 "title": "ProfileItemResource"
             },
+            "ProfilePhotoRequest": {
+                "type": "object",
+                "description": "A profile photo, as a multipart field `photo`.",
+                "properties": {
+                    "photo": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "JPEG, PNG or WebP, 128 to 4,096 pixels a side, 8 MB at most. Its central square is kept."
+                    }
+                },
+                "required": [
+                    "photo"
+                ],
+                "title": "ProfilePhotoRequest"
+            },
             "ProfileRequest": {
                 "type": "object",
                 "properties": {
@@ -12760,6 +13112,13 @@
                         ],
                         "description": "Avatar id (GET /avatars), null = initial letter."
                     },
+                    "photo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Its own photo (POST /profiles/{id}/photo), shown instead of the avatar; null = the avatar."
+                    },
                     "poster_format": {
                         "$ref": "#/components/schemas/PosterFormat"
                     },
@@ -12857,6 +13216,7 @@
                     "is_private",
                     "social_links",
                     "avatar",
+                    "photo_url",
                     "poster_format",
                     "is_kid",
                     "max_age_rating",

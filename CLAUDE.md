@@ -360,6 +360,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   hasard s'il n'en choisit pas (`AvatarCatalog::randomId`).
   Les avatars fournis sont des créations originales « Vixeo » : n'ajouter des images de vraies
   licences de jeux vidéo qu'avec les droits d'utilisation.
+  **Photo de profil** (demande du développeur, 23/11/2026 ; `docs/social.md`) : en plus de
+  l'avatar, `POST / DELETE /profiles/{id}/photo` (`App\Services\ProfilePhotos` : carré central,
+  à l'endroit, 512 px, réencodé en WebP sans métadonnées, nom aléatoire sur le disque privé, servi
+  publiquement par `GET /profile-photos/{nom}`, gardé un an) ; `photo_url` (null = l'avatar) dans
+  toute forme d'un profil (`ProfileResource`, `SocialCards::identity`, `ChatProfileResource`,
+  notifications, site) : **toute nouvelle forme d'un profil la donne aussi**. Fichier supprimé avec
+  le profil ou le compte ; `vixeo:moderate … photo` la retire.
 - **Contrôle parental** (doc : `docs/controle-parental.md`) : PIN parental du compte
   (`App\Services\ParentalControl`, 5 essais / 5 min), exigé pour créer / supprimer un profil et
   changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de

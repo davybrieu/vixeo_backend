@@ -28,7 +28,8 @@ var _sfc_main = {
 				noindex: ""
 			}, null, _parent));
 			_push(`<section class="mx-auto flex max-w-xl flex-col items-center px-5 pt-32 pb-24 text-center sm:px-8 sm:pt-40"><div class="size-32 overflow-hidden rounded-full bg-surface-high ring-4 ring-line sm:size-36">`);
-			if (pixelAvatar.value) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$3, { avatar: pixelAvatar.value }, null, _parent));
+			if (__props.member.photoUrl) _push(`<img${(0, server_renderer_exports.ssrRenderAttr)("src", __props.member.photoUrl)} alt="" class="size-full object-cover">`);
+			else if (pixelAvatar.value) _push((0, server_renderer_exports.ssrRenderComponent)(_sfc_main$3, { avatar: pixelAvatar.value }, null, _parent));
 			else if (__props.member.avatar?.imageUrl) _push(`<img${(0, server_renderer_exports.ssrRenderAttr)("src", __props.member.avatar.imageUrl)} alt="" class="size-full object-cover">`);
 			else _push(`<span class="flex size-full items-center justify-center text-5xl font-extrabold text-text" aria-hidden="true">${(0, server_renderer_exports.ssrInterpolate)(initial.value)}</span>`);
 			_push(`</div><h1 class="mt-6 text-3xl font-extrabold text-text sm:text-4xl">${(0, server_renderer_exports.ssrInterpolate)(__props.member.name)}</h1><p class="mt-1 text-lg text-text-muted"> @${(0, server_renderer_exports.ssrInterpolate)(__props.member.username)}`);

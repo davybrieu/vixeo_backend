@@ -23,7 +23,7 @@ class SocialCards
     /**
      * A profile in a list or on a card: who it is.
      *
-     * @return array{id: int, username: string, name: string, avatar: string|null, bio: string|null, is_private: bool}
+     * @return array{id: int, username: string, name: string, avatar: string|null, photo_url: string|null, bio: string|null, is_private: bool}
      */
     public static function identity(Profile $profile): array
     {
@@ -32,6 +32,8 @@ class SocialCards
             'username' => (string) $profile->username,
             'name' => (string) $profile->name,
             'avatar' => $profile->avatar === null ? null : (string) $profile->avatar,
+            /** Its own photo, shown instead of the avatar; null = the avatar. */
+            'photo_url' => $profile->photoUrl(),
             'bio' => $profile->bio === null ? null : (string) $profile->bio,
             /** Private account: what it publishes is seen by its accepted followers only. */
             'is_private' => (bool) $profile->is_private,

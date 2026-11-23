@@ -262,6 +262,7 @@ return [
         'usernames' => 'membres',
         'usernames.*' => 'membre',
         'file' => 'fichier',
+        'photo' => 'photo',
         'before' => 'message de départ',
         'cursor' => 'curseur',
         'limit' => 'limite',

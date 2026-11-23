@@ -24,6 +24,7 @@ php artisan vixeo:reports            # les signalements ouverts (--all : aussi l
 php artisan vixeo:moderate 12 hide --reason="Propos insultants"
 php artisan vixeo:moderate 12 dismiss --reason="Aucune règle enfreinte"
 php artisan vixeo:moderate 12 restore --reason="Rétabli après réclamation"
+php artisan vixeo:moderate 12 photo --reason="Photo inappropriée"
 ```
 
 - `hide` : un avis, une liste ou un commentaire est **masqué** (`hidden_at` : plus montré à
@@ -33,6 +34,9 @@ php artisan vixeo:moderate 12 restore --reason="Rétabli après réclamation"
   publier). Tous les signalements ouverts du même contenu sont fermés.
 - `dismiss` : le signalement est rejeté, le contenu reste.
 - `restore` : ce qui avait été masqué (ou suspendu) revient (recours de l'auteur).
+- `photo` : un profil signalé perd **sa photo** (fichier supprimé, l'avatar revient) sans être
+  suspendu ; ses signalements ouverts sont fermés (« Votre photo de profil a été retirée par la
+  modération : … »).
 
 La raison (`--reason`, obligatoire) est communiquée par une notification `moderation` de la page
 « Notifications » (et en push) : à l'auteur (« Votre avis sur Dune a été masqué par la modération :

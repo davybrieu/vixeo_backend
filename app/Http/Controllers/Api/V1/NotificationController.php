@@ -56,6 +56,7 @@ class NotificationController extends Controller
                     'username' => (string) $n->actor->username,
                     'name' => (string) $n->actor->name,
                     'avatar' => $n->actor->avatar,
+                    'photo_url' => $n->actor->photoUrl(),
                 ],
                 /** The review liked (`review_like`). */
                 'review' => $n->rating === null ? null : [

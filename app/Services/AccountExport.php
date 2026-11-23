@@ -101,6 +101,7 @@ class AccountExport
                 ])->values()->all(),
                 'rate_after_watching' => (bool) $p->rate_after_watching,
                 'avatar' => $p->avatar,
+                'photo_url' => $p->photoUrl(),
                 'is_kid' => $p->is_kid,
                 'max_age_rating' => $p->max_age_rating,
                 'allow_unrated' => $p->allow_unrated,

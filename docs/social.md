@@ -16,6 +16,28 @@ Renvoyés (profil, `GET /profiles`, page d'un membre `GET /social/profiles/{pseu
 dans l'ordre ci-dessus : `[{network, label, handle, url}]`. Le site n'affiche que des liens (rien
 n'est chargé depuis ces réseaux : aucun service tiers).
 
+## Photo de profil (23/11/2026)
+
+À côté des avatars du catalogue (`GET /avatars`), un profil peut avoir **sa propre photo**
+(demande du développeur), montrée à la place de l'avatar partout où le profil apparaît :
+`photo_url` du profil (`GET /profiles`), des cartes du réseau social (`SocialCards::identity` :
+recherche, abonnés, fil, avis, commentaires, page d'un membre), de la messagerie, de l'auteur d'une
+notification et de la page du site (`www.vixeo.app/pseudo`). `null` : l'avatar.
+
+- `POST /profiles/{id}/photo` (multipart, champ `photo` : JPEG, PNG ou WebP, 128 à 4 096 pixels de
+  côté, 8 Mo au plus ; 30 par heure) : l'appli envoie le carré qu'on a cadré ; l'API en garde le
+  carré central, le tourne à l'endroit (orientation EXIF d'un JPEG), le ramène à 512 pixels et le
+  réencode en WebP (JPEG si le serveur n'a pas WebP) : **rien du fichier d'origine n'est gardé**
+  (lieu de la prise de vue, appareil…). Remplace la photo précédente (fichier supprimé).
+- `DELETE /profiles/{id}/photo` : retour à l'avatar (gardé pendant tout ce temps).
+- `GET /profile-photos/{nom}` : **publique** (les images se chargent sans jeton), comme le nom du
+  profil ; nom aléatoire de 40 caractères, changé à chaque photo : gardée un an par les applis
+  (`Cache-Control: immutable`). Fichiers sur le disque privé (`App\Services\ProfilePhotos`),
+  supprimés avec le profil ou le compte (`photo_url` dans l'export).
+- Un profil enfant peut avoir une photo : elle n'apparaît que dans « Qui regarde ? » de son compte.
+- Modération : un profil signalé pour sa photo → `vixeo:moderate … photo` la retire sans suspendre
+  le profil (`docs/moderation.md`).
+
 ## Compte privé et demandes d'abonnement
 
 `is_private` (`PUT /profiles/{id}`). Comme Twitter : nom, @pseudo, avatar, biographie, réseaux et
@@ -213,4 +235,5 @@ spoiler, auteur, couverture d'une liste) est gardé avec le message (`direct_mes
 Les nouvelles tables sont supprimées avec le profil (clés étrangères `cascadeOnDelete`) et
 figurent dans l'export (`AccountExport` : `username`, `bio`, `is_private`, `social_links`,
 `following`, `followers`, `review_likes`, `notifications`, `lists`, `list_likes`, `comments`,
-`diary`, `muted`, `reports`, `rate_after_watching`).
+`diary`, `muted`, `reports`, `rate_after_watching`, `photo_url`). Les photos de profil sont des
+fichiers : supprimés par `ProfilePhotos::forget` avant le profil ou le compte.

@@ -27,6 +27,8 @@ class ProfileResource extends JsonResource
             'social_links' => SocialLinks::present($this->social_links),
             /** Avatar id (GET /avatars), null = initial letter. */
             'avatar' => $this->avatar,
+            /** Its own photo (POST /profiles/{id}/photo), shown instead of the avatar; null = the avatar. */
+            'photo_url' => $this->photoUrl(),
             'poster_format' => $this->poster_format,
             'is_kid' => $this->is_kid,
             'max_age_rating' => $this->max_age_rating,

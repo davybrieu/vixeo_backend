@@ -58,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
         // A screen of channels loads a few dozen logos at once; the apps then cache them.
         RateLimiter::for('tv-logos', fn (Request $request) => Limit::perMinute(600)->by($request->ip()));
 
+        // Profile photos: loaded like any image (feed, lists of accounts); a new photo now and then.
+        RateLimiter::for('profile-photos', fn (Request $request) => Limit::perMinute(600)->by($request->ip()));
+        RateLimiter::for('profile-photo-upload', fn (Request $request) => Limit::perHour(30)->by($request->user()?->id ?: $request->ip()));
+
         // Public profile pages of the site (www.vixeo.app/pseudo): no listing by brute force.
         RateLimiter::for('members', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));

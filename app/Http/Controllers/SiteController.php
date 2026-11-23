@@ -80,6 +80,8 @@ class SiteController extends Controller
                     'handle' => $link['handle'],
                     'url' => $link['url'],
                 ], SocialLinks::present($profile->social_links)),
+                // Its own photo (from the API: api.vixeo.app), shown instead of the avatar.
+                'photoUrl' => $profile->photoUrl(),
                 'avatar' => $avatar === null ? null : [
                     'background' => $avatar['background'] ?? null,
                     'palette' => $avatar['palette'] ?? null,
