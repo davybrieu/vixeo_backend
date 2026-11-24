@@ -43,7 +43,7 @@ Code : `App\Http\Controllers\Api\V1\DirectMessageController` (routes), `App\Serv
 - `GET /messages/count` : `unread_count`, les messages des autres non lus dans **toutes** les
   conversations, demandes reçues comprises (la pastille de « Messages » dans les applis, « 9+ »
   au-delà de 9), et `requests_count`. Une seule requête.
-- `GET /messages/{id}` : les 50 derniers messages, du plus ancien au plus récent, ou les 50 avant
+- `GET /messages/{id}` : les 20 derniers messages, du plus ancien au plus récent, ou les 20 avant
   `?before={id}` (`has_more`) ; `conversation` (`type`, `name`, `status`, `is_request`),
   `participants` (avec `role`), `is_admin`, `participant`, `blocked` (le profil actif a bloqué
   l'autre). Un message : `id`, `sender_profile_id`, `body`, `deleted`, `read_by` (profils qui l'ont

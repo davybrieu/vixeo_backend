@@ -32,20 +32,24 @@ class ListController extends Controller
     /**
      * My lists.
      *
-     * The most recently changed first. With `item` (`movie:550`), `contains` says which ones have
-     * it (« Ajouter à une liste »).
+     * The most recently changed first, 20 per page (`?page=`). With `item` (`movie:550`),
+     * `contains` says which ones have it (« Ajouter à une liste »).
      */
     public function mine(Request $request): JsonResponse
     {
         $profile = $this->author($request);
         $item = (string) $request->query('item', '');
         $containing = $item === '' ? [] : $this->lists->containing($profile, $item);
+        $page = $this->lists->of($profile);
 
-        return response()->json(['data' => array_map(fn (array $card) => [
-            ...$card,
-            /** Has the `item` asked. */
-            'contains' => in_array($card['id'], $containing, true),
-        ], $this->cards->lists($this->lists->of($profile), $profile))]);
+        return response()->json([
+            'data' => array_map(fn (array $card) => [
+                ...$card,
+                /** Has the `item` asked. */
+                'contains' => in_array($card['id'], $containing, true),
+            ], $this->cards->lists($page->getCollection(), $profile)),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
+        ]);
     }
 
     /**

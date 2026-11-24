@@ -163,16 +163,17 @@ it('pages the messages of a conversation', function () {
     $alice = messagingProfile('alice');
     $bob = messagingProfile('bob');
     $conversation = conversationWith($alice, $bob);
-    $rows = collect(range(1, 55))->map(fn (int $i) => [
+    $rows = collect(range(1, 25))->map(fn (int $i) => [
         'conversation_id' => $conversation, 'sender_profile_id' => $alice->id, 'body' => "Message {$i}",
         'created_at' => now(), 'updated_at' => now(),
     ]);
     DirectMessage::query()->insert($rows->all());
 
+    // 20 at a time (pages of 20, docs/messagerie.md).
     $latest = actingAsProfile($bob)->getJson("/api/v1/messages/{$conversation}")->assertOk()
-        ->assertJsonCount(50, 'data')
+        ->assertJsonCount(20, 'data')
         ->assertJsonPath('has_more', true)
-        ->assertJsonPath('data.49.body', 'Message 55')
+        ->assertJsonPath('data.19.body', 'Message 25')
         ->json('data');
 
     actingAsProfile($bob)->getJson("/api/v1/messages/{$conversation}?before={$latest[0]['id']}")->assertOk()

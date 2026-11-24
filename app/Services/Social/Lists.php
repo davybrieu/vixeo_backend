@@ -7,7 +7,7 @@ use App\Models\Profile;
 use App\Models\ProfileList;
 use App\Models\ProfileListItem;
 use App\Models\SocialNotification;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -112,15 +112,14 @@ class Lists
     }
 
     /**
-     * The lists of [profile], the most recently changed first; with `contains` when [itemId] is
-     * given (« Ajouter à une liste »).
+     * A page of the lists of [profile], the most recently changed first.
      *
-     * @return Collection<int, ProfileList>
+     * @return LengthAwarePaginator<int, ProfileList>
      */
-    public function of(Profile $profile): Collection
+    public function of(Profile $profile, int $perPage = 20): LengthAwarePaginator
     {
         return ProfileList::query()->where('profile_id', $profile->id)->whereNull('hidden_at')
-            ->latest('updated_at')->latest('id')->limit(200)->get();
+            ->latest('updated_at')->latest('id')->paginate($perPage);
     }
 
     /**

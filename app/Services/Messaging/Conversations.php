@@ -36,7 +36,7 @@ use Throwable;
 class Conversations
 {
     /** Messages per page of a conversation. */
-    public const PAGE = 50;
+    public const PAGE = 20;
 
     /** Conversations listed at most (the most recent first). */
     public const INBOX_LIMIT = 100;

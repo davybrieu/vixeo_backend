@@ -80,7 +80,7 @@ par un autre profil, la dernière gardée (aimer de nouveau = la même notificat
 
 Une action annulée (désabonnement, demande retirée ou refusée, J'aime retiré) retire sa
 notification. Routes (profil actif `X-Profile-Id`, pas de profil enfant) : `GET /notifications`
-(30 par page, `unread_count`), `GET /notifications/count` (la pastille de la navigation),
+(20 par page, `unread_count`), `GET /notifications/count` (la pastille de la navigation),
 `POST /notifications/read` (tout lu, à l'ouverture de la page).
 
 **Push** : envoyées après la réponse (`dispatch()->afterResponse()`, sans file d'attente) aux
@@ -133,14 +133,14 @@ moitié en 2 jours). Plusieurs voix par page : chaque publication précédente d
 baisser les suivantes. 20 par page, `next` = la page suivante (null à la fin).
 
 **« Abonnements »** (`GET /social/feed?before=`) : ce qu'ont fait le profil actif et ceux qu'il
-suit, le plus récent d'abord, 40 activités par page (`next` : le `before` de la page suivante, null
+suit, le plus récent d'abord, 20 activités par page (`next` : le `before` de la page suivante, null
 à la fin). Profils masqués, bloqués ou suspendus et contenus masqués : absents.
 
 ### Activité d'un profil (`GET /social/profiles/{pseudo}/activity?before=`)
 
 L'onglet « Activité » de la page d'un profil (demande du développeur, 23/11/2026 : « la liste de
 tes actions avec la date ») : ses avis, listes, titres vus et J'aime, **chacun avec sa date**
-(`created_at`), le plus récent d'abord, 40 activités par page ; mêmes éléments que le fil, mais
+(`created_at`), le plus récent d'abord, 20 activités par page ; mêmes éléments que le fil, mais
 rien n'est omis (un avis et le visionnage du même titre restent tous deux) et les épisodes d'une
 même série vus le même jour sont regroupés (`episodes_count`). Compte privé : ses abonnés
 acceptés seulement (403), bloqué : 404 (`Feed::activity`).
@@ -163,8 +163,8 @@ une description (1 000) et jusqu'à 100 titres **dans l'ordre choisi par l'auteu
 est une liste comme les autres (plus de `kind` `top` / `list` depuis le 23/11/2026, demande du
 développeur). Chaque titre garde ce que la liste en montre (nom, année, images), tiré de TMDb à
 l'ajout (`TitleSnapshots`, cache de `TitleSummaries`) : afficher une liste n'interroge pas TMDb.
-Routes : `GET /social/lists?item=movie:550` (mes listes, `contains` : la fenêtre « Ajouter à une
-liste » des applis, avec « À voir » en tête), `POST /social/lists`, `GET|PUT|DELETE
+Routes : `GET /social/lists?item=movie:550&page=` (mes listes, 20 par page, `contains` : la fenêtre
+« Ajouter à une liste » des applis, avec « À voir » en tête), `POST /social/lists`, `GET|PUT|DELETE
 /social/lists/{id}` (`items` : la liste entière dans le nouvel ordre), `POST
 /social/lists/{id}/items` (`item`, ajouté à la fin), `DELETE /social/lists/{id}/items/{type}/{id}`,
 `PUT|DELETE /social/lists/{id}/like` (`list_likes`), `GET|POST /social/lists/{id}/comments`,
@@ -175,7 +175,7 @@ liste » des applis, avec « À voir » en tête), `POST /social/lists`, `GET|PU
 `contains_spoilers` sur un avis (`PUT …/ratings…`, gardé s'il n'est pas envoyé) et sur un
 commentaire : les applis masquent le texte derrière « Afficher ». `GET /social/reviews/{id}`
 (l'avis comme publication : auteur, J'aime, `comments_count`), `GET|POST
-/social/reviews/{id}/comments` (les 50 derniers, du plus ancien au plus récent ; `before` pour les
+/social/reviews/{id}/comments` (les 20 derniers, du plus ancien au plus récent ; `before` pour les
 précédents), `DELETE /social/comments/{id}` (son auteur, ou l'auteur de l'avis ou de la liste).
 Table `social_comments` (`App\Services\Social\Comments`, 1 000 caractères), l'auteur est notifié.
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Profile;
+use App\Models\ProfileList;
 use App\Models\User;
 use App\Services\Social\Follows;
 use Laravel\Sanctum\Sanctum;
@@ -33,4 +34,22 @@ it('gives a member\'s lists 20 at a time', function () {
         ->assertJsonPath('meta.current_page', 2);
     expect($second->json('data'))->toHaveCount(5)
         ->and(array_intersect(array_column($first->json('data'), 'id'), array_column($second->json('data'), 'id')))->toBe([]);
+});
+
+it('gives my lists 20 at a time, with the ones that have a title', function () {
+    $lea = pagingMember('lea');
+    foreach (range(1, 23) as $i) {
+        ProfileList::query()->create(['profile_id' => $lea->id, 'title' => "Liste {$i}", 'items_count' => 0]);
+    }
+    Sanctum::actingAs($lea->user);
+
+    $first = $this->withHeader('X-Profile-Id', (string) $lea->id)
+        ->getJson('/api/v1/social/lists?item=movie:550')
+        ->assertOk()
+        ->assertJsonPath('meta', ['current_page' => 1, 'last_page' => 2])
+        ->assertJsonPath('data.0.contains', false);
+    expect($first->json('data'))->toHaveCount(20);
+
+    $second = $this->withHeader('X-Profile-Id', (string) $lea->id)->getJson('/api/v1/social/lists?page=2')->assertOk();
+    expect($second->json('data'))->toHaveCount(3);
 });

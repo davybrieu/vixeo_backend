@@ -202,8 +202,11 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     toute liste longue se lit **20 éléments à la fois**, les applis demandant la page suivante en
     défilant : catalogue (listes, recherche, recommandations, distribution, titres d'une personne),
     listes d'un membre (`SocialProfileController::PER_PAGE` : « À voir », J'aime, vus, personnes,
-    avis, abonnés, abonnements, listes), avis d'un titre, « Mes avis » (`per_page=20`). Une
-    nouvelle liste longue suit la même règle.
+    avis, abonnés, abonnements, listes), mes listes (`GET /social/lists?page=`), avis d'un titre,
+    « Mes avis » (`per_page=20`), fil « Abonnements » et activité d'un profil (`Feed::PAGE`),
+    « Pour toi », notifications (`NotificationController::PER_PAGE`), commentaires
+    (`Comments::PAGE`), messages d'une conversation (`Conversations::PAGE`). Une nouvelle liste
+    longue suit la même règle.
   - **Rangées de l'accueil** (demande du développeur) : après les listes de TMDb
     (`CatalogList`, `TmdbCatalog::COMBINED_HOME`) viennent les rangées de `CatalogRows` :
     tendances du jour (juste après celles de la semaine), puis plateformes (`platform_netflix`… :

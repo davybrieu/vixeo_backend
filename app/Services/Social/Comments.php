@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class Comments
 {
-    public const PAGE = 50;
+    public const PAGE = 20;
 
     public function __construct(private Audience $audience, private SocialNotifications $notifications) {}
 

@@ -25,13 +25,16 @@ use Illuminate\Http\Response;
  */
 class NotificationController extends Controller
 {
+    /** Notifications a page (pages of 20, docs/social.md). */
+    public const PER_PAGE = 20;
+
     /** Episodes out for less than that many days: « Nouveaux épisodes ». */
     private const RECENT_DAYS = 7;
 
     /**
      * Notifications of the active profile.
      *
-     * The most recent first, 30 per page. `type`: `follow`, `follow_request` (to accept or decline,
+     * The most recent first, 20 per page. `type`: `follow`, `follow_request` (to accept or decline,
      * `GET /social/requests`), `follow_accepted`, `review_like` (with `review`), `review_comment`
      * (with `review` and `comment`), `list_like` (with `list`), `list_comment` (with `list` and
      * `comment`), `moderation` (a decision of the moderation, `text`). `unread_count`: the badge
@@ -42,7 +45,7 @@ class NotificationController extends Controller
         $profile = $this->profile($request);
         $page = SocialNotification::query()->where('profile_id', $profile->id)
             ->whereNotIn('actor_profile_id', $audience->blocked($profile))
-            ->with(['actor', 'rating', 'list', 'comment'])->latest('created_at')->latest('id')->paginate(30);
+            ->with(['actor', 'rating', 'list', 'comment'])->latest('created_at')->latest('id')->paginate(self::PER_PAGE);
 
         return response()->json([
             'data' => collect($page->items())->map(fn (SocialNotification $n) => [

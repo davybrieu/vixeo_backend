@@ -27,7 +27,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Feed
 {
-    public const PAGE = 40;
+    /** « Abonnements »: publications a page (pages of 20, docs/social.md). */
+    public const PAGE = 20;
 
     /** « Pour toi »: a page, the days looked at and the most recent publications ranked. */
     public const FOR_YOU_PAGE = 20;

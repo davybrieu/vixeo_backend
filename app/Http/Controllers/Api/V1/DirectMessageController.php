@@ -130,7 +130,7 @@ class DirectMessageController extends Controller
     /**
      * A conversation.
      *
-     * Its 50 latest messages (oldest first), or the 50 before `before`; `has_more`: older ones
+     * Its 20 latest messages (oldest first), or the 20 before `before`; `has_more`: older ones
      * exist. `is_request`: a request the active profile received; `blocked`: it blocked the other
      * profile of a direct conversation.
      */

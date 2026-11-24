@@ -3489,7 +3489,7 @@
         "/v1/messages/{conversation}": {
             "get": {
                 "operationId": "v1.messages.show",
-                "description": "Its 50 latest messages (oldest first), or the 50 before `before`; `has_more`: older ones\nexist. `is_request`: a request the active profile received; `blocked`: it blocked the other\nprofile of a direct conversation.",
+                "description": "Its 20 latest messages (oldest first), or the 20 before `before`; `has_more`: older ones\nexist. `is_request`: a request the active profile received; `blocked`: it blocked the other\nprofile of a direct conversation.",
                 "summary": "A conversation",
                 "tags": [
                     "DirectMessage"
@@ -5112,7 +5112,7 @@
         "/v1/social/lists": {
             "get": {
                 "operationId": "v1.social.lists.mine",
-                "description": "The most recently changed first. With `item` (`movie:550`), `contains` says which ones have\nit (\u00ab Ajouter \u00e0 une liste \u00bb).",
+                "description": "The most recently changed first, 20 per page (`?page=`). With `item` (`movie:550`),\n`contains` says which ones have it (\u00ab Ajouter \u00e0 une liste \u00bb).",
                 "summary": "My lists",
                 "tags": [
                     "Listes",
@@ -5129,10 +5129,26 @@
                                         "data": {
                                             "type": "array",
                                             "items": {}
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page"
+                                            ]
                                         }
                                     },
                                     "required": [
-                                        "data"
+                                        "data",
+                                        "meta"
                                     ]
                                 }
                             }
@@ -5877,7 +5893,7 @@
         "/v1/notifications": {
             "get": {
                 "operationId": "v1.notifications.index",
-                "description": "The most recent first, 30 per page. `type`: `follow`, `follow_request` (to accept or decline,\n`GET /social/requests`), `follow_accepted`, `review_like` (with `review`), `review_comment`\n(with `review` and `comment`), `list_like` (with `list`), `list_comment` (with `list` and\n`comment`), `moderation` (a decision of the moderation, `text`). `unread_count`: the badge\nof the navigation.",
+                "description": "The most recent first, 20 per page. `type`: `follow`, `follow_request` (to accept or decline,\n`GET /social/requests`), `follow_accepted`, `review_like` (with `review`), `review_comment`\n(with `review` and `comment`), `list_like` (with `list`), `list_comment` (with `list` and\n`comment`), `moderation` (a decision of the moderation, `text`). `unread_count`: the badge\nof the navigation.",
                 "summary": "Notifications of the active profile",
                 "tags": [
                     "Notification"
