@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api\V1;
 use App\Enums\PosterFormat;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
 use App\Services\ParentalControl;
 use App\Support\Languages;
 use App\Support\SocialLinks;
@@ -72,6 +73,8 @@ class ProfileRequest extends FormRequest
             'bio' => ['sometimes', 'nullable', 'string', 'max:'.Profile::BIO_MAX_LENGTH],
             /** Avatar id from GET /avatars. Null = initial letter. */
             'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
+            /** Cover id from GET /covers: the banner of the profile page, when it has no image of its own (`cover_url`). */
+            'cover' => ['sometimes', 'string', Rule::in(app(CoverCatalog::class)->ids())],
             /** How titles are drawn in rows and grids. Default `portrait`. */
             'poster_format' => ['sometimes', Rule::enum(PosterFormat::class)],
             /** Kid profile. Without `max_age_rating`, its age limit is 10. */

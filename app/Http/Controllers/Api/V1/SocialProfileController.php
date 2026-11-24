@@ -478,6 +478,10 @@ class SocialProfileController extends Controller
             ...$this->identity($profile),
             /** The page of the profile on the site, shared from the app (« Partager »). */
             'share_url' => SiteController::memberUrl((string) $profile->username),
+            /** Cover id (GET /covers): the banner of its page. */
+            'cover' => $profile->cover,
+            /** Its own cover, shown instead of `cover`; null = `cover`. */
+            'cover_url' => $profile->coverUrl(),
             'followers_count' => (int) ($profile->followers_count ?? 0),
             'following_count' => (int) ($profile->following_count ?? 0),
             'reviews_count' => (int) ($profile->reviews_count ?? 0),

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
 use App\Http\Controllers\Api\V1\CatalogTitleController;
+use App\Http\Controllers\Api\V1\CoverController;
 use App\Http\Controllers\Api\V1\DeviceLoginController;
 use App\Http\Controllers\Api\V1\DiaryController;
 use App\Http\Controllers\Api\V1\DirectMessageController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PlaybackController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfileCoverController;
 use App\Http\Controllers\Api\V1\ProfilePhotoController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\ProfileSyncController;
@@ -28,6 +30,7 @@ use App\Http\Controllers\Api\V1\TitleSocialController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
 use App\Http\Middleware\ResolveProfile;
+use App\Services\ProfileCovers;
 use App\Services\ProfilePhotos;
 use Illuminate\Support\Facades\Route;
 
@@ -63,6 +66,11 @@ Route::prefix('v1')->name('v1.')->group(function () {
         ->where('name', ProfilePhotos::NAME_PATTERN)
         ->middleware('throttle:profile-photos')
         ->name('profile-photos.show');
+    // Profile covers (App\Services\ProfileCovers): the same.
+    Route::get('profile-covers/{name}', [ProfileCoverController::class, 'show'])
+        ->where('name', ProfileCovers::NAME_PATTERN)
+        ->middleware('throttle:profile-photos')
+        ->name('profile-covers.show');
 
     Route::prefix('tv')->name('tv.')->group(function () {
         Route::get('stream/{token}', [TvController::class, 'media'])->name('stream.media');
@@ -259,6 +267,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
         });
 
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
+        Route::get('covers', [CoverController::class, 'index'])->name('covers');
         Route::apiResource('profiles', ProfileController::class);
         Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
             ->middleware('throttle:pin')
@@ -269,6 +278,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('profiles.photo.store');
         Route::delete('profiles/{profile}/photo', [ProfilePhotoController::class, 'destroy'])
             ->name('profiles.photo.destroy');
+        // Its own cover image, instead of its cover of the catalog (docs/social.md).
+        Route::post('profiles/{profile}/cover', [ProfileCoverController::class, 'store'])
+            ->middleware('throttle:profile-photo-upload')
+            ->name('profiles.cover.store');
+        Route::delete('profiles/{profile}/cover', [ProfileCoverController::class, 'destroy'])
+            ->name('profiles.cover.destroy');
 
         // Per-profile sync (favorites, progress, watched): see docs/synchronisation.md.
         Route::prefix('profiles/{profile}')->name('profiles.')->middleware('throttle:sync')->group(function () {

@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
  */
 class ModerateReport extends Command
 {
-    protected $signature = 'vixeo:moderate {report : Its number (vixeo:reports)} {action : hide, dismiss, restore, or photo (removes the photo of a reported profile)} {--reason= : Why, told to the author and to who reported it}';
+    protected $signature = 'vixeo:moderate {report : Its number (vixeo:reports)} {action : hide, dismiss, restore, photo or cover (removes the photo or the cover image of a reported profile)} {--reason= : Why, told to the author and to who reported it}';
 
     protected $description = 'Traite un signalement : masquer, rejeter ou rétablir';
 
@@ -40,6 +40,16 @@ class ModerateReport extends Command
 
             return self::SUCCESS;
         }
+        if ($this->argument('action') === 'cover') {
+            if (! $reports->removeCover($report, $reason)) {
+                $this->error('Ce signalement ne vise pas un profil avec une image de couverture.');
+
+                return self::FAILURE;
+            }
+            $this->info("Signalement n° {$report->id} traité : image de couverture retirée.");
+
+            return self::SUCCESS;
+        }
         match ((string) $this->argument('action')) {
             'hide' => $reports->hide($report, $reason),
             'dismiss' => $reports->dismiss($report, $reason),
@@ -47,7 +57,7 @@ class ModerateReport extends Command
             default => null,
         };
         if (! in_array($this->argument('action'), ['hide', 'dismiss', 'restore'], true)) {
-            $this->error('Action inconnue : hide, dismiss, restore ou photo.');
+            $this->error('Action inconnue : hide, dismiss, restore, photo ou cover.');
 
             return self::FAILURE;
         }

@@ -380,6 +380,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   toute forme d'un profil (`ProfileResource`, `SocialCards::identity`, `ChatProfileResource`,
   notifications, site) : **toute nouvelle forme d'un profil la donne aussi**. Fichier supprimé avec
   le profil ou le compte ; `vixeo:moderate … photo` la retire.
+  **Couverture** (demande du développeur, 24/11/2026 ; `docs/social.md`) : la bannière 3:1 de la
+  page d'un profil, une couverture du catalogue `resources/covers/catalog.json` (`GET /covers`, par
+  style ; motif + couleurs **dessinés par les applis**, `App\Services\CoverCatalog` ; ne jamais
+  renommer ni supprimer un id utilisé) ou son image (`POST / DELETE /profiles/{id}/cover`,
+  `App\Services\ProfileCovers` : partie centrale 3:1, 1 500 × 500, même traitement que les photos,
+  `ProfileImages` ; `GET /profile-covers/{nom}`). **Un nouveau profil (inscription comprise) reçoit
+  une couverture du catalogue au hasard**, comme l'avatar. `cover` / `cover_url` dans
+  `ProfileResource`, la page d'un membre et l'export ; fichier supprimé avec le profil ou le compte ;
+  `vixeo:moderate … cover` la retire.
 - **Contrôle parental** (doc : `docs/controle-parental.md`) : PIN parental du compte
   (`App\Services\ParentalControl`, 5 essais / 5 min), exigé pour créer / supprimer un profil et
   changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de

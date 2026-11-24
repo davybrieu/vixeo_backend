@@ -194,6 +194,7 @@ return [
         'password' => 'mot de passe',
         'device_name' => 'nom de l\'appareil',
         'avatar' => 'avatar',
+        'cover' => 'couverture',
         'is_kid' => 'profil enfant',
         'max_age_rating' => 'âge maximum',
         'pin' => 'code PIN',

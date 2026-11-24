@@ -9,6 +9,7 @@ use App\Http\Resources\V1\UserResource;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -25,20 +26,21 @@ class AuthController extends Controller
     /**
      * Create an account.
      *
-     * Also creates a first profile named after the user (with an avatar of the catalog, at random)
-     * and returns an API token.
+     * Also creates a first profile named after the user (with an avatar and a cover of the catalogs,
+     * at random) and returns an API token.
      *
      * @unauthenticated
      */
-    public function register(RegisterRequest $request, AvatarCatalog $avatars): JsonResponse
+    public function register(RegisterRequest $request, AvatarCatalog $avatars, CoverCatalog $covers): JsonResponse
     {
-        $user = DB::transaction(function () use ($request, $avatars) {
+        $user = DB::transaction(function () use ($request, $avatars, $covers) {
             $user = User::create($request->safe()->only(['name', 'email', 'password']));
-            // The first profile gets an avatar of the catalog, at random.
+            // The first profile gets an avatar and a cover of the catalogs, at random.
             $user->profiles()->create([
                 'name' => $user->name,
                 'username' => $request->validated('username') ?? $this->uniqueUsername($user->name),
                 'avatar' => $avatars->randomId(),
+                'cover' => $covers->randomId(),
             ]);
 
             return $user;

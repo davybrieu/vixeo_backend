@@ -38,6 +38,32 @@ notification et de la page du site (`www.vixeo.app/pseudo`). `null` : l'avatar.
 - Modération : un profil signalé pour sa photo → `vixeo:moderate … photo` la retire sans suspendre
   le profil (`docs/moderation.md`).
 
+## Couverture (24/11/2026)
+
+En haut de la page d'un profil, une **couverture** (bannière 3:1, demande du développeur) : une
+couverture du catalogue ou **sa propre image**.
+
+- `GET /covers` : le catalogue (`resources/covers/catalog.json`, `App\Services\CoverCatalog`),
+  par style (Dégradés, Lumières, Motifs, Cinéma). Une couverture n'est pas une image : `pattern`
+  (`linear`, `glow`, `stripes`, `dots`, `waves`, `grid`, `film`, `spotlight`, `curtain`, `stars`),
+  `colors` (#RRGGBB, le fond d'abord) et `angle` (dégradé) ; **les applis la dessinent** (rien à
+  télécharger, aucune licence). Un motif inconnu d'une appli : un dégradé de ses couleurs. Ne
+  jamais renommer ni supprimer un id utilisé.
+- **Un nouveau profil reçoit une couverture du catalogue au hasard** (inscription et
+  `POST /profiles`, sauf `cover` choisie) ; les profils d'avant l'ont reçue de la même façon
+  (migration `add_cover_to_profiles`).
+- `cover` (id du catalogue) se change par `PUT /profiles/{id}` ; `cover_url` (son image, `null` :
+  la couverture du catalogue) est dans `GET /profiles` et la page d'un membre
+  (`GET /social/profiles/{pseudo}`), pas dans les listes de comptes.
+- `POST /profiles/{id}/cover` (multipart, champ `cover` : JPEG, PNG ou WebP, 600 × 200 à 4 096
+  pixels de côté, 8 Mo au plus ; même limite d'envois que les photos) : l'appli envoie la bannière
+  qu'on a cadrée ; l'API en garde la partie centrale au format 3:1, 1 500 × 500 pixels au plus,
+  réencodée sans les métadonnées du fichier (`App\Services\ProfileCovers`, même traitement que les
+  photos : `ProfileImages`). `DELETE /profiles/{id}/cover` : retour à la couverture du catalogue.
+- `GET /profile-covers/{nom}` : publique, comme les photos ; fichiers supprimés avec le profil ou le
+  compte (`cover` et `cover_url` dans l'export). Modération : `vixeo:moderate … cover` retire
+  l'image signalée (`docs/moderation.md`).
+
 ## Compte privé et demandes d'abonnement
 
 `is_private` (`PUT /profiles/{id}`). Comme Twitter : nom, @pseudo, avatar, biographie, réseaux et
@@ -235,5 +261,6 @@ spoiler, auteur, couverture d'une liste) est gardé avec le message (`direct_mes
 Les nouvelles tables sont supprimées avec le profil (clés étrangères `cascadeOnDelete`) et
 figurent dans l'export (`AccountExport` : `username`, `bio`, `is_private`, `social_links`,
 `following`, `followers`, `review_likes`, `notifications`, `lists`, `list_likes`, `comments`,
-`diary`, `muted`, `reports`, `rate_after_watching`, `photo_url`). Les photos de profil sont des
-fichiers : supprimés par `ProfilePhotos::forget` avant le profil ou le compte.
+`diary`, `muted`, `reports`, `rate_after_watching`, `photo_url`, `cover`, `cover_url`). Les photos
+et les couvertures de profil sont des fichiers : supprimés par `ProfilePhotos::forget` et
+`ProfileCovers::forget` avant le profil ou le compte.

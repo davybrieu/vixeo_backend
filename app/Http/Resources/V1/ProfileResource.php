@@ -29,6 +29,10 @@ class ProfileResource extends JsonResource
             'avatar' => $this->avatar,
             /** Its own photo (POST /profiles/{id}/photo), shown instead of the avatar; null = the avatar. */
             'photo_url' => $this->photoUrl(),
+            /** Cover id (GET /covers): the banner of its page. */
+            'cover' => $this->cover,
+            /** Its own cover (POST /profiles/{id}/cover), shown instead of `cover`; null = `cover`. */
+            'cover_url' => $this->coverUrl(),
             'poster_format' => $this->poster_format,
             'is_kid' => $this->is_kid,
             'max_age_rating' => $this->max_age_rating,

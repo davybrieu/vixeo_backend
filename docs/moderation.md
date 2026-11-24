@@ -25,6 +25,7 @@ php artisan vixeo:moderate 12 hide --reason="Propos insultants"
 php artisan vixeo:moderate 12 dismiss --reason="Aucune règle enfreinte"
 php artisan vixeo:moderate 12 restore --reason="Rétabli après réclamation"
 php artisan vixeo:moderate 12 photo --reason="Photo inappropriée"
+php artisan vixeo:moderate 12 cover --reason="Image inappropriée"
 ```
 
 - `hide` : un avis, une liste ou un commentaire est **masqué** (`hidden_at` : plus montré à
@@ -37,6 +38,8 @@ php artisan vixeo:moderate 12 photo --reason="Photo inappropriée"
 - `photo` : un profil signalé perd **sa photo** (fichier supprimé, l'avatar revient) sans être
   suspendu ; ses signalements ouverts sont fermés (« Votre photo de profil a été retirée par la
   modération : … »).
+- `cover` : de même pour **son image de couverture** (la couverture du catalogue revient ;
+  « Votre image de couverture a été retirée par la modération : … »).
 
 La raison (`--reason`, obligatoire) est communiquée par une notification `moderation` de la page
 « Notifications » (et en push) : à l'auteur (« Votre avis sur Dune a été masqué par la modération :

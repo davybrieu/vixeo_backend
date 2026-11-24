@@ -1,0 +1,45 @@
+{
+  "_comment": "Profile covers (the banner at the top of a profile page), grouped by style. Each cover is drawn by the apps from its 'pattern' and its 'colors' (#RRGGBB, in the order the pattern reads them): no image to license. Patterns: linear (a gradient, 'angle' in degrees, 0 = left to right, 90 = top to bottom), glow (a background and soft lights), stripes, dots, waves, grid (a retro sun over a grid), film (a film strip), spotlight (beams of light), curtain (a theater curtain), stars (a starry night). Ids are stored on profiles: never rename or remove one that is in use.",
+  "styles": [
+    {
+      "id": "degrades",
+      "name": "Dégradés",
+      "covers": [
+        {"id": "aurore", "name": "Aurore", "pattern": "linear", "angle": 160, "colors": ["#03140A", "#0E5C3A", "#2EE58A"]},
+        {"id": "crepuscule", "name": "Crépuscule", "pattern": "linear", "angle": 20, "colors": ["#1A0B2E", "#6B2D5C", "#F08A4B"]},
+        {"id": "ocean", "name": "Océan", "pattern": "linear", "angle": 135, "colors": ["#04121F", "#0B4F6C", "#3FC1C9"]},
+        {"id": "braise", "name": "Braise", "pattern": "linear", "angle": 110, "colors": ["#140606", "#7A1F1F", "#F2A541"]},
+        {"id": "minuit", "name": "Minuit", "pattern": "linear", "angle": 90, "colors": ["#05070D", "#1B2A4A", "#4A6FA5"]}
+      ]
+    },
+    {
+      "id": "lumieres",
+      "name": "Lumières",
+      "covers": [
+        {"id": "neon", "name": "Néon", "pattern": "glow", "colors": ["#07040F", "#FF3CAC", "#2B86C5", "#2EE58A"]},
+        {"id": "aube", "name": "Aube", "pattern": "glow", "colors": ["#120A06", "#F9D976", "#F08A4B", "#B3446C"]},
+        {"id": "abysses", "name": "Abysses", "pattern": "glow", "colors": ["#020B12", "#1E90FF", "#00C9A7", "#6A5ACD"]}
+      ]
+    },
+    {
+      "id": "motifs",
+      "name": "Motifs",
+      "covers": [
+        {"id": "rayures", "name": "Rayures", "pattern": "stripes", "colors": ["#0B120E", "#14231A", "#2EE58A"]},
+        {"id": "points", "name": "Points", "pattern": "dots", "colors": ["#08100B", "#1C3A2A", "#2EE58A"]},
+        {"id": "vagues", "name": "Vagues", "pattern": "waves", "colors": ["#04121F", "#0B4F6C", "#1C7A8C", "#3FC1C9"]},
+        {"id": "retro", "name": "Rétro", "pattern": "grid", "colors": ["#0D0221", "#541388", "#FF6B9D", "#2DE2E6"]}
+      ]
+    },
+    {
+      "id": "cinema",
+      "name": "Cinéma",
+      "covers": [
+        {"id": "pellicule", "name": "Pellicule", "pattern": "film", "colors": ["#0A0A0A", "#1C1C1C", "#F2C94C"]},
+        {"id": "projecteurs", "name": "Projecteurs", "pattern": "spotlight", "colors": ["#07090F", "#1B2440", "#FFF3C4"]},
+        {"id": "rideau", "name": "Rideau", "pattern": "curtain", "colors": ["#2A0508", "#8C1C24", "#D4A017"]},
+        {"id": "nuit-etoilee", "name": "Nuit étoilée", "pattern": "stars", "colors": ["#03050C", "#111A33", "#FFFFFF"]}
+      ]
+    }
+  ]
+}

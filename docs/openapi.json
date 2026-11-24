@@ -166,7 +166,7 @@
         "/v1/auth/register": {
             "post": {
                 "operationId": "v1.auth.register",
-                "description": "Also creates a first profile named after the user (with an avatar of the catalog, at random)\nand returns an API token.",
+                "description": "Also creates a first profile named after the user (with an avatar and a cover of the catalogs,\nat random) and returns an API token.",
                 "summary": "Create an account",
                 "tags": [
                     "Authentification",
@@ -6606,6 +6606,54 @@
                 "security": []
             }
         },
+        "/v1/profile-covers/{name}": {
+            "get": {
+                "operationId": "v1.profile-covers.show",
+                "description": "Public (images are loaded without a bearer token), at the address `cover_url` gives; cached\nfor a year: a new image has a new address.",
+                "summary": "A profile cover",
+                "tags": [
+                    "Profils",
+                    "ProfileCover"
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "public, max-age=31536000, immutable"
+                                }
+                            },
+                            "X-Content-Type-Options": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "nosniff"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/avatars": {
             "get": {
                 "operationId": "v1.avatars",
@@ -6627,6 +6675,43 @@
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/components/schemas/AvatarLicenseResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/covers": {
+            "get": {
+                "operationId": "v1.covers",
+                "description": "The covers a profile can use (the banner of its page), grouped by style. Each is drawn by the\napps from its pattern and its colors. A new profile gets one at random.",
+                "summary": "Covers",
+                "tags": [
+                    "Profils",
+                    "Cover"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `CoverStyleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CoverStyleResource"
                                             }
                                         }
                                     },
@@ -6680,7 +6765,7 @@
             },
             "post": {
                 "operationId": "v1.profiles.store",
-                "description": "An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.\nWithout `avatar`, the profile gets one of the catalog at random.",
+                "description": "An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.\nWithout `avatar` or `cover`, the profile gets one of each catalog at random.",
                 "summary": "Create a profile",
                 "tags": [
                     "Profils",
@@ -7001,6 +7086,119 @@
                 "tags": [
                     "Profils",
                     "ProfilePhoto"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProfileResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/cover": {
+            "post": {
+                "operationId": "v1.profiles.cover.store",
+                "description": "Multipart field `cover`. Shown at the top of its page instead of its cover of the catalog\n(`cover_url` of the profile and of its page); replaces the previous image. The app sends the\n3:1 banner it framed; the API keeps the central 3:1 part anyway, 1,500 \u00d7 500 pixels at most,\nre-encoded without the metadata of the file (location\u2026).",
+                "summary": "Set the profile's cover image",
+                "tags": [
+                    "Profils",
+                    "ProfileCover"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProfileCoverRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ProfileResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.profiles.cover.destroy",
+                "description": "Its cover of the catalog (`cover`) is shown again.",
+                "summary": "Remove the profile's cover image",
+                "tags": [
+                    "Profils",
+                    "ProfileCover"
                 ],
                 "parameters": [
                     {
@@ -9030,6 +9228,20 @@
                                                     "type": "string",
                                                     "description": "The page of the profile on the site, shared from the app (\u00ab Partager \u00bb)."
                                                 },
+                                                "cover": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Cover id (GET /covers): the banner of its page."
+                                                },
+                                                "cover_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Its own cover, shown instead of `cover`; null = `cover`."
+                                                },
                                                 "followers_count": {
                                                     "type": "integer"
                                                 },
@@ -9144,6 +9356,8 @@
                                                 "bio",
                                                 "is_private",
                                                 "share_url",
+                                                "cover",
+                                                "cover_url",
                                                 "followers_count",
                                                 "following_count",
                                                 "reviews_count",
@@ -11653,6 +11867,64 @@
                 ],
                 "title": "ConversationResource"
             },
+            "CoverResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Value to store in the profile's `cover`."
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "pattern": {
+                        "type": "string",
+                        "description": "How it is drawn: `linear` (a gradient along `angle`), `glow` (a background and soft\nlights), `stripes`, `dots`, `waves`, `grid` (a retro sun over a grid), `film` (a film\nstrip), `spotlight` (beams of light), `curtain` (a theater curtain), `stars` (a starry\nnight). An app that doesn't know a pattern draws a `linear` gradient of the colors."
+                    },
+                    "colors": {
+                        "type": "array",
+                        "description": "Colors (#RRGGBB), in the order the pattern reads them (the background first).",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "angle": {
+                        "type": "integer",
+                        "description": "Direction of a `linear` gradient, in degrees: 0 = left to right, 90 = top to bottom."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "pattern",
+                    "colors",
+                    "angle"
+                ],
+                "title": "CoverResource"
+            },
+            "CoverStyleResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "covers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CoverResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "covers"
+                ],
+                "title": "CoverStyleResource"
+            },
             "CreditsResource": {
                 "type": "object",
                 "properties": {
@@ -12655,6 +12927,22 @@
                 ],
                 "title": "PosterFormat"
             },
+            "ProfileCoverRequest": {
+                "type": "object",
+                "description": "A profile cover, as a multipart field `cover`.",
+                "properties": {
+                    "cover": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "JPEG, PNG or WebP, 600 \u00d7 200 to 4,096 pixels a side, 8 MB at most. Its central 3:1 part is kept."
+                    }
+                },
+                "required": [
+                    "cover"
+                ],
+                "title": "ProfileCoverRequest"
+            },
             "ProfileItemResource": {
                 "type": "object",
                 "properties": {
@@ -12978,6 +13266,28 @@
                             null
                         ]
                     },
+                    "cover": {
+                        "type": "string",
+                        "description": "Cover id from GET /covers: the banner of the profile page, when it has no image of its own (`cover_url`).",
+                        "enum": [
+                            "aurore",
+                            "crepuscule",
+                            "ocean",
+                            "braise",
+                            "minuit",
+                            "neon",
+                            "aube",
+                            "abysses",
+                            "rayures",
+                            "points",
+                            "vagues",
+                            "retro",
+                            "pellicule",
+                            "projecteurs",
+                            "rideau",
+                            "nuit-etoilee"
+                        ]
+                    },
                     "poster_format": {
                         "description": "How titles are drawn in rows and grids. Default `portrait`.\n\n| |\n|---|\n| `portrait` <br/> Vertical poster (2:3). Default. |\n| `landscape` <br/> Horizontal image (16:9). |",
                         "$ref": "#/components/schemas/PosterFormat"
@@ -13194,6 +13504,20 @@
                         ],
                         "description": "Its own photo (POST /profiles/{id}/photo), shown instead of the avatar; null = the avatar."
                     },
+                    "cover": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Cover id (GET /covers): the banner of its page."
+                    },
+                    "cover_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Its own cover (POST /profiles/{id}/cover), shown instead of `cover`; null = `cover`."
+                    },
                     "poster_format": {
                         "$ref": "#/components/schemas/PosterFormat"
                     },
@@ -13292,6 +13616,8 @@
                     "social_links",
                     "avatar",
                     "photo_url",
+                    "cover",
+                    "cover_url",
                     "poster_format",
                     "is_kid",
                     "max_age_rating",

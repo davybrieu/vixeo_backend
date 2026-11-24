@@ -9,7 +9,9 @@ use App\Http\Requests\Api\V1\VerifyPinRequest;
 use App\Http\Resources\V1\ProfileResource;
 use App\Models\Profile;
 use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
 use App\Services\Messaging\Conversations;
+use App\Services\ProfileCovers;
 use App\Services\ProfilePhotos;
 use App\Services\Social\Follows;
 use Dedoc\Scramble\Attributes\HeaderParameter;
@@ -38,9 +40,9 @@ class ProfileController extends Controller
      * Create a profile.
      *
      * An account can have at most 5 profiles. Requires `parental_pin` when parental control is on.
-     * Without `avatar`, the profile gets one of the catalog at random.
+     * Without `avatar` or `cover`, the profile gets one of each catalog at random.
      */
-    public function store(ProfileRequest $request, AvatarCatalog $avatars): JsonResponse
+    public function store(ProfileRequest $request, AvatarCatalog $avatars, CoverCatalog $covers): JsonResponse
     {
         Gate::authorize('create', Profile::class);
 
@@ -48,6 +50,8 @@ class ProfileController extends Controller
         $data['username'] ??= $this->uniqueUsername($data['name']);
         // No avatar chosen: one of the catalog, at random.
         $data['avatar'] ??= $avatars->randomId();
+        // Its cover too.
+        $data['cover'] ??= $covers->randomId();
         $profile = $request->user()->profiles()->create($data);
 
         return (new ProfileResource($profile))
@@ -98,9 +102,10 @@ class ProfileController extends Controller
     {
         Gate::authorize('delete', $profile);
 
-        // Its photos and videos sent in the messaging, and its own photo, go with it (files, not rows).
+        // Its photos and videos sent in the messaging, its own photo and cover, go with it (files, not rows).
         app(Conversations::class)->forgetProfiles([$profile->id]);
         app(ProfilePhotos::class)->forget([$profile->photo_path]);
+        app(ProfileCovers::class)->forget([$profile->cover_path]);
         $profile->delete();
 
         return response()->noContent();
