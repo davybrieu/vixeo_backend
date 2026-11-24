@@ -124,7 +124,8 @@ Actions de l'appui long :
 ## Pages publiques d'un membre
 
 `GET /api/v1/social/profiles/{username}` donne aussi `liked_count` (J'aime ❤) et `people_count`
-(personnes suivies). Listes paginées (30 par page, les plus récents d'abord) :
+(personnes suivies). Listes paginées (**20 par page**, `?page=`, les plus récents d'abord ; les applis
+chargent la page suivante en défilant) :
 
 | Route | Contenu |
 | - | - |

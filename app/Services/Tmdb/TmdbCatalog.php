@@ -212,6 +212,12 @@ class TmdbCatalog
         return $season;
     }
 
+    /**
+     * Titles of a person page's rows, and of a page of their « Voir tout » (developer's request,
+     * 24/11/2026: 20 at a time, the rest as the page scrolls).
+     */
+    public const PERSON_PAGE = 20;
+
     /** @return array<string, mixed> */
     public function person(int $id): array
     {
@@ -220,8 +226,8 @@ class TmdbCatalog
         unset($person['combined_credits']);
 
         return $person + [
-            'known_for' => array_slice($credits[PersonCreditsSort::Popular->value], 0, 10),
-            'filmography' => array_slice($credits[PersonCreditsSort::Date->value], 0, 100),
+            'known_for' => array_slice($credits[PersonCreditsSort::Popular->value], 0, self::PERSON_PAGE),
+            'filmography' => array_slice($credits[PersonCreditsSort::Date->value], 0, self::PERSON_PAGE),
         ];
     }
 

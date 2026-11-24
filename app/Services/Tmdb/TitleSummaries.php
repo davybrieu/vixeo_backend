@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Cache;
  * cost a request.
  *
  * Every list of titles has the IMDb rating (developer's request, 21/11/2026: TMDb's is only a
- * fallback): with the summary ([add]), or alone for long lists ([ratings], a person's titles).
+ * fallback): with the summary ([add]), or alone ([ratings], a person's titles). The rating alone
+ * only needs the IMDb id of the title: kept 90 days, else read from details already cached, else
+ * from its External IDs (developer's request, 24/11/2026: a few hundred bytes instead of the
+ * details with images and certifications). Movies and TV shows go in one batch of requests.
  */
 class TitleSummaries
 {
@@ -40,32 +43,36 @@ class TitleSummaries
      */
     public function addMany(array $lists): array
     {
-        $paths = ['movie' => [], 'tv' => []];
+        $paths = [];
         foreach ($lists as $items) {
-            foreach ($items as $item) {
-                if ($path = self::path($item)) {
-                    $paths[$item['media_type']][$path] = true;
-                }
-            }
+            $paths += self::paths($items);
         }
 
-        $details = $this->fetch($paths);
+        [$details] = $this->load($paths, []);
         if ($details === []) {
             return $lists;
         }
-        $ratings = $this->imdbRatings($details);
 
-        return array_map(fn (array $items) => array_map(function (array $item) use ($details, $ratings) {
-            $path = self::path($item);
-            $title = $path === null ? null : ($details[$path] ?? null);
-            $item['logo'] = is_array($title) ? TmdbFormat::logo($title) : null;
-            $item['summary'] = is_array($title) ? self::summary($title) : null;
-            if (is_array($title)) {
-                $item['imdb_rating'] = $ratings[$path] ?? null;
-            }
+        return $this->summarized($lists, $details, $this->imdbRatings($details));
+    }
 
-            return $item;
-        }, $items), $lists);
+    /**
+     * [add] for [summarized] and [ratings] for [rated], with one batch of TMDb requests (a person's
+     * page: « Connu pour » with its summaries, « Filmographie » with the ratings).
+     *
+     * @param  list<array<string, mixed>>  $summarized
+     * @param  list<array<string, mixed>>  $rated
+     * @return array{list<array<string, mixed>>, list<array<string, mixed>>}
+     */
+    public function addAndRate(array $summarized, array $rated): array
+    {
+        [$details, $ids] = $this->load(self::paths($summarized), self::paths($rated));
+        $ratings = $this->imdb->many(array_values(array_filter($ids)));
+
+        return [
+            $this->summarized([$summarized], $details, $this->imdbRatings($details))[0],
+            $this->rated($rated, $ids, $ratings),
+        ];
     }
 
     /**
@@ -88,18 +95,46 @@ class TitleSummaries
      */
     public function ratings(array $items): array
     {
-        $paths = [];
-        foreach ($items as $item) {
-            if ($path = self::path($item)) {
-                $paths[$path] = true;
-            }
-        }
+        $paths = self::paths($items);
         if ($paths === []) {
             return $items;
         }
-        $ids = $this->imdbIds(array_keys($paths));
-        $ratings = $this->imdb->many(array_values(array_filter($ids)));
+        [, $ids] = $this->load([], $paths);
 
+        return $this->rated($items, $ids, $this->imdb->many(array_values(array_filter($ids))));
+    }
+
+    /**
+     * @param  array<array-key, list<array<string, mixed>>>  $lists
+     * @param  array<string, array<string, mixed>|null>  $details
+     * @param  array<string, array{id: string, rating: float, votes: int}>  $ratings
+     * @return array<array-key, list<array<string, mixed>>>
+     */
+    private function summarized(array $lists, array $details, array $ratings): array
+    {
+        return array_map(fn (array $items) => array_map(function (array $item) use ($details, $ratings) {
+            $path = self::path($item);
+            $title = $path === null ? null : ($details[$path] ?? null);
+            $item['logo'] = is_array($title) ? TmdbFormat::logo($title) : null;
+            $item['summary'] = is_array($title) ? self::summary($title) : null;
+            if (is_array($title)) {
+                $item['imdb_rating'] = $ratings[$path] ?? null;
+            }
+
+            return $item;
+        }, $items), $lists);
+    }
+
+    /**
+     * Sets `imdb_rating` on the items whose IMDb id is known (null when IMDb doesn't rate them).
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @param  array<string, string>  $ids
+     * @param  array<string, array{id: string, rating: float, votes: int}>  $ratings
+     * @return list<array<string, mixed>>
+     */
+    private function rated(array $items, array $ids, array $ratings): array
+    {
         return array_map(function (array $item) use ($ids, $ratings) {
             $path = self::path($item);
             if ($path !== null && array_key_exists($path, $ids)) {
@@ -119,11 +154,11 @@ class TitleSummaries
      */
     public function titles(array $titles): array
     {
-        $paths = ['movie' => [], 'tv' => []];
+        $paths = [];
         foreach ($titles as [$type, $id]) {
-            $paths[$type->value]["{$type->value}/{$id}"] = true;
+            $paths["{$type->value}/{$id}"] = true;
         }
-        $details = $this->fetch($paths);
+        [$details] = $this->load($paths, []);
         $ratings = $this->imdbRatings($details);
 
         $items = [];
@@ -161,7 +196,7 @@ class TitleSummaries
         foreach ($ids as $id) {
             $paths["tv/{$id}"] = true;
         }
-        $details = $this->fetch(['movie' => [], 'tv' => $paths]);
+        [$details] = $this->load($paths, []);
 
         $shows = [];
         foreach ($ids as $id) {
@@ -173,52 +208,57 @@ class TitleSummaries
     }
 
     /**
-     * TMDb details (with images and certifications) of each path, null when TMDb fails.
+     * One batch of TMDb requests, movies and TV shows together: the details (with images and
+     * certifications) of [detailPaths], null when TMDb fails; and the IMDb id of [idPaths] ('' when
+     * IMDb doesn't know the title), kept 90 days, else from details already cached, else from their
+     * External IDs; the summarized titles' ids come with their details. A title TMDb could not give
+     * has no IMDb id (asked again next time).
      *
-     * @param  array{movie: array<string, true>, tv: array<string, true>}  $paths
-     * @return array<string, array<string, mixed>|null>
+     * @param  array<string, true>  $detailPaths
+     * @param  array<string, true>  $idPaths
+     * @return array{array<string, array<string, mixed>|null>, array<string, string>}
      */
-    private function fetch(array $paths): array
+    private function load(array $detailPaths, array $idPaths): array
     {
-        $details = [];
-        foreach ($paths as $type => $typePaths) {
-            if ($typePaths !== []) {
-                $details += $this->tmdb->getMany(array_keys($typePaths), 'details', 20, self::QUERY[$type]);
-            }
-        }
-
-        return $details;
-    }
-
-    /**
-     * IMDb id of each path ('' when IMDb doesn't know the title): from the cache, else from TMDb's
-     * details, then kept. A title TMDb could not give is left out.
-     *
-     * @param  list<string>  $paths
-     * @return array<string, string>
-     */
-    private function imdbIds(array $paths): array
-    {
-        $cached = Cache::many(array_map(fn (string $path) => self::IMDB_ID_KEY.$path, $paths));
+        // The details of a summarized title give its IMDb id (imdbRatings).
+        $idPaths = array_diff_key($idPaths, $detailPaths);
         $ids = [];
-        $missing = ['movie' => [], 'tv' => []];
-        foreach ($paths as $path) {
-            $id = $cached[self::IMDB_ID_KEY.$path] ?? null;
-            if (is_string($id)) {
-                $ids[$path] = $id;
-            } else {
-                $missing[str_starts_with($path, 'tv/') ? 'tv' : 'movie'][$path] = true;
+        $found = [];
+        if ($idPaths !== []) {
+            $cached = Cache::many(array_map(fn (string $path) => self::IMDB_ID_KEY.$path, array_keys($idPaths)));
+            foreach (array_keys($idPaths) as $path) {
+                $id = $cached[self::IMDB_ID_KEY.$path] ?? null;
+                if (is_string($id)) {
+                    $ids[$path] = $id;
+                }
+            }
+            // Details already read for a summary (home, search, title pages: cached a day).
+            foreach (['movie', 'tv'] as $type) {
+                $unknown = array_values(array_filter(
+                    array_keys(array_diff_key($idPaths, $ids)),
+                    fn (string $path) => self::typeOf($path) === $type,
+                ));
+                foreach ($this->tmdb->cached($unknown, self::QUERY[$type]) as $path => $title) {
+                    if (is_array($title) && isset($title['id'])) {
+                        $found[$path] = self::imdbIdOf($title);
+                    }
+                }
             }
         }
-        if ($missing['movie'] === [] && $missing['tv'] === []) {
-            return $ids;
-        }
 
-        $found = [];
-        foreach ($this->fetch($missing) as $path => $title) {
-            if (is_array($title) && isset($title['id'])) {
-                $id = $title['imdb_id'] ?? $title['external_ids']['imdb_id'] ?? null;
-                $found[$path] = is_string($id) ? $id : '';
+        $requests = [];
+        foreach (array_keys($detailPaths) as $path) {
+            $requests[$path] = [$path, self::QUERY[self::typeOf($path)]];
+        }
+        foreach (array_keys(array_diff_key($idPaths, $ids, $found)) as $path) {
+            $requests["{$path}/external_ids"] = ["{$path}/external_ids", []];
+        }
+        $results = $requests === [] ? [] : $this->tmdb->getEach($requests, 'details', 20);
+
+        foreach (array_keys(array_diff_key($idPaths, $ids, $found)) as $path) {
+            $external = $results["{$path}/external_ids"] ?? null;
+            if (is_array($external)) {
+                $found[$path] = is_string($external['imdb_id'] ?? null) ? $external['imdb_id'] : '';
             }
         }
         if ($found !== []) {
@@ -228,7 +268,15 @@ class TitleSummaries
             ), self::IMDB_ID_TTL);
         }
 
-        return $ids + $found;
+        $details = array_intersect_key($results, $detailPaths);
+        // A summarized title's IMDb id comes with its details.
+        foreach ($details as $path => $title) {
+            if (is_array($title) && isset($title['id'])) {
+                $ids[$path] = self::imdbIdOf($title);
+            }
+        }
+
+        return [$details, $ids + $found];
     }
 
     /**
@@ -241,8 +289,8 @@ class TitleSummaries
     {
         $ids = [];
         foreach ($details as $path => $title) {
-            $id = is_array($title) ? ($title['imdb_id'] ?? $title['external_ids']['imdb_id'] ?? null) : null;
-            if (is_string($id)) {
+            $id = is_array($title) ? self::imdbIdOf($title) : '';
+            if ($id !== '') {
                 $ids[$path] = $id;
             }
         }
@@ -272,6 +320,43 @@ class TitleSummaries
     }
 
     /** @param  array<string, mixed>  $item */
+    /**
+     * The movies and TV shows of [items], by path.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return array<string, true>
+     */
+    private static function paths(array $items): array
+    {
+        $paths = [];
+        foreach ($items as $item) {
+            if ($path = self::path($item)) {
+                $paths[$path] = true;
+            }
+        }
+
+        return $paths;
+    }
+
+    /** `movie` or `tv`, from a path (`tv/1399`). */
+    private static function typeOf(string $path): string
+    {
+        return str_starts_with($path, 'tv/') ? 'tv' : 'movie';
+    }
+
+    /**
+     * IMDb id in TMDb details ('' when IMDb doesn't know the title): `imdb_id` of a movie,
+     * `external_ids` of a TV show.
+     *
+     * @param  array<string, mixed>  $title
+     */
+    private static function imdbIdOf(array $title): string
+    {
+        $id = $title['imdb_id'] ?? $title['external_ids']['imdb_id'] ?? null;
+
+        return is_string($id) ? $id : '';
+    }
+
     private static function path(array $item): ?string
     {
         $type = $item['media_type'] ?? null;

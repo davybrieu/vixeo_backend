@@ -2461,7 +2461,7 @@
         "/v1/catalog/person/{id}": {
             "get": {
                 "operationId": "v1.catalog.person",
-                "description": "Biography and filmography (filtered by the active profile's age limit).",
+                "description": "Biography, the 20 best-known titles (with their summary) and the 20 latest of the filmography\n(with their IMDb rating), filtered by the active profile's age limit. The rest:\n`GET /catalog/person/{id}/credits`, page by page.",
                 "summary": "Person",
                 "tags": [
                     "Catalogue",
@@ -2510,7 +2510,7 @@
         "/v1/catalog/person/{id}/credits": {
             "get": {
                 "operationId": "v1.catalog.person.credits",
-                "description": "Every title of \u00ab Connu pour \u00bb (`sort=popular`, the person page shows 10) or \u00ab Filmographie \u00bb\n(`sort=date`, newest first), each once, filtered by the active profile's age limit.",
+                "description": "Every title of \u00ab Connu pour \u00bb (`sort=popular`) or \u00ab Filmographie \u00bb (`sort=date`, newest first),\neach once, 20 a page (the \u00ab Voir tout \u00bb pages load the next one as they scroll), filtered by\nthe active profile's age limit: a page can be shorter.",
                 "summary": "Titles of a person",
                 "tags": [
                     "Catalogue",
@@ -2531,6 +2531,16 @@
                         "description": "`popular` (most voted first, \u00ab Connu pour \u00bb) or `date` (newest first, \u00ab Filmographie \u00bb).\n| |\n|---|\n| `popular` <br/> Most voted first: \u00ab Connu pour \u00bb. |\n| `date` <br/> Newest first: \u00ab Filmographie \u00bb. |",
                         "schema": {
                             "$ref": "#/components/schemas/PersonCreditsSort"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number: 20 titles a page.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1000
                         }
                     },
                     {
@@ -2555,10 +2565,28 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/MediaItemResource"
                                             }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {},
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
                                         }
                                     },
                                     "required": [
-                                        "data"
+                                        "data",
+                                        "meta"
                                     ]
                                 }
                             }
@@ -2670,7 +2698,7 @@
         "/v1/catalog/{type}/{id}/credits": {
             "get": {
                 "operationId": "v1.catalog.credits",
-                "description": "Everyone of \u00ab Cr\u00e9ateur et distribution \u00bb (the title page shows 20 cast members): directors\n(movie) or creators (TV show), then the whole cast. 403 if the active profile may not see\nthe title.",
+                "description": "Everyone of \u00ab Cr\u00e9ateur et distribution \u00bb (the title page shows 20 cast members): directors\n(movie) or creators (TV show) on the first page, then the cast in billing order, 20 a page (the\n\u00ab Voir tout \u00bb page loads the next one as it scrolls). 403 if the active profile may not see\nthe title.",
                 "summary": "Credits of a movie / TV show",
                 "tags": [
                     "Catalogue",
@@ -2695,6 +2723,16 @@
                         }
                     },
                     {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (1 to 500).",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 500
+                        }
+                    },
+                    {
                         "name": "X-Profile-Id",
                         "in": "header",
                         "description": "Active profile id: its age limit is applied.",
@@ -2713,10 +2751,28 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/components/schemas/CreditsResource"
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "total_pages": {},
+                                                "total_results": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "total_pages",
+                                                "total_results"
+                                            ]
                                         }
                                     },
                                     "required": [
-                                        "data"
+                                        "data",
+                                        "meta"
                                     ]
                                 }
                             }
@@ -2724,6 +2780,9 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -11583,14 +11642,14 @@
                 "properties": {
                     "crew": {
                         "type": "array",
-                        "description": "Directors (movie) or creators (TV show).",
+                        "description": "Directors (movie) or creators (TV show): on the first page only.",
                         "items": {
                             "$ref": "#/components/schemas/CrewResource"
                         }
                     },
                     "cast": {
                         "type": "array",
-                        "description": "The whole cast in billing order (over all seasons for a TV show).",
+                        "description": "20 cast members of the page, in billing order.",
                         "items": {
                             "$ref": "#/components/schemas/CastResource"
                         }
@@ -12543,14 +12602,14 @@
                     },
                     "known_for": {
                         "type": "array",
-                        "description": "10 best-known titles.",
+                        "description": "20 best-known titles (the rest: `GET /catalog/person/{id}/credits?sort=popular&page=`).",
                         "items": {
                             "$ref": "#/components/schemas/MediaItemResource"
                         }
                     },
                     "filmography": {
                         "type": "array",
-                        "description": "Titles as cast member, most recent first (100 max).",
+                        "description": "20 titles as cast member, most recent first (the rest: `\u2026/credits?sort=date&page=`).",
                         "items": {
                             "$ref": "#/components/schemas/MediaItemResource"
                         }

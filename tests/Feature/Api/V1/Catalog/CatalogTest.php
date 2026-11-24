@@ -201,12 +201,20 @@ it('lists every person of a title for « Voir tout »: crew first, then the whol
         'api.themoviedb.org/3/tv/1399*' => Http::response(Tmdb::showDetails()),
     ]);
 
-    // The title page keeps 20 cast members; the credits give them all.
+    // The title page keeps 20 cast members; the credits give them all, 20 a page, the crew first.
     expect($this->getJson('/api/v1/catalog/movie/550')->json('data.cast'))->toHaveCount(20);
-    $credits = $this->getJson('/api/v1/catalog/movie/550/credits')->assertOk()->json('data');
+    $credits = $this->getJson('/api/v1/catalog/movie/550/credits')
+        ->assertOk()
+        ->assertJsonPath('meta', ['page' => 1, 'total_pages' => 2, 'total_results' => 25])
+        ->json('data');
     expect(array_column($credits['crew'], 'name'))->toBe(['David Fincher'])
-        ->and($credits['cast'])->toHaveCount(25)
-        ->and($credits['cast'][24])->toMatchArray(['name' => 'Actor 25', 'character' => 'Role 25']);
+        ->and($credits['cast'])->toHaveCount(20)
+        ->and($credits['cast'][0])->toMatchArray(['name' => 'Actor 1', 'character' => 'Role 1']);
+    $next = $this->getJson('/api/v1/catalog/movie/550/credits?page=2')->assertOk()->assertJsonPath('meta.page', 2)->json('data');
+    expect($next['crew'])->toBe([])
+        ->and($next['cast'])->toHaveCount(5)
+        ->and($next['cast'][4])->toMatchArray(['name' => 'Actor 25', 'character' => 'Role 25']);
+    $this->getJson('/api/v1/catalog/movie/550/credits?page=0')->assertUnprocessable();
 
     $show = $this->getJson('/api/v1/catalog/tv/1399/credits')->assertOk()->json('data');
     expect(array_column($show['crew'], 'name'))->toBe(['David Benioff'])
@@ -250,18 +258,27 @@ it('lists every title of a person, most voted or newest first', function () {
             Tmdb::movie(550, ['media_type' => 'movie', 'vote_count' => 30000, 'character' => 'Second role']),
             Tmdb::movie(1, ['media_type' => 'movie', 'title' => 'F1', 'release_date' => '2025-06-25', 'vote_count' => 2000]),
             Tmdb::show(2, ['media_type' => 'tv', 'name' => 'Friends', 'first_air_date' => '1994-09-22', 'vote_count' => 9000]),
-            ...array_map(fn (int $i) => Tmdb::movie(100 + $i, ['media_type' => 'movie', 'title' => "Film {$i}", 'release_date' => '1990-01-01', 'vote_count' => $i]), range(1, 10)),
+            ...array_map(fn (int $i) => Tmdb::movie(100 + $i, ['media_type' => 'movie', 'title' => "Film {$i}", 'release_date' => '1990-01-01', 'vote_count' => $i]), range(1, 22)),
         ]],
     ])]);
 
-    // The person page shows the 10 best known; the credits give them all, each once.
-    expect($this->getJson('/api/v1/catalog/person/287')->json('data.known_for'))->toHaveCount(10);
-    $popular = $this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data');
-    expect($popular)->toHaveCount(13)
+    // The person page shows the 20 best known and the 20 latest; the credits give them all, each
+    // once, 20 a page.
+    $person = $this->getJson('/api/v1/catalog/person/287')->json('data');
+    expect($person['known_for'])->toHaveCount(20)
+        ->and($person['filmography'])->toHaveCount(20);
+    $popular = $this->getJson('/api/v1/catalog/person/287/credits')
+        ->assertOk()
+        ->assertJsonPath('meta', ['page' => 1, 'total_pages' => 2, 'total_results' => 25])
+        ->json('data');
+    expect($popular)->toHaveCount(20)
         ->and(array_column(array_slice($popular, 0, 3), 'title'))->toBe(['Fight Club', 'Friends', 'F1']);
+    expect($this->getJson('/api/v1/catalog/person/287/credits?page=2')->assertOk()->json('data'))->toHaveCount(5);
+    expect($this->getJson('/api/v1/catalog/person/287/credits?page=3')->assertOk()->json('data'))->toBe([]);
 
     $byDate = $this->getJson('/api/v1/catalog/person/287/credits?sort=date')->assertOk()->json('data');
     expect(array_column(array_slice($byDate, 0, 3), 'title'))->toBe(['F1', 'Fight Club', 'Friends']);
+    $this->getJson('/api/v1/catalog/person/287/credits?page=0')->assertUnprocessable()->assertJsonValidationErrors('page');
 
     $this->getJson('/api/v1/catalog/person/287/credits?sort=rating')->assertUnprocessable()->assertJsonValidationErrors('sort');
 });

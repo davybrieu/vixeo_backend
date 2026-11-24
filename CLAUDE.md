@@ -188,13 +188,22 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     « À voir » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
   - **« Voir tout » des fiches et des personnes** (demande du développeur, 20/11/2026) : la fiche
     ne donne que 20 recommandations et 20 membres de la distribution, la page d'une personne
-    10 titres « Connu pour » et 100 de filmographie ; les listes entières viennent de
+    **20 titres « Connu pour » et 20 de filmographie** (24/11/2026 ; `TmdbCatalog::PERSON_PAGE`, un
+    seul lot de requêtes TMDb, `TitleSummaries::addAndRate`) ; les listes entières viennent, **par
+    pages de 20** (`?page=`, `meta` : `page`, `total_pages`, `total_results`), de
     `GET /catalog/{type}/{id}/recommendations?page=` (paginé comme les listes, recommandations
-    TMDb sinon titres similaires, même choix que la fiche), `GET /catalog/{type}/{id}/credits`
-    (`crew` : réalisation ou création, `cast` : toute la distribution) et
-    `GET /catalog/person/{id}/credits?sort=popular|date` (tous les titres, chacun une fois ; même
-    appel TMDb que la page, en cache). Tous passent par `AgeGate` (titre refusé → 403, titres
-    filtrés).
+    TMDb sinon titres similaires, même choix que la fiche), `GET /catalog/{type}/{id}/credits?page=`
+    (`crew` : réalisation ou création, sur la première page ; `cast` : 20 membres de la
+    distribution par page, `CreditsResource::PAGE`) et
+    `GET /catalog/person/{id}/credits?sort=popular|date&page=` (chaque titre une fois ; même
+    appel TMDb que la page, en cache ; note IMDb pour les 20 de la page seulement). Tous passent par
+    `AgeGate` (titre refusé → 403, titres filtrés : une page peut être plus courte).
+  - **Pages de 20** (demande du développeur, 24/11/2026 : « éviter les trop grosses requêtes ») :
+    toute liste longue se lit **20 éléments à la fois**, les applis demandant la page suivante en
+    défilant : catalogue (listes, recherche, recommandations, distribution, titres d'une personne),
+    listes d'un membre (`SocialProfileController::PER_PAGE` : « À voir », J'aime, vus, personnes,
+    avis, abonnés, abonnements, listes), avis d'un titre, « Mes avis » (`per_page=20`). Une
+    nouvelle liste longue suit la même règle.
   - **Rangées de l'accueil** (demande du développeur) : après les listes de TMDb
     (`CatalogList`, `TmdbCatalog::COMBINED_HOME`) viennent les rangées de `CatalogRows` :
     tendances du jour (juste après celles de la semaine), puis plateformes (`platform_netflix`… :
@@ -235,7 +244,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   **Toutes les listes de titres ont `ratings`** (demande du développeur, 21/11/2026 : la note
   IMDb partout, TMDb seulement en secours) : avec le `summary` (`TitleSummaries::add` : accueil,
   recherche, discover, recommandations et leur « Voir tout », « Voir tout » des rangées, « Connu
-  pour », `catalog/titles`) ou seule (`TitleSummaries::ratings`, identifiant IMDb gardé 90 jours :
+  pour », `catalog/titles`) ou seule (`TitleSummaries::ratings`, identifiant IMDb gardé 90 jours,
+  sinon tiré d'une fiche déjà en cache, sinon des seuls **External IDs** de TMDb, le 24/11/2026 :
   filmographie, `person/{id}/credits`) ; une requête d'IMDb par réponse. Sauf les rangées légères
   de l'accueil (l'appli les complète par `catalog/titles`) : `ratings: null`, l'appli n'affiche
   alors aucune note. Aucune note demandée par carte.

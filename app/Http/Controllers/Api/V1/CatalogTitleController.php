@@ -88,16 +88,22 @@ class CatalogTitleController extends Controller
      * Credits of a movie / TV show.
      *
      * Everyone of « Créateur et distribution » (the title page shows 20 cast members): directors
-     * (movie) or creators (TV show), then the whole cast. 403 if the active profile may not see
+     * (movie) or creators (TV show) on the first page, then the cast in billing order, 20 a page (the
+     * « Voir tout » page loads the next one as it scrolls). 403 if the active profile may not see
      * the title.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
-    public function credits(Request $request, MediaType $type, int $id): CreditsResource
+    public function credits(CatalogPageRequest $request, MediaType $type, int $id): JsonResponse
     {
         $title = $this->title($type, $id);
         $this->ageGate->authorizeTitle(ResolveProfile::profile($request), $title);
+        $cast = count(CreditsResource::cast($title, $type));
 
-        return new CreditsResource($title, $type);
+        return (new CreditsResource($title, $type, $request->page()))->additional(['meta' => [
+            'page' => $request->page(),
+            'total_pages' => max(1, (int) ceil($cast / CreditsResource::PAGE)),
+            'total_results' => $cast,
+        ]])->response();
     }
 
     /**
@@ -120,7 +126,9 @@ class CatalogTitleController extends Controller
     /**
      * Person.
      *
-     * Biography and filmography (filtered by the active profile's age limit).
+     * Biography, the 20 best-known titles (with their summary) and the 20 latest of the filmography
+     * (with their IMDb rating), filtered by the active profile's age limit. The rest:
+     * `GET /catalog/person/{id}/credits`, page by page.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function person(Request $request, int $id): PersonResource
@@ -131,10 +139,9 @@ class CatalogTitleController extends Controller
             'known_for' => $person['known_for'],
             'filmography' => $person['filmography'],
         ]);
-        // IMDb rating with each title: with the summary for the 10 of « Connu pour », alone for the
-        // 100 of the filmography (TitleSummaries::ratings).
-        $lists['known_for'] = $this->summaries->add($lists['known_for']);
-        $lists['filmography'] = $this->summaries->ratings($lists['filmography']);
+        // IMDb rating with each title: with the summary for « Connu pour », alone for the filmography,
+        // in one batch of TMDb requests (TitleSummaries::addAndRate).
+        [$lists['known_for'], $lists['filmography']] = $this->summaries->addAndRate($lists['known_for'], $lists['filmography']);
 
         return new PersonResource(array_merge($person, $lists));
     }
@@ -142,19 +149,30 @@ class CatalogTitleController extends Controller
     /**
      * Titles of a person.
      *
-     * Every title of « Connu pour » (`sort=popular`, the person page shows 10) or « Filmographie »
-     * (`sort=date`, newest first), each once, filtered by the active profile's age limit.
+     * Every title of « Connu pour » (`sort=popular`) or « Filmographie » (`sort=date`, newest first),
+     * each once, 20 a page (the « Voir tout » pages load the next one as they scroll), filtered by
+     * the active profile's age limit: a page can be shorter.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function personCredits(PersonCreditsRequest $request, int $id): JsonResponse
     {
-        // Every title (often more than a hundred): the IMDb rating alone (TitleSummaries::ratings).
+        $all = $this->catalog->personCredits($id, $request->sort());
+        $size = TmdbCatalog::PERSON_PAGE;
+        $page = $request->page();
+        // The IMDb rating alone (TitleSummaries::ratings: the IMDb id, light), for this page only.
         $titles = $this->summaries->ratings($this->ageGate->filter(
             ResolveProfile::profile($request),
-            $this->catalog->personCredits($id, $request->sort()),
+            array_slice($all, ($page - 1) * $size, $size),
         ));
 
-        return response()->json(['data' => MediaItemResource::collection($titles)]);
+        return response()->json([
+            'data' => MediaItemResource::collection($titles),
+            'meta' => [
+                'page' => $page,
+                'total_pages' => max(1, (int) ceil(count($all) / $size)),
+                'total_results' => count($all),
+            ],
+        ]);
     }
 
     /**

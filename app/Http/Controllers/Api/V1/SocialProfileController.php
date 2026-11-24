@@ -25,6 +25,13 @@ use Illuminate\Http\Response;
 
 class SocialProfileController extends Controller
 {
+    /**
+     * Items of a page of a member's lists (À voir, J'aime, Vus, people, reviews, followers,
+     * following, lists): the apps load the next one as the page scrolls (developer's request,
+     * 24/11/2026: 20 at a time).
+     */
+    public const PER_PAGE = 20;
+
     public function __construct(
         private Follows $follows,
         private ReviewLikes $likes,
@@ -225,7 +232,7 @@ class SocialProfileController extends Controller
     {
         $profile = $this->visibleProfile($request, $username);
         $items = TmdbRating::query()->where('profile_id', $profile->id)->whereNull('hidden_at')
-            ->withCount(['likes', 'comments' => fn ($q) => $q->whereNull('hidden_at')])->latest('rated_at')->paginate(20);
+            ->withCount(['likes', 'comments' => fn ($q) => $q->whereNull('hidden_at')])->latest('rated_at')->paginate(self::PER_PAGE);
         $viewer = ResolveProfile::profile($request);
         $liked = $viewer === null ? [] : ReviewLike::query()->where('profile_id', $viewer->id)
             ->whereIn('tmdb_rating_id', $items->getCollection()->modelKeys())->pluck('tmdb_rating_id')->all();
@@ -248,7 +255,7 @@ class SocialProfileController extends Controller
     {
         $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
-            ->where('is_favorite', true)->latest('favorited_at')->paginate(30);
+            ->where('is_favorite', true)->latest('favorited_at')->paginate(self::PER_PAGE);
 
         return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
             'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
@@ -266,7 +273,7 @@ class SocialProfileController extends Controller
         $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_liked', true)->whereIn('type', ['movie', 'tv'])
-            ->latest('liked_at')->latest('id')->paginate(30);
+            ->latest('liked_at')->latest('id')->paginate(self::PER_PAGE);
 
         return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
             'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
@@ -285,7 +292,7 @@ class SocialProfileController extends Controller
         $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_watched', true)->whereIn('type', ['movie', 'tv'])
-            ->latest('watched_at')->latest('id')->paginate(30);
+            ->latest('watched_at')->latest('id')->paginate(self::PER_PAGE);
 
         return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
             'type' => $item->type, 'item_id' => $item->item_id, 'title' => $item->title,
@@ -306,7 +313,7 @@ class SocialProfileController extends Controller
         $profile = $this->visibleProfile($request, $username);
         $items = ProfileItem::query()->where('profile_id', $profile->id)
             ->where('is_followed', true)->where('type', 'person')
-            ->latest('followed_at')->latest('id')->paginate(30);
+            ->latest('followed_at')->latest('id')->paginate(self::PER_PAGE);
 
         return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
             'id' => (int) str_replace('person:', '', $item->item_id),
@@ -322,7 +329,7 @@ class SocialProfileController extends Controller
     {
         $profile = $this->visibleProfile($request, $username);
         $relation = $direction === 'followers' ? $profile->followers() : $profile->following();
-        $items = $relation->where('is_kid', false)->paginate(30);
+        $items = $relation->where('is_kid', false)->paginate(self::PER_PAGE);
 
         return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->identity($p)),
             'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage()]]);
@@ -351,7 +358,7 @@ class SocialProfileController extends Controller
         $viewer = ResolveProfile::profile($request);
         $page = ProfileList::query()->where('profile_id', $profile->id)->whereNull('hidden_at')
             ->when($viewer?->id !== $profile->id, fn ($q) => $q->where('items_count', '>', 0))
-            ->latest('updated_at')->latest('id')->paginate(30);
+            ->latest('updated_at')->latest('id')->paginate(self::PER_PAGE);
 
         return response()->json([
             'data' => $this->cards->lists($page->getCollection(), $viewer),

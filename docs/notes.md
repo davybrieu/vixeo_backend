@@ -41,7 +41,11 @@ panne / un quota dépassé suspend temporairement les appels. La clé reste côt
   et leur « Voir tout », « Voir tout » des rangées, « Connu pour », `GET /catalog/titles` pour
   « À voir », « Continuer à regarder » et les rangées légères) ou seule (filmographie de la page
   d'une personne et `GET /catalog/person/{id}/credits` : `TitleSummaries::ratings`, l'identifiant
-  IMDb de chaque titre gardé 90 jours en cache, TMDb n'est interrogé que pour un titre jamais vu).
+  IMDb de chaque titre gardé 90 jours en cache, sinon lu dans sa fiche si elle est déjà en cache,
+  sinon demandé à TMDb par ses **External IDs** seulement (`movie|tv/{id}/external_ids`, quelques
+  centaines d'octets au lieu de la fiche avec images et classifications ; demande du développeur,
+  24/11/2026). Films et séries partent dans **un seul lot** de requêtes (`TmdbClient::getEach`) ;
+  la page d'une personne fait ses deux rangées en un lot (`TitleSummaries::addAndRate`)).
   `TitleSummaries` lit la fiche TMDb de chaque titre (avec `external_ids` pour les séries) et
   cherche leurs notes IMDb en **une requête** par réponse. Seules exceptions : les **rangées
   légères** de l'accueil (`light`, sans `summary`), que l'appli complète par `GET /catalog/titles`,

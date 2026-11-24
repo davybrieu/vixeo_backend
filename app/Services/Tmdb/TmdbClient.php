@@ -82,6 +82,31 @@ class TmdbClient
     }
 
     /**
+     * What the cache already has for [paths] (null for the others), without asking TMDb: a lighter
+     * request can then be made for the missing ones (TitleSummaries: the IMDb id of a title from
+     * its details already read, else from its External IDs only).
+     *
+     * @param  list<string>  $paths
+     * @param  array<string, string>  $query  The query of the cached answers.
+     * @return array<string, array<string, mixed>|null>
+     */
+    public function cached(array $paths, array $query = []): array
+    {
+        $query = ['language' => config('services.tmdb.language')] + $query;
+        ksort($query);
+        $keys = [];
+        foreach (array_unique($paths) as $path) {
+            $keys[$path] = 'tmdb:'.sha1($path.'?'.http_build_query($query));
+        }
+        if ($keys === []) {
+            return [];
+        }
+        $values = $this->cache->many(array_values($keys));
+
+        return array_map(fn (string $key) => is_array($values[$key] ?? null) ? $values[$key] : null, $keys);
+    }
+
+    /**
      * Several paths at once (cache first, missing ones fetched concurrently, no retry).
      * A path that fails or does not exist maps to null (to its cached answer when refreshing).
      *

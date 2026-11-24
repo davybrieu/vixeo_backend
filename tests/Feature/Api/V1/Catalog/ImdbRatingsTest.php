@@ -287,7 +287,7 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     Sanctum::actingAs(User::factory()->create());
     imdbRating('tt0137523', 8.8, 2400000);
     imdbRating('tt0944947', 9.2, 2300000);
-    $server = (object) ['details' => 0];
+    $server = (object) ['details' => 0, 'external' => 0];
     Http::fake(function (Request $request) use ($server) {
         $path = (string) parse_url($request->url(), PHP_URL_PATH);
 
@@ -302,6 +302,10 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
                     Tmdb::show(1399, ['media_type' => 'tv']),
                 ]],
             ]),
+            // External IDs only: what a rating alone needs.
+            str_ends_with($path, '/movie/550/external_ids') => tap(Http::response(['id' => 550, 'imdb_id' => 'tt0137523']), fn () => $server->external++),
+            str_ends_with($path, '/movie/551/external_ids') => tap(Http::response(['id' => 551, 'imdb_id' => null]), fn () => $server->external++),
+            str_ends_with($path, '/tv/1399/external_ids') => tap(Http::response(['id' => 1399, 'imdb_id' => 'tt0944947']), fn () => $server->external++),
             str_ends_with($path, '/movie/550') => tap(Http::response(Tmdb::movieDetails()), fn () => $server->details++),
             str_ends_with($path, '/movie/551') => tap(Http::response(['id' => 551, 'title' => 'Sans IMDb', 'imdb_id' => null]), fn () => $server->details++),
             str_ends_with($path, '/tv/1399') => tap(Http::response(Tmdb::showDetails()), fn () => $server->details++),
@@ -314,7 +318,17 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     // All of a person's titles, the IMDb ids already known (kept 90 days): TMDb is not asked for them.
     Cache::putMany(['imdb-id:movie/550' => 'tt0137523', 'imdb-id:movie/551' => '', 'imdb-id:tv/1399' => 'tt0944947'], 3600);
     expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
-        ->and($server->details)->toBe(0);
+        ->and($server->details)->toBe(0)
+        ->and($server->external)->toBe(0);
+
+    // Not kept: their External IDs only (a few hundred bytes), never the details with images and
+    // certifications; then kept.
+    Cache::flush();
+    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+        ->and($server->details)->toBe(0)
+        ->and($server->external)->toBe(3)
+        ->and(Cache::get('imdb-id:tv/1399'))->toBe('tt0944947')
+        ->and(Cache::get('imdb-id:movie/551'))->toBe('');
     Cache::flush();
 
     // « Voir tout » of a home row and of « Vous pourriez aussi aimer »: with the summary.
@@ -323,10 +337,20 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
         ->and($list[1]['ratings']['tmdb'])->toBe(['rating' => 8.4, 'votes' => 30000])
         ->and($imdb($this->getJson('/api/v1/catalog/movie/550/recommendations')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null]);
 
-    // A person's page.
+    // A person's page: the filmography's titles also summarized in « Connu pour » need nothing more.
+    $server->external = 0;
     $person = $this->getJson('/api/v1/catalog/person/287')->assertOk()->json('data');
     expect($imdb($person['known_for']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
-        ->and($imdb($person['filmography']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2]);
+        ->and($imdb($person['filmography']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+        ->and($server->external)->toBe(0);
+
+    // Details already read for a summary (cached a day) give the IMDb id: no request.
+    Cache::forget('imdb-id:movie/550');
+    Cache::forget('imdb-id:movie/551');
+    Cache::forget('imdb-id:tv/1399');
+    $server->details = 0;
+    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+        ->and($server->details + $server->external)->toBe(0);
 });
 
 it('never runs two imports at once', function () {
