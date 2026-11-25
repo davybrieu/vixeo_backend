@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Synced state of one content for one profile (« À voir », progress, watched, « J'aime » ❤, a
- * followed person).
+ * liked title).
  * Written only through App\Services\ProfileSync.
  */
 #[Fillable(['source', 'item_id', 'type', 'title', 'year', 'poster_url', 'backdrop_url', 'parent_item_id', 'season_number', 'episode_number'])]
