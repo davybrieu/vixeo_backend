@@ -34,7 +34,8 @@ Artisan::command('vixeo:releases-sync', function () {
         $this->line(sprintf('%s → %s : %d sorties', $week['from'], $week['to'], $week['count']));
     }
 })->purpose('Refresh the worldwide weekly releases calendar');
-\n// IMDb ratings and episodes (docs/notes.md): every hour, imported only when IMDb published new
+
+// IMDb ratings and episodes (docs/notes.md): every hour, imported only when IMDb published new
 // datasets since the last import (Last-Modified of the files, HEAD requests).
 Schedule::command('imdb:import')->hourlyAt(17)->withoutOverlapping(180)->runInBackground();
 
