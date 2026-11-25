@@ -12,8 +12,8 @@ class UpdateEmailRequest extends FormRequest
         return [
             /** The new address. */
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->user()?->id)],
-            /** The account password, to confirm. */
-            'password' => ['required', 'string'],
+            /** The account password, to confirm. An account without a password (`has_password`) creates one first. */
+            'password' => [$this->user()?->hasPassword() === false ? 'nullable' : 'required', 'string'],
         ];
     }
 }

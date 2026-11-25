@@ -39,6 +39,11 @@ le corps de la requête (jamais dans une URL). Au plus 5 essais par minute (`thr
   déconnectés** ; celui qui fait la demande reste connecté. Mot de passe actuel faux : 422
   « Mot de passe incorrect. » sur `current_password`.
 
+**Compte sans mot de passe** (créé avec Google ou Apple, `has_password` faux,
+`connexion-sociale.md`) : `POST /me/password` sans `current_password` crée son premier mot de
+passe ; `POST /me/email` répond 422 « Créez d’abord un mot de passe dans « Mon compte ». ». Le
+code de « Mot de passe oublié » marque aussi l'adresse comme vérifiée.
+
 ## Appareils connectés
 
 - Chaque connexion crée un jeton Sanctum, qui porte le nom de l'appareil (`device_name`).
@@ -52,10 +57,11 @@ le corps de la requête (jamais dans une URL). Au plus 5 essais par minute (`thr
 
 ## Supprimer le compte
 
-`POST /api/v1/me/delete` avec `{password}`. C'est un POST et non un DELETE, pour ne jamais mettre
-de secret dans une URL.
+`POST /api/v1/me/delete` avec `{password}` (sans mot de passe pour un compte qui n'en a pas :
+Google, Apple). C'est un POST et non un DELETE, pour ne jamais mettre de secret dans une URL.
 - Sont supprimés : le compte, ses profils, leur liste, leur progression, leur historique, les
-  connexions TV en attente, les codes de réinitialisation et tous les jetons.
+  connexions TV en attente, les comptes Google / Apple liés, les codes de réinitialisation et
+  tous les jetons.
 - C'est définitif.
 - Au plus 5 essais par minute (mot de passe faux : 422 « Mot de passe incorrect. »).
 

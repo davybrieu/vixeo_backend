@@ -44,4 +44,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Profile::class)->orderBy('position')->orderBy('id');
     }
+
+    /** False for an account created with Google or Apple that never chose a password. */
+    public function hasPassword(): bool
+    {
+        return $this->password !== null;
+    }
 }

@@ -116,5 +116,8 @@
     "You cannot like your own list.": "Vous ne pouvez pas aimer votre propre liste.",
     "Choose a year.": "Choisissez une année.",
     "You cannot follow this account.": "Vous ne pouvez pas suivre ce compte.",
-    "This image cannot be read.": "Impossible de lire cette image."
+    "This image cannot be read.": "Impossible de lire cette image.",
+    "This return address is not allowed.": "Cette adresse de retour n’est pas autorisée.",
+    "This sign-in has expired. Try again.": "Cette connexion a expiré. Recommencez.",
+    "Create a password first, in « Mon compte ».": "Créez d’abord un mot de passe dans « Mon compte »."
 }

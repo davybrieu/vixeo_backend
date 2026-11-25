@@ -34,13 +34,15 @@ class AccountController extends Controller
      *
      * Deletes the account, its profiles, their list, progress and history, and signs out every
      * device. Cannot be undone. The password is sent in the body (POST, not DELETE: never a
-     * secret in a URL).
+     * secret in a URL); an account without a password (Google, Apple) sends none.
      */
     public function destroy(DeleteAccountRequest $request): Response
     {
         $user = $request->user();
 
-        $this->checkPassword($user->password, $request->validated('password'), 'password');
+        if ($user->hasPassword()) {
+            $this->checkPassword($user->password, (string) $request->validated('password'), 'password');
+        }
 
         // The files of the profiles' messages, their photos and covers (the rows go with the profiles).
         app(Conversations::class)->forgetProfiles($user->profiles()->pluck('id')->map(fn ($id) => (int) $id)->all());
@@ -62,12 +64,16 @@ class AccountController extends Controller
      *
      * Confirmed with the account password. The address is used to sign in and to receive the
      * password reset codes; a pending reset code for the old address is cancelled. 5 tries per
-     * minute (wrong password: 422).
+     * minute (wrong password: 422). An account without a password (Google, Apple) creates one
+     * first (422 on `password`).
      */
     public function updateEmail(UpdateEmailRequest $request): UserResource
     {
         $user = $request->user();
-        $this->checkPassword($user->password, $request->validated('password'), 'password');
+        if (! $user->hasPassword()) {
+            throw ValidationException::withMessages(['password' => [__('Create a password first, in « Mon compte ».')]]);
+        }
+        $this->checkPassword($user->password, (string) $request->validated('password'), 'password');
 
         $email = $request->validated('email');
         if ($email !== $user->email) {
@@ -84,12 +90,15 @@ class AccountController extends Controller
      * Change the password.
      *
      * Confirmed with the current password. Every other device is signed out; this one stays
-     * signed in. 5 tries per minute (wrong password: 422).
+     * signed in. 5 tries per minute (wrong password: 422). An account without a password (created
+     * with Google or Apple, `has_password` false) creates its first one: no `current_password`.
      */
     public function updatePassword(UpdatePasswordRequest $request): Response
     {
         $user = $request->user();
-        $this->checkPassword($user->password, $request->validated('current_password'), 'current_password');
+        if ($user->hasPassword()) {
+            $this->checkPassword($user->password, (string) $request->validated('current_password'), 'current_password');
+        }
 
         DB::transaction(function () use ($user, $request) {
             $user->forceFill(['password' => $request->validated('password')])->save();

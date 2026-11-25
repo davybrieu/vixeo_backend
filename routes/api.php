@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\ProfileSyncController;
 use App\Http\Controllers\Api\V1\PushDeviceController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ReviewSocialController;
+use App\Http\Controllers\Api\V1\SocialLoginController;
 use App\Http\Controllers\Api\V1\SocialProfileController;
 use App\Http\Controllers\Api\V1\TitleSocialController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
@@ -47,6 +48,14 @@ Route::prefix('v1')->name('v1.')->group(function () {
         // "Mot de passe oublié" (docs/compte.md).
         Route::post('password/forgot', [PasswordResetController::class, 'forgot'])->name('password.forgot');
         Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.reset');
+        // « Continuer avec Google / Apple » (docs/connexion-sociale.md): the sign-in runs in a
+        // browser, which comes back to the API (callback), then to the app with a code.
+        Route::get('social', [SocialLoginController::class, 'index'])->name('social.index');
+        Route::post('social/token', [SocialLoginController::class, 'token'])->name('social.token');
+        Route::get('social/{provider}', [SocialLoginController::class, 'start'])
+            ->whereIn('provider', ['google', 'apple'])->name('social.start');
+        Route::match(['get', 'post'], 'social/{provider}/callback', [SocialLoginController::class, 'callback'])
+            ->whereIn('provider', ['google', 'apple'])->name('social.callback');
     });
     // Installed Android / iOS apps ask whether to update (docs/mise-a-jour.md).
     Route::get('app/update', [AppUpdateController::class, 'check'])

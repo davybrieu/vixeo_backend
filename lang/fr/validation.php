@@ -189,6 +189,9 @@ return [
     */
 
     'attributes' => [
+        'redirect_uri' => 'adresse de retour',
+        'code_challenge' => 'défi PKCE',
+        'code_verifier' => 'secret PKCE',
         'name' => 'nom',
         'email' => 'adresse e-mail',
         'password' => 'mot de passe',

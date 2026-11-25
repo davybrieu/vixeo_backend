@@ -346,6 +346,24 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `device_code` secret haché, `user_code` court, 10 min, usage unique ; le code se tape dans
   l'appli du téléphone (« Paramètres » → « Connecter une TV »), **plus de QR code** (demande du
   développeur) ni lien (`verification_url(_complete)` supprimés, 20/11/2026).
+- **Connexion avec Google et Apple** (demande du développeur, 25/11/2026 ; doc :
+  `docs/connexion-sociale.md`) : « Continuer avec Google / Apple » de l'appli, **dans un
+  navigateur** (RFC 8252) ; **l'API est le client OAuth** (`services.google`, `services.apple` :
+  `GOOGLE_*`, `APPLE_*` du `.env`, rien dans les applis). `GET /auth/social` (disponibles),
+  `GET /auth/social/{google|apple}` (ouvert par le navigateur, `redirect_uri` = `app.vixeo://auth`
+  ou `http://127.0.0.1:{port}/auth` seulement, `code_challenge` PKCE S256), retour du fournisseur
+  sur `…/callback` (Apple : POST `form_post`), puis l'appli échange `code` + `code_verifier` sur
+  `POST /auth/social/token` (réponse de `auth/login` + `created`, `password_removed`).
+  `App\Services\SocialLogin\SocialLogins` (états et codes dans le cache, 10 et 5 min, une fois),
+  `GoogleSignIn`, `AppleSignIn` (client secret ES256 : `App\Support\Jwt`), table
+  `social_accounts` (fournisseur + `subject`). Compte trouvé par le compte lié, sinon par
+  l'adresse (vérifiée par le fournisseur ; **adresse jamais prouvée côté Vixeo : mot de passe et
+  autres appareils retirés**, contre une inscription faite d'avance avec l'adresse d'un autre),
+  sinon créé **sans mot de passe** (`users.password` nullable, `has_password`, `providers` dans
+  `UserResource` ; `App\Services\Accounts` partagé avec l'inscription). Le code de « mot de passe
+  oublié » prouve l'adresse (`email_verified_at`). **Pas de relation `socialAccounts()` sur
+  `User`** : elle faisait perdre à Scramble les formes des profils (`SocialCards::identity`) ;
+  passer par `SocialAccount::query()` / `SocialAccount::providersOf`.
 - **Compte** (doc : `docs/compte.md`) : « mot de passe oublié » par code à 6 chiffres envoyé par
   e-mail (`App\Services\PasswordResets` : haché, 15 min, usage unique, 5 essais ; la réponse ne
   révèle pas si l'adresse a un compte ; la réinitialisation déconnecte tous les appareils),

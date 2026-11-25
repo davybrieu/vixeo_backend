@@ -1,0 +1,357 @@
+<?php
+
+use App\Models\SocialAccount;
+use App\Models\User;
+use App\Services\SocialLogin\SocialLogins;
+use App\Support\Jwt;
+use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Laravel\Sanctum\Sanctum;
+
+beforeEach(function () {
+    Http::preventStrayRequests();
+    config([
+        'services.google.client_id' => 'google-client.apps.googleusercontent.com',
+        'services.google.client_secret' => 'google-secret',
+    ]);
+});
+
+/** An ID token as the provider's token endpoint gives it (its signature isn't read). */
+function idToken(array $claims): string
+{
+    return Jwt::base64Url('{"alg":"RS256"}').'.'.Jwt::base64Url((string) json_encode($claims)).'.c2lnbmF0dXJl';
+}
+
+function googleAnswers(array $claims): void
+{
+    // A new answer replaces the one before (the fakes of Http add up, the first one wins).
+    Http::swap(new HttpFactory(app('events')));
+    Http::preventStrayRequests();
+    Http::fake(['oauth2.googleapis.com/token' => Http::response(['id_token' => idToken($claims + [
+        'iss' => 'https://accounts.google.com',
+        'aud' => 'google-client.apps.googleusercontent.com',
+        'exp' => time() + 3600,
+    ])])]);
+}
+
+/** A PKCE pair: [verifier, challenge]. */
+function pkce(): array
+{
+    $verifier = str_repeat('v', 20).bin2hex(random_bytes(16));
+
+    return [$verifier, SocialLogins::challenge($verifier)];
+}
+
+/** Starts a sign-in like the app: the state sent to the provider. */
+function startSignIn($test, string $provider, string $challenge, string $redirect = SocialLogins::APP_REDIRECT): string
+{
+    $location = $test->get("/api/v1/auth/social/{$provider}?".http_build_query([
+        'redirect_uri' => $redirect,
+        'code_challenge' => $challenge,
+        'code_challenge_method' => 'S256',
+    ]))->assertRedirect()->headers->get('Location');
+    parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+    return $query['state'];
+}
+
+/** The query of the address the browser is sent back to. */
+function backQuery($response): array
+{
+    $location = (string) $response->headers->get('Location');
+    expect($location)->toStartWith(SocialLogins::APP_REDIRECT.'?');
+    parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+    return $query;
+}
+
+it('lists the providers and whether the server has their settings', function () {
+    $this->getJson('/api/v1/auth/social')->assertOk()->assertExactJson(['data' => [
+        ['provider' => 'google', 'name' => 'Google', 'available' => true],
+        ['provider' => 'apple', 'name' => 'Apple', 'available' => false],
+    ]]);
+});
+
+it('sends the browser to Google with its own state, and only back to the app', function () {
+    [, $challenge] = pkce();
+
+    $location = $this->get('/api/v1/auth/social/google?'.http_build_query([
+        'redirect_uri' => SocialLogins::APP_REDIRECT, 'code_challenge' => $challenge,
+    ]))->assertRedirect()->headers->get('Location');
+
+    expect($location)->toStartWith('https://accounts.google.com/o/oauth2/v2/auth?')
+        ->toContain('client_id=google-client.apps.googleusercontent.com')
+        ->toContain('scope=openid%20email%20profile')
+        ->toContain('redirect_uri='.rawurlencode('https://api.vixeo.test/api/v1/auth/social/google/callback'))
+        ->not->toContain($challenge);
+
+    // Never a website, never another port of another host.
+    foreach (['https://evil.example/auth', 'http://localhost:5000/auth', 'http://127.0.0.1:80/auth', 'http://127.0.0.1:5000/x', 'app.vixeo://other'] as $redirect) {
+        $this->getJson('/api/v1/auth/social/google?'.http_build_query(['redirect_uri' => $redirect, 'code_challenge' => $challenge]))
+            ->assertUnprocessable()->assertJsonValidationErrors('redirect_uri');
+    }
+    $this->getJson('/api/v1/auth/social/google?'.http_build_query(['redirect_uri' => SocialLogins::APP_REDIRECT, 'code_challenge' => 'short']))
+        ->assertJsonValidationErrors('code_challenge');
+    $this->getJson('/api/v1/auth/social/facebook?'.http_build_query(['redirect_uri' => SocialLogins::APP_REDIRECT, 'code_challenge' => $challenge]))
+        ->assertNotFound();
+    // Windows: a server of the app on the device.
+    $this->get('/api/v1/auth/social/google?'.http_build_query(['redirect_uri' => 'http://127.0.0.1:53123/auth', 'code_challenge' => $challenge]))
+        ->assertRedirect();
+});
+
+it('sends the app back an error when the server has no settings for the provider', function () {
+    [, $challenge] = pkce();
+
+    $this->get('/api/v1/auth/social/apple?'.http_build_query(['redirect_uri' => SocialLogins::APP_REDIRECT, 'code_challenge' => $challenge]))
+        ->assertRedirect(SocialLogins::APP_REDIRECT.'?error=unavailable');
+});
+
+it('creates an account with Google, its first profile, then the token for the code and the secret', function () {
+    Mail::fake();
+    [$verifier, $challenge] = pkce();
+    $state = startSignIn($this, 'google', $challenge);
+    googleAnswers(['sub' => '1098', 'email' => 'lea@gmail.com', 'email_verified' => true, 'name' => 'Léa Martin']);
+
+    $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=google-code")->assertStatus(303));
+    Http::assertSent(fn (HttpRequest $request) => $request['code'] === 'google-code'
+        && $request['client_secret'] === 'google-secret'
+        && $request['redirect_uri'] === 'https://api.vixeo.test/api/v1/auth/social/google/callback');
+
+    $response = $this->postJson('/api/v1/auth/social/token', [
+        'code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8',
+    ])->assertOk()
+        ->assertJsonPath('created', true)
+        ->assertJsonPath('password_removed', false)
+        ->assertJsonPath('user.email', 'lea@gmail.com')
+        ->assertJsonPath('user.email_verified', true)
+        ->assertJsonPath('user.has_password', false)
+        ->assertJsonPath('user.providers', ['google']);
+
+    $user = User::where('email', 'lea@gmail.com')->firstOrFail();
+    expect($user->name)->toBe('Léa Martin')
+        ->and($user->password)->toBeNull()
+        ->and($user->profiles)->toHaveCount(1)
+        ->and($user->profiles->first()->avatar)->not->toBeNull()
+        ->and($user->profiles->first()->cover)->not->toBeNull()
+        ->and($user->profiles->first()->username)->toStartWith('lea_martin_')
+        ->and($user->tokens()->first()->name)->toBe('Pixel 8');
+    $this->withToken($response->json('token'))->getJson('/api/v1/me')->assertOk();
+
+    // The code works once.
+    $this->postJson('/api/v1/auth/social/token', [
+        'code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8',
+    ])->assertUnprocessable()->assertJsonValidationErrors('code');
+
+    // Again: the same account, found by Google's identifier (its address may change).
+    $state = startSignIn($this, 'google', $challenge);
+    googleAnswers(['sub' => '1098', 'email' => 'lea.martin@gmail.com', 'email_verified' => true]);
+    $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=again"));
+    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'PC'])
+        ->assertOk()->assertJsonPath('created', false)->assertJsonPath('user.id', $user->id);
+    expect(User::count())->toBe(1)
+        ->and(SocialAccount::sole()->email)->toBe('lea.martin@gmail.com');
+});
+
+it('gives no token without the secret that started the sign-in', function () {
+    [, $challenge] = pkce();
+    [$otherVerifier] = pkce();
+    $state = startSignIn($this, 'google', $challenge);
+    googleAnswers(['sub' => '1', 'email' => 'lea@gmail.com', 'email_verified' => true]);
+    $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c"));
+
+    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $otherVerifier, 'device_name' => 'X'])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.code.0', 'Cette connexion a expiré. Recommencez.');
+});
+
+it('links Google to the account of its address, and keeps its password when the address was proved', function () {
+    $user = User::factory()->create(['email' => 'davy@gmail.com', 'password' => 'secret-password']);
+    Sanctum::actingAs($user);
+    $user->createToken('TV');
+    [$verifier, $challenge] = pkce();
+    $state = startSignIn($this, 'google', $challenge);
+    googleAnswers(['sub' => '77', 'email' => 'Davy@Gmail.com', 'email_verified' => true]);
+
+    $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c"));
+    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
+        ->assertOk()
+        ->assertJsonPath('created', false)
+        ->assertJsonPath('password_removed', false)
+        ->assertJsonPath('user.id', $user->id)
+        ->assertJsonPath('user.has_password', true);
+
+    expect($user->fresh()->tokens()->where('name', 'TV')->exists())->toBeTrue()
+        ->and(SocialAccount::where('user_id', $user->id)->sole()->subject)->toBe('77');
+});
+
+it('removes the password and the sessions of an account whose address nobody had proved', function () {
+    // Someone may have signed up with this address before its owner came with Google.
+    $user = User::factory()->unverified()->create(['email' => 'lea@gmail.com', 'password' => 'their-password']);
+    $user->createToken('Their phone');
+    [$verifier, $challenge] = pkce();
+    $state = startSignIn($this, 'google', $challenge);
+    googleAnswers(['sub' => '5', 'email' => 'lea@gmail.com', 'email_verified' => true]);
+
+    $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c"));
+    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
+        ->assertOk()
+        ->assertJsonPath('password_removed', true)
+        ->assertJsonPath('user.has_password', false)
+        ->assertJsonPath('user.email_verified', true);
+
+    $user->refresh();
+    expect($user->password)->toBeNull()
+        ->and($user->tokens()->where('name', 'Their phone')->exists())->toBeFalse();
+    $this->postJson('/api/v1/auth/login', ['email' => 'lea@gmail.com', 'password' => 'their-password', 'device_name' => 'X'])
+        ->assertUnprocessable();
+});
+
+it('refuses an address Google did not check, when it belongs to an account', function () {
+    User::factory()->create(['email' => 'lea@example.com']);
+    [, $challenge] = pkce();
+    $state = startSignIn($this, 'google', $challenge);
+    googleAnswers(['sub' => '5', 'email' => 'lea@example.com', 'email_verified' => false]);
+
+    expect(backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c")))
+        ->toBe(['error' => 'unverified']);
+    expect(SocialAccount::count())->toBe(0);
+});
+
+it('sends the app back « cancelled », « failed », and a page for a sign-in that has expired', function () {
+    [, $challenge] = pkce();
+
+    $state = startSignIn($this, 'google', $challenge);
+    expect(backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&error=access_denied")))
+        ->toBe(['error' => 'cancelled']);
+
+    $state = startSignIn($this, 'google', $challenge);
+    Http::fake(['oauth2.googleapis.com/token' => Http::response(['error' => 'invalid_grant'], 400)]);
+    expect(backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c")))
+        ->toBe(['error' => 'failed']);
+
+    // The state is used: a second time is a page, not the app.
+    $this->get("/api/v1/auth/social/google/callback?state={$state}&code=c")
+        ->assertStatus(410)
+        ->assertSee('Cette connexion a expiré');
+    $this->get('/api/v1/auth/social/google/callback?state=unknown&code=c')->assertStatus(410);
+    // A state of Google is not one of Apple.
+    $state = startSignIn($this, 'google', $challenge);
+    $this->post('/api/v1/auth/social/apple/callback', ['state' => $state, 'code' => 'c'])->assertStatus(410);
+});
+
+it('signs in with Apple: a form posted back, a client secret signed with the key, the name of the first time', function () {
+    $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+    openssl_pkey_export($key, $pem);
+    config([
+        'services.apple.client_id' => 'app.vixeo.signin',
+        'services.apple.team_id' => 'TEAM123456',
+        'services.apple.key_id' => 'KEY1234567',
+        'services.apple.private_key' => 'base64:'.base64_encode($pem),
+    ]);
+    $this->getJson('/api/v1/auth/social')->assertJsonPath('data.1.available', true);
+
+    [$verifier, $challenge] = pkce();
+    $location = $this->get('/api/v1/auth/social/apple?'.http_build_query(['redirect_uri' => SocialLogins::APP_REDIRECT, 'code_challenge' => $challenge]))
+        ->headers->get('Location');
+    expect($location)->toStartWith('https://appleid.apple.com/auth/authorize?')
+        ->toContain('response_mode=form_post')
+        ->toContain('scope=name%20email');
+    parse_str((string) parse_url($location, PHP_URL_QUERY), $start);
+
+    Http::fake(['appleid.apple.com/auth/token' => Http::response(['id_token' => idToken([
+        'iss' => 'https://appleid.apple.com',
+        'aud' => 'app.vixeo.signin',
+        'exp' => time() + 600,
+        'sub' => '001234.abcdef.1234',
+        'email' => 'x7k2@privaterelay.appleid.com',
+        'email_verified' => 'true',
+    ])])]);
+
+    $response = $this->post('/api/v1/auth/social/apple/callback', [
+        'state' => $start['state'],
+        'code' => 'apple-code',
+        'user' => json_encode(['name' => ['firstName' => 'Tom', 'lastName' => 'Durand'], 'email' => 'x7k2@privaterelay.appleid.com']),
+    ])->assertStatus(303);
+    $query = backQuery($response);
+
+    // The client secret: ES256, signed by the team's key, for this Services ID.
+    Http::assertSent(function (HttpRequest $request) use ($key) {
+        [$header, $claims, $signature] = explode('.', $request['client_secret']);
+        $raw = base64_decode(strtr($signature, '-_', '+/'));
+        $integer = fn (string $bytes) => ($bytes = ltrim($bytes, "\0")) !== '' && ord($bytes[0]) > 0x7F ? "\0".$bytes : ($bytes ?: "\0");
+        [$r, $s] = [$integer(substr($raw, 0, 32)), $integer(substr($raw, 32))];
+        $der = "\x30".chr(4 + strlen($r) + strlen($s))."\x02".chr(strlen($r)).$r."\x02".chr(strlen($s)).$s;
+        $payload = json_decode(base64_decode(strtr($claims, '-_', '+/')), true);
+
+        return strlen($raw) === 64
+            && openssl_verify("{$header}.{$claims}", $der, openssl_pkey_get_details($key)['key'], OPENSSL_ALGO_SHA256) === 1
+            && json_decode(base64_decode(strtr($header, '-_', '+/')), true) === ['alg' => 'ES256', 'kid' => 'KEY1234567', 'typ' => 'JWT']
+            && $payload['iss'] === 'TEAM123456' && $payload['sub'] === 'app.vixeo.signin' && $payload['aud'] === 'https://appleid.apple.com'
+            && $request['code'] === 'apple-code';
+    });
+
+    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8'])
+        ->assertOk()
+        ->assertJsonPath('created', true)
+        ->assertJsonPath('user.name', 'Tom Durand')
+        ->assertJsonPath('user.providers', ['apple']);
+});
+
+it('names an account of an Apple relay address without its name « Moi »', function () {
+    $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+    openssl_pkey_export($key, $pem);
+    config([
+        'services.apple.client_id' => 'app.vixeo.signin', 'services.apple.team_id' => 'T',
+        'services.apple.key_id' => 'K', 'services.apple.private_key' => $pem,
+    ]);
+    [$verifier, $challenge] = pkce();
+    $state = startSignIn($this, 'apple', $challenge);
+    Http::fake(['appleid.apple.com/auth/token' => Http::response(['id_token' => idToken([
+        'iss' => 'https://appleid.apple.com', 'aud' => 'app.vixeo.signin', 'exp' => time() + 600,
+        'sub' => 'apple-sub', 'email' => 'q9@privaterelay.appleid.com', 'email_verified' => true,
+    ])])]);
+
+    $query = backQuery($this->post('/api/v1/auth/social/apple/callback', ['state' => $state, 'code' => 'c']));
+    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
+        ->assertJsonPath('user.name', 'Moi');
+});
+
+it('lets an account without a password create one, and be deleted without one', function () {
+    $user = User::factory()->create(['password' => null]);
+    SocialAccount::create(['user_id' => $user->id, 'provider' => 'google', 'subject' => '1', 'email' => $user->email]);
+    Sanctum::actingAs($user);
+
+    // The address changes once there is a password.
+    $this->postJson('/api/v1/me/email', ['email' => 'new@example.com'])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.password.0', 'Créez d’abord un mot de passe dans « Mon compte ».');
+
+    $this->postJson('/api/v1/me/password', ['password' => 'a-new-password'])->assertNoContent();
+    expect($user->fresh()->hasPassword())->toBeTrue();
+    // Now the current one is asked.
+    $this->postJson('/api/v1/me/password', ['password' => 'another-password'])
+        ->assertJsonValidationErrors('current_password');
+
+    $other = User::factory()->create(['password' => null]);
+    SocialAccount::create(['user_id' => $other->id, 'provider' => 'apple', 'subject' => '2']);
+    Sanctum::actingAs($other);
+    $this->postJson('/api/v1/me/delete')->assertNoContent();
+    expect(User::find($other->id))->toBeNull()
+        ->and(SocialAccount::where('subject', '2')->exists())->toBeFalse();
+});
+
+it('proves the address with the code of « Mot de passe oublié »', function () {
+    Mail::fake();
+    $user = User::factory()->unverified()->create(['email' => 'davy@example.com']);
+    DB::table('password_reset_tokens')->insert([
+        'email' => 'davy@example.com', 'token' => Hash::make('123456'), 'created_at' => now(),
+    ]);
+
+    $this->postJson('/api/v1/auth/password/reset', [
+        'email' => 'davy@example.com', 'code' => '123456', 'password' => 'a-new-password', 'device_name' => 'Pixel 8',
+    ])->assertSuccessful();
+
+    expect($user->fresh()->email_verified_at)->not->toBeNull();
+});

@@ -15,6 +15,7 @@ use App\Models\ProfileSearch;
 use App\Models\PushDevice;
 use App\Models\Report;
 use App\Models\ReviewLike;
+use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialNotification;
 use App\Models\TmdbRating;
@@ -39,6 +40,13 @@ class AccountExport
                 'email' => $user->email,
                 'created_at' => $user->created_at?->toIso8601String(),
                 'parental_control' => $user->hasParentalControl(),
+                'has_password' => $user->hasPassword(),
+                // « Continuer avec Google / Apple ».
+                'linked_accounts' => SocialAccount::query()->where('user_id', $user->id)->orderBy('id')->get()->map(fn (SocialAccount $account) => [
+                    'provider' => $account->provider,
+                    'email' => $account->email,
+                    'linked_at' => $account->created_at?->toIso8601String(),
+                ])->all(),
             ],
             'profiles' => $user->profiles()->with(['items', 'searches', 'tmdbRatings', 'episodeNotifications'])->get()->map(fn (Profile $p) => [
                 'name' => $p->name,

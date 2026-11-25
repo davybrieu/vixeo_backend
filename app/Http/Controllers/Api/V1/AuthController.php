@@ -6,16 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Resources\V1\UserResource;
-use App\Models\Profile;
 use App\Models\User;
-use App\Services\AvatarCatalog;
-use App\Services\CoverCatalog;
+use App\Services\Accounts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -31,20 +27,14 @@ class AuthController extends Controller
      *
      * @unauthenticated
      */
-    public function register(RegisterRequest $request, AvatarCatalog $avatars, CoverCatalog $covers): JsonResponse
+    public function register(RegisterRequest $request, Accounts $accounts): JsonResponse
     {
-        $user = DB::transaction(function () use ($request, $avatars, $covers) {
-            $user = User::create($request->safe()->only(['name', 'email', 'password']));
-            // The first profile gets an avatar and a cover of the catalogs, at random.
-            $user->profiles()->create([
-                'name' => $user->name,
-                'username' => $request->validated('username') ?? $this->uniqueUsername($user->name),
-                'avatar' => $avatars->randomId(),
-                'cover' => $covers->randomId(),
-            ]);
-
-            return $user;
-        });
+        $user = $accounts->create(
+            $request->validated('name'),
+            $request->validated('email'),
+            $request->validated('password'),
+            $request->validated('username'),
+        );
 
         return $this->tokenResponse($user, $request->validated('device_name'), Response::HTTP_CREATED);
     }
@@ -83,16 +73,6 @@ class AuthController extends Controller
     public function me(Request $request): UserResource
     {
         return new UserResource($request->user());
-    }
-
-    private function uniqueUsername(string $name): string
-    {
-        $base = Str::limit(Str::lower(Str::slug($name, '_')) ?: 'membre', 22, '');
-        do {
-            $username = $base.'_'.Str::lower(Str::random(6));
-        } while (Profile::query()->where('username', $username)->exists());
-
-        return $username;
     }
 
     private function tokenResponse(User $user, string $deviceName, int $status = Response::HTTP_OK): JsonResponse

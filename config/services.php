@@ -119,6 +119,27 @@ return [
     ],
 
     /*
+    | « Continuer avec Google / Apple » (docs/connexion-sociale.md): the API is the OAuth client,
+    | the apps never see these settings. Empty: the button says the sign-in isn't available yet.
+    | Google: a « Web application » OAuth client, redirect URI
+    | {API_URL}/api/v1/auth/social/google/callback.
+    | Apple: a Services ID (client_id) of the team, return URL
+    | {API_URL}/api/v1/auth/social/apple/callback, and a « Sign in with Apple » key: its id and
+    | the .p8 file (a path out of the repository, "base64:…" or the PEM itself).
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    ],
+
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key' => env('APPLE_PRIVATE_KEY'),
+    ],
+
+    /*
     | Vavoo live TV (docs/lecture.md). Vavoo's MediaHubMX API is signed with an "addonSig"
     | obtained from a ping endpoint; mirrors and signature stay on the server, apps only get
     | the resolved HLS URL and the User-Agent to send. Mirrors and versions are ONYX's.

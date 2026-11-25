@@ -79,7 +79,8 @@ class PasswordResets
         }
 
         DB::transaction(function () use ($user, $password) {
-            $user->forceFill(['password' => $password])->save();
+            // The code came to this address: it is the account's owner's (SocialLogin\SocialLogins).
+            $user->forceFill(['password' => $password, 'email_verified_at' => $user->email_verified_at ?? now()])->save();
             $user->tokens()->delete();
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
         });

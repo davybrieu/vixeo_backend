@@ -48,7 +48,10 @@ it('never documents secrets as query parameters (they would end up in server log
     foreach ($spec['paths'] as $url => $operations) {
         foreach ($operations as $method => $operation) {
             foreach ($operation['parameters'] ?? [] as $parameter) {
-                if ($parameter['in'] === 'query' && preg_match('/pin|password|token|secret|code/i', $parameter['name'])) {
+                // PKCE (« Continuer avec Google / Apple »): the hash of a secret the app keeps,
+                // public by design (RFC 7636), in the address a browser opens.
+                $public = in_array($parameter['name'], ['code_challenge', 'code_challenge_method'], true);
+                if ($parameter['in'] === 'query' && ! $public && preg_match('/pin|password|token|secret|code/i', $parameter['name'])) {
                     $leaks[] = strtoupper($method)." {$url} ?{$parameter['name']}";
                 }
             }

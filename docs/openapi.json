@@ -427,6 +427,213 @@
                 "security": []
             }
         },
+        "/v1/auth/social": {
+            "get": {
+                "operationId": "v1.auth.social.index",
+                "description": "`available`: the server has its settings; otherwise the app says the sign-in isn't\navailable yet, without opening the browser.",
+                "summary": "List the sign-in providers",
+                "tags": [
+                    "Authentification",
+                    "SocialLogin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/social/token": {
+            "post": {
+                "operationId": "v1.auth.social.token",
+                "description": "The code the browser brought back and the secret of the `code_challenge`. Same answer as\n`auth/login`, plus `created` (a new account, with its first profile) and `password_removed`\n(the account had this address but nobody had ever proved it was theirs: its password and\nits other devices were removed).",
+                "summary": "Get a token with the code",
+                "tags": [
+                    "Authentification",
+                    "SocialLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SocialLoginTokenRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string",
+                                            "description": "Bearer token to send in the `Authorization` header."
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        },
+                                        "created": {
+                                            "type": "boolean",
+                                            "description": "A new account (and its first profile)."
+                                        },
+                                        "password_removed": {
+                                            "type": "boolean",
+                                            "description": "The account's password and other devices were removed (an address nobody had proved)."
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "user",
+                                        "created",
+                                        "password_removed"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/social/{provider}": {
+            "get": {
+                "operationId": "v1.auth.social.start",
+                "description": "Opened by the app in a browser: sends it to Google or Apple. A provider the server isn't\nset up for sends it straight back to `redirect_uri` with `?error=unavailable`.",
+                "summary": "Start a sign-in (in a browser)",
+                "tags": [
+                    "Authentification",
+                    "SocialLogin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "redirect_uri",
+                        "in": "query",
+                        "required": true,
+                        "description": "Where the browser comes back with the code: `app.vixeo://auth` (Android, iOS) or\n`http://127.0.0.1:{port}/auth` (Windows, a server of the app on the device).",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "code_challenge",
+                        "in": "query",
+                        "required": true,
+                        "description": "PKCE (RFC 7636): base64url of the SHA-256 of a secret the app keeps (`code_verifier`).",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                        }
+                    },
+                    {
+                        "name": "code_challenge_method",
+                        "in": "query",
+                        "description": "Only `S256`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "S256"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "",
+                        "headers": {
+                            "Location": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/social/{provider}/callback": {
+            "get": {
+                "operationId": "v1.auth.social.callback",
+                "description": "Called by the provider (Google: GET; Apple: POST, `form_post`), never by the app. Sends the\nbrowser back to the app's `redirect_uri` with `?code=` (5 minutes, once) or `?error=`\n(`cancelled`, `failed`, `email`: no address, `unverified`: the provider didn't check the\naddress of an existing account). A sign-in that has expired gets a page saying so.",
+                "summary": "Come back from Google or Apple (in the browser)",
+                "tags": [
+                    "Authentification",
+                    "SocialLogin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "303": {
+                        "description": "",
+                        "headers": {
+                            "Location": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/device/token": {
             "post": {
                 "operationId": "v1.auth.device.poll",
@@ -2790,7 +2997,7 @@
         "/v1/me/delete": {
             "post": {
                 "operationId": "v1.me.delete",
-                "description": "Deletes the account, its profiles, their list, progress and history, and signs out every\ndevice. Cannot be undone. The password is sent in the body (POST, not DELETE: never a\nsecret in a URL).",
+                "description": "Deletes the account, its profiles, their list, progress and history, and signs out every\ndevice. Cannot be undone. The password is sent in the body (POST, not DELETE: never a\nsecret in a URL); an account without a password (Google, Apple) sends none.",
                 "summary": "Delete the account",
                 "tags": [
                     "Compte",
@@ -2822,7 +3029,7 @@
         "/v1/me/email": {
             "post": {
                 "operationId": "v1.me.email",
-                "description": "Confirmed with the account password. The address is used to sign in and to receive the\npassword reset codes; a pending reset code for the old address is cancelled. 5 tries per\nminute (wrong password: 422).",
+                "description": "Confirmed with the account password. The address is used to sign in and to receive the\npassword reset codes; a pending reset code for the old address is cancelled. 5 tries per\nminute (wrong password: 422). An account without a password (Google, Apple) creates one\nfirst (422 on `password`).",
                 "summary": "Change the e-mail address",
                 "tags": [
                     "Compte",
@@ -2869,7 +3076,7 @@
         "/v1/me/password": {
             "post": {
                 "operationId": "v1.me.password",
-                "description": "Confirmed with the current password. Every other device is signed out; this one stays\nsigned in. 5 tries per minute (wrong password: 422).",
+                "description": "Confirmed with the current password. Every other device is signed out; this one stays\nsigned in. 5 tries per minute (wrong password: 422). An account without a password (created\nwith Google or Apple, `has_password` false) creates its first one: no `current_password`.",
                 "summary": "Change the password",
                 "tags": [
                     "Compte",
@@ -11984,7 +12191,7 @@
                 "properties": {
                     "password": {
                         "type": "string",
-                        "description": "The account password, to confirm."
+                        "description": "The account password, to confirm. Not asked of an account without a password (`has_password`: Google, Apple)."
                     }
                 },
                 "required": [
@@ -14667,6 +14874,32 @@
                 ],
                 "title": "SkipSegmentsResource"
             },
+            "SocialLoginTokenRequest": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "The code the browser brought back to the app (`?code=`).",
+                        "maxLength": 100
+                    },
+                    "code_verifier": {
+                        "type": "string",
+                        "description": "The secret whose hash was sent as `code_challenge` (43 to 128 characters).",
+                        "pattern": "^[A-Za-z0-9._~-]{43,128}$"
+                    },
+                    "device_name": {
+                        "type": "string",
+                        "description": "Free label identifying the device, e.g. \"Pixel 8\" or \"PC du salon\".",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "code",
+                    "code_verifier",
+                    "device_name"
+                ],
+                "title": "SocialLoginTokenRequest"
+            },
             "SubtitleResource": {
                 "type": "object",
                 "properties": {
@@ -14972,7 +15205,7 @@
                     },
                     "password": {
                         "type": "string",
-                        "description": "The account password, to confirm."
+                        "description": "The account password, to confirm. An account without a password (`has_password`) creates one first."
                     }
                 },
                 "required": [
@@ -14986,7 +15219,7 @@
                 "properties": {
                     "current_password": {
                         "type": "string",
-                        "description": "The password in use, to confirm."
+                        "description": "The password in use, to confirm. Not asked of an account without a password (`has_password`): it creates its first one."
                     },
                     "password": {
                         "type": "string",
@@ -15014,6 +15247,17 @@
                     "email_verified": {
                         "type": "boolean"
                     },
+                    "has_password": {
+                        "type": "boolean",
+                        "description": "False for an account created with Google or Apple that never chose a password: \u00ab Mon compte \u00bb offers to create one."
+                    },
+                    "providers": {
+                        "type": "array",
+                        "description": "Google and Apple accounts linked to this one (\u00ab Continuer avec\u2026 \u00bb).",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "parental_control": {
                         "type": "boolean",
                         "description": "A parental PIN is set (see /parental-control)."
@@ -15031,6 +15275,8 @@
                     "name",
                     "email",
                     "email_verified",
+                    "has_password",
+                    "providers",
                     "parental_control",
                     "created_at"
                 ],
