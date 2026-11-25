@@ -45,11 +45,6 @@ class ProfileItemResource extends JsonResource
             'liked_at' => $this->liked_at,
             'liked_changed_at' => $this->liked_changed_at,
 
-            /** A followed person (type "person"). */
-            'is_followed' => $this->is_followed,
-            'followed_at' => $this->followed_at,
-            'followed_changed_at' => $this->followed_changed_at,
-
             'updated_at' => $this->updated_at,
         ];
     }
