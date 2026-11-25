@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\MediaType;
+use App\Models\User;
 use App\Services\Ratings\MdbListRatings;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     config([
@@ -13,6 +15,7 @@ beforeEach(function () {
         'services.mdblist.daily_requests' => 900,
     ]);
     Http::preventStrayRequests();
+    Sanctum::actingAs(User::factory()->create());
 });
 
 /** An MDBList title as its batch answers it. */
