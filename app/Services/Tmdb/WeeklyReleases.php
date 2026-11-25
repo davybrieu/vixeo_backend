@@ -30,7 +30,18 @@ class WeeklyReleases
     {
         $key = "vixeo:weekly-releases:{$from}:{$to}";
 
-        $items = Cache::remember($key, now()->addHours(12), fn () => $this->aggregate($from, $to));
+        $staleKey = "{$key}:stale";
+
+        try {
+            $items = Cache::remember($key, now()->addHours(12), fn () => $this->aggregate($from, $to));
+            // Keep a longer-lived copy so a temporary TMDb outage does not blank the calendar.
+            Cache::put($staleKey, $items, now()->addDays(7));
+        } catch (TmdbUnavailableException $exception) {
+            $items = Cache::get($staleKey);
+            if (! is_array($items)) {
+                throw $exception;
+            }
+        }
 
         return array_values(array_filter(
             $items,
@@ -50,6 +61,7 @@ class WeeklyReleases
             Cache::forget("vixeo:weekly-releases:{$from}:{$to}");
             $items = $this->aggregate($from, $to);
             Cache::put("vixeo:weekly-releases:{$from}:{$to}", $items, now()->addHours(24));
+            Cache::put("vixeo:weekly-releases:{$from}:{$to}:stale", $items, now()->addDays(7));
             $refreshed[] = ['from' => $from, 'to' => $to, 'count' => count($items)];
         }
 
