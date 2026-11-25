@@ -20,6 +20,7 @@ class WeeklyReleases
     public function __construct(
         private TmdbClient $tmdb,
         private UpcomingEpisodes $episodes,
+        private TitleSummaries $summaries,
     ) {}
 
     /**
@@ -266,6 +267,13 @@ class WeeklyReleases
             return [];
         }
 
+        // Past weeks need season lookup based on TMDb season air dates: last_episode_to_air now
+        // points beyond the selected week. For current/future weeks, reuse the existing optimized
+        // next/last-episode helper.
+        if ($to->lt(CarbonImmutable::now('UTC')->startOfDay())) {
+            return $this->pastEpisodes($ids, $from, $to);
+        }
+
         // The existing helper estimates release instants by network timezone. Widen the instant
         // window, then select by TMDb's literal air_date so a UTC conversion never changes a day.
         $episodes = $this->episodes->availableBetween(
@@ -302,6 +310,74 @@ class WeeklyReleases
                     'season_number' => $season,
                     'episode_number' => $number,
                     'navigation' => ['type' => 'tv', 'id' => (int) $showId],
+                ];
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Episodes from previous weeks. Discover's air-date query has already narrowed the candidate
+     * shows; inspect only the season summaries of those shows and fetch seasons whose date window
+     * intersects the requested period (normally one or two seasons per show).
+     *
+     * @param  list<int>  $ids
+     * @return list<array<string, mixed>>
+     */
+    private function pastEpisodes(array $ids, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $seasons = [];
+        foreach ($this->summaries->shows($ids) as $showId => $show) {
+            if ($show === null) {
+                continue;
+            }
+            $list = TmdbFormat::array($show, 'seasons');
+            usort($list, fn (array $a, array $b) => (TmdbFormat::string($a, 'air_date') ?? '9999-99-99')
+                <=> (TmdbFormat::string($b, 'air_date') ?? '9999-99-99'));
+
+            foreach ($list as $index => $season) {
+                $date = TmdbFormat::string($season, 'air_date');
+                $nextDate = isset($list[$index + 1]) ? TmdbFormat::string($list[$index + 1], 'air_date') : null;
+                if ($date === null || $date > $to->toDateString() || ($nextDate !== null && $nextDate <= $from->toDateString())) {
+                    continue;
+                }
+                $number = (int) ($season['season_number'] ?? 0);
+                $path = "tv/{$showId}/season/{$number}";
+                $seasons[$path] = ['show' => $show, 'show_id' => (int) $showId];
+            }
+        }
+
+        $responses = $seasons === [] ? [] : $this->tmdb->getMany(array_keys($seasons), 'details', 8);
+        $items = [];
+        foreach ($seasons as $path => $data) {
+            $show = $data['show'];
+            foreach (TmdbFormat::array($responses[$path] ?? [], 'episodes') as $episode) {
+                if (! is_array($episode)) {
+                    continue;
+                }
+                $date = TmdbFormat::string($episode, 'air_date');
+                if ($date === null || $date < $from->toDateString() || $date > $to->toDateString()) {
+                    continue;
+                }
+                $showId = $data['show_id'];
+                $items[] = [
+                    'type' => 'episode',
+                    'media_type' => 'tv',
+                    'tmdb_id' => $showId,
+                    'id' => $showId,
+                    'episode_id' => (int) ($episode['id'] ?? 0),
+                    'title' => (string) ($show['name'] ?? 'Série inconnue'),
+                    'episode_name' => TmdbFormat::string($episode, 'name'),
+                    'poster_url' => TmdbFormat::image(TmdbFormat::string($show, 'poster_path'), 'w342'),
+                    'release_date' => $date,
+                    'release_type' => 'Épisode',
+                    'country' => TmdbFormat::array($show, 'origin_country')[0] ?? null,
+                    'country_code' => TmdbFormat::array($show, 'origin_country')[0] ?? null,
+                    'overview' => TmdbFormat::string($episode, 'overview'),
+                    'season_number' => (int) ($episode['season_number'] ?? 0),
+                    'episode_number' => (int) ($episode['episode_number'] ?? 0),
+                    'navigation' => ['type' => 'tv', 'id' => $showId],
                 ];
             }
         }
