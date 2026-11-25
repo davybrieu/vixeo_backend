@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Cron\CronExpression;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Client\Request;
@@ -15,6 +16,7 @@ beforeEach(function () {
     ]);
     Http::preventStrayRequests();
     Sleep::fake();
+    Sanctum::actingAs(User::factory()->create());
 });
 
 /**
