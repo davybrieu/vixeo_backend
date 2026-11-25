@@ -239,7 +239,11 @@ class WeeklyReleases
         $known = ProfileItem::query()
             ->where('source', 'tmdb')
             ->where('type', 'tv')
-            ->distinct()
+            ->where(fn ($query) => $query->where('is_favorite', true)
+                ->orWhere('is_watched', true)
+                ->orWhereNotNull('last_engaged_at'))
+            ->orderByDesc('updated_at')
+            ->limit(200)
             ->pluck('item_id')
             ->map(fn (string $value) => (int) substr($value, strrpos($value, ':') !== false ? strrpos($value, ':') + 1 : 0))
             ->filter(fn (int $id) => $id > 0)
@@ -257,7 +261,7 @@ class WeeklyReleases
             }
         }
 
-        $ids = array_values(array_unique(array_filter($known)));
+        $ids = array_slice(array_values(array_unique(array_filter($known))), 0, 250);
         if ($ids === []) {
             return [];
         }
