@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\SiteController;
 use App\Http\Middleware\ResolveProfile;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
+use App\Models\DiaryEntry;
 use App\Models\MessageBlock;
 use App\Models\Profile;
 use App\Models\ProfileItem;
@@ -461,6 +462,13 @@ class SocialProfileController extends Controller
                 'items as list_count' => fn ($query) => $query->where('is_favorite', true)->whereIn('type', ['movie', 'tv']),
                 'items as liked_count' => fn ($query) => $query->where('is_liked', true)->whereIn('type', ['movie', 'tv']),
                 'items as people_count' => fn ($query) => $query->where('is_followed', true)->where('type', 'person'),
+                'items as episodes_count' => fn ($query) => $query->where('is_watched', true)->where('type', 'episode'),
+            ])->addSelect([
+                // Time watched: the movies and episodes of its diary whose length TMDb knows (a
+                // whole TV show marked watched has no length), as in the year in review.
+                'watch_minutes' => DiaryEntry::query()->selectRaw('coalesce(sum(runtime), 0)')
+                    ->whereColumn('diary_entries.profile_id', 'profiles.id')
+                    ->where(fn ($query) => $query->where('media_type', 'movie')->orWhereNotNull('episode_number')),
             ]))
             ->firstOrFail();
     }
@@ -486,6 +494,10 @@ class SocialProfileController extends Controller
             'following_count' => (int) ($profile->following_count ?? 0),
             'reviews_count' => (int) ($profile->reviews_count ?? 0),
             'watched_count' => (int) ($profile->watched_count ?? 0),
+            /** Episodes watched. */
+            'episodes_count' => (int) ($profile->episodes_count ?? 0),
+            /** Minutes watched: movies and episodes of its diary whose length TMDb knows. */
+            'watch_minutes' => (int) ($profile->watch_minutes ?? 0),
             /** Titles « À voir ». */
             'list_count' => (int) ($profile->list_count ?? 0),
             /** « J'aime » ❤ (movies and TV shows). */

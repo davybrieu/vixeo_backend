@@ -9892,6 +9892,14 @@
                                                 "watched_count": {
                                                     "type": "integer"
                                                 },
+                                                "episodes_count": {
+                                                    "type": "integer",
+                                                    "description": "Episodes watched."
+                                                },
+                                                "watch_minutes": {
+                                                    "type": "integer",
+                                                    "description": "Minutes watched: movies and episodes of its diary whose length TMDb knows."
+                                                },
                                                 "list_count": {
                                                     "type": "integer",
                                                     "description": "Titles \u00ab \u00c0 voir \u00bb."
@@ -10000,6 +10008,8 @@
                                                 "following_count",
                                                 "reviews_count",
                                                 "watched_count",
+                                                "episodes_count",
+                                                "watch_minutes",
                                                 "list_count",
                                                 "liked_count",
                                                 "people_count",

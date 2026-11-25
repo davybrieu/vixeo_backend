@@ -296,7 +296,9 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   avec un pseudo, **jamais le profil actif lui-même** (demande du développeur, 20/11/2026 : on
   ouvre son propre profil par la navigation, « Profil »). Les listes de comptes (recherche,
   abonnés, abonnements) ne donnent que l'identité (`identity`) ; les compteurs (une sous-requête
-  chacun) seulement pour la page d'un membre (`publicProfile(withCounts: true)`).
+  chacun) seulement pour la page d'un membre (`publicProfile(withCounts: true)`), dont
+  `episodes_count` et `watch_minutes` (temps de visionnage : durées des films et épisodes de
+  `diary_entries`, demande du développeur, 25/11/2026, cartes de chiffres de la page de profil).
   Biographie d'un profil : **160 caractères au plus** (`Profile::BIO_MAX_LENGTH`, demande du
   développeur, 21/11/2026), modifiée par `PUT /profiles/{id}`.
 - **Fonctions sociales** (doc : `docs/social.md`, demande du développeur, 21/11/2026, comme

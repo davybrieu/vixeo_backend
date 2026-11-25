@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\DiaryEntry;
 use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\TmdbRating;
@@ -105,6 +106,36 @@ it('lists a member\'s « Favoris » ❤ and the people they follow, with their c
         ->assertJsonPath('data.liked_count', 2)
         ->assertJsonPath('data.people_count', 1)
         ->assertJsonPath('data.list_count', 1);
+});
+
+it('gives the time watched and the episodes watched of a profile', function () {
+    $entry = fn (array $fields) => DiaryEntry::forceCreate([
+        'profile_id' => $this->member->id, 'title' => 'Titre', 'watched_at' => now(), ...$fields,
+    ]);
+    $entry(['media_type' => 'movie', 'tmdb_id' => 550, 'runtime' => 139]);
+    // Seen again: watched twice.
+    $entry(['media_type' => 'movie', 'tmdb_id' => 550, 'runtime' => 139, 'rewatch' => true]);
+    $entry(['media_type' => 'tv', 'tmdb_id' => 1399, 'season_number' => 1, 'episode_number' => 1, 'runtime' => 60]);
+    // A whole TV show marked watched, and a movie whose length TMDb does not know: no time.
+    $entry(['media_type' => 'tv', 'tmdb_id' => 1399, 'runtime' => 60]);
+    $entry(['media_type' => 'movie', 'tmdb_id' => 13]);
+    // Another profile's diary.
+    DiaryEntry::forceCreate([
+        'profile_id' => Profile::factory()->for(User::factory())->create()->id,
+        'media_type' => 'movie', 'tmdb_id' => 550, 'title' => 'Fight Club', 'watched_at' => now(), 'runtime' => 139,
+    ]);
+    foreach (['tv:1399:1:1', 'tv:1399:1:2'] as $id) {
+        ProfileItem::forceCreate([
+            'profile_id' => $this->member->id, 'source' => 'tmdb', 'item_id' => $id, 'type' => 'episode',
+            'title' => 'Épisode', 'is_watched' => true, 'watched_at' => now(), 'revision' => 1,
+        ]);
+    }
+
+    $this->getJson('/api/v1/social/profiles/lea')
+        ->assertOk()
+        ->assertJsonPath('data.watch_minutes', 338)
+        ->assertJsonPath('data.episodes_count', 2)
+        ->assertJsonPath('data.watched_count', 0);
 });
 
 it('never gives a profile a username that is a page of the site or of the app', function () {
