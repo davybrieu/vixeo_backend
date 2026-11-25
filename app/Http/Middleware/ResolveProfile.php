@@ -22,9 +22,7 @@ class ResolveProfile
         $id = $request->header(self::HEADER);
 
         if ($id !== null && $id !== '') {
-            // Catalog routes are public for guests, so there is no auth:sanctum middleware
-            // to initialise Request::user(). Resolve Sanctum explicitly when a bearer token
-            // is present, preserving age filtering for signed-in profiles.
+            // Resolve the authenticated account and validate that the selected profile belongs to it.
             $user = $request->user('sanctum') ?? $request->user();
 
             if ($user === null && $request->bearerToken() !== null) {
