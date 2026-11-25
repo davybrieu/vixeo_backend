@@ -13125,15 +13125,6 @@
                 ],
                 "title": "PersonResource"
             },
-            "PosterFormat": {
-                "type": "string",
-                "description": "How a profile wants catalog titles drawn in rows and grids.\n| |\n|---|\n| `portrait` <br/> Vertical poster (2:3). Default. |\n| `landscape` <br/> Horizontal image (16:9). |",
-                "enum": [
-                    "portrait",
-                    "landscape"
-                ],
-                "title": "PosterFormat"
-            },
             "ProfileCoverRequest": {
                 "type": "object",
                 "description": "A profile cover, as a multipart field `cover`.",
@@ -13495,10 +13486,6 @@
                             "nuit-etoilee"
                         ]
                     },
-                    "poster_format": {
-                        "description": "How titles are drawn in rows and grids. Default `portrait`.\n\n| |\n|---|\n| `portrait` <br/> Vertical poster (2:3). Default. |\n| `landscape` <br/> Horizontal image (16:9). |",
-                        "$ref": "#/components/schemas/PosterFormat"
-                    },
                     "is_kid": {
                         "type": "boolean",
                         "description": "Kid profile. Without `max_age_rating`, its age limit is 10."
@@ -13725,9 +13712,6 @@
                         ],
                         "description": "Its own cover (POST /profiles/{id}/cover), shown instead of `cover`; null = `cover`."
                     },
-                    "poster_format": {
-                        "$ref": "#/components/schemas/PosterFormat"
-                    },
                     "is_kid": {
                         "type": "boolean"
                     },
@@ -13825,7 +13809,6 @@
                     "photo_url",
                     "cover",
                     "cover_url",
-                    "poster_format",
                     "is_kid",
                     "max_age_rating",
                     "effective_max_age_rating",

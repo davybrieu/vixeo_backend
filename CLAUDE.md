@@ -492,7 +492,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   saison / personne, recherche groupée et par type, filtres et tri), mis en cache, synchro par profil
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
   contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
-  avatars de profil par licence, format des affiches par profil (`poster_format`), connexion TV
+  avatars de profil par licence, connexion TV
   par code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
   et export des données (RGPD), vérification des mises à jour des applis (releases GitHub).
 - Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage

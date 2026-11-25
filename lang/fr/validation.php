@@ -202,7 +202,6 @@ return [
         'max_age_rating' => 'âge maximum',
         'pin' => 'code PIN',
         'position' => 'position',
-        'poster_format' => 'format des affiches',
         'user_code' => 'code',
         'code' => 'code',
         'platform' => 'plateforme',

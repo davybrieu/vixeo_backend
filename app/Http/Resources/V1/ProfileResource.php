@@ -33,7 +33,6 @@ class ProfileResource extends JsonResource
             'cover' => $this->cover,
             /** Its own cover (POST /profiles/{id}/cover), shown instead of `cover`; null = `cover`. */
             'cover_url' => $this->coverUrl(),
-            'poster_format' => $this->poster_format,
             'is_kid' => $this->is_kid,
             'max_age_rating' => $this->max_age_rating,
             /** Age limit actually applied (kid profile without `max_age_rating`: 10). Null = no limit. */

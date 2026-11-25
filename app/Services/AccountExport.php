@@ -115,7 +115,6 @@ class AccountExport
                 'is_kid' => $p->is_kid,
                 'max_age_rating' => $p->max_age_rating,
                 'allow_unrated' => $p->allow_unrated,
-                'poster_format' => $p->poster_format->value,
                 'audio_language' => $p->audio_language,
                 'subtitle_language' => $p->subtitle_language,
                 'no_spoiler' => $p->no_spoiler,

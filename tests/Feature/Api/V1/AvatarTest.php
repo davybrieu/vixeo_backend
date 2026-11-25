@@ -75,34 +75,30 @@ it('rejects an unknown avatar', function () {
         ->assertJsonPath('errors.avatar.0', "La valeur sélectionnée pour avatar n'est pas valide.");
 });
 
-it('stores the poster format, portrait by default', function () {
-    $this->getJson("/api/v1/profiles/{$this->profile->id}")->assertJsonPath('data.poster_format', 'portrait');
-
+it('has no poster format any more: the apps show vertical posters only', function () {
+    $this->getJson("/api/v1/profiles/{$this->profile->id}")->assertJsonMissingPath('data.poster_format');
+    // An app of before still sends it: ignored.
     $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['poster_format' => 'landscape'])
         ->assertOk()
-        ->assertJsonPath('data.poster_format', 'landscape');
-
-    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['poster_format' => 'square'])
-        ->assertUnprocessable()
-        ->assertJsonPath('errors.poster_format.0', "La valeur sélectionnée pour format des affiches n'est pas valide.");
+        ->assertJsonMissingPath('data.poster_format');
 });
 
-it('does not need the parental PIN to change avatar or poster format', function () {
+it('does not need the parental PIN to change the avatar', function () {
     $this->putJson('/api/v1/parental-control/pin', ['pin' => '9999'])->assertNoContent();
 
-    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['avatar' => 'arcade-cat', 'poster_format' => 'landscape'])
-        ->assertOk();
+    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['avatar' => 'arcade-cat'])->assertOk();
 });
 
 it('gives a new profile an avatar of the catalog at random, unless one is chosen', function () {
     $ids = app(AvatarCatalog::class)->ids();
 
-    $avatar = $this->postJson('/api/v1/profiles', ['name' => 'Léa'])->assertCreated()->json('data.avatar');
+    // Names no factory picks (a first name could be the existing profile's, accents aside on MySQL).
+    $avatar = $this->postJson('/api/v1/profiles', ['name' => 'Léa B.'])->assertCreated()->json('data.avatar');
     expect($ids)->toContain($avatar);
 
-    $this->postJson('/api/v1/profiles', ['name' => 'Tom', 'avatar' => null])->assertCreated()
+    $this->postJson('/api/v1/profiles', ['name' => 'Tom B.', 'avatar' => null])->assertCreated()
         ->assertJsonPath('data.avatar', fn ($a) => in_array($a, $ids, true));
-    $this->postJson('/api/v1/profiles', ['name' => 'Zoé', 'avatar' => 'arcade-cat'])->assertCreated()
+    $this->postJson('/api/v1/profiles', ['name' => 'Zoé B.', 'avatar' => 'arcade-cat'])->assertCreated()
         ->assertJsonPath('data.avatar', 'arcade-cat');
 
     // Not always the same one.
