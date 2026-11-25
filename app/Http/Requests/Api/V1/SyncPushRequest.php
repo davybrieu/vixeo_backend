@@ -60,10 +60,6 @@ class SyncPushRequest extends FormRequest
             'changes.*.liked.value' => ['required_with:changes.*.liked', 'boolean'],
             'changes.*.liked.at' => ['required_with:changes.*.liked', 'date'],
 
-            /** A person (type "person", item id "person:287") followed or no longer followed. */
-            'changes.*.followed' => ['sometimes', 'array:value,at'],
-            'changes.*.followed.value' => ['required_with:changes.*.followed', 'boolean'],
-            'changes.*.followed.at' => ['required_with:changes.*.followed', 'date'],
         ];
     }
 
