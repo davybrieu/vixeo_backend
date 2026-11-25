@@ -80,6 +80,8 @@ class ShowResource extends JsonResource
             'textless_backdrop_path' => $textless,
             'textless_backdrop_url' => F::image($textless, 'w1280'),
             'trailer' => $trailer !== null ? new VideoResource($trailer) : null,
+            /** « Bandes-annonces »: every trailer and teaser on YouTube (20 at most), the best first. */
+            'trailers' => VideoResource::collection(array_slice(F::trailers($r), 0, 20)),
             'creators' => CrewResource::collection(F::array($r, 'created_by')),
             /** « Équipe technique »: the creators, then everyone but the actors (20 max), their jobs in French. */
             'crew' => CrewMemberResource::collection(array_slice(TitleCrew::of($r, MediaType::Tv), 0, 20)),

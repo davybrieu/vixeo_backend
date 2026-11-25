@@ -212,11 +212,24 @@ final class TmdbFormat
      */
     public static function trailer(array $title): ?array
     {
-        $videos = array_filter(
+        return self::trailers($title)[0] ?? null;
+    }
+
+    /**
+     * Every trailer and teaser of a title on YouTube (« Bandes-annonces » of the title page): French
+     * first, then English, then the others; trailers before teasers, official ones first, the
+     * newest first.
+     *
+     * @param  array<string, mixed>  $title
+     * @return list<array<string, mixed>>
+     */
+    public static function trailers(array $title): array
+    {
+        $videos = array_values(array_filter(
             self::array(self::array($title, 'videos'), 'results'),
             fn ($video) => is_array($video) && ($video['site'] ?? null) === 'YouTube'
                 && in_array($video['type'] ?? null, ['Trailer', 'Teaser'], true) && ! empty($video['key']),
-        );
+        ));
 
         $score = fn (array $video) => [
             match ($video['iso_639_1'] ?? null) {
@@ -226,8 +239,10 @@ final class TmdbFormat
             ! empty($video['official']) ? 0 : 1,
         ];
 
-        usort($videos, fn (array $a, array $b) => $score($a) <=> $score($b));
+        // Stable: the newest first within a rank (TMDb's dates sort as strings).
+        usort($videos, fn (array $a, array $b) => [$score($a), (string) ($b['published_at'] ?? '')]
+            <=> [$score($b), (string) ($a['published_at'] ?? '')]);
 
-        return $videos[0] ?? null;
+        return $videos;
     }
 }

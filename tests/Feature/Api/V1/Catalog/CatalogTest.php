@@ -120,7 +120,12 @@ it('returns a movie page', function () {
         ->and($movie['trailer'])->toBe([
             'name' => 'Bande-annonce VF', 'site' => 'YouTube', 'key' => 'fr-trailer',
             'url' => 'https://www.youtube.com/watch?v=fr-trailer', 'language' => 'fr',
+            'type' => 'Trailer', 'thumbnail_url' => 'https://i.ytimg.com/vi/fr-trailer/hqdefault.jpg',
+            'published_at' => null,
         ])
+        // « Bandes-annonces »: every trailer and teaser on YouTube, French first, trailers first.
+        ->and(array_column($movie['trailers'], 'key'))->toBe(['fr-trailer', 'fr-teaser', 'en-trailer'])
+        ->and($movie['trailers'][1]['type'])->toBe('Teaser')
         // No recommendations: similar titles are used instead.
         ->and($movie['recommended'][0]['title'])->toBe('Seven');
 
@@ -145,6 +150,7 @@ it('returns a TV show page', function () {
         'certification' => 'TV-MA',
         'age_rating' => 17,
         'trailer' => null,
+        'trailers' => [],
         'next_episode' => null,
     ])->and($show['cast'][0]['character'])->toBe('Tyrion Lannister')
         ->and($show['creators'][0]['name'])->toBe('David Benioff')

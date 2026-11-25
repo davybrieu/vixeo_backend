@@ -193,6 +193,12 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     réalisation, scénario, musique, photographie, montage, production…, puis par département ;
     série : créateurs d'abord, puis le plus d'épisodes), 20 au plus ; `directors` / `creators`
     restent pour les anciennes applis. « Voir tout » : `credits?group=crew` (20 par page).
+  - **« Bandes-annonces »** (demande du développeur, 25/11/2026 : une rangée sur la fiche à la place
+    du bouton) : la fiche donne `trailers` (`TmdbFormat::trailers` : toutes les bandes-annonces et
+    teasers YouTube de TMDb en français, anglais ou sans langue, le français d'abord, les
+    bandes-annonces avant les teasers, officielles d'abord, les plus récentes d'abord ; 20 au plus ;
+    `VideoResource` : `type`, `thumbnail_url` (image de YouTube `hqdefault`), `published_at`) ;
+    `trailer` (la première) reste pour les anciennes applis.
   - **« Voir tout » des fiches et des personnes** (demande du développeur, 20/11/2026) : la fiche
     ne donne que 20 recommandations et 20 membres de la distribution, la page d'une personne
     **20 titres « Connu pour » et 20 de filmographie** (24/11/2026 ; `TmdbCatalog::PERSON_PAGE`, un

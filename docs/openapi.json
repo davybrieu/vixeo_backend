@@ -13426,6 +13426,13 @@
                             }
                         ]
                     },
+                    "trailers": {
+                        "type": "array",
+                        "description": "\u00ab Bandes-annonces \u00bb: every trailer and teaser on YouTube (20 at most), the best first.",
+                        "items": {
+                            "$ref": "#/components/schemas/VideoResource"
+                        }
+                    },
                     "directors": {
                         "type": "array",
                         "items": {
@@ -13483,6 +13490,7 @@
                     "textless_backdrop_path",
                     "textless_backdrop_url",
                     "trailer",
+                    "trailers",
                     "directors",
                     "crew",
                     "cast",
@@ -15185,6 +15193,13 @@
                             }
                         ]
                     },
+                    "trailers": {
+                        "type": "array",
+                        "description": "\u00ab Bandes-annonces \u00bb: every trailer and teaser on YouTube (20 at most), the best first.",
+                        "items": {
+                            "$ref": "#/components/schemas/VideoResource"
+                        }
+                    },
                     "creators": {
                         "type": "array",
                         "items": {
@@ -15264,6 +15279,7 @@
                     "textless_backdrop_path",
                     "textless_backdrop_url",
                     "trailer",
+                    "trailers",
                     "creators",
                     "crew",
                     "cast",
@@ -15873,6 +15889,25 @@
                             "null"
                         ],
                         "description": "ISO 639-1 language code (\"fr\", \"en\")."
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "`Trailer` (bande-annonce) or `Teaser`.",
+                        "enum": [
+                            "Teaser",
+                            "Trailer"
+                        ]
+                    },
+                    "thumbnail_url": {
+                        "type": "string",
+                        "description": "YouTube's still of the video, 480 \u00d7 360 (a 16:9 picture between black bands)."
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When YouTube published it (ISO 8601), if TMDb knows."
                     }
                 },
                 "required": [
@@ -15880,7 +15915,10 @@
                     "site",
                     "key",
                     "url",
-                    "language"
+                    "language",
+                    "type",
+                    "thumbnail_url",
+                    "published_at"
                 ],
                 "title": "VideoResource"
             }
