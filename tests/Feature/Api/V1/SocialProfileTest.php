@@ -12,6 +12,7 @@ use Laravel\Sanctum\Sanctum;
 beforeEach(function () {
     config(['services.tmdb.image_base_url' => 'https://image.tmdb.org/t/p']);
     $this->member = Profile::factory()->for(User::factory())->create(['username' => 'lea']);
+    Sanctum::actingAs(User::factory()->create());
 });
 
 it('lists a member\'s reviews with the fields of « Mes avis », images included', function () {
