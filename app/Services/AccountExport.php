@@ -170,8 +170,6 @@ class AccountExport
                     'watched_at' => $i->watched_at?->toIso8601String(),
                     'is_liked' => $i->is_liked,
                     'liked_at' => $i->liked_at?->toIso8601String(),
-                    'is_followed' => $i->is_followed,
-                    'followed_at' => $i->followed_at?->toIso8601String(),
                 ])->values()->all(),
             ])->values()->all(),
             // Apps registered for push notifications (their Firebase token is left out).
