@@ -21,7 +21,7 @@ La découverte des épisodes est volontairement progressive : elle ne parcourt p
 
 ## Cache et planification
 
-- Résultat agrégé par période : cache partagé de 12 heures.
+- Résultat agrégé par période : cache partagé de 12 heures, avec une copie de secours conservée 7 jours en cas d'indisponibilité temporaire de TMDB.
 - `php artisan vixeo:releases-sync` rafraîchit la semaine courante et la suivante.
 - Planification quotidienne à 04:20, sans chevauchement et en arrière-plan.
 - Aucune migration : les identifiants de séries existants et le cache Laravel suffisent.
