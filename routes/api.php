@@ -103,7 +103,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('profiles/{username}/list', [SocialProfileController::class, 'favoritesList'])->name('profiles.list');
         Route::get('profiles/{username}/liked', [SocialProfileController::class, 'liked'])->name('profiles.liked');
         Route::get('profiles/{username}/watched', [SocialProfileController::class, 'watched'])->name('profiles.watched');
-        Route::get('profiles/{username}/people', [SocialProfileController::class, 'people'])->name('profiles.people');
         // The social network of movies and TV shows (docs/social.md): activity, lists, the « Bilan
         // de l'année », reviews and their comments, the social part of a title page.
         Route::get('profiles/{username}/activity', [FeedController::class, 'activity'])->name('profiles.activity');
