@@ -131,7 +131,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
     // Catalog metadata, title search and playback helpers require an account. The active profile
     // header is validated and used for age filtering.
-    Route::prefix('catalog')->name('catalog.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
+    Route::prefix('catalog')->name('catalog.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
