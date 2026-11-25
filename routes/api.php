@@ -92,8 +92,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('logo');
     });
 
-    // Public social profile discovery (child profiles are excluded by the controller).
-    Route::prefix('social')->name('social.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
+    // Social profile discovery requires an authenticated account (child profiles are excluded by the controller).
+    Route::prefix('social')->name('social.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('search', [SocialProfileController::class, 'search'])->name('search');
         Route::get('profiles/{username}', [SocialProfileController::class, 'show'])->name('profiles.show');
         Route::get('profiles/{username}/followers', [SocialProfileController::class, 'followers'])->name('profiles.followers');
@@ -117,10 +117,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('report-reasons', [ReportController::class, 'reasons'])->name('reports.reasons');
     });
 
-    // Public browsing and playback: no account or profile is required.
-    // Personal data and profile actions remain inside auth:sanctum below.
+    // Catalog browsing, search and playback metadata require an authenticated account.
+    // Raw media proxy URLs and static image assets above remain public because players load them without bearer headers.
     // Live TV, provider-neutral: credentials, mirrors and signatures stay server-side.
-    Route::prefix('tv')->name('tv.')->middleware('throttle:catalog')->group(function () {
+    Route::prefix('tv')->name('tv.')->middleware(['auth:sanctum', 'throttle:catalog'])->group(function () {
         Route::get('categories', [TvController::class, 'categories'])->name('categories');
         Route::get('channels', [TvController::class, 'channels'])->name('channels');
         // Channel ids are strings on some providers (Vavoo "tf1"), digits on Xtream.
@@ -129,8 +129,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('channels/{id}/stream', [TvController::class, 'stream'])->name('channels.stream');
     });
 
-    // Catalog metadata, title search and playback helpers are public. A profile header,
-    // when present, is still validated and used for age filtering.
+    // Catalog metadata, title search and playback helpers require an account. The active profile
+    // header is validated and used for age filtering.
     Route::prefix('catalog')->name('catalog.')->middleware(['throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('home', [CatalogController::class, 'home'])->name('home');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
