@@ -6,6 +6,7 @@ use App\Enums\MediaType;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\CatalogPageRequest;
+use App\Http\Requests\Api\V1\CreditsRequest;
 use App\Http\Requests\Api\V1\PersonCreditsRequest;
 use App\Http\Resources\V1\Catalog\CreditsResource;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
@@ -15,6 +16,7 @@ use App\Http\Resources\V1\Catalog\SeasonResource;
 use App\Http\Resources\V1\Catalog\ShowResource;
 use App\Services\Imdb\ImdbRatings;
 use App\Services\Tmdb\AgeGate;
+use App\Services\Tmdb\TitleCrew;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
 use Dedoc\Scramble\Attributes\HeaderParameter;
@@ -87,22 +89,23 @@ class CatalogTitleController extends Controller
     /**
      * Credits of a movie / TV show.
      *
-     * Everyone of « Créateur et distribution » (the title page shows 20 cast members): directors
-     * (movie) or creators (TV show) on the first page, then the cast in billing order, 20 a page (the
-     * « Voir tout » page loads the next one as it scrolls). 403 if the active profile may not see
-     * the title.
+     * « Distribution » (the title page shows 20 cast members): directors (movie) or creators (TV
+     * show) on the first page, then the cast in billing order, 20 a page (the « Voir tout » page
+     * loads the next one as it scrolls). `group=crew`: « Équipe technique », everyone but the
+     * actors, once each with their jobs in French, 20 a page (`crew`). 403 if the active profile
+     * may not see the title.
      */
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
-    public function credits(CatalogPageRequest $request, MediaType $type, int $id): JsonResponse
+    public function credits(CreditsRequest $request, MediaType $type, int $id): JsonResponse
     {
         $title = $this->title($type, $id);
         $this->ageGate->authorizeTitle(ResolveProfile::profile($request), $title);
-        $cast = count(CreditsResource::cast($title, $type));
+        $total = count($request->crew() ? TitleCrew::of($title, $type) : CreditsResource::cast($title, $type));
 
-        return (new CreditsResource($title, $type, $request->page()))->additional(['meta' => [
+        return (new CreditsResource($title, $type, $request->page(), $request->crew()))->additional(['meta' => [
             'page' => $request->page(),
-            'total_pages' => max(1, (int) ceil($cast / CreditsResource::PAGE)),
-            'total_results' => $cast,
+            'total_pages' => max(1, (int) ceil($total / CreditsResource::PAGE)),
+            'total_results' => $total,
         ]])->response();
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\V1\Catalog;
 
 use App\Enums\MediaType;
+use App\Services\Tmdb\TitleCrew;
 use App\Services\Tmdb\TmdbFormat as F;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,7 +19,7 @@ class CreditsResource extends JsonResource
     /** Cast members a page. */
     public const PAGE = 20;
 
-    public function __construct(mixed $resource, private MediaType $type, private int $page = 1)
+    public function __construct(mixed $resource, private MediaType $type, private int $page = 1, private bool $crew = false)
     {
         parent::__construct($resource);
     }
@@ -38,6 +39,14 @@ class CreditsResource extends JsonResource
     {
         $r = (array) $this->resource;
         $movie = $this->type === MediaType::Movie;
+
+        if ($this->crew) {
+            return [
+                /** « Équipe technique »: 20 a page, everyone but the actors, their jobs in French. */
+                'crew' => CrewMemberResource::collection(array_slice(TitleCrew::of($r, $this->type), ($this->page - 1) * self::PAGE, self::PAGE)),
+                'cast' => [],
+            ];
+        }
 
         return [
             /** Directors (movie) or creators (TV show): on the first page only. */

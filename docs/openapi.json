@@ -2905,7 +2905,7 @@
         "/v1/catalog/{type}/{id}/credits": {
             "get": {
                 "operationId": "v1.catalog.credits",
-                "description": "Everyone of \u00ab Cr\u00e9ateur et distribution \u00bb (the title page shows 20 cast members): directors\n(movie) or creators (TV show) on the first page, then the cast in billing order, 20 a page (the\n\u00ab Voir tout \u00bb page loads the next one as it scrolls). 403 if the active profile may not see\nthe title.",
+                "description": "\u00ab Distribution \u00bb (the title page shows 20 cast members): directors (movie) or creators (TV\nshow) on the first page, then the cast in billing order, 20 a page (the \u00ab Voir tout \u00bb page\nloads the next one as it scrolls). `group=crew`: \u00ab \u00c9quipe technique \u00bb, everyone but the\nactors, once each with their jobs in French, 20 a page (`crew`). 403 if the active profile\nmay not see the title.",
                 "summary": "Credits of a movie / TV show",
                 "tags": [
                     "Catalogue",
@@ -2932,11 +2932,21 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Page number (1 to 500).",
                         "schema": {
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 500
+                        }
+                    },
+                    {
+                        "name": "group",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "cast",
+                                "crew"
+                            ]
                         }
                     },
                     {
@@ -12554,28 +12564,99 @@
                 "title": "CoverStyleResource"
             },
             "CreditsResource": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "crew": {
+                                "type": "array",
+                                "description": "Directors (movie) or creators (TV show): on the first page only.",
+                                "items": {
+                                    "$ref": "#/components/schemas/CrewResource"
+                                }
+                            },
+                            "cast": {
+                                "type": "array",
+                                "description": "20 cast members of the page, in billing order.",
+                                "items": {
+                                    "$ref": "#/components/schemas/CastResource"
+                                }
+                            }
+                        },
+                        "required": [
+                            "crew",
+                            "cast"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "crew": {
+                                "type": "array",
+                                "description": "\u00ab \u00c9quipe technique \u00bb: 20 a page, everyone but the actors, their jobs in French.",
+                                "items": {
+                                    "$ref": "#/components/schemas/CrewMemberResource"
+                                }
+                            },
+                            "cast": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 0,
+                                "maxItems": 0
+                            }
+                        },
+                        "required": [
+                            "crew",
+                            "cast"
+                        ]
+                    }
+                ],
+                "title": "CreditsResource"
+            },
+            "CrewMemberResource": {
                 "type": "object",
                 "properties": {
-                    "crew": {
-                        "type": "array",
-                        "description": "Directors (movie) or creators (TV show): on the first page only.",
-                        "items": {
-                            "$ref": "#/components/schemas/CrewResource"
-                        }
+                    "id": {
+                        "type": "integer"
                     },
-                    "cast": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "profile_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "profile_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "job": {
+                        "type": "string",
+                        "description": "Its jobs on this title, in French, the most important first: \u00ab R\u00e9alisation, Sc\u00e9nario \u00bb."
+                    },
+                    "jobs": {
                         "type": "array",
-                        "description": "20 cast members of the page, in billing order.",
+                        "description": "The same, one by one.",
                         "items": {
-                            "$ref": "#/components/schemas/CastResource"
+                            "type": "string"
                         }
                     }
                 },
                 "required": [
-                    "crew",
-                    "cast"
+                    "id",
+                    "name",
+                    "profile_path",
+                    "profile_url",
+                    "job",
+                    "jobs"
                 ],
-                "title": "CreditsResource"
+                "title": "CrewMemberResource"
             },
             "CrewResource": {
                 "type": "object",
@@ -13341,6 +13422,13 @@
                             "$ref": "#/components/schemas/CrewResource"
                         }
                     },
+                    "crew": {
+                        "type": "array",
+                        "description": "\u00ab \u00c9quipe technique \u00bb: everyone but the actors (20 max), their jobs in French, the most important first.",
+                        "items": {
+                            "$ref": "#/components/schemas/CrewMemberResource"
+                        }
+                    },
                     "cast": {
                         "type": "array",
                         "description": "Main cast (20 max), in billing order.",
@@ -13386,6 +13474,7 @@
                     "textless_backdrop_url",
                     "trailer",
                     "directors",
+                    "crew",
                     "cast",
                     "recommended"
                 ],
@@ -15092,6 +15181,13 @@
                             "$ref": "#/components/schemas/CrewResource"
                         }
                     },
+                    "crew": {
+                        "type": "array",
+                        "description": "\u00ab \u00c9quipe technique \u00bb: the creators, then everyone but the actors (20 max), their jobs in French.",
+                        "items": {
+                            "$ref": "#/components/schemas/CrewMemberResource"
+                        }
+                    },
                     "cast": {
                         "type": "array",
                         "description": "Main cast over all seasons (20 max).",
@@ -15159,6 +15255,7 @@
                     "textless_backdrop_url",
                     "trailer",
                     "creators",
+                    "crew",
                     "cast",
                     "seasons",
                     "next_episode",

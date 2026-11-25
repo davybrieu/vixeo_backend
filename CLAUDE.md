@@ -186,6 +186,13 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     pas (`summary` à null). `GET /catalog/titles?ids=movie:550,tv:1399` (100 au
     plus, `TitleSummaries::titles`, même cache) donne plusieurs titres d'un coup avec ces champs :
     « À voir » et « Continuer à regarder » n'ont pas à demander une fiche par titre.
+  - **« Distribution » et « Équipe technique »** (demande du développeur, 25/11/2026 : deux
+    rangées sur la fiche) : la fiche donne `crew` (`App\Services\Tmdb\TitleCrew`,
+    `CrewMemberResource`) : tous sauf les acteurs, **une fois chacun avec tous ses métiers en
+    français** (`job` « Réalisation, Scénario », `jobs`), les plus importants d'abord (création,
+    réalisation, scénario, musique, photographie, montage, production…, puis par département ;
+    série : créateurs d'abord, puis le plus d'épisodes), 20 au plus ; `directors` / `creators`
+    restent pour les anciennes applis. « Voir tout » : `credits?group=crew` (20 par page).
   - **« Voir tout » des fiches et des personnes** (demande du développeur, 20/11/2026) : la fiche
     ne donne que 20 recommandations et 20 membres de la distribution, la page d'une personne
     **20 titres « Connu pour » et 20 de filmographie** (24/11/2026 ; `TmdbCatalog::PERSON_PAGE`, un

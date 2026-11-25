@@ -4,6 +4,7 @@ namespace App\Http\Resources\V1\Catalog;
 
 use App\Enums\MediaType;
 use App\Services\TitleArtworks;
+use App\Services\Tmdb\TitleCrew;
 use App\Services\Tmdb\TmdbFormat as F;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -80,6 +81,8 @@ class ShowResource extends JsonResource
             'textless_backdrop_url' => F::image($textless, 'w1280'),
             'trailer' => $trailer !== null ? new VideoResource($trailer) : null,
             'creators' => CrewResource::collection(F::array($r, 'created_by')),
+            /** « Équipe technique »: the creators, then everyone but the actors (20 max), their jobs in French. */
+            'crew' => CrewMemberResource::collection(array_slice(TitleCrew::of($r, MediaType::Tv), 0, 20)),
             /** Main cast over all seasons (20 max). */
             'cast' => CastResource::collection(array_slice(F::array(F::array($r, 'aggregate_credits'), 'cast'), 0, 20)),
             /** Episodes: GET /catalog/tv/{id}/season/{season_number}. */

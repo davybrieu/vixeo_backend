@@ -4,6 +4,7 @@ namespace App\Http\Resources\V1\Catalog;
 
 use App\Enums\MediaType;
 use App\Services\TitleArtworks;
+use App\Services\Tmdb\TitleCrew;
 use App\Services\Tmdb\TmdbFormat as F;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -75,6 +76,8 @@ class MovieResource extends JsonResource
             'textless_backdrop_url' => F::image($textless, 'w1280'),
             'trailer' => $trailer !== null ? new VideoResource($trailer) : null,
             'directors' => CrewResource::collection($directors),
+            /** « Équipe technique »: everyone but the actors (20 max), their jobs in French, the most important first. */
+            'crew' => CrewMemberResource::collection(array_slice(TitleCrew::of($r, MediaType::Movie), 0, 20)),
             /** Main cast (20 max), in billing order. */
             'cast' => CastResource::collection(array_slice(F::array($credits, 'cast'), 0, 20)),
             /** "Vous pourriez aussi aimer". */

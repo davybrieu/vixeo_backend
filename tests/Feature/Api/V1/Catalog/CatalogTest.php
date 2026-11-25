@@ -223,6 +223,47 @@ it('lists every person of a title for « Voir tout »: crew first, then the whol
     $this->getJson('/api/v1/catalog/person/550/recommendations')->assertNotFound();
 });
 
+it('gives « Équipe technique » apart: everyone but the actors, once each, their jobs in French', function () {
+    $movie = Tmdb::movieDetails();
+    $movie['credits']['crew'] = [
+        ['id' => 1, 'name' => 'Lili', 'job' => 'Original Music Composer', 'department' => 'Sound', 'profile_path' => null],
+        ['id' => 2, 'name' => 'David Fincher', 'job' => 'Director', 'department' => 'Directing', 'profile_path' => '/fincher.jpg'],
+        ['id' => 3, 'name' => 'Jim', 'job' => 'Screenplay', 'department' => 'Writing', 'profile_path' => null],
+        ['id' => 2, 'name' => 'David Fincher', 'job' => 'Screenplay', 'department' => 'Writing', 'profile_path' => '/fincher.jpg'],
+        ['id' => 4, 'name' => 'Ana', 'job' => 'Boom Operator', 'department' => 'Sound', 'profile_path' => null],
+        ['id' => 5, 'name' => 'Zed', 'job' => 'Weird Job', 'department' => null, 'profile_path' => null],
+    ];
+    $show = Tmdb::showDetails();
+    $show['aggregate_credits']['crew'] = [
+        ['id' => 7, 'name' => 'Ramin', 'department' => 'Sound', 'jobs' => [['job' => 'Original Music Composer', 'episode_count' => 73]], 'profile_path' => null],
+        ['id' => 8, 'name' => 'Alan', 'department' => 'Directing', 'jobs' => [['job' => 'Director', 'episode_count' => 6]], 'profile_path' => null],
+        ['id' => 9, 'name' => 'Miguel', 'department' => 'Directing', 'jobs' => [['job' => 'Director', 'episode_count' => 9]], 'profile_path' => null],
+    ];
+    Http::fake([
+        'api.themoviedb.org/3/movie/550*' => Http::response($movie),
+        'api.themoviedb.org/3/tv/1399*' => Http::response($show),
+    ]);
+
+    $crew = $this->getJson('/api/v1/catalog/movie/550')->assertOk()->json('data.crew');
+    expect(array_column($crew, 'name'))->toBe(['David Fincher', 'Jim', 'Lili', 'Ana', 'Zed'])
+        ->and($crew[0])->toMatchArray(['job' => 'Réalisation, Scénario', 'jobs' => ['Réalisation', 'Scénario'], 'profile_url' => 'https://image.tmdb.org/t/p/w185/fincher.jpg'])
+        ->and(array_column($crew, 'job'))->toBe(['Réalisation, Scénario', 'Scénario', 'Musique', 'Son', 'Weird Job']);
+    // The old fields stay for the apps of before.
+    $this->getJson('/api/v1/catalog/movie/550')->assertJsonPath('data.directors.0.name', 'David Fincher');
+
+    // « Voir tout »: 20 a page.
+    $this->getJson('/api/v1/catalog/movie/550/credits?group=crew')->assertOk()
+        ->assertJsonPath('meta', ['page' => 1, 'total_pages' => 1, 'total_results' => 5])
+        ->assertJsonPath('data.cast', [])
+        ->assertJsonPath('data.crew.1.name', 'Jim');
+    $this->getJson('/api/v1/catalog/movie/550/credits?group=writers')->assertUnprocessable();
+
+    // A TV show: its creators first, then by job, the most episodes first.
+    expect(array_column($this->getJson('/api/v1/catalog/tv/1399')->json('data.crew'), 'name'))
+        ->toBe(['David Benioff', 'Miguel', 'Alan', 'Ramin']);
+    $this->getJson('/api/v1/catalog/tv/1399/credits?group=crew')->assertJsonPath('data.crew.0.job', 'Création');
+});
+
 it('pages the recommendations of a title, or its similar titles without any', function () {
     Http::fake([
         'api.themoviedb.org/3/movie/550/recommendations*' => Http::response(Tmdb::page([], 0)),
