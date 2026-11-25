@@ -151,6 +151,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
         // « Voir tout » of the person and title pages.
         Route::get('person/{id}/credits', [CatalogTitleController::class, 'personCredits'])
             ->whereNumber('id')->name('person.credits');
+        Route::get('{type}/{id}/watch-providers', [CatalogTitleController::class, 'watchProviders'])
+            ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('watch-providers');
         Route::get('{type}/{id}/recommendations', [CatalogTitleController::class, 'recommendations'])
             ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('recommendations');
         Route::get('{type}/{id}/credits', [CatalogTitleController::class, 'credits'])
