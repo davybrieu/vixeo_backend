@@ -67,7 +67,7 @@ couverture du catalogue ou **sa propre image**.
 ## Compte privé et demandes d'abonnement
 
 `is_private` (`PUT /profiles/{id}`). Comme Twitter : nom, @pseudo, avatar, biographie, réseaux et
-compteurs restent visibles ; **listes, favoris, personnes suivies, avis, abonnés et abonnements**
+compteurs restent visibles ; **listes, J'aime, avis, abonnés et abonnements**
 ne le sont que par le profil lui-même et ses **abonnés acceptés** (`can_view` de la page d'un
 membre ; sinon ces routes répondent 403 « Ce compte est privé. »). Le compte reste trouvable dans
 la recherche (`is_private` dans chaque résultat).

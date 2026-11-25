@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Per-profile sync of « À voir » (favorite), playback progress, watched state, « J'aime » ❤
- * (liked) and followed people (followed).
+ * (liked).
  *
  * - Every write gives the item a new revision (per-profile counter). Clients pull
  *   "everything after revision N" and keep the last revision as their cursor.
@@ -152,7 +152,7 @@ class ProfileSync
             }
         }
 
-        foreach (['liked', 'followed'] as $group) {
+        foreach (['liked'] as $group) {
             if (isset($change[$group])) {
                 $this->toggle($item, $group, (bool) $change[$group]['value'], $this->time($change[$group]['at']));
             }
@@ -185,7 +185,7 @@ class ProfileSync
     }
 
     /**
-     * A yes / no group with its date (liked, followed): set when the change is the most recent.
+     * A yes / no group with its date (liked): set when the change is the most recent.
      * Setting it again keeps the original date (sort "ajoutés récemment").
      */
     private function toggle(ProfileItem $item, string $group, bool $value, CarbonImmutable $at): void
