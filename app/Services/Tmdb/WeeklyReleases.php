@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
  *
  * Movies and first-air TV shows come from Discover. Episode discovery is progressive: series
  * already present in Vixeo profiles plus the TV shows returned by Discover's air-date window.
- * Only the seasons containing a known next/last episode are read by UpcomingEpisodes.
+ * Upcoming weeks reuse UpcomingEpisodes; previous weeks fetch only season windows intersecting the requested dates.
  */
 class WeeklyReleases
 {
@@ -332,7 +332,7 @@ class WeeklyReleases
             if ($show === null) {
                 continue;
             }
-            $list = TmdbFormat::array($show, 'seasons');
+            $list = array_values(array_filter(TmdbFormat::array($show, 'seasons'), 'is_array'));
             usort($list, fn (array $a, array $b) => (TmdbFormat::string($a, 'air_date') ?? '9999-99-99')
                 <=> (TmdbFormat::string($b, 'air_date') ?? '9999-99-99'));
 
