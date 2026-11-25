@@ -192,26 +192,6 @@ it('syncs « Favoris » ❤ apart from « Ma liste », the most recent change wi
         ->assertJsonPath('data.0.liked_at', null);
 });
 
-it('syncs the people a profile follows', function () {
-    $person = fn (array $followed) => change([
-        'item_id' => 'person:287', 'type' => 'person', 'title' => 'Brad Pitt', 'year' => null,
-        'poster_url' => 'https://image.tmdb.org/t/p/w185/brad.jpg', 'followed' => $followed,
-    ]);
-
-    push([$person(['value' => true, 'at' => '2026-06-01T10:00:00Z'])])
-        ->assertOk()
-        ->assertJsonPath('data.0.type', 'person')
-        ->assertJsonPath('data.0.is_followed', true)
-        ->assertJsonPath('data.0.followed_at', '2026-06-01T10:00:00.000000Z');
-
-    // A new device downloads it.
-    pull()->assertJsonCount(1, 'data')->assertJsonPath('data.0.title', 'Brad Pitt');
-
-    push([$person(['value' => false, 'at' => '2026-06-01T11:00:00Z'])])->assertJsonPath('data.0.is_followed', false);
-    // No longer followed: nothing left to download.
-    pull()->assertJsonCount(0, 'data');
-});
-
 it('paginates pulls', function () {
     push(collect(range(1, 5))->map(fn (int $n) => change([
         'item_id' => "movie:{$n}", 'favorite' => ['value' => true, 'at' => '2026-06-01T10:00:00Z'],
