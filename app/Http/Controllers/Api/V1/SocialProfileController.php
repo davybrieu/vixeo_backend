@@ -304,55 +304,6 @@ class SocialProfileController extends Controller
         ]]);
     }
 
-    /**
-     * The people (actors, directors…) a member follows, the most recently followed first.
-     *
-     * `id` is the TMDb person id, `profile_url` their photo (null without one).
-     */
-    public function people(Request $request, string $username): JsonResponse
-    {
-        $profile = $this->visibleProfile($request, $username);
-        $items = ProfileItem::query()->where('profile_id', $profile->id)
-            ->where('is_followed', true)->where('type', 'person')
-            ->latest('followed_at')->latest('id')->paginate(self::PER_PAGE);
-
-        return response()->json(['data' => collect($items->items())->map(fn (ProfileItem $item) => [
-            'id' => (int) str_replace('person:', '', $item->item_id),
-            'item_id' => $item->item_id,
-            'name' => $item->title,
-            'profile_url' => $item->poster_url,
-        ]), 'meta' => [
-            'current_page' => $items->currentPage(), 'last_page' => $items->lastPage(),
-        ]]);
-    }
-
-    private function connections(Request $request, string $username, string $direction): JsonResponse
-    {
-        $profile = $this->visibleProfile($request, $username);
-        $relation = $direction === 'followers' ? $profile->followers() : $profile->following();
-        $items = $relation->where('is_kid', false)->paginate(self::PER_PAGE);
-
-        return response()->json(['data' => $items->getCollection()->map(fn (Profile $p) => $this->identity($p)),
-            'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage()]]);
-    }
-
-    /** A member whose lists and reviews the active profile may see (403: a private account it doesn't follow; 404: blocked). */
-    private function visibleProfile(Request $request, string $username): Profile
-    {
-        $this->assertAdultViewer($request);
-        $profile = $this->publicProfile($username);
-        $viewer = ResolveProfile::profile($request);
-        abort_if($this->audience->isBlocked($viewer, $profile), 404);
-        abort_unless($this->follows->canView($viewer, $profile), 403, __('This account is private.'));
-
-        return $profile;
-    }
-
-    /**
-     * A member's lists.
-     *
-     * The most recently changed first (those without a title are only shown to their author).
-     */
     public function lists(Request $request, string $username): JsonResponse
     {
         $profile = $this->visibleProfile($request, $username);
@@ -461,7 +412,6 @@ class SocialProfileController extends Controller
                 'items as watched_count' => fn ($query) => $query->where('is_watched', true)->whereIn('type', ['movie', 'tv']),
                 'items as list_count' => fn ($query) => $query->where('is_favorite', true)->whereIn('type', ['movie', 'tv']),
                 'items as liked_count' => fn ($query) => $query->where('is_liked', true)->whereIn('type', ['movie', 'tv']),
-                'items as people_count' => fn ($query) => $query->where('is_followed', true)->where('type', 'person'),
                 'items as episodes_count' => fn ($query) => $query->where('is_watched', true)->where('type', 'episode'),
             ])->addSelect([
                 // Time watched: the movies and episodes of its diary whose length TMDb knows (a
@@ -502,8 +452,6 @@ class SocialProfileController extends Controller
             'list_count' => (int) ($profile->list_count ?? 0),
             /** « J'aime » ❤ (movies and TV shows). */
             'liked_count' => (int) ($profile->liked_count ?? 0),
-            /** Followed people (actors, directors…). */
-            'people_count' => (int) ($profile->people_count ?? 0),
             /** Lists with a title (« À voir » apart). */
             'lists_count' => (int) ($profile->lists_count ?? 0),
         ];
