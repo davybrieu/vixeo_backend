@@ -48,9 +48,12 @@ function fakeVavoo(array $items, ?string $resolveUrl = 'https://cdn.vavoo.test/t
     ]);
 }
 
-it('allows guests to browse the live TV catalogue', function () {
+it('requires an account to browse the live TV catalogue', function () {
     fakeVavoo([vavooChannel('tf1', 'TF1')]);
 
+    $this->getJson('/api/v1/tv/channels')->assertUnauthorized();
+
+    Sanctum::actingAs($this->user);
     $this->getJson('/api/v1/tv/channels')
         ->assertOk()
         ->assertJsonPath('data.0.name', 'TF1');
