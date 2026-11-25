@@ -36,8 +36,8 @@ class SyncPushRequest extends FormRequest
             'changes.*.season_number' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
             'changes.*.episode_number' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
 
-            /** « À voir »: added or removed. At least one of favorite, progress, watched, liked, followed is required. */
-            'changes.*.favorite' => ['required_without_all:changes.*.progress,changes.*.watched,changes.*.liked,changes.*.followed', 'array:value,at'],
+            /** « À voir »: added or removed. At least one of favorite, progress, watched and liked is required. */
+            'changes.*.favorite' => ['required_without_all:changes.*.progress,changes.*.watched,changes.*.liked', 'array:value,at'],
             'changes.*.favorite.value' => ['required_with:changes.*.favorite', 'boolean'],
             /** When the change happened on the device (ISO 8601). */
             'changes.*.favorite.at' => ['required_with:changes.*.favorite', 'date'],
