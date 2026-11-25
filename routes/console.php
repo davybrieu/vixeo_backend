@@ -2,6 +2,7 @@
 
 use App\Services\Push\Fcm;
 use App\Services\Tmdb\TmdbClient;
+use App\Services\Tmdb\WeeklyReleases;
 use App\Services\Tv\ChannelLogos;
 use App\Services\Tv\ChannelName;
 use App\Services\Tv\Epg;
