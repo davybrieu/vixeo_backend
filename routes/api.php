@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\V1\TitleArtworkController;
 use App\Http\Controllers\Api\V1\TitleSocialController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
+use App\Http\Controllers\Api\V1\WeeklyReleasesController;
 use App\Http\Middleware\ResolveProfile;
 use App\Services\ProfileCovers;
 use App\Services\ProfilePhotos;
@@ -132,7 +133,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
     // Catalog metadata, title search and playback helpers require an account. The active profile
     // header is validated and used for age filtering.
     Route::prefix('catalog')->name('catalog.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
-        Route::get('home', [CatalogController::class, 'home'])->name('home');\n        Route::get('releases', [WeeklyReleasesController::class, 'index'])->name('releases');
+        Route::get('home', [CatalogController::class, 'home'])->name('home');
+        Route::get('releases', [WeeklyReleasesController::class, 'index'])->name('releases');
         Route::get('genres', [CatalogController::class, 'genres'])->name('genres');
         Route::get('titles', [CatalogController::class, 'titles'])->name('titles');
         Route::get('ratings', [CatalogController::class, 'ratings'])->middleware('throttle:catalog')->name('ratings');
