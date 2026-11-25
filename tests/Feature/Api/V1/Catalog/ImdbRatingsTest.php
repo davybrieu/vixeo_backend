@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\User;
 use App\Services\Imdb\ImdbDatasets;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +19,7 @@ beforeEach(function () {
         'services.imdb.datasets_url' => 'https://datasets.imdbws.com',
     ]);
     Http::preventStrayRequests();
+    Sanctum::actingAs(User::factory()->create());
 });
 
 /** A gzipped TSV dataset of IMDb, with its header. */
