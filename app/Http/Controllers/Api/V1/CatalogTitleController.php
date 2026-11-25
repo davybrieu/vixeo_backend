@@ -19,6 +19,7 @@ use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleCrew;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
+use App\Services\Tmdb\TmdbClient;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ class CatalogTitleController extends Controller
         private AgeGate $ageGate,
         private TitleSummaries $summaries,
         private ImdbRatings $imdb,
+        private TmdbClient $tmdb,
     ) {}
 
     /**
@@ -57,6 +59,37 @@ class CatalogTitleController extends Controller
     public function show(Request $request, int $id): ShowResource
     {
         return new ShowResource($this->imdb->attach(MediaType::Tv, $id, $this->restricted($request, $this->catalog->show($id))));
+    }
+
+    /**
+     * Streaming, rental and purchase availability for a title.
+     *
+     * TMDb's watch-provider data is supplied by JustWatch. The active profile's age limit
+     * is applied before returning provider offers.
+     */
+    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
+    public function watchProviders(Request $request, MediaType $type, int $id): JsonResponse
+    {
+        $validated = $request->validate(['country' => ['sometimes', 'string', 'size:2', 'alpha']]);
+        $country = strtoupper($validated['country'] ?? config('services.tmdb.region', 'FR'));
+        $title = $this->title($type, $id);
+        $this->ageGate->authorizeTitle(ResolveProfile::profile($request), $title);
+
+        $providers = $this->tmdb->get("{$type->value}/{$id}/watch/providers", [], 'details');
+        $region = $providers['results'][$country] ?? null;
+
+        return response()->json([
+            'data' => [
+                'country' => $country,
+                'link' => $region['link'] ?? null,
+                'flatrate' => $region['flatrate'] ?? [],
+                'free' => $region['free'] ?? [],
+                'ads' => $region['ads'] ?? [],
+                'rent' => $region['rent'] ?? [],
+                'buy' => $region['buy'] ?? [],
+                'source' => 'JustWatch',
+            ],
+        ]);
     }
 
     /**
