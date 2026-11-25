@@ -190,6 +190,9 @@ return [
 
     'attributes' => [
         'redirect_uri' => 'adresse de retour',
+        'poster' => 'affiche',
+        'backdrop' => 'arrière-plan',
+        'logo' => 'logo',
         'code_challenge' => 'défi PKCE',
         'code_verifier' => 'secret PKCE',
         'name' => 'nom',

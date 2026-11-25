@@ -223,6 +223,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     applis) reste inchangé.
   - Tests : `Http::fake()` + `Http::preventStrayRequests()`, jamais d'appel réel ; payloads dans
     `tests/Feature/Api/V1/Catalog/TmdbFixtures.php`.
+- **Affiches, arrière-plans et logos choisis par un profil** (demande du développeur,
+  25/11/2026 ; doc : `docs/images-des-titres.md`) : `GET /catalog/{type}/{id}/images` (images de
+  TMDb déjà jointes à la fiche, 60 par sorte, `default` et `chosen`) et
+  `PUT /profiles/{id}/artwork/{type}/{id}` (`poster`, `backdrop`, `logo` : un chemin de la liste ou
+  null). `App\Services\TitleArtworks`, table `title_artworks` ; le choix est appliqué **par l'API**
+  (`TitleArtworks::chosen`, une requête par réponse) dans `MediaItemResource`, `MovieResource` et
+  `ShowResource` : toute nouvelle ressource qui donne les images d'un titre au profil actif doit
+  l'appliquer aussi.
 - **Notes IMDb et TMDb** (doc : `docs/notes.md`, demande du développeur, 21/11/2026) : les
   fiches film / série et chaque épisode d'une saison ont `ratings` = `{imdb: {id, rating, votes}
   | null, tmdb: {rating, votes}}` (`RatingsResource`). **IMDb vient de ses jeux de données**

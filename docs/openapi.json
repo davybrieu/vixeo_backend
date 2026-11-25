@@ -2994,6 +2994,427 @@
                 }
             }
         },
+        "/v1/catalog/{type}/{id}/images": {
+            "get": {
+                "operationId": "v1.catalog.images",
+                "description": "The posters, backdrops and logos of TMDb (French, English and without text, the best rated\nfirst, 60 of each at most), TMDb's choice (`default`) and the active profile's (`chosen`,\nnull for each kind it left to TMDb). 403 if the profile may not see the title.",
+                "summary": "Images of a title",
+                "tags": [
+                    "Catalogue",
+                    "TitleArtwork"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Profile-Id",
+                        "in": "header",
+                        "description": "Active profile id: its choice and its age limit.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "default": {
+                                                    "type": "object",
+                                                    "description": "What TMDb gives (paths), shown by \u00ab Par d\u00e9faut \u00bb.",
+                                                    "properties": {
+                                                        "poster": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "poster_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "backdrop": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "backdrop_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "logo": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "logo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "poster",
+                                                        "poster_url",
+                                                        "backdrop",
+                                                        "backdrop_url",
+                                                        "logo",
+                                                        "logo_url"
+                                                    ]
+                                                },
+                                                "chosen": {
+                                                    "description": "The active profile's choice (paths); null for a kind left to TMDb.",
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "null"
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "poster": {
+                                                                    "type": "null"
+                                                                },
+                                                                "backdrop": {
+                                                                    "type": "null"
+                                                                },
+                                                                "logo": {
+                                                                    "type": "null"
+                                                                },
+                                                                "logo_aspect_ratio": {
+                                                                    "type": "null"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "poster",
+                                                                "backdrop",
+                                                                "logo",
+                                                                "logo_aspect_ratio"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "poster": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "backdrop": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "logo": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "logo_aspect_ratio": {
+                                                                    "type": [
+                                                                        "number",
+                                                                        "null"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "poster",
+                                                                "backdrop",
+                                                                "logo",
+                                                                "logo_aspect_ratio"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "posters": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "path": {
+                                                                "type": "string"
+                                                            },
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "language": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "aspect_ratio": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "path",
+                                                            "url",
+                                                            "language",
+                                                            "aspect_ratio"
+                                                        ]
+                                                    }
+                                                },
+                                                "backdrops": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "path": {
+                                                                "type": "string"
+                                                            },
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "language": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "aspect_ratio": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "path",
+                                                            "url",
+                                                            "language",
+                                                            "aspect_ratio"
+                                                        ]
+                                                    }
+                                                },
+                                                "logos": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "path": {
+                                                                "type": "string"
+                                                            },
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "language": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "aspect_ratio": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "path",
+                                                            "url",
+                                                            "language",
+                                                            "aspect_ratio"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "default",
+                                                "chosen",
+                                                "posters",
+                                                "backdrops",
+                                                "logos"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/v1/profiles/{profile}/artwork/{type}/{id}": {
+            "put": {
+                "operationId": "v1.profiles.artwork.update",
+                "description": "The kinds given change (a `path` of `catalog/{type}/{id}/images`, or null for TMDb's), the\nothers stay. From then on, every list, search and title page gives these images to this\nprofile. 422 on an image that isn't one of the title's.",
+                "summary": "Choose the images of a title",
+                "tags": [
+                    "Catalogue",
+                    "TitleArtwork"
+                ],
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "description": "The profile ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The type ID",
+                        "schema": {
+                            "$ref": "#/components/schemas/MediaType"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TitleArtworkRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "poster": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "backdrop": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "logo": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "logo_aspect_ratio": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "poster",
+                                                        "backdrop",
+                                                        "logo",
+                                                        "logo_aspect_ratio"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "poster": {
+                                                            "type": "null"
+                                                        },
+                                                        "backdrop": {
+                                                            "type": "null"
+                                                        },
+                                                        "logo": {
+                                                            "type": "null"
+                                                        },
+                                                        "logo_aspect_ratio": {
+                                                            "type": "null"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "poster",
+                                                        "backdrop",
+                                                        "logo",
+                                                        "logo_aspect_ratio"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/me/delete": {
             "post": {
                 "operationId": "v1.me.delete",
@@ -15095,6 +15516,36 @@
                     "changes"
                 ],
                 "title": "SyncPushRequest"
+            },
+            "TitleArtworkRequest": {
+                "type": "object",
+                "properties": {
+                    "poster": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A poster's `path` from `catalog/{type}/{id}/images`; null: TMDb's. Absent: unchanged.",
+                        "maxLength": 100
+                    },
+                    "backdrop": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A backdrop's `path`; null: TMDb's. Absent: unchanged.",
+                        "maxLength": 100
+                    },
+                    "logo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A logo's `path`; null: TMDb's. Absent: unchanged.",
+                        "maxLength": 100
+                    }
+                },
+                "title": "TitleArtworkRequest"
             },
             "TitleRatingsResource": {
                 "type": "object",

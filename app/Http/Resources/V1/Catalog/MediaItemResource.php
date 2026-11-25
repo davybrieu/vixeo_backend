@@ -3,6 +3,7 @@
 namespace App\Http\Resources\V1\Catalog;
 
 use App\Enums\MediaType;
+use App\Services\TitleArtworks;
 use App\Services\Tmdb\TmdbFormat as F;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,6 +24,13 @@ class MediaItemResource extends JsonResource
         $poster = F::string($r, 'poster_path');
         $backdrop = F::string($r, 'backdrop_path');
         $logo = is_array($r['logo'] ?? null) ? $r['logo'] : null;
+        // The images the active profile chose for this title (TitleArtworks).
+        $chosen = TitleArtworks::chosen($request, $type, (int) $r['id']);
+        if ($chosen !== null) {
+            $poster = $chosen['poster'] ?? $poster;
+            $backdrop = $chosen['backdrop'] ?? $backdrop;
+            $logo = $chosen['logo'] !== null ? ['path' => $chosen['logo'], 'aspect_ratio' => $chosen['logo_aspect_ratio']] : $logo;
+        }
         $summary = is_array($r['summary'] ?? null) ? $r['summary'] : null;
 
         return [

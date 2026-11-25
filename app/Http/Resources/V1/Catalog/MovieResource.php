@@ -3,6 +3,7 @@
 namespace App\Http\Resources\V1\Catalog;
 
 use App\Enums\MediaType;
+use App\Services\TitleArtworks;
 use App\Services\Tmdb\TmdbFormat as F;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -26,6 +27,15 @@ class MovieResource extends JsonResource
         $backdrop = F::string($r, 'backdrop_path');
         $logo = F::logo($r);
         $textless = F::textlessBackdrop($r);
+        // The images the active profile chose for this title (TitleArtworks): its backdrop is the
+        // one under the logo too.
+        $chosen = TitleArtworks::chosen($request, MediaType::Movie, (int) $r['id']);
+        if ($chosen !== null) {
+            $poster = $chosen['poster'] ?? $poster;
+            $backdrop = $chosen['backdrop'] ?? $backdrop;
+            $textless = $chosen['backdrop'] ?? $textless;
+            $logo = $chosen['logo'] !== null ? ['path' => $chosen['logo'], 'aspect_ratio' => $chosen['logo_aspect_ratio']] : $logo;
+        }
 
         return [
             'id' => (int) $r['id'],

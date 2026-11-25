@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ReviewSocialController;
 use App\Http\Controllers\Api\V1\SocialLoginController;
 use App\Http\Controllers\Api\V1\SocialProfileController;
+use App\Http\Controllers\Api\V1\TitleArtworkController;
 use App\Http\Controllers\Api\V1\TitleSocialController;
 use App\Http\Controllers\Api\V1\TmdbRatingController;
 use App\Http\Controllers\Api\V1\TvController;
@@ -154,6 +155,9 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('recommendations');
         Route::get('{type}/{id}/credits', [CatalogTitleController::class, 'credits'])
             ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('credits');
+        // « Affiches, arrière-plans, logos »: what TMDb has, and the active profile's choice.
+        Route::get('{type}/{id}/images', [TitleArtworkController::class, 'images'])
+            ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('images');
 
         // Player metadata: moments to skip and subtitles.
         Route::get('movie/{id}/segments', [PlaybackController::class, 'movieSegments'])
@@ -308,6 +312,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
             // Viewings: an episode watched to the end, another viewing (docs/social.md).
             Route::post('diary', [DiaryController::class, 'store'])->name('diary.store');
+
+            // The poster, backdrop and logo the profile chose for a title (docs/images-des-titres.md).
+            Route::put('artwork/{type}/{id}', [TitleArtworkController::class, 'update'])
+                ->whereIn('type', ['movie', 'tv'])->whereNumber('id')->name('artwork.update');
         });
 
         // The profile's reviews (docs/avis.md), under their historical address.

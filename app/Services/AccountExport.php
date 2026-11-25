@@ -18,6 +18,7 @@ use App\Models\ReviewLike;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialNotification;
+use App\Models\TitleArtwork;
 use App\Models\TmdbRating;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,14 @@ class AccountExport
                 'bio' => $p->bio,
                 'is_private' => (bool) $p->is_private,
                 'social_links' => $p->social_links ?? [],
+                // The poster, backdrop and logo it chose for titles (TitleArtworks).
+                'title_images' => TitleArtwork::query()->where('profile_id', $p->id)->orderBy('id')->get()
+                    ->map(fn (TitleArtwork $a) => [
+                        'item_id' => "{$a->media_type}:{$a->tmdb_id}",
+                        'poster' => $a->poster_path,
+                        'backdrop' => $a->backdrop_path,
+                        'logo' => $a->logo_path,
+                    ])->all(),
                 // Members followed (or asked to follow), followers, likes given, notifications (docs/social.md).
                 'following' => $this->follows('follower_profile_id', 'followed_profile_id', $p),
                 'followers' => $this->follows('followed_profile_id', 'follower_profile_id', $p),

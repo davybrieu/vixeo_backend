@@ -119,5 +119,6 @@
     "This image cannot be read.": "Impossible de lire cette image.",
     "This return address is not allowed.": "Cette adresse de retour n’est pas autorisée.",
     "This sign-in has expired. Try again.": "Cette connexion a expiré. Recommencez.",
-    "Create a password first, in « Mon compte ».": "Créez d’abord un mot de passe dans « Mon compte »."
+    "Create a password first, in « Mon compte ».": "Créez d’abord un mot de passe dans « Mon compte ».",
+    "This image is not one of this title.": "Cette image n’est pas une image de ce titre."
 }
