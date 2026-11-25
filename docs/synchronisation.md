@@ -26,7 +26,7 @@ Chaque item porte un **instantané d'affichage** (`title`, `year`, `poster_url`,
 dans les URL d'images** (`api_key`, `token`… sont refusés) : utiliser des URL d'images
 publiques, ou laisser `poster_url` vide et la reconstruire localement.
 
-Et cinq **groupes d'état**, chacun avec la date du dernier changement :
+Et quatre **groupes d'état**, chacun avec la date du dernier changement :
 
 | Groupe | Champs | Date du changement |
 | - | - | - |
