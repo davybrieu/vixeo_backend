@@ -27,7 +27,6 @@ class ProfileItem extends Model
         'position_ms' => 0,
         'is_watched' => false,
         'is_liked' => false,
-        'is_followed' => false,
     ];
 
     protected function casts(): array
@@ -50,9 +49,6 @@ class ProfileItem extends Model
             'is_liked' => 'boolean',
             'liked_at' => 'datetime',
             'liked_changed_at' => 'datetime',
-            'is_followed' => 'boolean',
-            'followed_at' => 'datetime',
-            'followed_changed_at' => 'datetime',
             'revision' => 'integer',
         ];
     }
@@ -63,7 +59,7 @@ class ProfileItem extends Model
         return $this->belongsTo(Profile::class);
     }
 
-    /** Items that carry some state (an item can be fully reset: not in « À voir », no progress, not watched, not liked, not followed). */
+    /** Items that carry some state (an item can be fully reset: not in « À voir », no progress, not watched and not liked). */
     #[Scope]
     protected function notEmpty(Builder $query): void
     {
@@ -71,7 +67,6 @@ class ProfileItem extends Model
             ->where('is_favorite', true)
             ->orWhere('is_watched', true)
             ->orWhere('is_liked', true)
-            ->orWhere('is_followed', true)
             ->orWhere('position_ms', '>', 0)
             ->orWhereNotNull('last_engaged_at'));
     }
