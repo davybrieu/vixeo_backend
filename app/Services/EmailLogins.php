@@ -31,7 +31,7 @@ final class EmailLogins
     public function verifyCode(string $email, string $code): ?array
     {
         return Cache::lock('email-login:otp-lock:'.hash('sha256', mb_strtolower($email)), 5)
-            ->block(2, function () use ($email, $code, $accounts): ?array {
+            ->block(2, function () use ($email, $code): ?array {
                 $key = self::otpKey($email);
                 $entry = Cache::get($key);
                 if (! is_array($entry) || ! is_string($entry['hash'] ?? null) || ! Hash::check($code, $entry['hash'])) {
