@@ -90,7 +90,7 @@ class EmailLoginController extends Controller
             'device_name' => ['required', 'string', 'max:100'],
         ]);
         $email = mb_strtolower(trim($data['email']));
-        $key = 'email-login-verify:'.hash('sha256', $email.'|'.$request->ip());
+        $key = 'email-login-verify:'.hash('sha256', $email);
         $ipKey = 'email-login-verify-ip:'.hash('sha256', (string) $request->ip());
 
         if (RateLimiter::tooManyAttempts($key, 5) || RateLimiter::tooManyAttempts($ipKey, 20)) {
