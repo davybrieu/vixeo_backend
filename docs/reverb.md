@@ -85,7 +85,7 @@ la connexion temps réel se reconnecte automatiquement ; il n'y a plus de pollin
 ## Ce qui passe par Reverb
 
 Une seule connexion par appli (`Realtime` dans `vixeo_frontend`), autorisée canal par canal par
-`POST /api/broadcasting/auth` (jeton Bearer et `X-Profile-Id`, `routes/channels.php`) :
+`POST /api/broadcasting/auth` (jeton Bearer, profil du compte résolu automatiquement, `routes/channels.php`) :
 
 - **une conversation ouverte** : `private-messages.{id}` (ses membres actifs). Événements
   (`App\Events\ConversationChanged`, envoyés après la réponse) : `message.sent`,
