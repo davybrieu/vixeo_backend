@@ -97,7 +97,7 @@ class EmailLoginController extends Controller
             throw ValidationException::withMessages(['code' => ['Trop de tentatives. Réessayez dans 10 minutes.']]);
         }
 
-        $result = $logins->verifyCode($email, $data['code'], $accounts);
+        $result = $logins->verifyCode($email, $data['code']);
         if ($result === null) {
             RateLimiter::hit($key, EmailLogins::OTP_TTL);
             RateLimiter::hit($ipKey, EmailLogins::OTP_TTL);
@@ -105,15 +105,73 @@ class EmailLoginController extends Controller
         }
 
         RateLimiter::clear($key);
+        if (isset($result['registration_ticket'])) {
+            return response()->json([
+                'registration_required' => true,
+                'registration_ticket' => $result['registration_ticket'],
+                'created' => true,
+            ]);
+        }
+
         $user = $result['user'];
 
         return response()->json([
             'token' => (string) $user->createToken($data['device_name'])->plainTextToken,
             'user' => new UserResource($user),
-            'created' => (bool) $result['created'],
-            'needs_profile_setup' => $user->profiles()->first()?->registration_completed_at === null,
+            'created' => false,
+            'needs_profile_setup' => false,
         ]);
     }
+    /** Create the account and its one and only profile after e-mail verification. */
+    public function completeRegistration(Request $request, EmailLogins $logins, Accounts $accounts, AvatarCatalog $avatars, CoverCatalog $covers): JsonResponse
+    {
+        $data = $request->validate([
+            'registration_ticket' => ['required', 'string', 'min:40', 'max:100'],
+            'device_name' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:50'],
+            'username' => ['required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/', Rule::notIn(Usernames::RESERVED), 'unique:profiles,username'],
+            'bio' => ['nullable', 'string', 'max:160'],
+            'avatar' => ['required', 'string', Rule::in($avatars->ids())],
+            'cover' => ['required', 'string', Rule::in($covers->ids())],
+            'social_links' => ['nullable', 'array:'.implode(',', array_keys(SocialLinks::NETWORKS))],
+            'social_links.*' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        $links = [];
+        foreach (($data['social_links'] ?? []) as $network => $value) {
+            if ($value !== null && ! SocialLinks::valid($network, $value)) {
+                throw ValidationException::withMessages(['social_links.'.$network => ['Lien de réseau social invalide.']]);
+            }
+            $links[$network] = $value === null ? null : SocialLinks::normalize($network, $value);
+        }
+
+        $ticket = $logins->consumeRegistrationTicket($data['registration_ticket']);
+        if ($ticket === null) {
+            throw ValidationException::withMessages(['registration_ticket' => ['Cette inscription a expiré. Recommencez la vérification de votre adresse e-mail.']]);
+        }
+
+        $email = (string) $ticket['email'];
+        if (User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->exists()) {
+            throw ValidationException::withMessages(['email' => ['Un compte existe déjà avec cette adresse. Connectez-vous.']]);
+        }
+
+        $user = $accounts->create($data['name'], $email, $data['username'], true, [
+            'name' => $data['name'],
+            'username' => mb_strtolower($data['username']),
+            'bio' => $data['bio'] ?? null,
+            'avatar' => $data['avatar'],
+            'cover' => $data['cover'],
+            'social_links' => $links,
+        ]);
+
+        return response()->json([
+            'token' => (string) $user->createToken($data['device_name'])->plainTextToken,
+            'user' => new UserResource($user),
+            'created' => true,
+            'needs_profile_setup' => false,
+        ], 201);
+    }
+
     /** Legacy PKCE exchange retained for email-change links and older installed apps. */
     public function token(Request $request, EmailLogins $logins): JsonResponse
     {
