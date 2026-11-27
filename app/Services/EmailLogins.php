@@ -40,7 +40,7 @@ final class EmailLogins
         ], self::LINK_TTL);
 
         $url = route('v1.auth.email.consume', ['token' => $token]);
-        Notification::route('mail', $email)->notify(new EmailChangeLink($url, self::LINK_TTL / 60, $user->name));
+        Notification::sendNow(Notification::route('mail', $email), new EmailChangeLink($url, self::LINK_TTL / 60, $user->name));
     }
 
     /** Consume the emailed link once and return the app redirect with a short-lived PKCE code. */
