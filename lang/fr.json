@@ -5,9 +5,6 @@
     "Method Not Allowed.": "Méthode non autorisée.",
     "Too Many Attempts. Please try again in :seconds seconds.": "Trop de tentatives. Réessayez dans :seconds secondes.",
     "Server Error.": "Erreur interne du serveur.",
-    "Incorrect PIN.": "Code PIN incorrect.",
-    "An account can have at most :max profiles.": "Un compte ne peut pas avoir plus de :max profils.",
-    "The last profile of an account cannot be deleted.": "Le dernier profil d'un compte ne peut pas être supprimé.",
     "The metadata service is temporarily unavailable.": "Le service de métadonnées est momentanément indisponible. Réessayez dans quelques instants.",
     "Trending movies": "Films tendance",
     "Trending TV shows": "Séries tendance",
@@ -29,9 +26,6 @@
     "Korean TV shows": "Séries coréennes",
     "Japanese animation": "Animation japonaise",
     "The :attribute must not contain credentials.": "Le champ :attribute ne doit pas contenir d'identifiants (clé API, jeton…).",
-    "The parental PIN is required.": "Le code PIN parental est obligatoire.",
-    "Incorrect parental PIN.": "Code PIN parental incorrect.",
-    "This content is not available on this profile.": "Ce contenu n'est pas disponible sur ce profil.",
     "This code is invalid or has expired.": "Ce code est invalide ou a expiré. Affichez un nouveau code sur la TV.",
     "This reset code is incorrect or has expired.": "Ce code est incorrect ou a expiré. Demandez un nouveau code si besoin.",
     "Too many wrong codes. Ask for a new code.": "Trop de codes incorrects. Demandez un nouveau code.",
@@ -103,10 +97,8 @@
     "Only photos and videos can be sent.": "Seules les photos et les vidéos peuvent être envoyées.",
     "A photo is limited to 15 MB.": "Une photo est limitée à 15 Mo.",
     "The catalog is not available right now.": "Le catalogue n’est pas disponible pour le moment. Réessayez dans quelques instants.",
-    "Choose a profile.": "Sélectionnez un profil.",
     "Unknown title.": "Ce titre est introuvable.",
     "You cannot mute yourself.": "Vous ne pouvez pas vous masquer vous-même.",
-    "Kid profiles cannot use the social features.": "Les profils enfants ne peuvent pas utiliser les fonctions sociales.",
     "This profile is suspended.": "Ce profil est suspendu par la modération.",
     "Choose a username to use the social features.": "Choisissez un pseudo pour utiliser les fonctions sociales.",
     "A list has 100 titles at most.": "Une liste contient 100 titres au plus.",
@@ -120,5 +112,6 @@
     "This return address is not allowed.": "Cette adresse de retour n’est pas autorisée.",
     "This sign-in has expired. Try again.": "Cette connexion a expiré. Recommencez.",
     "Create a password first, in « Mon compte ».": "Créez d’abord un mot de passe dans « Mon compte ».",
-    "This image is not one of this title.": "Cette image n’est pas une image de ce titre."
+    "This image is not one of this title.": "Cette image n’est pas une image de ce titre.",
+    "An account can have only one profile.": "Un compte ne peut avoir qu’un seul profil."
 }
