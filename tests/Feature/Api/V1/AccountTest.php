@@ -4,6 +4,8 @@ use App\Models\DeviceLogin;
 use App\Models\ProfileItem;
 use App\Models\User;
 use App\Notifications\AccountDataExport;
+use App\Notifications\EmailChangeLink;
+use App\Services\SocialLogin\SocialLogins;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -33,13 +35,36 @@ it('removes pending TV sign-ins with the account', function () {
     $this->assertDatabaseCount('device_logins', 0);
 });
 
-it('changes the email address without a password', function () {
-    $this->withToken($this->token)->postJson('/api/v1/me/email', ['email' => 'nouveau@example.com'])
-        ->assertOk()
-        ->assertJsonPath('data.email', 'nouveau@example.com')
-        ->assertJsonPath('data.email_verified', false);
+it('changes the email address only after its one-time confirmation link is used', function () {
+    Notification::fake();
+    $verifier = 'a123456789012345678901234567890123456789012';
+    $this->withToken($this->token)->postJson('/api/v1/me/email', [
+        'email' => 'nouveau@example.com',
+        'redirect_uri' => SocialLogins::APP_REDIRECT,
+        'code_challenge' => SocialLogins::challenge($verifier),
+    ])->assertOk()->assertJsonPath('message', 'Un lien de confirmation a été envoyé à votre nouvelle adresse e-mail.');
 
-    expect($this->user->fresh()->email)->toBe('nouveau@example.com');
+    expect($this->user->fresh()->email)->toBe('davy@example.com');
+    $url = null;
+    Notification::assertSentTo($this->user, EmailChangeLink::class, function (EmailChangeLink $mail) use (&$url) {
+        $url = $mail->url;
+        return true;
+    });
+
+    $path = (string) parse_url((string) $url, PHP_URL_PATH);
+    $query = (string) parse_url((string) $url, PHP_URL_QUERY);
+    $callback = $this->get($path.'?'.$query)->assertStatus(303)->headers->get('Location');
+    parse_str((string) parse_url((string) $callback, PHP_URL_QUERY), $params);
+
+    $this->postJson('/api/v1/auth/email/token', [
+        'code' => $params['code'] ?? '',
+        'code_verifier' => $verifier,
+        'device_name' => 'iPhone',
+    ])->assertOk()->assertJsonPath('user.email', 'nouveau@example.com')
+      ->assertJsonPath('user.email_verified', true);
+
+    expect($this->user->fresh()->email)->toBe('nouveau@example.com')
+        ->and($this->user->fresh()->email_verified_at)->not->toBeNull();
 });
 
 it('rejects an invalid or already used email address', function () {
