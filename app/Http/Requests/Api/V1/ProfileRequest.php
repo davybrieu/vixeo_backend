@@ -66,6 +66,7 @@ class ProfileRequest extends FormRequest
             'skip_preview' => ['sometimes', 'boolean'],
             'rate_after_watching' => ['sometimes', 'boolean'],
             'onboarded' => ['sometimes', 'accepted'],
+            'registration_completed' => ['sometimes', 'accepted'],
         ];
     }
 
@@ -75,6 +76,9 @@ class ProfileRequest extends FormRequest
         $data = $this->safe()->except(['onboarded']);
         if ($this->has('onboarded')) {
             $data['onboarded_at'] = now();
+        }
+        if ($this->has('registration_completed')) {
+            $data['registration_completed_at'] = now();
         }
         if (isset($data['username'])) {
             $data['username'] = mb_strtolower($data['username']);
