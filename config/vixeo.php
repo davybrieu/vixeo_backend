@@ -3,7 +3,7 @@
 return [
 
     // Base URL used only to create links that open a public profile in the Flutter app.
-    'app_url' => rtrim((string) env('VIXEO_APP_URL', 'https://app.vixeo.app'), '/'),
+    'app_url' => rtrim((string) env('VIXEO_APP_URL', 'https://vixeo.app'), '/'),
 
     'domains' => [
         'api' => strtolower((string) parse_url(env('API_URL', env('APP_URL', 'http://localhost')), PHP_URL_HOST)) ?: null,
