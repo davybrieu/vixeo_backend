@@ -9,7 +9,6 @@ use App\Models\ProfileItem;
 use App\Models\SocialNotification;
 use App\Services\Social\Audience;
 use App\Services\Social\SocialNotifications;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbFormat as F;
 use App\Services\Tmdb\UpcomingEpisodes;
@@ -19,9 +18,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * The app's « Notifications » page (docs/social.md): what other profiles did for the active profile
- * (followed it, asked to follow it, accepted its request, liked a review) and the next episodes of
- * the TV shows of its « À voir ».
+ * The app's « Notifications » page (docs/social.md): what other members did for the account's
+ * single profile (followed it, asked to follow it, accepted its request, liked a review) and the
+ * next episodes of the TV shows in its « À voir ».
  */
 class NotificationController extends Controller
 {
@@ -32,7 +31,7 @@ class NotificationController extends Controller
     private const RECENT_DAYS = 7;
 
     /**
-     * Notifications of the active profile.
+     * Notifications of the account's single profile.
      *
      * The most recent first, 20 per page. `type`: `follow`, `follow_request` (to accept or decline,
      * `GET /social/requests`), `follow_accepted`, `review_like` (with `review`), `review_comment`
@@ -117,7 +116,7 @@ class NotificationController extends Controller
      * out for less than 7 days, the most recent first. `available_at` is an estimate made not to
      * be early (08:00 UTC on streaming platforms, 21:00 in the show's country otherwise).
      */
-    public function episodes(Request $request, TitleSummaries $summaries, AgeGate $ageGate): JsonResponse
+    public function episodes(Request $request, TitleSummaries $summaries): JsonResponse
     {
         $profile = $this->profile($request);
         $ids = ProfileItem::query()->where('profile_id', $profile->id)->where('is_favorite', true)
@@ -129,7 +128,7 @@ class NotificationController extends Controller
         $upcoming = [];
         $recent = [];
         foreach ($summaries->shows($ids) as $id => $show) {
-            if ($show === null || ! $ageGate->allows($profile, $show)) {
+            if ($show === null) {
                 continue;
             }
             foreach (['next_episode_to_air' => true, 'last_episode_to_air' => false] as $key => $next) {
@@ -179,8 +178,7 @@ class NotificationController extends Controller
     private function profile(Request $request): Profile
     {
         $profile = ResolveProfile::profile($request);
-        abort_unless($profile instanceof Profile, 422, 'Sélectionnez un profil.');
-        abort_if($profile->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
+        abort_unless($profile instanceof Profile, 422, 'Profil de compte introuvable.');
 
         return $profile;
     }

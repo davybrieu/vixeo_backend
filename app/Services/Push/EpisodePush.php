@@ -8,7 +8,6 @@ use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\PushDevice;
 use App\Models\User;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TmdbFormat;
 use App\Services\Tmdb\UpcomingEpisodes;
 use Carbon\CarbonImmutable;
@@ -34,7 +33,6 @@ class EpisodePush
     public function __construct(
         private PushDevices $devices,
         private UpcomingEpisodes $episodes,
-        private AgeGate $ageGate,
     ) {}
 
     /**
@@ -100,7 +98,7 @@ class EpisodePush
             $pending = [];
             foreach ($favorites[$profileId] ?? [] as $showId => $favoritedAt) {
                 $entry = $released[$showId] ?? null;
-                if ($entry === null || ! $this->ageGate->allows($profile, $entry['show'])) {
+                if ($entry === null) {
                     continue;
                 }
                 $start = max($from, $since, $favoritedAt === null ? $from : CarbonImmutable::instance($favoritedAt));

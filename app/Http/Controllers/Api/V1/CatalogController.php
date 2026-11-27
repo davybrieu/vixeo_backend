@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\CatalogList;
 use App\Enums\MediaType;
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\CatalogHomeRequest;
 use App\Http\Requests\Api\V1\CatalogPageRequest;
 use App\Http\Requests\Api\V1\CatalogTitlesRequest;
@@ -14,11 +13,9 @@ use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
 use App\Http\Resources\V1\Catalog\TitleRatingsResource;
 use App\Services\Ratings\MdbListRatings;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\CatalogRows;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
-use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -30,7 +27,6 @@ class CatalogController extends Controller
 {
     public function __construct(
         private TmdbCatalog $catalog,
-        private AgeGate $ageGate,
         private TitleSummaries $summaries,
     ) {}
 
@@ -46,15 +42,14 @@ class CatalogController extends Controller
      * `studio_marvel`, `language_fr`…). Their items carry no logo nor summary. Every row has its
      * "see all" page: `GET /catalog/{type}/lists/{list}`.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function home(CatalogHomeRequest $request): JsonResponse
     {
         $home = $this->catalog->home($request->enum('type', MediaType::class));
 
-        $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = [
             'featured' => $home['featured'],
             ...array_map(fn (array $section) => $section['items'], $home['sections']),
-        ]);
+        ];
 
         // Logo and summary for the carousel and the curated rows only (prepared in advance by
         // `catalog:warm`, CatalogWarmer).
@@ -78,12 +73,11 @@ class CatalogController extends Controller
      *
      * Movies and TV shows by id (« À voir », Continuer à regarder), with their logo, length, genres
      * and age rating, in the order asked: one request instead of one per title. Respects the
-     * active profile's age limit; titles TMDb doesn't know are left out.
+     * titles TMDb doesn't know are left out.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function titles(CatalogTitlesRequest $request): JsonResponse
     {
-        $titles = $this->ageGate->filter(ResolveProfile::profile($request), $this->summaries->titles($request->titles()));
+        $titles = $this->summaries->titles($request->titles());
 
         return response()->json(['data' => MediaItemResource::collection($titles)]);
     }
@@ -133,7 +127,6 @@ class CatalogController extends Controller
      * `now_playing` and `upcoming` exist for movies only, `on_the_air` and `airing_today`
      * for TV shows only; 404 for a list that does not exist for the type.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function list(CatalogPageRequest $request, MediaType $type, string $list): JsonResponse
     {
         $curated = CatalogList::tryFrom($list);
@@ -148,7 +141,7 @@ class CatalogController extends Controller
         }
 
         // Logo, summary and IMDb rating with each title, like the home rows (TitleSummaries).
-        $page['results'] = $this->summaries->add($this->ageGate->filter(ResolveProfile::profile($request), $page['results']));
+        $page['results'] = $this->summaries->add($page['results']);
 
         return response()->json([
             'data' => MediaItemResource::collection($page['results']),

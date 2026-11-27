@@ -202,12 +202,9 @@ it('paginates pulls', function () {
     pull(4, 2)->assertJsonPath('has_more', false)->assertJsonPath('cursor', 5)->assertJsonCount(1, 'data');
 });
 
-it('keeps profiles separate', function () {
-    $other = Profile::factory()->for($this->user)->create();
-    ProfileItem::factory()->for($other)->favorite()->create();
-
-    pull()->assertJsonPath('data', []);
-    $this->getJson("/api/v1/profiles/{$other->id}/sync")->assertJsonCount(1, 'data');
+it('does not allow a second profile for the same account', function () {
+    $this->postJson('/api/v1/profiles', ['name' => 'Second profile'])->assertForbidden();
+    expect($this->user->profiles()->count())->toBe(1);
 });
 
 it('forbids syncing another account profile', function () {
@@ -220,13 +217,11 @@ it('forbids syncing another account profile', function () {
     expect(ProfileItem::count())->toBe(0);
 });
 
-it('deletes the items with the profile', function () {
-    Profile::factory()->for($this->user)->create();
+it('does not expose profile deletion', function () {
     ProfileItem::factory()->for($this->profile)->favorite()->create();
 
-    $this->deleteJson("/api/v1/profiles/{$this->profile->id}")->assertNoContent();
-
-    expect(ProfileItem::count())->toBe(0);
+    $this->deleteJson("/api/v1/profiles/{$this->profile->id}")->assertMethodNotAllowed();
+    expect(ProfileItem::count())->toBe(1);
 });
 
 it('validates changes', function (array $changes, string $error) {

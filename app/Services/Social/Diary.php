@@ -198,9 +198,7 @@ class Diary
             'rewatch' => $rewatch ?? (clone $same)->where('watched_at', '<', $at)->exists(),
             'created_at' => now(),
         ]);
-        if (! $profile->is_kid) {
-            $this->activities->watched($entry);
-        }
+        $this->activities->watched($entry);
 
         return $entry;
     }

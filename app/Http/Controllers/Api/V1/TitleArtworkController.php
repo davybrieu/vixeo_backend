@@ -8,10 +8,8 @@ use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\TitleArtworkRequest;
 use App\Models\Profile;
 use App\Services\TitleArtworks;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TmdbCatalog;
 use App\Services\Tmdb\TmdbFormat as F;
-use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -25,7 +23,6 @@ class TitleArtworkController extends Controller
 {
     public function __construct(
         private readonly TmdbCatalog $catalog,
-        private readonly AgeGate $ageGate,
         private readonly TitleArtworks $artworks,
     ) {}
 
@@ -34,14 +31,12 @@ class TitleArtworkController extends Controller
      *
      * The posters, backdrops and logos of TMDb (French, English and without text, the best rated
      * first, 60 of each at most), TMDb's choice (`default`) and the active profile's (`chosen`,
-     * null for each kind it left to TMDb). 403 if the profile may not see the title.
+     * null for each kind it left to TMDb). 
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its choice and its age limit.', type: 'integer')]
     public function images(Request $request, MediaType $type, int $id): JsonResponse
     {
         $profile = ResolveProfile::profile($request);
         $title = $this->title($type, $id);
-        $this->ageGate->authorizeTitle($profile, $title);
         $offered = $this->artworks->images($title);
         $logo = F::logo($title);
 
@@ -76,7 +71,6 @@ class TitleArtworkController extends Controller
     {
         Gate::authorize('update', $profile);
         $title = $this->title($type, $id);
-        $this->ageGate->authorizeTitle($profile, $title);
 
         return response()->json([
             'data' => $this->artworks->choose(

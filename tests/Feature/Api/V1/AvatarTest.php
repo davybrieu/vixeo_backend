@@ -83,29 +83,13 @@ it('has no poster format any more: the apps show vertical posters only', functio
         ->assertJsonMissingPath('data.poster_format');
 });
 
-it('does not need the parental PIN to change the avatar', function () {
-    $this->putJson('/api/v1/parental-control/pin', ['pin' => '9999'])->assertNoContent();
-
+it('updates the account profile avatar without a PIN', function () {
     $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['avatar' => 'arcade-cat'])->assertOk();
 });
 
-it('gives a new profile an avatar of the catalog at random, unless one is chosen', function () {
-    $ids = app(AvatarCatalog::class)->ids();
-
-    // Names no factory picks (a first name could be the existing profile's, accents aside on MySQL).
-    $avatar = $this->postJson('/api/v1/profiles', ['name' => 'Léa B.'])->assertCreated()->json('data.avatar');
-    expect($ids)->toContain($avatar);
-
-    $this->postJson('/api/v1/profiles', ['name' => 'Tom B.', 'avatar' => null])->assertCreated()
-        ->assertJsonPath('data.avatar', fn ($a) => in_array($a, $ids, true));
-    $this->postJson('/api/v1/profiles', ['name' => 'Zoé B.', 'avatar' => 'arcade-cat'])->assertCreated()
-        ->assertJsonPath('data.avatar', 'arcade-cat');
-
-    // Not always the same one.
-    $picked = collect(range(1, 40))->map(fn () => app(AvatarCatalog::class)->randomId())->unique();
-    expect($picked->count())->toBeGreaterThan(1);
+it('does not allow a second profile to be created', function () {
+    $this->postJson('/api/v1/profiles', ['name' => 'Second profile'])->assertForbidden();
 });
-
 it('gives the first profile of a new account an avatar of the catalog', function () {
     app('auth')->forgetGuards();
 

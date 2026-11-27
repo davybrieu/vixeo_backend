@@ -35,9 +35,12 @@ beforeEach(function () {
 
     $this->user = User::factory()->create();
     $this->profile = Profile::factory()->for($this->user)->create();
-    $this->other = Profile::factory()->for($this->user)->create();
+    $this->other = Profile::factory()->for(User::factory())->create();
     Sanctum::actingAs($this->user);
-    $this->as = fn (Profile $profile) => $this->withHeader('X-Profile-Id', (string) $profile->id);
+    $this->as = function (Profile $profile) {
+        Sanctum::actingAs($profile->user);
+        return $this;
+    };
 });
 
 it('lists the images of a title: French, English and without text, the best first, and TMDb’s choice', function () {
@@ -76,7 +79,7 @@ it('gives the chosen poster, backdrop and logo to this profile only, everywhere'
     ($this->as)($this->profile)->getJson('/api/v1/catalog/movie/550/images')
         ->assertJsonPath('data.chosen.poster', '/en.jpg');
 
-    // Another profile keeps TMDb's.
+    // Another account keeps TMDb's.
     ($this->as)($this->other)->getJson('/api/v1/catalog/movie/550')
         ->assertJsonPath('data.poster_url', 'https://image.tmdb.org/t/p/w500/poster.jpg')
         ->assertJsonPath('data.logo_url', 'https://image.tmdb.org/t/p/w500/l-fr.png');
@@ -102,13 +105,13 @@ it('refuses an image that is not one of the title’s, and another account’s p
     expect(TitleArtwork::count())->toBe(0);
 });
 
-it('keeps the choices in the export, and forgets them with the profile', function () {
+it('keeps the choices in the export, and forgets them with the account', function () {
     $this->putJson("/api/v1/profiles/{$this->profile->id}/artwork/movie/550", ['poster' => '/fr.jpg'])->assertOk();
 
     $export = app(AccountExport::class)->build($this->user);
     $profile = collect($export['profiles'])->firstWhere('name', $this->profile->name);
     expect($profile['title_images'])->toBe([['item_id' => 'movie:550', 'poster' => '/fr.jpg', 'backdrop' => null, 'logo' => null]]);
 
-    $this->profile->delete();
+    $this->user->delete();
     expect(TitleArtwork::count())->toBe(0);
 });

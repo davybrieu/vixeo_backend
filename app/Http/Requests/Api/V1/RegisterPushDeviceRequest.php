@@ -17,7 +17,7 @@ class RegisterPushDeviceRequest extends FormRequest
             'fid' => ['exclude_if:platform,windows', 'required_without:token', 'string', 'max:4096'],
             /** Firebase registration token of the apps before the installation ID (still accepted). Not for Windows. */
             'token' => ['exclude_if:platform,windows', 'required_without:fid', 'string', 'max:4096'],
-            /** New episodes of the « À voir » TV shows of the active profile (X-Profile-Id). */
+            /** New episodes of the « À voir » TV shows of the account profile. */
             'new_episodes' => ['required', 'boolean'],
             /** Social activity of the active profile: likes of its reviews, followers, follow requests, messages (default true). */
             'social' => ['sometimes', 'boolean'],

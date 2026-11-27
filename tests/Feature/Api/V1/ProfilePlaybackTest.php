@@ -25,11 +25,8 @@ it('gives the playback settings of a new profile: original version, no subtitles
         ->assertJsonPath('data.skip_preview', false);
 });
 
-it('saves the playback settings, without the parental PIN', function () {
-    $this->user->forceFill(['parental_pin' => '1234'])->save();
-    $kid = Profile::factory()->for($this->user)->kid()->create();
-
-    $this->patchJson("/api/v1/profiles/{$kid->id}", [
+it('saves the playback settings on the account profile', function () {
+    $this->patchJson("/api/v1/profiles/{$this->profile->id}", [
         'audio_language' => 'fr',
         'subtitle_language' => 'pt-BR',
         'no_spoiler' => true,
@@ -44,7 +41,7 @@ it('saves the playback settings, without the parental PIN', function () {
         ->assertJsonPath('data.skip_credits', true);
 
     // Back to the original version, subtitles off.
-    $this->patchJson("/api/v1/profiles/{$kid->id}", ['audio_language' => null, 'subtitle_language' => null])
+    $this->patchJson("/api/v1/profiles/{$this->profile->id}", ['audio_language' => null, 'subtitle_language' => null])
         ->assertOk()
         ->assertJsonPath('data.audio_language', null)
         ->assertJsonPath('data.subtitle_language', null);

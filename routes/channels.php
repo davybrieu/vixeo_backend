@@ -6,7 +6,7 @@ use App\Services\Push\PushDevices;
 use Illuminate\Support\Facades\Broadcast;
 
 // A conversation's real-time channel (docs/reverb.md): its active members, from the profile of the
-// `X-Profile-Id` header of the authorization request (POST /api/broadcasting/auth).
+// The account's single profile, resolved automatically from its bearer token.
 Broadcast::channel('messages.{conversation}', function ($user, int $conversation): bool {
     $profile = ResolveProfile::profile(request());
 

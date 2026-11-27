@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\ResolveProfile;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\Playback\SubtitleFormat;
@@ -97,7 +96,7 @@ it('finds subtitles of a movie in the profile language, preferred language first
     ]])]);
     $profile = Profile::factory()->for($this->user)->create(['subtitle_language' => 'pt-BR']);
 
-    $response = $this->getJson('/api/v1/catalog/movie/550/subtitles?languages=pt-BR,en', [ResolveProfile::HEADER => $profile->id])
+    $response = $this->getJson('/api/v1/catalog/movie/550/subtitles?languages=pt-BR,en')
         ->assertOk();
 
     expect($response->json('data.*.file_id'))->toBe([3, 2, 1])
@@ -112,7 +111,7 @@ it('finds subtitles of a movie in the profile language, preferred language first
         && $request->hasHeader('Api-Key', 'os-key') && $request->hasHeader('User-Agent', 'Vixeo v1.0'));
 
     // Without languages: the profile's.
-    $this->getJson('/api/v1/catalog/movie/551/subtitles', [ResolveProfile::HEADER => $profile->id])->assertOk();
+    $this->getJson('/api/v1/catalog/movie/551/subtitles')->assertOk();
     Http::assertSent(fn (Request $request) => $request['tmdb_id'] == 551 && $request['languages'] === 'pt-br');
 });
 

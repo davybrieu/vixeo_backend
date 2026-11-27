@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use App\Models\User;
 use App\Services\Imdb\ImdbDatasets;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;

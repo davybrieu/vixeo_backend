@@ -168,8 +168,7 @@ describe('the app’s registration', function () {
     it('registers the app with the active profile, the token kept encrypted', function () {
         [, $profile, $bearer] = pushApp();
 
-        $this->withToken($bearer)->withHeader('X-Profile-Id', (string) $profile->id)
-            ->putJson('/api/v1/push/device', ['token' => 'fcm-token-1', 'platform' => 'android', 'new_episodes' => true, 'utc_offset' => 60])
+        $this->withToken($bearer)->putJson('/api/v1/push/device', ['token' => 'fcm-token-1', 'platform' => 'android', 'new_episodes' => true, 'utc_offset' => 60])
             ->assertCreated()
             ->assertJsonPath('data.profile_id', $profile->id)
             ->assertJsonPath('data.new_episodes', true)
@@ -190,8 +189,7 @@ describe('the app’s registration', function () {
     it('keeps one registration per app; the same app signed in again replaces the old one', function () {
         [$user, $profile, $bearer] = pushApp();
         $register = fn (string $bearer, string $token, bool $episodes = true) => $this->withToken($bearer)
-            ->withHeader('X-Profile-Id', (string) $profile->id)
-            ->putJson('/api/v1/push/device', ['token' => $token, 'platform' => 'android', 'new_episodes' => $episodes])
+                        ->putJson('/api/v1/push/device', ['token' => $token, 'platform' => 'android', 'new_episodes' => $episodes])
             ->assertSuccessful();
 
         $register($bearer, 'fcm-a');
@@ -340,8 +338,7 @@ describe('the real-time channel of Windows', function () {
     it('registers Windows without Firebase', function () {
         [, $profile, $bearer] = pushApp();
 
-        $id = $this->withToken($bearer)->withHeader('X-Profile-Id', (string) $profile->id)
-            ->putJson('/api/v1/push/device', ['platform' => 'windows', 'token' => 'ignored', 'new_episodes' => true, 'social' => true])
+        $id = $this->withToken($bearer)->putJson('/api/v1/push/device', ['platform' => 'windows', 'token' => 'ignored', 'new_episodes' => true, 'social' => true])
             ->assertCreated()
             ->assertJsonPath('data.target', 'realtime')
             ->assertJsonPath('data.platform', 'windows')

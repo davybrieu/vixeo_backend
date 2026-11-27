@@ -40,8 +40,6 @@ l'utilisent), limite `throttle:reviews` (120 requêtes par minute et par compte 
   (`ProfileSync::push`, comme le bouton « Vu » : hors de « Continuer à regarder », visionnage et
   fil), sauf s'il l'est déjà. Modifier un avis ne remarque rien : un « Vu » retiré le reste. Les
   applis le reçoivent à leur synchro suivante.
-- La liste filtre selon l'âge maximum du profil (`AgeGate`) ; pour un épisode, c'est sa série qui
-  compte.
 - Supprimer un avis qui n'existe pas répond 204.
 - La page publique d'un membre (`/social/profiles/{username}/reviews`) montre ses avis.
 - `422` : note hors de l'échelle (validation).

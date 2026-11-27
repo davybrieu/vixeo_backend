@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
 use Throwable;
 
 /**
- * The messaging between adult profiles (docs/messagerie.md): direct conversations, which start as a
+ * The messaging between Vixeo profiles (docs/messagerie.md): direct conversations, which start as a
  * request the other profile accepts or declines, and groups run by their admins. The only place that
  * writes conversations, members, messages, reads and blocks. Every list is read with a fixed number
  * of queries, whatever the number of conversations or messages.
@@ -46,10 +46,10 @@ class Conversations
 
     public function __construct(private PushDevices $devices) {}
 
-    /** The profile may use the messaging: an adult profile with a username. */
+    /** The account may use messaging once its profile has a username. */
     public static function allowed(?Profile $profile): bool
     {
-        return $profile !== null && ! $profile->is_kid && $profile->username !== null;
+        return $profile !== null && $profile->username !== null;
     }
 
     /**
@@ -119,7 +119,6 @@ class Conversations
             ->with('activeMembers.profile')
             ->first();
         abort_if($conversation === null || $this->membership($conversation, $me) === null, 404);
-        abort_if($conversation->activeMembers->contains(fn (ConversationMember $member) => $member->profile->is_kid), 404);
 
         return $conversation;
     }
@@ -558,7 +557,7 @@ class Conversations
     }
 
     /**
-     * Adult profiles by username (with or without @, any case); 422 when one is missing.
+     * Profiles by username (with or without @, any case); 422 when one is missing.
      *
      * @param  list<string>  $usernames
      * @return Collection<int, Profile>
@@ -566,7 +565,7 @@ class Conversations
     private function profilesNamed(array $usernames): Collection
     {
         $names = array_values(array_unique(array_map(fn (string $name) => mb_strtolower(ltrim(trim($name), '@')), $usernames)));
-        $profiles = Profile::query()->whereIn('username', $names)->where('is_kid', false)->get();
+        $profiles = Profile::query()->whereIn('username', $names)->get();
         if ($profiles->count() !== count($names)) {
             throw ValidationException::withMessages(['usernames' => __('One or more members cannot be found.')]);
         }

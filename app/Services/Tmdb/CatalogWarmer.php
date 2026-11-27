@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Cache as CacheFactory;
  * they expire after an hour, so they never do. The details of the titles shown with their logo
  * and summary (carousel, curated rows: [TmdbCatalog::summarized]) are fetched when missing, and
  * all asked again every 12 hours (they expire after a day). When TMDb fails, the cached answers
- * stay. Not prepared: the age ratings of restricted profiles (AgeGate) and the titles of the
- * light rows (the app completes them with `GET /catalog/titles`).
+ * stay. The titles of the light rows are completed by the app with `GET /catalog/titles`.
  */
 class CatalogWarmer
 {
@@ -41,8 +40,7 @@ class CatalogWarmer
         $refreshing = $this->tmdb->refreshing();
         $home = app()->make(TmdbCatalog::class, ['tmdb' => $refreshing])->home(null);
 
-        // The lists given with their summary, as CatalogController::home does (no profile here:
-        // an age limit only removes titles).
+        // The lists given with their summary, as CatalogController::home does.
         $lists = ['featured' => $home['featured']];
         foreach ($home['sections'] as $index => $section) {
             if (TmdbCatalog::summarized($home, $index)) {

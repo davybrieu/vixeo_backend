@@ -25,8 +25,6 @@ class UserResource extends JsonResource
              * @var list<string>
              */
             'providers' => SocialAccount::providersOf($this->resource),
-            /** A parental PIN is set (see /parental-control). */
-            'parental_control' => $this->hasParentalControl(),
             'created_at' => $this->created_at,
         ];
     }

@@ -16,17 +16,16 @@ use Tests\Feature\Api\V1\Catalog\TmdbFixtures as Tmdb;
 
 // Social features (developer's request, 21/11/2026; docs/social.md).
 
-/** An adult profile with a username, its own account. */
+/** A profile with a username; each account owns exactly one. */
 function member(string $username, array $attributes = []): Profile
 {
     return Profile::factory()->for(User::factory())->create($attributes + ['username' => $username, 'name' => ucfirst($username)]);
 }
 
-/** Requests as [profile] (its account, X-Profile-Id). */
+/** Requests as the account that owns [profile]. */
 function actingAsMember(Profile $profile): void
 {
     Sanctum::actingAs($profile->user);
-    test()->withHeader('X-Profile-Id', (string) $profile->id);
 }
 
 function memberReview(Profile $author, array $attributes = []): TmdbRating

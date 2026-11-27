@@ -94,7 +94,7 @@ class ProfileSync
         }
         // A movie or TV show liked (« J'aime ») goes to the feed; unliked, it leaves it.
         $titles = array_values(array_filter($liked, fn (ProfileItem $item) => in_array($item->type, [ItemType::Movie, ItemType::Tv], true)));
-        if ($titles !== [] && ! $profile->is_kid) {
+        if ($titles !== []) {
             $this->activities->liked(
                 array_values(array_filter($titles, fn (ProfileItem $item) => $item->is_liked)),
                 array_values(array_filter($titles, fn (ProfileItem $item) => ! $item->is_liked)),

@@ -18,8 +18,7 @@ Champs du profil (`GET/PATCH /api/v1/profiles/{id}`), les mêmes sur tous les ap
 | `skip_preview` | aperçu de l'épisode suivant passé tout seul | `false` |
 
 Quand un `skip_*` vaut `false`, le lecteur affiche un bouton « Passer » pendant ce moment.
-Ces réglages ne sont pas des restrictions : pas de PIN parental pour les changer. Ils font partie
-de l'export des données.
+Ces réglages sont propres au compte et sont synchronisés entre ses appareils.
 
 L'appli garde la liste des noms français des langues : en ajouter une = la mettre dans
 `Languages` (API) et dans l'appli.

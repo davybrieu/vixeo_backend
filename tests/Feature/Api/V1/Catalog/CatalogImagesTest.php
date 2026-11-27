@@ -217,21 +217,6 @@ it('gives several titles at once with their logo and summary, in the order asked
     $this->getJson('/api/v1/catalog/titles?ids='.implode(',', array_map(fn ($i) => "movie:{$i}", range(1, 101))))->assertUnprocessable();
 });
 
-it('keeps only the titles a kid profile may see', function () {
-    $user = User::factory()->create();
-    $kid = Profile::factory()->for($user)->kid(12)->create();
-    Sanctum::actingAs($user);
-    Http::fake([
-        'api.themoviedb.org/3/movie/550?*' => Http::response(Tmdb::movieDetails()),
-        'api.themoviedb.org/3/movie/550/release_dates*' => Http::response(Tmdb::movieDetails()['release_dates']),
-        'api.themoviedb.org/3/tv/1399?*' => Http::response(Tmdb::showDetails()),
-        'api.themoviedb.org/3/tv/1399/content_ratings*' => Http::response(['results' => [['iso_3166_1' => 'FR', 'rating' => '10']]]),
-    ]);
-
-    $this->getJson('/api/v1/catalog/titles?ids=movie:550,tv:1399', ['X-Profile-Id' => $kid->id])->assertOk()
-        ->assertJsonPath('data.*.id', [1399]);
-});
-
 it('gives the logo of each "Vous pourriez aussi aimer" title, like the home rows', function () {
     Http::fake([
         // The title page, recommending Seven (807).

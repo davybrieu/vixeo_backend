@@ -14,7 +14,6 @@ use App\Http\Controllers\Api\V1\DirectMessageController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\ListController;
 use App\Http\Controllers\Api\V1\NotificationController;
-use App\Http\Controllers\Api\V1\ParentalControlController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PlaybackController;
 use App\Http\Controllers\Api\V1\ProfileController;
@@ -93,7 +92,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('logo');
     });
 
-    // Social profile discovery requires an authenticated account (child profiles are excluded by the controller).
+    // Social profile discovery requires an authenticated account.
     Route::prefix('social')->name('social.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('search', [SocialProfileController::class, 'search'])->name('search');
         Route::get('profiles/{username}', [SocialProfileController::class, 'show'])->name('profiles.show');
@@ -177,7 +176,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
-        // Messaging between adult profiles (docs/messagerie.md); real time: routes/channels.php.
+        // Messaging between account profiles (docs/messagerie.md); real time: routes/channels.php.
         Route::middleware([ResolveProfile::class, 'throttle:messages'])->prefix('messages')->name('messages.')->group(function () {
             Route::get('/', [DirectMessageController::class, 'index'])->name('index');
             Route::get('count', [DirectMessageController::class, 'count'])->name('count');
@@ -265,15 +264,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::delete('devices/{device}', [AccountController::class, 'revokeDevice'])->whereNumber('device')->name('devices.revoke');
         });
 
-        // Wrong parental PINs are also limited by App\Services\ParentalControl (5 per 5 min).
-        Route::prefix('parental-control')->name('parental-control.')->middleware('throttle:parental')->group(function () {
-            Route::get('/', [ParentalControlController::class, 'show'])->name('show');
-            Route::put('pin', [ParentalControlController::class, 'update'])->name('pin.update');
-            // POST, not DELETE: the PIN / password must travel in the body, never in the URL.
-            Route::post('disable', [ParentalControlController::class, 'destroy'])->name('disable');
-            Route::post('verify', [ParentalControlController::class, 'verify'])->name('verify');
-        });
-
         // Push notifications of this app (docs/notifications.md).
         Route::prefix('push/device')->name('push.device.')->middleware(['throttle:push', ResolveProfile::class])->group(function () {
             Route::get('/', [PushDeviceController::class, 'show'])->name('show');
@@ -284,10 +274,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
         Route::get('covers', [CoverController::class, 'index'])->name('covers');
-        Route::apiResource('profiles', ProfileController::class);
-        Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
-            ->middleware('throttle:pin')
-            ->name('profiles.verify-pin');
+        Route::apiResource('profiles', ProfileController::class)->only(['index', 'store', 'show', 'update']);
         // Its own photo, instead of its avatar (docs/social.md).
         Route::post('profiles/{profile}/photo', [ProfilePhotoController::class, 'store'])
             ->middleware('throttle:profile-photo-upload')

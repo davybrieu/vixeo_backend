@@ -16,15 +16,15 @@ use Laravel\Sanctum\Sanctum;
 
 function messagingProfile(string $username, array $attributes = []): Profile
 {
-    return Profile::factory()->for(User::factory())->create(['username' => $username, ...$attributes]);
+    return Profile::factory()->for(User::factory()->create(['password' => 'secret-password']))->create(['username' => $username, ...$attributes]);
 }
 
-/** Acts as [profile]: its account signed in, its id in X-Profile-Id. */
+/** Acts as the account that owns [profile]. */
 function actingAsProfile(Profile $profile): mixed
 {
     Sanctum::actingAs($profile->user);
 
-    return test()->withHeader('X-Profile-Id', (string) $profile->id);
+    return test();
 }
 
 function conversationWith(Profile $from, Profile $to, bool $accepted = true): int
@@ -133,12 +133,12 @@ it('hides a declined request from both profiles and lets it be made again', func
     expect($again)->not->toBe($conversation);
 });
 
-it('keeps the messaging to adult profiles with a username', function () {
+it('allows messaging for the single profile of an account', function () {
     $alice = messagingProfile('alice');
-    $kid = messagingProfile('kiddo', ['is_kid' => true]);
+    $other = messagingProfile('kiddo');
 
-    actingAsProfile($kid)->getJson('/api/v1/messages')->assertForbidden();
-    actingAsProfile($alice)->postJson('/api/v1/messages/with/kiddo')->assertNotFound();
+    actingAsProfile($other)->getJson('/api/v1/messages')->assertOk();
+    actingAsProfile($alice)->postJson('/api/v1/messages/with/kiddo')->assertOk();
     actingAsProfile($alice)->postJson('/api/v1/messages/with/alice')->assertUnprocessable();
 });
 
@@ -282,7 +282,7 @@ it('keeps a group when one of its members deletes its profile', function () {
     actingAsProfile($carol)->getJson("/api/v1/messages/{$conversation}")->assertOk()->assertJsonCount(1, 'participants');
 });
 
-it('removes the files of a deleted profile', function () {
+it('removes message files and conversations when the account is deleted', function () {
     $alice = messagingProfile('alice');
     $bob = messagingProfile('bob');
     $conversation = conversationWith($alice, $bob);
@@ -290,8 +290,7 @@ it('removes the files of a deleted profile', function () {
         ->assertCreated()->json('data.attachments.0.id');
     $path = MessageAttachment::query()->findOrFail($id)->path;
 
-    Profile::factory()->for($alice->user)->create();
-    actingAsProfile($alice)->deleteJson("/api/v1/profiles/{$alice->id}")->assertNoContent();
+    actingAsProfile($alice)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
 
     Storage::disk('local')->assertMissing($path);
     expect(Conversation::query()->find($conversation))->toBeNull();

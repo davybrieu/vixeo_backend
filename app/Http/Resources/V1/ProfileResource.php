@@ -33,29 +33,6 @@ class ProfileResource extends JsonResource
             'cover' => $this->cover,
             /** Its own cover (POST /profiles/{id}/cover), shown instead of `cover`; null = `cover`. */
             'cover_url' => $this->coverUrl(),
-            'is_kid' => $this->is_kid,
-            'max_age_rating' => $this->max_age_rating,
-            /** Age limit actually applied (kid profile without `max_age_rating`: 10). Null = no limit. */
-            'effective_max_age_rating' => $this->maxAge(),
-            'allow_unrated' => $this->allow_unrated,
-            /** Sources / folders the app must hide on this profile. */
-            'locked_sources' => $this->lockedSources(),
-            'has_pin' => $this->hasPin(),
-            /** Preferred audio language, null = original version. */
-            'audio_language' => $this->audio_language,
-            /** Preferred subtitles, null = none. */
-            'subtitle_language' => $this->subtitle_language,
-            /** Hide episode artwork, titles and descriptions until selected. */
-            'no_spoiler' => (bool) $this->no_spoiler,
-            /** Segments the player skips by itself (TheIntroDB timestamps, see GET …/segments). */
-            'skip_intro' => (bool) $this->skip_intro,
-            'skip_recap' => (bool) $this->skip_recap,
-            'skip_credits' => (bool) $this->skip_credits,
-            'skip_preview' => (bool) $this->skip_preview,
-            /** At the end of a movie or an episode, the player proposes to rate it. */
-            'rate_after_watching' => (bool) $this->rate_after_watching,
-            /** The first launch (rate known titles, accounts to follow) was done or skipped. */
-            'onboarded' => $this->onboarded_at !== null,
             'position' => $this->position,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

@@ -11,7 +11,6 @@ use App\Http\Requests\Api\V1\RateRequest;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\Profile;
 use App\Models\TmdbRating;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\RatingTarget;
 use App\Services\TmdbRatings;
 use Illuminate\Http\JsonResponse;
@@ -26,14 +25,14 @@ use Illuminate\Support\Facades\Gate;
  */
 class TmdbRatingController extends Controller
 {
-    public function __construct(private TmdbRatings $ratings, private AgeGate $ageGate) {}
+    public function __construct(private TmdbRatings $ratings) {}
 
     /**
      * My reviews ("Mes avis").
      *
      * Every type, or one, with the comments: the most recently rated first, or sorted by `sort`
      * (oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the
-     * profile's age limit.
+     * The account profile's full set of ratings.
      */
     public function index(RatedListRequest $request, Profile $profile): JsonResponse
     {
@@ -44,18 +43,11 @@ class TmdbRatingController extends Controller
             ->sort(self::order($request->sort()))
             ->values();
 
-        // The age limit of the TV show applies to its episodes.
-        $allowed = collect($this->ageGate->filter($profile, $rows->map(fn (TmdbRating $r) => [
-            'media_type' => $r->type === RatedType::Movie ? 'movie' : 'tv',
-            'id' => $r->tmdb_id,
-            'row' => $r,
-        ])->all()))->pluck('row');
-
         $perPage = $request->perPage();
-        $total = $allowed->count();
+        $total = $rows->count();
 
         return response()->json([
-            'data' => RatedItemResource::collection($allowed->forPage($request->page(), $perPage)->values()),
+            'data' => RatedItemResource::collection($rows->forPage($request->page(), $perPage)->values()),
             'meta' => [
                 'page' => $request->page(),
                 'total_pages' => max(1, (int) ceil($total / $perPage)),
