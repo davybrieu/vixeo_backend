@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *    keeps (PKCE, `code_challenge`);
  * 2. the API sends the browser to Google or Apple, and they send it back to the API with a code
  *    (the API is the OAuth client: no secret in the apps);
- * 3. the API finds or creates the account, then sends the browser back to the app with a code of
+ * 3. the API signs in an existing account or keeps a new identity pending, then sends the browser back to the app with a code of
  *    its own, valid 5 minutes, once;
  * 4. the app trades this code and its secret for a token (`auth/social/token`).
  *
@@ -179,7 +179,7 @@ final class SocialLogins
      * The Vixeo account of [$identity]: the one already linked; else the one with its address,
      * linked now; else a new one.
      *
-     * @return array{User, bool} the account and whether it was created
+     * @return array{User|null, bool, SocialIdentity|null} the account or pending identity
      *
      * @throws SocialLoginFailed
      */
@@ -215,7 +215,7 @@ final class SocialLogins
                     $user->forceFill(['email_verified_at' => now()])->save();
                 }
             } else {
-                return [null, true, $identity];
+                if (! $identity->emailVerified) {\n                    throw new SocialLoginFailed(SocialLoginFailed::UNVERIFIED);\n                }\n                return [null, true, $identity];
             }
 
             SocialAccount::query()->create([
