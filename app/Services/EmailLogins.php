@@ -57,7 +57,7 @@ final class EmailLogins
 
         if (($entry['type'] ?? null) === 'email_change') {
             $email = (string) ($entry['email'] ?? '');
-            if ($email === '' || User::query()->where('email', $email)->whereKeyNot($user->id)->exists()) {
+            if ($email === '' || User::query()->where('email', $email)->where('id', '!=', $user->id)->exists()) {
                 return null;
             }
 
