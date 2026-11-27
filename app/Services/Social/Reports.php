@@ -150,7 +150,7 @@ class Reports
     public function subject(string $type, int $id): array
     {
         $subject = match ($type) {
-            'profile' => Profile::query()->whereKey($id)->where('is_kid', false)->first(),
+            'profile' => Profile::query()->whereKey($id)->first(),
             'review' => TmdbRating::query()->with('profile')->find($id),
             'list' => ProfileList::query()->with('profile')->find($id),
             'comment' => SocialComment::query()->with('profile')->find($id),
