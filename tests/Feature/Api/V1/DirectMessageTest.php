@@ -16,7 +16,7 @@ use Laravel\Sanctum\Sanctum;
 
 function messagingProfile(string $username, array $attributes = []): Profile
 {
-    return Profile::factory()->for(User::factory())->create(['username' => $username, ...$attributes]);
+    return Profile::factory()->for(User::factory()->create(['password' => 'secret-password']))->create(['username' => $username, ...$attributes]);
 }
 
 /** Acts as the account that owns [profile]. */
@@ -282,7 +282,7 @@ it('keeps a group when one of its members deletes its profile', function () {
     actingAsProfile($carol)->getJson("/api/v1/messages/{$conversation}")->assertOk()->assertJsonCount(1, 'participants');
 });
 
-it('removes the files of a deleted profile', function () {
+it('removes message files and conversations when the account is deleted', function () {
     $alice = messagingProfile('alice');
     $bob = messagingProfile('bob');
     $conversation = conversationWith($alice, $bob);
@@ -290,8 +290,7 @@ it('removes the files of a deleted profile', function () {
         ->assertCreated()->json('data.attachments.0.id');
     $path = MessageAttachment::query()->findOrFail($id)->path;
 
-    Profile::factory()->for($alice->user)->create();
-    actingAsProfile($alice)->deleteJson("/api/v1/profiles/{$alice->id}")->assertNoContent();
+    actingAsProfile($alice)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
 
     Storage::disk('local')->assertMissing($path);
     expect(Conversation::query()->find($conversation))->toBeNull();
