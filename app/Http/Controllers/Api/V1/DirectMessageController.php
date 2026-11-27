@@ -313,17 +313,16 @@ class DirectMessageController extends Controller
     {
         $profile = ResolveProfile::profile($request);
         abort_if($profile === null, 422, __('Select a profile.'));
-        abort_unless(Conversations::allowed($profile), 403, __('Messaging is for adult profiles with a username.'));
+        abort_unless(Conversations::allowed($profile), 403, __('Messaging requires a profile username.'));
 
         return $profile;
     }
 
-    /** An adult member, by username (404 otherwise). */
+    /** A member, by username (404 otherwise). */
     private function member(string $username): Profile
     {
         return Profile::query()
             ->where('username', mb_strtolower(ltrim($username, '@')))
-            ->where('is_kid', false)
             ->firstOrFail();
     }
 }
