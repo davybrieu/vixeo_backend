@@ -133,7 +133,7 @@ it('never gives a profile a username that is a page of the site or of the app', 
 
     // vixeo.app/membre/pseudo (Flutter Web): /accueil, /recherche… are app routes.
     foreach (['apk', 'Accueil', 'recherche', 'confidentialite'] as $reserved) {
-                    ->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])
+        $this->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['username' => 'Ce pseudo est réservé : choisissez-en un autre.']);
     }
