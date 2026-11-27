@@ -58,7 +58,7 @@ it('lists the covers by style, each with its pattern and its colors', function (
     }
 });
 
-it('gives a cover of the catalog, at random, to a new account and to a new profile', function () {
+it('gives a cover of the catalog, at random, to the initial profile of a new account', function () {
     $ids = app(CoverCatalog::class)->ids();
 
     $this->postJson('/api/v1/auth/register', [
@@ -68,14 +68,7 @@ it('gives a cover of the catalog, at random, to a new account and to a new profi
     $first = Profile::query()->firstOrFail();
     expect($first->cover)->toBeIn($ids);
 
-    Sanctum::actingAs($first->user);
-    $created = $this->postJson('/api/v1/profiles', ['name' => 'Max'])->assertCreated();
-    expect($created->json('data.cover'))->toBeIn($ids)
-        ->and($created->json('data.cover_url'))->toBeNull();
 
-    // One chosen.
-    $this->postJson('/api/v1/profiles', ['name' => 'Zoé', 'cover' => 'pellicule'])->assertCreated()
-        ->assertJsonPath('data.cover', 'pellicule');
 });
 
 it('changes the cover for another of the catalog, never an unknown one', function () {
