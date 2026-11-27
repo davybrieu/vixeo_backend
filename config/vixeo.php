@@ -5,6 +5,10 @@ return [
     // Base URL used only to create links that open a public profile in the Flutter app.
     'app_url' => rtrim((string) env('VIXEO_APP_URL', 'https://app.vixeo.app'), '/'),
 
+    'domains' => [
+        'api' => strtolower((string) parse_url(env('API_URL', env('APP_URL', 'http://localhost')), PHP_URL_HOST)) ?: null,
+    ],
+
     // Pas de Play Store (décision du développeur) : Android = APK téléchargé depuis le site.
     'android' => [
         // L'APK et son empreinte viennent d'abord de la dernière release GitHub android-<build>
