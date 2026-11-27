@@ -265,15 +265,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::delete('devices/{device}', [AccountController::class, 'revokeDevice'])->whereNumber('device')->name('devices.revoke');
         });
 
-        // Wrong parental PINs are also limited by App\Services\ParentalControl (5 per 5 min).
-        Route::prefix('parental-control')->name('parental-control.')->middleware('throttle:parental')->group(function () {
-            Route::get('/', [ParentalControlController::class, 'show'])->name('show');
-            Route::put('pin', [ParentalControlController::class, 'update'])->name('pin.update');
-            // POST, not DELETE: the PIN / password must travel in the body, never in the URL.
-            Route::post('disable', [ParentalControlController::class, 'destroy'])->name('disable');
-            Route::post('verify', [ParentalControlController::class, 'verify'])->name('verify');
-        });
-
         // Push notifications of this app (docs/notifications.md).
         Route::prefix('push/device')->name('push.device.')->middleware(['throttle:push', ResolveProfile::class])->group(function () {
             Route::get('/', [PushDeviceController::class, 'show'])->name('show');
