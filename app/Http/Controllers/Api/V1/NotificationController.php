@@ -9,7 +9,6 @@ use App\Models\ProfileItem;
 use App\Models\SocialNotification;
 use App\Services\Social\Audience;
 use App\Services\Social\SocialNotifications;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbFormat as F;
 use App\Services\Tmdb\UpcomingEpisodes;
