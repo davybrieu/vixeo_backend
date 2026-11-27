@@ -5,7 +5,7 @@ Le dépôt `davybrieu/vixeo_backend` héberge **uniquement l'API Laravel**.
 | Domaine | Hébergement | Rôle |
 |---|---|---|
 | `api.vixeo.app` | Laravel Forge | API REST `/api/v1`, Reverb, tâches planifiées et fichiers API |
-| `app.vixeo.app` | Hébergement statique séparé | Application Flutter Web, compilée depuis `vixeo_frontend` et publiée dans sa branche `web-dist` |
+| `vixeo.app` | Hébergement statique séparé | Application Flutter Web, compilée depuis `vixeo_frontend` et publiée dans sa branche `web-dist` |
 
 Aucun site de présentation, aucune page Inertia/Blade, aucun rendu SSR et aucun build frontend ne
 sont déployés sur Forge. Le dépôt frontend est responsable du build et de la publication Web.
@@ -13,7 +13,7 @@ sont déployés sur Forge. Le dépôt frontend est responsable du build et de la
 ## 1. DNS et Forge
 
 - Le domaine `api.vixeo.app` pointe vers le serveur Forge (Cloudflare proxifié).
-- Le domaine `app.vixeo.app` pointe vers l'hébergement statique choisi pour le frontend ; il ne
+- Le domaine `vixeo.app` pointe vers l'hébergement statique choisi pour le frontend ; il ne
   doit pas être ajouté au site Forge de l'API.
 - SSL Cloudflare : mode **Full (strict)**.
 
@@ -43,7 +43,7 @@ APP_URL=https://api.vixeo.app
 API_URL=https://api.vixeo.app
 
 # URL du frontend Flutter Web : utilisée uniquement pour les liens de partage de profils.
-VIXEO_APP_URL=https://app.vixeo.app
+VIXEO_APP_URL=https://vixeo.app
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -56,8 +56,8 @@ CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 
-# Le navigateur Flutter Web appelle l'API depuis app.vixeo.app.
-CORS_ALLOWED_ORIGINS=https://app.vixeo.app
+# Le navigateur Flutter Web appelle l'API depuis vixeo.app.
+CORS_ALLOWED_ORIGINS=https://vixeo.app
 
 # Reverb, TMDb, OpenSubtitles, mail, FCM et autres paramètres métier :
 # conserver les variables existantes de .env.example.
@@ -112,7 +112,7 @@ curl -s https://api.vixeo.app/up                       # healthcheck
 ```
 
 Toutes les erreurs de l'API, y compris les chemins inconnus appelés depuis un navigateur,
-doivent renvoyer du JSON. Le domaine `app.vixeo.app` doit être vérifié séparément depuis
+doivent renvoyer du JSON. Le domaine `vixeo.app` doit être vérifié séparément depuis
 l'hébergement du frontend Web.
 
 ## 6. Points à préserver
@@ -122,7 +122,7 @@ l'hébergement du frontend Web.
 - Les liens publics de profils renvoyés par l'API utilisent `VIXEO_APP_URL` et la route Flutter
   `/membre/{username}`.
 - Les fichiers `/.well-known/assetlinks.json` et le routage des profils publics doivent être
-  servis par le frontend sur `app.vixeo.app`.
+  servis par le frontend sur `vixeo.app`.
 - Les releases Android et Windows continuent d'être publiées par GitHub Actions dans
   `vixeo_frontend`. L'API les lit pour `GET /api/v1/app/update`.
 - La documentation OpenAPI reste générée par Scramble ; la spec publiée est
