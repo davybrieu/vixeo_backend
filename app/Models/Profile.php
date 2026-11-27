@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * A viewer profile ("Qui regarde ?"). Favorites, history and resume
@@ -29,7 +28,7 @@ class Profile extends Model
     /** @use HasFactory<ProfileFactory> */
     use HasFactory;
 
-    /** Maximum number of profiles per account. */
+    /** One profile is allowed per account. */
     public const MAX_PER_USER = 1;
 
     /** Longest biography of a public profile, in characters (developer's request, 21/11/2026). */
@@ -39,7 +38,6 @@ class Profile extends Model
     public const SKIP_FIELDS = ['skip_intro', 'skip_recap', 'skip_credits', 'skip_preview'];
 
     protected $attributes = [
-        'allow_unrated' => false,
         'no_spoiler' => false,
         'skip_intro' => false,
         'skip_recap' => false,
