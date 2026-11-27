@@ -16,7 +16,7 @@ php artisan serve                 # API sur http://localhost:8000/api/v1
 ```
 
 En local, `APP_URL` et `API_URL` pointent vers l'API locale. En production, les deux pointent vers
-`https://api.vixeo.app`. `VIXEO_APP_URL=https://app.vixeo.app` sert uniquement à construire les
+`https://api.vixeo.app`. `VIXEO_APP_URL=https://vixeo.app` sert uniquement à construire les
 liens publics de profils qui ouvrent l'application Flutter.
 
 
