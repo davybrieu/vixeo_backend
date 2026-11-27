@@ -8,6 +8,7 @@ use App\Services\Accounts;
 use App\Services\EmailLogins;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -33,6 +34,25 @@ class EmailLoginController extends Controller
             'message' => 'Si cette adresse peut être utilisée, un code de connexion vient de lui être envoyé.',
             'expires_in_seconds' => EmailLogins::OTP_TTL,
         ]);
+    }
+
+    /** Browser waiting page used only for confirming a changed account e-mail address. */
+    public function waiting(): Response
+    {
+        return response('<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vixeo</title><body style="font-family:system-ui;background:#080b09;color:#fff;padding:3rem;text-align:center"><h1>Confirmation de votre adresse</h1><p>La confirmation vous ramènera dans Vixeo.</p></body></html>')
+            ->header('Content-Type', 'text/html; charset=UTF-8');
+    }
+
+    /** Consume the one-time link used only for changing an account e-mail address. */
+    public function consume(Request $request, EmailLogins $logins): Response
+    {
+        $token = (string) $request->query('token', '');
+        $redirect = $token === '' ? null : $logins->consume($token);
+        if ($redirect === null) {
+            return response('Ce lien est invalide, expiré ou déjà utilisé. Demandez-en un nouveau dans Vixeo.', 410)
+                ->header('Content-Type', 'text/plain; charset=UTF-8');
+        }
+        return response('', Response::HTTP_SEE_OTHER)->header('Location', $redirect);
     }
 
     /** Verify the six-digit code and issue the Sanctum token directly to the app. */
