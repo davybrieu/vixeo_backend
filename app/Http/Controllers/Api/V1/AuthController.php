@@ -21,7 +21,7 @@ class AuthController extends Controller
      * Create an account.
      *
      * Also creates a first profile named after the user (with an avatar and a cover of the catalogs,
-     * at random) and returns an API token.
+     * at random) and sends a one-time email sign-in link.
      *
      * @unauthenticated
      */
