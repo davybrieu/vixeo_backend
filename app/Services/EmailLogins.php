@@ -7,7 +7,6 @@ use App\Services\SocialLogin\SocialLogins;
 use App\Notifications\EmailLoginLink;
 use App\Notifications\EmailChangeLink;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 final class EmailLogins
@@ -40,7 +39,9 @@ final class EmailLogins
         ], self::LINK_TTL);
 
         $url = route('v1.auth.email.consume', ['token' => $token]);
-        Notification::sendNow(Notification::route('mail', $email), new EmailChangeLink($url, self::LINK_TTL / 60, $user->name));
+        $recipient = clone $user;
+        $recipient->email = $email;
+        $recipient->notify(new EmailChangeLink($url, self::LINK_TTL / 60, $user->name));
     }
 
     /** Consume the emailed link once and return the app redirect with a short-lived PKCE code. */
