@@ -97,15 +97,22 @@ class SocialLoginController extends Controller
             throw ValidationException::withMessages(['code' => [__('This sign-in has expired. Try again.')]]);
         }
 
+        if (isset($result['registration_ticket'])) {
+            return response()->json([
+                'registration_required' => true,
+                'registration_ticket' => $result['registration_ticket'],
+                'created' => true,
+            ]);
+        }
+
         $user = $result['user'];
 
         return response()->json([
             /** Bearer token to send in the `Authorization` header. */
             'token' => (string) $user->createToken($request->validated('device_name'))->plainTextToken,
             'user' => new UserResource($user),
-            /** A new account (and its first profile). */
-            'created' => (bool) $result['created'],
-            'needs_profile_setup' => $user->profiles()->first()?->registration_completed_at === null,
+            'created' => false,
+            'needs_profile_setup' => false,
         ]);
     }
 }
