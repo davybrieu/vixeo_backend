@@ -11,7 +11,6 @@ use App\Http\Requests\Api\V1\RateRequest;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\Profile;
 use App\Models\TmdbRating;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\RatingTarget;
 use App\Services\TmdbRatings;
 use Illuminate\Http\JsonResponse;
@@ -33,7 +32,7 @@ class TmdbRatingController extends Controller
      *
      * Every type, or one, with the comments: the most recently rated first, or sorted by `sort`
      * (oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the
-     * profile's age limit.
+     * The full set of ratings for the account profile.
      */
     public function index(RatedListRequest $request, Profile $profile): JsonResponse
     {
