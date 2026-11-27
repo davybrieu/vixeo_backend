@@ -284,10 +284,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
         Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
         Route::get('covers', [CoverController::class, 'index'])->name('covers');
-        Route::apiResource('profiles', ProfileController::class);
-        Route::post('profiles/{profile}/verify-pin', [ProfileController::class, 'verifyPin'])
-            ->middleware('throttle:pin')
-            ->name('profiles.verify-pin');
+        Route::apiResource('profiles', ProfileController::class)->only(['index', 'store', 'show', 'update']);
         // Its own photo, instead of its avatar (docs/social.md).
         Route::post('profiles/{profile}/photo', [ProfilePhotoController::class, 'store'])
             ->middleware('throttle:profile-photo-upload')
