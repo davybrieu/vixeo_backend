@@ -76,7 +76,8 @@ it('lists and revokes signed-in devices', function () {
     $tv = $this->user->createToken('Salon TV');
     $this->withToken($this->token)->getJson('/api/v1/me/devices')
         ->assertOk()->assertJsonCount(2, 'data')
-        ->assertJsonPath('data.0.name', 'Salon TV')
+        ->assertJsonPath('data.0.name', 'iPhone')
+        ->assertJsonPath('data.1.name', 'Salon TV')
         ->assertJsonStructure(['data' => [['id', 'name', 'current', 'signed_in_at', 'last_used_at', 'expires_at']]]);
 
     $this->withToken($this->token)->deleteJson('/api/v1/me/devices/'.$tv->accessToken->id)->assertNoContent();
