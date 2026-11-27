@@ -133,7 +133,7 @@ it('never gives a profile a username that is a page of the site or of the app', 
     $profile = Profile::factory()->for($user)->create(['username' => 'maxime']);
     Sanctum::actingAs($user);
 
-    // www.vixeo.app/pseudo (like Twitter): /apk, /confidentialite, /accueil… stay pages.
+    // app.vixeo.app/membre/pseudo (Flutter Web): /accueil, /recherche… are app routes.
     foreach (['apk', 'Accueil', 'recherche', 'confidentialite'] as $reserved) {
         $this->withHeader('X-Profile-Id', (string) $profile->id)
             ->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])
