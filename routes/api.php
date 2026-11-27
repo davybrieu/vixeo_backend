@@ -43,7 +43,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->name('v1.')->group(function () {
     Route::prefix('auth')->name('auth.')->middleware('throttle:auth')->group(function () {
         Route::post('register', [AuthController::class, 'register'])->name('register');
-        Route::post('login', [AuthController::class, 'login'])->name('login');
+        Route::post('email/link', [EmailLoginController::class, 'request'])->name('email.request');
+        Route::get('email/consume', [EmailLoginController::class, 'consume'])->name('email.consume');
+        Route::post('email/token', [EmailLoginController::class, 'token'])->name('email.token');
         // TV sign-in with a code (docs/connexion-tv.md).
         Route::post('device', [DeviceLoginController::class, 'start'])->name('device.start');
         // "Mot de passe oublié" (docs/compte.md).
