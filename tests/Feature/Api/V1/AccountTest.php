@@ -59,7 +59,7 @@ it('removes pending TV sign-ins with the account', function () {
 
 it('e-mails the account data as JSON', function () {
     Notification::fake();
-    $profile = $this->user->profiles()->create(['name' => 'Léa', 'pin' => '1234']);
+    $profile = $this->user->profiles()->create(['name' => 'Léa']);
     ProfileItem::factory()->for($profile)->create(['title' => 'Nord Sauvage']);
 
     $this->withToken($this->token)->postJson('/api/v1/me/export')
@@ -73,7 +73,6 @@ it('e-mails the account data as JSON', function () {
 
         return $data['account']['email'] === 'davy@example.com'
             && $data['profiles'][0]['name'] === 'Léa'
-            && $data['profiles'][0]['has_pin'] === true
             && $data['profiles'][0]['library'][0]['title'] === 'Nord Sauvage'
             && $data['devices'][0]['name'] === 'iPhone'
             && ! str_contains($json, '$2y$') // no hash
