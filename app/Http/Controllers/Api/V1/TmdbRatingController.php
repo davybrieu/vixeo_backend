@@ -32,7 +32,7 @@ class TmdbRatingController extends Controller
      *
      * Every type, or one, with the comments: the most recently rated first, or sorted by `sort`
      * (oldest, highest, lowest rating; equal ratings: the most recent first). Filtered by the
-     * The full set of ratings for the account profile.
+     * The account profile's full set of ratings.
      */
     public function index(RatedListRequest $request, Profile $profile): JsonResponse
     {
@@ -43,13 +43,11 @@ class TmdbRatingController extends Controller
             ->sort(self::order($request->sort()))
             ->values();
 
-        $allowed = $rows;
-
         $perPage = $request->perPage();
-        $total = $allowed->count();
+        $total = $rows->count();
 
         return response()->json([
-            'data' => RatedItemResource::collection($allowed->forPage($request->page(), $perPage)->values()),
+            'data' => RatedItemResource::collection($rows->forPage($request->page(), $perPage)->values()),
             'meta' => [
                 'page' => $request->page(),
                 'total_pages' => max(1, (int) ceil($total / $perPage)),
