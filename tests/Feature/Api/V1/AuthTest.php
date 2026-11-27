@@ -78,7 +78,6 @@ it('protects personal endpoints', function () {
     $this->getJson('/api/v1/social/profiles/lea')->assertUnauthorized();
     $this->getJson('/api/v1/tv/channels')->assertUnauthorized();
     $this->withToken('invalid-token')
-        ->withHeader('X-Profile-Id', '1')
         ->getJson('/api/v1/catalog/home')
         ->assertUnauthorized();
 });
