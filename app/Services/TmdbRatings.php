@@ -106,7 +106,7 @@ class TmdbRatings
             $this->markWatched($profile, $row);
         }
         $newComment = $row->comment !== null && $row->comment !== $previousComment;
-        if (! $profile->is_kid && ($fresh || $newComment)) {
+        if ($fresh || $newComment) {
             $this->activities->review($row);
         }
 
