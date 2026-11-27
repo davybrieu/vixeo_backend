@@ -1,11 +1,11 @@
 <?php
 
-use App\\Services\\Tmdb\\TitleSummaries;
-use App\\Services\\Tmdb\\TmdbClient;
-use App\\Services\\Tmdb\\TmdbUnavailableException;
-use App\\Services\\Tmdb\\UpcomingEpisodes;
-use App\\Services\\Tmdb\\WeeklyReleases;
-use Illuminate\\Support\\Facades\\Cache;
+use App\Services\Tmdb\TitleSummaries;
+use App\Services\Tmdb\TmdbClient;
+use App\Services\Tmdb\TmdbUnavailableException;
+use App\Services\Tmdb\UpcomingEpisodes;
+use App\Services\Tmdb\WeeklyReleases;
+use Illuminate\Support\Facades\Cache;
 
 it('serves the previous weekly result when TMDB is temporarily unavailable', function () {
     $from = '2026-11-23';
