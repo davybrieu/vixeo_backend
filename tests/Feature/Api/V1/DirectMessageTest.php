@@ -19,12 +19,12 @@ function messagingProfile(string $username, array $attributes = []): Profile
     return Profile::factory()->for(User::factory())->create(['username' => $username, ...$attributes]);
 }
 
-/** Acts as [profile]: its account signed in, its id in X-Profile-Id. */
+/** Acts as the account that owns [profile]. */
 function actingAsProfile(Profile $profile): mixed
 {
     Sanctum::actingAs($profile->user);
 
-    return test()->withHeader('X-Profile-Id', (string) $profile->id);
+    return test();
 }
 
 function conversationWith(Profile $from, Profile $to, bool $accepted = true): int
