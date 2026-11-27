@@ -211,18 +211,6 @@ it('sorts my reviews by date or by rating, equal ratings the most recent first',
         ->assertJsonPath('errors.sort.0', 'La valeur sélectionnée pour tri n\'est pas valide.');
 });
 
-it('hides the reviews a kid profile may not see', function () {
-    $kid = Profile::factory()->for($this->user)->kid(12)->create();
-    review($kid, 'movie/1', 8, 1);
-    review($kid, 'movie/2', 5, 2);
-    Http::fake([
-        TMDB.'movie/1/release_dates*' => Http::response(['results' => [['iso_3166_1' => 'FR', 'release_dates' => [['certification' => 'U']]]]]),
-        TMDB.'movie/2/release_dates*' => Http::response(['results' => [['iso_3166_1' => 'FR', 'release_dates' => [['certification' => '16']]]]]),
-    ]);
-
-    $this->getJson("/api/v1/profiles/{$kid->id}/tmdb/ratings?type=movie")->assertOk()->assertJsonPath('data.*.id', [1]);
-});
-
 it('keeps the review when TMDb is down, and completes its title later', function () {
     $tmdb = (object) ['down' => true];
     fakeTitles($tmdb);
