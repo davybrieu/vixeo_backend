@@ -22,13 +22,13 @@ it('gives a member\'s lists 20 at a time', function () {
     $max = pagingMember('max');
     Sanctum::actingAs($max->user);
 
-    $first = $this->withHeader('X-Profile-Id', (string) $max->id)
+    $first = $this
         ->getJson('/api/v1/social/profiles/lea/followers')
         ->assertOk()
         ->assertJsonPath('meta', ['current_page' => 1, 'last_page' => 2]);
     expect($first->json('data'))->toHaveCount(20);
 
-    $second = $this->withHeader('X-Profile-Id', (string) $max->id)
+    $second = $this
         ->getJson('/api/v1/social/profiles/lea/followers?page=2')
         ->assertOk()
         ->assertJsonPath('meta.current_page', 2);
@@ -43,13 +43,13 @@ it('gives my lists 20 at a time, with the ones that have a title', function () {
     }
     Sanctum::actingAs($lea->user);
 
-    $first = $this->withHeader('X-Profile-Id', (string) $lea->id)
+    $first = $this
         ->getJson('/api/v1/social/lists?item=movie:550')
         ->assertOk()
         ->assertJsonPath('meta', ['current_page' => 1, 'last_page' => 2])
         ->assertJsonPath('data.0.contains', false);
     expect($first->json('data'))->toHaveCount(20);
 
-    $second = $this->withHeader('X-Profile-Id', (string) $lea->id)->getJson('/api/v1/social/lists?page=2')->assertOk();
+    $second = $this->getJson('/api/v1/social/lists?page=2')->assertOk();
     expect($second->json('data'))->toHaveCount(3);
 });
