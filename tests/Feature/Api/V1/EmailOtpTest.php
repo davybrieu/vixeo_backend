@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
 use App\Notifications\EmailLoginCode;
 use Illuminate\Support\Facades\Notification;
 
