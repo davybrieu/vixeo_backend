@@ -19,7 +19,7 @@ beforeEach(function () {
 
 function coverMember(string $username, array $attributes = []): Profile
 {
-    return Profile::factory()->for(User::factory()->create(['password' => 'secret-password']))
+    return Profile::factory()->for(User::factory()->create([]))
         ->create(['username' => $username, 'cover' => 'aurore', ...$attributes]);
 }
 
@@ -146,7 +146,7 @@ it('deletes the cover image with the account', function () {
     sendCover($lea, UploadedFile::fake()->image('c.png', 1200, 400));
     $path = ProfileCovers::DIRECTORY.'/'.$lea->refresh()->cover_path;
 
-    asCoverMember($lea)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
+    asCoverMember($lea)->postJson('/api/v1/me/delete', [])->assertNoContent();
     Storage::disk(ProfileCovers::DISK)->assertMissing($path);
 });
 
