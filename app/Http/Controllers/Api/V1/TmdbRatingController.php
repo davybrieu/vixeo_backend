@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Gate;
  */
 class TmdbRatingController extends Controller
 {
-    public function __construct(private TmdbRatings $ratings, private AgeGate $ageGate) {}
+    public function __construct(private TmdbRatings $ratings) {}
 
     /**
      * My reviews ("Mes avis").
@@ -44,12 +44,7 @@ class TmdbRatingController extends Controller
             ->sort(self::order($request->sort()))
             ->values();
 
-        // The age limit of the TV show applies to its episodes.
-        $allowed = collect($this->ageGate->filter($profile, $rows->map(fn (TmdbRating $r) => [
-            'media_type' => $r->type === RatedType::Movie ? 'movie' : 'tv',
-            'id' => $r->tmdb_id,
-            'row' => $r,
-        ])->all()))->pluck('row');
+        $allowed = $rows;
 
         $perPage = $request->perPage();
         $total = $allowed->count();
