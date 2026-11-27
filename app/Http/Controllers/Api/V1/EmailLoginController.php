@@ -82,7 +82,7 @@ class EmailLoginController extends Controller
     }
 
     /** Verify the six-digit code and issue the Sanctum token directly to the app. */
-    public function verifyCode(Request $request, EmailLogins $logins, Accounts $accounts): JsonResponse
+    public function verifyCode(Request $request, EmailLogins $logins): JsonResponse
     {
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],
