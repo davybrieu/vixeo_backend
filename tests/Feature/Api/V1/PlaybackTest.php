@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\ResolveProfile;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\Playback\SubtitleFormat;
@@ -97,7 +96,7 @@ it('finds subtitles of a movie in the profile language, preferred language first
     ]])]);
     $profile = Profile::factory()->for($this->user)->create(['subtitle_language' => 'pt-BR']);
 
-    $response = $this->getJson('/api/v1/catalog/movie/550/subtitles?languages=pt-BR,en', [ResolveProfile::HEADER => $profile->id])
+    $response = $this->getJson('/api/v1/catalog/movie/550/subtitles?languages=pt-BR,en')
         ->assertOk();
 
     expect($response->json('data.*.file_id'))->toBe([3, 2, 1])
