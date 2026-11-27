@@ -18,7 +18,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 /**
  * Push notifications of the signed-in app (docs/notifications.md): the app registers its
  * Firebase installation ID (or, before firebase_messaging 17, its registration token) with the
- * active profile (`X-Profile-Id`) and whether it wants the new episodes of the profile's
+ * account's single profile and whether it wants new episodes of its
  * « À voir » shows. Windows has no Firebase: its registration has no ID and its notifications
  * come by the real-time channel `push-devices.{id}` (Reverb) while the app runs. One registration
  * per signed-in app: signing out removes it.
@@ -52,7 +52,7 @@ class PushDeviceController extends Controller
     /**
      * Register this app.
      *
-     * At sign-in, at launch, when the installation ID changes, when the profile in use changes and
+     * At sign-in, at launch, when the installation ID changes and
      * when the new-episode alerts are turned on or off. `fid` (or `token` for the older apps) on
      * Android and iOS, neither on Windows. Episodes out before the alerts are turned on (or before
      * the profile is used on the app) are not announced. 201 the first time, 200 after.
