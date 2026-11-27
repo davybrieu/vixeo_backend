@@ -40,8 +40,7 @@ class CatalogWarmer
         $refreshing = $this->tmdb->refreshing();
         $home = app()->make(TmdbCatalog::class, ['tmdb' => $refreshing])->home(null);
 
-        // The lists given with their summary, as CatalogController::home does (no profile here:
-        // an age limit only removes titles).
+        // The lists given with their summary, as CatalogController::home does.
         $lists = ['featured' => $home['featured']];
         foreach ($home['sections'] as $index => $section) {
             if (TmdbCatalog::summarized($home, $index)) {
