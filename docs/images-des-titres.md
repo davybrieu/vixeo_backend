@@ -6,7 +6,7 @@ l'API les donne ensuite **à ce profil** à la place de ceux de TMDb, partout o�
 
 ## Routes
 
-- `GET /api/v1/catalog/{movie|tv}/{id}/images` (en-tête `X-Profile-Id`) :
+- `GET /api/v1/catalog/{movie|tv}/{id}/images` :
   - `default` : le choix de TMDb (chemins et vignettes), montré par « Par défaut » ;
   - `chosen` : le choix du profil (`poster`, `backdrop`, `logo` : un chemin, ou null pour celui de
     TMDb ; `logo_aspect_ratio`) ; null sans profil ;
