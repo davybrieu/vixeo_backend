@@ -121,8 +121,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     et rangées de l'accueil (`TmdbClient::refreshing()` : la réponse en cache est remplacée, gardée
     si TMDb échoue) et les fiches des titres résumés (`TmdbCatalog::summarized`) quand elles
     manquent, toutes redemandées toutes les 12 h (cache d'un jour ; `--details` : tout de suite).
-    L'accueil répond alors sans appeler TMDb. Pas préparés : classifications des profils avec
-    limite d'âge (`AgeGate`), titres des rangées légères. Tests : `Catalog/CatalogWarmTest.php`.
+    L'accueil répond alors sans appeler TMDb. Pas préparés : titres des rangées légères. Tests : `Catalog/CatalogWarmTest.php`.
   - `TmdbCatalog` : ce qu'on demande à TMDb ; pose `media_type` sur chaque élément.
   - Les ressources `app/Http/Resources/V1/Catalog` transforment le JSON de TMDb (chaînes vides
     → `null`, URL d'images, âge minimum, bande-annonce…) via `TmdbFormat`. Caster chaque valeur
