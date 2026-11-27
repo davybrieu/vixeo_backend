@@ -117,7 +117,7 @@ class NotificationController extends Controller
      * out for less than 7 days, the most recent first. `available_at` is an estimate made not to
      * be early (08:00 UTC on streaming platforms, 21:00 in the show's country otherwise).
      */
-    public function episodes(Request $request, TitleSummaries $summaries, AgeGate $ageGate): JsonResponse
+    public function episodes(Request $request, TitleSummaries $summaries): JsonResponse
     {
         $profile = $this->profile($request);
         $ids = ProfileItem::query()->where('profile_id', $profile->id)->where('is_favorite', true)
@@ -129,7 +129,7 @@ class NotificationController extends Controller
         $upcoming = [];
         $recent = [];
         foreach ($summaries->shows($ids) as $id => $show) {
-            if ($show === null || ! $ageGate->allows($profile, $show)) {
+            if ($show === null) {
                 continue;
             }
             foreach (['next_episode_to_air' => true, 'last_episode_to_air' => false] as $key => $next) {
