@@ -14,6 +14,7 @@ return new class extends Migration
         });
 
         // Existing accounts already have a profile and must not be forced through registration.
+        DB::table('profiles')->whereNull('onboarded_at')->update(['onboarded_at' => now()]);
         DB::table('profiles')->whereNull('registration_completed_at')->update([
             'registration_completed_at' => now(),
         ]);
