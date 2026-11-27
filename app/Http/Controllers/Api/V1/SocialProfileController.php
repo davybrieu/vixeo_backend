@@ -41,14 +41,12 @@ class SocialProfileController extends Controller
 
     public function search(Request $request): JsonResponse
     {
-        $this->assertAdultViewer($request);
         $query = ltrim(trim((string) $request->query('query', '')), '@');
         abort_if(mb_strlen($query) < 2, 422, 'Saisissez au moins deux caractères.');
 
         $viewer = ResolveProfile::profile($request);
 
         $profiles = Profile::query()
-            ->where('is_kid', false)
             ->whereNotNull('username')
             ->whereNull('suspended_at')
             // Never the active profile itself: it is reached from the navigation (« Profil »).
@@ -109,7 +107,7 @@ class SocialProfileController extends Controller
              *
              * @var array{score: int|null, common: int}|null
              */
-            'compatibility' => $viewer instanceof Profile && ! $self && $canView && ! $viewer->is_kid ? $taste->compatibility($viewer, $profile) : null,
+            'compatibility' => $viewer instanceof Profile && ! $self && $canView  ? $taste->compatibility($viewer, $profile) : null,
         ]]);
     }
 
@@ -380,17 +378,10 @@ class SocialProfileController extends Controller
         ]);
     }
 
-    private function assertAdultViewer(Request $request): void
-    {
-        $viewer = ResolveProfile::profile($request);
-        abort_if($viewer?->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
-    }
-
     private function activeProfile(Request $request): Profile
     {
         $profile = ResolveProfile::profile($request);
-        abort_unless($profile instanceof Profile, 422, 'Sélectionnez un profil.');
-        abort_if($profile->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
+        abort_unless($profile instanceof Profile, 422, 'Profil de compte introuvable.');
 
         return $profile;
     }
@@ -402,7 +393,7 @@ class SocialProfileController extends Controller
     private function publicProfile(string $username, bool $withCounts = false): Profile
     {
         return Profile::query()->where('username', mb_strtolower(ltrim($username, '@')))
-            ->where('is_kid', false)->whereNull('suspended_at')
+            ->whereNull('suspended_at')
             ->when($withCounts, fn ($query) => $query->withCount([
                 'lists as lists_count' => fn ($query) => $query->whereNull('hidden_at')->where('items_count', '>', 0),
                 'followers',
