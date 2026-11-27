@@ -6,19 +6,18 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 
 it('translates validation errors and field names', function () {
-    $this->postJson('/api/v1/auth/register', ['email' => 'not-an-email', 'password' => 'short'])
+    $this->postJson('/api/v1/auth/register', ['email' => 'not-an-email'])
         ->assertUnprocessable()
         ->assertJsonPath('errors.name.0', 'Le champ nom est obligatoire.')
         ->assertJsonPath('errors.email.0', 'Le champ adresse e-mail doit être une adresse e-mail valide.')
-        ->assertJsonPath('errors.password.0', 'Le champ mot de passe doit contenir au moins 8 caractères.')
-        ->assertJsonPath('errors.device_name.0', "Le champ nom de l'appareil est obligatoire.");
+        ->assertJsonValidationErrors(['redirect_uri', 'code_challenge']);
 });
 
 it('uses custom messages for duplicates', function () {
     User::factory()->create(['email' => 'taken@example.com']);
 
     $this->postJson('/api/v1/auth/register', [
-        'name' => 'Davy', 'email' => 'taken@example.com', 'password' => 'secret-password', 'device_name' => 'test',
+        'name' => 'Davy', 'username' => 'davy', 'email' => 'taken@example.com', 'redirect_uri' => 'app.vixeo://auth', 'code_challenge' => str_repeat('a', 43),
     ])->assertJsonPath('errors.email.0', 'Un compte existe déjà avec cette adresse e-mail.');
 
     $user = User::factory()->create();
@@ -27,11 +26,6 @@ it('uses custom messages for duplicates', function () {
 
     $this->postJson('/api/v1/profiles', ['name' => 'Léa'])
         ->assertJsonPath('errors.name.0', 'Un profil porte déjà ce nom.');
-});
-
-it('translates failed login', function () {
-    $this->postJson('/api/v1/auth/login', ['email' => 'x@example.com', 'password' => 'x', 'device_name' => 'test'])
-        ->assertJsonPath('errors.email.0', 'Adresse e-mail ou mot de passe incorrect.');
 });
 
 it('translates 401', function () {
@@ -58,18 +52,17 @@ it('translates 404 without leaking model names', function () {
 });
 
 it('translates 405', function () {
-    $this->putJson('/api/v1/auth/login')->assertMethodNotAllowed()->assertExactJson(['message' => 'Méthode non autorisée.']);
+    $this->putJson('/api/v1/auth/email/link')->assertMethodNotAllowed()->assertExactJson(['message' => 'Méthode non autorisée.']);
 });
 
 it('translates 429 with the waiting time', function () {
-    $payload = ['email' => 'x@example.com', 'password' => 'x', 'device_name' => 'test'];
+    $payload = ['email' => 'x@example.com', 'redirect_uri' => 'app.vixeo://auth', 'code_challenge' => str_repeat('a', 43)];
     foreach (range(1, 10) as $i) {
-        $this->postJson('/api/v1/auth/login', $payload);
+        $this->postJson('/api/v1/auth/email/link', $payload);
     }
 
-    $response = $this->postJson('/api/v1/auth/login', $payload)->assertTooManyRequests();
-
-    expect($response->json('message'))->toMatch('/^Trop de tentatives\. Réessayez dans \d+ secondes\.$/');
+    $response = $this->postJson('/api/v1/auth/email/link', $payload)->assertTooManyRequests();
+    expect($response->json('message'))->toMatch('/^Trop de tentatives\\. Réessayez dans \\d+ secondes\\.$/');
     $response->assertHeader('Retry-After');
 });
 
