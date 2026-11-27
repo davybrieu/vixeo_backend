@@ -33,7 +33,7 @@ notification et de la page de profil Flutter (`VIXEO_APP_URL/membre/{username}`)
 - `GET /profile-photos/{nom}` : **publique** (les images se chargent sans jeton), comme le nom du
   profil ; nom aléatoire de 40 caractères, changé à chaque photo : gardée un an par les applis
   (`Cache-Control: immutable`). Fichiers sur le disque privé (`App\Services\ProfilePhotos`),
-  supprimés avec le profil ou le compte (`photo_url` dans l'export).
+  supprimés avec le compte (`photo_url` dans l'export).
 - Modération : un profil signalé pour sa photo → `vixeo:moderate … photo` la retire sans suspendre
   le profil (`docs/moderation.md`).
 
