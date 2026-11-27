@@ -18,7 +18,7 @@ séries viennent **uniquement des plug-ins exécutés par l'appli** (dépôts de
 façon Nuvio, `vixeo_frontend/docs/scrapers.md`) : le serveur n'a plus de scraper, de
 fournisseurs, d'extracteurs (supprimés le 20/11/2026), ni de plug-ins Stremio, de sources, de
 flux favoris ou morts (supprimés le 21/11/2026) ; demande du développeur, ne pas les réintroduire. Pas de serveurs multimédias
-de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli, ni sur le site.
+de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli.
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
 périmètre légal (§3, ce qui est hors périmètre ne doit pas être implémenté), sécurité (§6),
@@ -26,7 +26,7 @@ feuille de route (§10).
 
 **Distribution Android** (décision du développeur, ne plus poser la question) : **pas de Play
 Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est distribuée en
-**APK signé** depuis le site (`www.vixeo.app/#installer`, dans ce dépôt). Conséquences :
+**APK signé** publié dans les releases GitHub de `vixeo_frontend`. Conséquences :
 - chaque version est signée avec la **même clé de release** (keystore hors du dépôt, dans les
   secrets) : sinon Android refuse d'installer la mise à jour par-dessus l'ancienne version ;
 - les mises à jour passent par la vérification intégrée à l'appli (`GET /app/update`), pas par
@@ -38,8 +38,7 @@ Store**. L'appli Android (téléphones, tablettes, Android TV / Google TV) est d
 **Distribution Windows** (demande du développeur, 20/11/2026) : installateur Inno Setup
 (`vixeo-setup-<build>.exe`, pour l'utilisateur, sans droits d'administrateur, Windows 10 / 11
 64 bits) publié en release GitHub `windows-<build>` par la CI de `vixeo_frontend`, téléchargé
-depuis le site (`#installer`) ; pas de Microsoft Store ; **non signé** pour l'instant (SmartScreen
-prévient, le site et la FAQ l'expliquent).
+depuis les releases GitHub ; pas de Microsoft Store ; **non signé** pour l'instant (SmartScreen prévient).
 
 ## Langue
 
@@ -81,31 +80,14 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 ## Conventions
 
-, JSON sur l'hôte de l'API et sous `/api/*` (`Hosts::isApi`). Textes honnêtes
-  (ce que l'appli fait aujourd'hui, « Bientôt disponible » sinon), écarté : import IPTV / M3U /
-  Xtream, radio, replays. **Mac, iPhone et iPad** : listés même avant leur sortie, onglets
-  d'installation « Bientôt disponible », sans bouton (demande du développeur, 21/11/2026) ; les
-  onglets passent sur plusieurs lignes selon la place, jamais de défilement de côté. Un seul bouton en haut de l'accueil, « Installer
-  Vixeo » (vers `#installer`) ; FAQ réduite aux questions les plus utiles ; **pas de mention TMDb**
-  dans le pied de page ni sur l'accueil (seulement dans les mentions légales). SSR : pas de `window` / `document` hors `onMounted`.
-  Logo et favicon copiés de `vixeo_frontend/brand`. Mobile d'abord, tester à 390, 834, 1440 px.
-  **Une seule page de présentation** : l'accueil, avec les sections `#installer` et `#faq` ; pages
-  Installer et FAQ et liens courts supprimés (`/installer`, `/faq`, `/telecharger`, `/android`,
-  `/tv` → 404 ; `/apk` reste, adresse à taper sur une TV), barre de navigation
-  sans liens ni menu burger (logo + « Télécharger », vers `#installer` : plus d'appli web à ouvrir). Ne pas les recréer.
-  **Pages de profil** (demande du développeur, 21/11/2026) : `/pseudo`, **sans @, comme Twitter**
-  (`SiteController::member`, page `Member`, route `/{username}` déclarée **en dernier**), le lien du
-  bouton « Partager » de l'appli (`share_url` de `GET /social/profiles/{pseudo}`) ; un pseudo n'est
-  jamais une page du site ni de l'appli (`App\Support\Usernames::RESERVED`, à compléter pour toute
-  nouvelle page d'un seul mot) ; « Ouvrir dans Vixeo » (Android) ouvre `/membre/pseudo` dans l'appli ; profils adultes avec
-  un pseudo, non indexées ; Android les ouvre dans l'appli (`/.well-known/assetlinks.json`,
-  empreinte du certificat de release dans `vixeo.android.cert_sha256`). Détails : `docs/site.md`.
-  **Build committé** (`public/build`, `bootstrap/ssr`, bundle SSR autonome) : après toute
-  modification du site, `npm run build` et committer ; `tests/Unit/FrontendBuildTest.php` le vérifie.
-
-- **Jamais d'ancienne adresse** (demande du développeur, 23/11/2026) : quand une page du site ou de
-  l'appli, ou une route, change d'adresse, l'ancienne est supprimée (ni redirection ni alias ; elle
-  répond 404).
+- **API uniquement** : toutes les routes applicatives renvoient du JSON, y compris les 404 et
+  erreurs inattendues. Aucun site de présentation, route Inertia, rendu Blade de site, SSR ou
+  build frontend dans ce dépôt.
+- **Liens publics de profils** : l'API renvoie `share_url` sous
+  `VIXEO_APP_URL/membre/{username}`. Le frontend Flutter Web gère cette route et sert
+  `/.well-known/assetlinks.json` pour Android App Links.
+- **Jamais d'ancienne adresse** : quand une route API change d'adresse, l'ancienne est supprimée
+  (ni redirection ni alias ; elle répond 404).
 - Toutes les routes sous `/api/v1` (`routes/api.php`). **Pas de changement cassant en v1** :
   les applis installées ne se mettent pas à jour en même temps que l'API. Ajouter des champs
   est autorisé ; renommer/supprimer → nouvelle version. Exception décidée par le développeur
