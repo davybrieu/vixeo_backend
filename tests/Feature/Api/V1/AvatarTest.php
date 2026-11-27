@@ -96,9 +96,9 @@ it('gives the first profile of a new account an avatar of the catalog', function
     $this->postJson('/api/v1/auth/register', [
         'name' => 'Davy',
         'email' => 'nouveau@exemple.fr',
-        'password' => 'secret-password',
-        'password_confirmation' => 'secret-password',
-        'device_name' => 'Test',
+        'username' => 'davy',
+        'redirect_uri' => 'app.vixeo://auth',
+        'code_challenge' => str_repeat('a', 43),
     ])->assertCreated();
 
     $profile = User::where('email', 'nouveau@exemple.fr')->first()->profiles()->first();
