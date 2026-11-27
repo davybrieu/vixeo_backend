@@ -25,9 +25,9 @@ class RegisterRequest extends FormRequest
                 Rule::notIn(Usernames::RESERVED), 'unique:profiles,username',
             ],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', Password::defaults()],
             /** Free label identifying the device, e.g. "Pixel 8" or "Salon TV". */
-            'device_name' => ['required', 'string', 'max:100'],
+            'redirect_uri' => ['required', 'string', 'max:255'],
+            'code_challenge' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{43}$/'],
         ];
     }
 }
