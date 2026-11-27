@@ -14,7 +14,7 @@ abstract class TestCase extends BaseTestCase
     {
         $uri = (string) $uri;
         if (! preg_match('#^https?://#i', $uri)) {
-            $uri = config('vixeo.urls.api').'/'.ltrim($uri, '/');
+            $uri = config('app.url').'/'.ltrim($uri, '/');
         }
 
         return parent::prepareUrlForRequest($uri);
