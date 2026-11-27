@@ -73,7 +73,7 @@ class ProfileRequest extends FormRequest
     /** Profile attributes to save. */
     public function profileData(): array
     {
-        $data = $this->safe()->except(['onboarded']);
+        $data = $this->safe()->except(['onboarded', 'registration_completed']);
         if ($this->has('onboarded')) {
             $data['onboarded_at'] = now();
         }
