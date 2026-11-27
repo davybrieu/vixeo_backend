@@ -42,6 +42,12 @@ class EmailLoginController extends Controller
         ]);
     }
 
+    public function waiting(): Response
+    {
+        return response('<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connexion Vixeo</title><body style="font-family:system-ui;background:#080b09;color:#fff;padding:3rem;text-align:center"><h1>Consultez votre e-mail</h1><p>Ouvrez le lien envoyé par Vixeo. Cette fenêtre se fermera automatiquement après la connexion.</p></body></html>')
+            ->header('Content-Type', 'text/html; charset=UTF-8');
+    }
+
     public function consume(Request $request, EmailLogins $logins): Response
     {
         $token = (string) $request->query('token', '');
