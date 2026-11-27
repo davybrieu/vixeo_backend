@@ -29,5 +29,8 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Run OTP and profile registration tests
+        run: php artisan test --compact --filter='EmailOtpTest|ProfileTest'
+
       - name: Run test suite
         run: php artisan test --compact
