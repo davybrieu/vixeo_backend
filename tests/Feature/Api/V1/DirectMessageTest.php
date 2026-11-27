@@ -133,12 +133,12 @@ it('hides a declined request from both profiles and lets it be made again', func
     expect($again)->not->toBe($conversation);
 });
 
-it('keeps the messaging to adult profiles with a username', function () {
+it('allows messaging for the single profile of an account', function () {
     $alice = messagingProfile('alice');
-    $kid = messagingProfile('kiddo', ['is_kid' => true]);
+    $other = messagingProfile('kiddo');
 
-    actingAsProfile($kid)->getJson('/api/v1/messages')->assertForbidden();
-    actingAsProfile($alice)->postJson('/api/v1/messages/with/kiddo')->assertNotFound();
+    actingAsProfile($other)->getJson('/api/v1/messages')->assertOk();
+    actingAsProfile($alice)->postJson('/api/v1/messages/with/kiddo')->assertOk();
     actingAsProfile($alice)->postJson('/api/v1/messages/with/alice')->assertUnprocessable();
 });
 
