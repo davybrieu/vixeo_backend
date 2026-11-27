@@ -123,7 +123,7 @@ class EmailLoginController extends Controller
         ]);
     }
     /** Create the account and its one and only profile after e-mail verification. */
-    public function completeRegistration(Request $request, EmailLogins $logins, Accounts $accounts, AvatarCatalog $avatars, CoverCatalog $covers): JsonResponse
+    public function completeRegistration(Request $request, EmailLogins $logins, SocialLogins $socialLogins, Accounts $accounts, AvatarCatalog $avatars, CoverCatalog $covers): JsonResponse
     {
         $data = $request->validate([
             'registration_ticket' => ['required', 'string', 'min:40', 'max:100'],
@@ -146,11 +146,12 @@ class EmailLoginController extends Controller
         }
 
         $ticket = $logins->consumeRegistrationTicket($data['registration_ticket']);
-        if ($ticket === null) {
+        $socialIdentity = $ticket === null ? $socialLogins->consumeRegistrationTicket($data['registration_ticket']) : null;
+        if ($ticket === null && $socialIdentity === null) {
             throw ValidationException::withMessages(['registration_ticket' => ['Cette inscription a expiré. Recommencez la vérification de votre adresse e-mail.']]);
         }
 
-        $email = (string) $ticket['email'];
+        $email = (string) ($ticket['email'] ?? $socialIdentity['email']);
         if (User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->exists()) {
             throw ValidationException::withMessages(['email' => ['Un compte existe déjà avec cette adresse. Connectez-vous.']]);
         }
@@ -163,6 +164,15 @@ class EmailLoginController extends Controller
             'cover' => $data['cover'],
             'social_links' => $links,
         ]);
+
+        if ($socialIdentity !== null) {
+            SocialAccount::query()->create([
+                'user_id' => $user->id,
+                'provider' => $socialIdentity['provider'],
+                'subject' => $socialIdentity['subject'],
+                'email' => $email,
+            ]);
+        }
 
         return response()->json([
             'token' => (string) $user->createToken($data['device_name'])->plainTextToken,
