@@ -392,7 +392,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   à l'endroit, 512 px, réencodé en WebP sans métadonnées, nom aléatoire sur le disque privé, servi
   publiquement par `GET /profile-photos/{nom}`, gardé un an) ; `photo_url` (null = l'avatar) dans
   toute forme d'un profil (`ProfileResource`, `SocialCards::identity`, `ChatProfileResource`,
-  notifications, site) : **toute nouvelle forme d'un profil la donne aussi**. Fichier supprimé avec
+  notifications, partage) : **toute nouvelle forme d'un profil la donne aussi**. Fichier supprimé avec
   le profil ou le compte ; `vixeo:moderate … photo` la retire.
   **Couverture** (demande du développeur, 24/11/2026 ; `docs/social.md`) : la bannière 3:1 de la
   page d'un profil, une couverture du catalogue `resources/covers/catalog.json` (`GET /covers`, par
