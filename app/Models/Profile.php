@@ -19,11 +19,11 @@ use Illuminate\Support\Facades\Hash;
  * positions will be attached to a profile, not to the account.
  */
 #[Fillable([
-    'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'cover', 'is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources', 'pin', 'position',
+    'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'cover', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
     'rate_after_watching', 'onboarded_at',
 ])]
-#[Hidden(['pin', 'sync_revision'])]
+#[Hidden(['sync_revision'])]
 class Profile extends Model
 {
     /** @use HasFactory<ProfileFactory> */
@@ -34,12 +34,6 @@ class Profile extends Model
 
     /** Longest biography of a public profile, in characters (developer's request, 21/11/2026). */
     public const BIO_MAX_LENGTH = 160;
-
-    /** Age limit of a kid profile created without an explicit one. */
-    public const DEFAULT_KID_MAX_AGE = 10;
-
-    /** Fields guarded by the parental PIN once parental control is on. */
-    public const RESTRICTION_FIELDS = ['is_kid', 'max_age_rating', 'allow_unrated', 'locked_sources'];
 
     /** Playback settings: segments the player skips by itself (else it shows "Passer"). */
     public const SKIP_FIELDS = ['skip_intro', 'skip_recap', 'skip_credits', 'skip_preview'];
@@ -57,13 +51,8 @@ class Profile extends Model
     protected function casts(): array
     {
         return [
-            'is_kid' => 'boolean',
             'is_private' => 'boolean',
             'social_links' => 'array',
-            'max_age_rating' => 'integer',
-            'allow_unrated' => 'boolean',
-            'locked_sources' => 'array',
-            'pin' => 'hashed',
             'position' => 'integer',
             'sync_revision' => 'integer',
             'no_spoiler' => 'boolean',
@@ -145,36 +134,7 @@ class Profile extends Model
     /** An adult profile with a username, not suspended: it has a public page and social features. */
     public function isSocial(): bool
     {
-        return ! $this->is_kid && $this->username !== null && $this->suspended_at === null;
-    }
-
-    /** Age limit that applies to this profile, null = no limit. */
-    public function maxAge(): ?int
-    {
-        return $this->max_age_rating ?? ($this->is_kid ? self::DEFAULT_KID_MAX_AGE : null);
-    }
-
-    /** Whether a title with this age rating (null = unknown) can be shown. */
-    public function allowsAge(?int $ageRating): bool
-    {
-        $max = $this->maxAge();
-
-        if ($max === null) {
-            return true;
-        }
-
-        return $ageRating === null ? $this->allow_unrated : $ageRating <= $max;
-    }
-
-    /** @return list<string> */
-    public function lockedSources(): array
-    {
-        return array_values(array_map(strval(...), $this->locked_sources ?? []));
-    }
-
-    public function isRestricted(): bool
-    {
-        return $this->maxAge() !== null;
+        return $this->username !== null && $this->suspended_at === null;
     }
 
     /** Address of its own photo (App\Services\ProfilePhotos), null = its avatar is shown. */
@@ -189,13 +149,4 @@ class Profile extends Model
         return ProfileCovers::url($this->cover_path);
     }
 
-    public function hasPin(): bool
-    {
-        return $this->pin !== null;
-    }
-
-    public function checkPin(string $pin): bool
-    {
-        return $this->hasPin() && Hash::check($pin, $this->pin);
-    }
 }
