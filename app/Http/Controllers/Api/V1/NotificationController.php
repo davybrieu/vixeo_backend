@@ -18,9 +18,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * The app's « Notifications » page (docs/social.md): what other profiles did for the active profile
- * (followed it, asked to follow it, accepted its request, liked a review) and the next episodes of
- * the TV shows of its « À voir ».
+ * The app's « Notifications » page (docs/social.md): what other members did for the account's
+ * single profile (followed it, asked to follow it, accepted its request, liked a review) and the
+ * next episodes of the TV shows in its « À voir ».
  */
 class NotificationController extends Controller
 {
@@ -31,7 +31,7 @@ class NotificationController extends Controller
     private const RECENT_DAYS = 7;
 
     /**
-     * Notifications of the active profile.
+     * Notifications of the account's single profile.
      *
      * The most recent first, 20 per page. `type`: `follow`, `follow_request` (to accept or decline,
      * `GET /social/requests`), `follow_accepted`, `review_like` (with `review`), `review_comment`
