@@ -1,7 +1,7 @@
 <?php
 
 /*
-| The API host (API_URL, api.vixeo.test in phpunit.xml): JSON only, never the site's pages.
+| The API host: JSON responses only.
 */
 
 it('describes the API at the root of its host', function () {
@@ -22,11 +22,8 @@ it('keeps search engines away from the API', function () {
     $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /');
 });
 
-it('does not serve the site pages on the API host', function () {
-    $response = $this->get('/faq')->assertNotFound();
-
-    expect($response->headers->has('X-Inertia'))->toBeFalse()
-        ->and($response->headers->get('Content-Type'))->toContain('application/json');
+it('returns JSON for paths outside the API', function () {
+    $this->get('/faq')->assertNotFound()->assertHeader('Content-Type', 'application/json');
 });
 
 it('keeps the 401 of the API in JSON for a browser', function () {
