@@ -6,15 +6,12 @@ use App\Enums\MediaType;
 use App\Enums\SearchSort;
 use App\Enums\SearchType;
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\DiscoverRequest;
 use App\Http\Requests\Api\V1\SearchRequest;
 use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\PersonItemResource;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
-use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -28,21 +25,20 @@ class CatalogSearchController extends Controller
      * Search (all types).
      *
      * First page of movies, TV shows and people, grouped. Use the per-type search for more.
-     * Movies and TV shows respect the active profile's age limit.
+     * Movies and TV shows are returned without account-level restrictions.
      *
      * With a filter (genre, years, rating) or another order than relevance, movies and TV shows
      * are the matching titles among the first 60 results of each, sorted; people are only
      * returned without a filter.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function search(SearchRequest $request): JsonResponse
     {
         $results = $this->catalog->search($request->searchQuery(), $request->titleFilters(), $request->sort());
 
-        $filtered = $this->summaries->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = $this->summaries->addMany([
             'movies' => $results['movies']['results'],
             'shows' => $results['shows']['results'],
-        ]));
+        ]);
         $results['movies']['results'] = $filtered['movies'];
         $results['shows']['results'] = $filtered['shows'];
 
@@ -70,7 +66,6 @@ class CatalogSearchController extends Controller
      * search, never with people. Released titles only. The rating is IMDb's, else TMDb's
      * (docs/notes.md).
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function discover(DiscoverRequest $request): JsonResponse
     {
         $results = $this->catalog->discoverAll($request->titleFilters(), $request->sort());
@@ -99,11 +94,10 @@ class CatalogSearchController extends Controller
      * page may hold fewer than 20 titles (even none) while later pages still have some: read
      * `meta.total_pages`. `total_results` is then an upper bound.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function discoverType(DiscoverRequest $request, MediaType $type): JsonResponse
     {
         $page = $this->catalog->discover($type, $request->titleFilters(), $request->sort(), $request->page());
-        $results = $this->summaries->add($this->ageGate->filter(ResolveProfile::profile($request), $page['results']));
+        $results = $this->summaries->add($page['results']);
 
         return response()->json([
             'data' => MediaItemResource::collection($results),
@@ -124,7 +118,6 @@ class CatalogSearchController extends Controller
      * the matching titles among the first 60 results, sorted, in a single page. Filters and order
      * don't apply to people.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function searchType(SearchRequest $request, SearchType $type): JsonResponse
     {
         $filters = $request->titleFilters();
@@ -132,7 +125,6 @@ class CatalogSearchController extends Controller
         $page = $type !== SearchType::Person && (! $filters->isEmpty() || $sort !== SearchSort::Relevance)
             ? $this->catalog->searchTitles($type, $request->searchQuery(), $filters, $sort)
             : $this->catalog->searchType($type, $request->searchQuery(), $request->page());
-        $page['results'] = $this->ageGate->filter(ResolveProfile::profile($request), $page['results']);
         if ($type !== SearchType::Person) {
             $page['results'] = $this->summaries->add($page['results']);
         }
