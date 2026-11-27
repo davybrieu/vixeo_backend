@@ -25,12 +25,14 @@ Créer une application multiplateforme de type « media center », avec une seul
 - Android (téléphone et tablette).
 - Android TV / Google TV (navigation à la télécommande).
 - Windows (10 et 11, 64 bits).
+- Web (Flutter, build statique séparé).
 - Chromebook (via l'APK Android).
 - iOS ensuite (et éventuellement Apple TV plus tard).
 
-**Plus de version web** (décision du développeur, 20/11/2026) : l'appli web, son déploiement et
-la connexion des TV par QR code (page `/tv` de l'appli web) sont supprimés ; une TV se connecte
-avec un code tapé dans l'appli du téléphone.
+**Version Web réintroduite** (27/11/2026) : le même frontend Flutter est compilé pour le Web dans
+`vixeo_frontend`. GitHub Actions publie les fichiers statiques dans la branche `web-dist` ; le
+frontend est hébergé séparément sur `app.vixeo.app`. Le backend reste une API Laravel uniquement.
+Les TV continuent de se connecter avec un code tapé dans l'application du téléphone.
 
 Priorité absolue : l'esthétique et la fluidité. Interface sur mesure soignée, inspirée des plateformes de streaming, animations fluides, y compris sur les petites box TV.
 
@@ -195,16 +197,16 @@ Le backend est entièrement responsable de la logique métier et des traitements
 
 Pour le frontend, le fonctionnement interne du backend doit rester totalement transparent.
 
-Il n'y a plus de version web : les applis (Android, Windows, iOS) lisent les flux directement, avec leurs en-têtes HTTP, sans problème de CORS.
+Le Web est une cible Flutter à part entière, servie depuis `app.vixeo.app` ; l'API autorise cette origine via CORS. Les applis natives (Android, Windows, iOS) n'utilisent pas CORS.
 
 Attention au coût en bande passante et aux ressources serveur si le backend relaie directement les vidéos.
 
 4.3 Dépôts : deux dépôts séparés — décidé
 
 - "vixeo_frontend" : application Flutter.
-- "vixeo_backend" : API Laravel **et** site de présentation (un seul projet Laravel, un seul site
-  Forge : `api.vixeo.app` pour l'API, `www.vixeo.app` pour le site ; l'ancien dépôt "vixeo_web"
-  y a été fusionné, voir `docs/deploiement.md`).
+- "vixeo_backend" : API Laravel uniquement, déployée sur Forge à `api.vixeo.app`.
+  Le build Flutter Web est publié depuis `vixeo_frontend` (branche `web-dist`) et hébergé
+  séparément sur `app.vixeo.app`.
 
 Chaque dépôt dispose de son propre "CLAUDE.md" contenant :
 
