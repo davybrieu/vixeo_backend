@@ -5,8 +5,7 @@ $allowedOrigins = array_filter(array_map(
     explode(',', env('CORS_ALLOWED_ORIGINS', '*')),
 ));
 
-// No web app any more (developer's request): the apps (Android, Windows, iOS) are not browsers and
-// need no CORS. CORS_ALLOWED_ORIGINS stays for the interactive API documentation.
+// Flutter Web is hosted separately on VIXEO_APP_URL. Native apps do not use browser CORS.
 
 return [
 
