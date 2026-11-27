@@ -63,7 +63,7 @@ class Audience
         $blocked = $this->blocked($viewer);
 
         return $query->whereIn($column, Profile::query()->select('id')
-            ->where('is_kid', false)->whereNotNull('username')->whereNull('suspended_at')
+            ->whereNotNull('username')->whereNull('suspended_at')
             ->when($blocked !== [], fn ($q) => $q->whereNotIn('id', $blocked))
             ->where(fn ($q) => $q->where('is_private', false)
                 ->when($viewer !== null, fn ($q) => $q->orWhere('id', $viewer->id)
