@@ -19,7 +19,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The account's address, password, data and devices (docs/compte.md).
+ * The account's address, data and devices (docs/compte.md).
  *
  * @tags Compte
  */
