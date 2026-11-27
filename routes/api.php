@@ -257,7 +257,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::prefix('me')->name('me.')->group(function () {
             Route::post('delete', [AccountController::class, 'destroy'])->middleware('throttle:account')->name('delete');
             Route::post('email', [AccountController::class, 'updateEmail'])->middleware('throttle:account')->name('email');
-            Route::post('password', [AccountController::class, 'updatePassword'])->middleware('throttle:account')->name('password');
             Route::post('export', [AccountController::class, 'export'])->middleware('throttle:account-export')->name('export');
             Route::get('devices', [AccountController::class, 'devices'])->name('devices');
             Route::delete('devices/{device}', [AccountController::class, 'revokeDevice'])->whereNumber('device')->name('devices.revoke');
