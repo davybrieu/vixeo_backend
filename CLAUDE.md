@@ -1,21 +1,15 @@
-# Vixeo — API et site (vixeo_backend)
+# Vixeo — API Laravel uniquement (vixeo_backend)
 
-API REST Laravel de **Vixeo**, media center multiplateforme (Flutter : Android, Android TV,
-Windows, puis iOS ; **plus d'appli web**, demande du développeur, 20/11/2026), **et site de présentation** (ancien dépôt `vixeo_web`, fusionné ici). L'appli
-cliente est dans le dépôt [`davybrieu/vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
+API REST Laravel de **Vixeo**, media center multiplateforme. Le backend ne sert que l'API, Reverb,
+les tâches planifiées et les services métier. L'application Flutter (Android, Android TV, Windows
+et Web) est dans [`davybrieu/vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
 
-**Un seul projet, un seul site Forge, deux domaines** (décision du développeur) :
-`api.vixeo.app` → l'API (`routes/api.php` sous `/api/v1`, `routes/api-host.php`),
-`www.vixeo.app` → le site (`routes/site.php`, Vue + Inertia SSR, doc : `docs/site.md`),
-`vixeo.app` → 301 vers `www` (**redirection du site Forge**, pas de Laravel). Routage par `Host`
-dans `bootstrap/app.php` (`App\Support\Hosts`). **Deux adresses, chacune écrite une seule fois**
-dans le `.env` : `APP_URL` = le site (`https://www.vixeo.app`), `API_URL` = l'API
-(`https://api.vixeo.app`) ; plus de `WEB_URL` (pas d'appli web, pas de CORS à prévoir) ; `config/vixeo.php`
-en tire les domaines avec `parse_url()` (`vixeo.urls`, `vixeo.domains`) : ne pas ajouter de clé
-qui répète un domaine. `API_URL` vide ou même hôte que `APP_URL` (en local) : un seul hôte, le
-site sur `/`, l'API sur `/api/v1`. Les tests tournent avec les domaines
-de `phpunit.xml` (`api.vixeo.test`, `www.vixeo.test`) : URL relative = hôte de l'API (`tests/TestCase.php`), le site se
-teste avec des URL absolues (`site('/mentions-legales')` dans `tests/Feature/Site/PagesTest.php`).
+**Deux domaines, deux dépôts / responsabilités** : `api.vixeo.app` sert l'API Laravel
+(`routes/api.php` sous `/api/v1`, `routes/api-host.php`) ; `app.vixeo.app` sert le build Flutter Web
+publié depuis la branche `web-dist` de `vixeo_frontend`. Aucun site, Inertia, SSR ou build web
+n'est servi par Laravel. `APP_URL` et `API_URL` pointent vers `https://api.vixeo.app` ;
+`VIXEO_APP_URL=https://app.vixeo.app` est uniquement la base des liens de profils publics.
+CORS doit autoriser l'origine du frontend Web. Les erreurs Laravel sont toujours JSON.
 
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
 question). Les applis lisent ce que l'API leur renvoie (sources de lecture, TV en direct, sous-titres,
@@ -55,7 +49,7 @@ prévient, le site et la FAQ l'expliquent).
 ## Stack
 
 - Laravel 13, PHP 8.3+, Sanctum (jetons Bearer), Scramble (OpenAPI), Pest 4, Pint.
-- Site : Vue 3, Inertia 3 (SSR, `php artisan inertia:start-ssr`), Tailwind CSS 4, Vite.
+- Aucun frontend dans ce dépôt : ni Vue, ni Inertia, ni Vite, ni SSR. Flutter Web est compilé dans `vixeo_frontend`.
 - Redis pour cache et files d'attente. Base de production : **MySQL** sur le serveur Forge actuel
   (constaté au déploiement du 16/11/2026 ; prévu PostgreSQL au départ). Une migration doit passer
   sur MySQL, PostgreSQL et SQLite, et pouvoir être relancée après un échec (MySQL n'annule pas les
@@ -68,7 +62,7 @@ prévient, le site et la FAQ l'expliquent).
 ## Commandes
 
 ```bash
-composer install && npm ci
+composer install
 cp .env.example .env && php artisan key:generate
 php artisan migrate
 
@@ -76,8 +70,7 @@ php artisan migrate
 ./vendor/bin/pint                 # formatage (vérification : pint --test)
 composer openapi                  # régénère docs/openapi.json (échoue si un type est inconnu)
                                   # (conteneur cloud, en root : COMPOSER_ALLOW_SUPERUSER=1)
-npm run dev                       # site : Vite (SSR compris) ; npm run build = client + SSR
-php artisan serve                 # http://localhost:8000 (site sur /, API sur /api/v1),
+php artisan serve                 # API sur http://localhost:8000/api/v1,
                                   # doc interactive sur /docs/api (env local)
 ```
 
@@ -88,9 +81,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 ## Conventions
 
-- **Site de présentation** (`docs/site.md`) : groupe de middleware `site` (ni session, ni CSRF,
-  **aucun cookie**, aucun service tiers, polices servies par le site). Erreurs : pages Inertia
-  `Error` sur le site, JSON sur l'hôte de l'API et sous `/api/*` (`Hosts::isApi`). Textes honnêtes
+, JSON sur l'hôte de l'API et sous `/api/*` (`Hosts::isApi`). Textes honnêtes
   (ce que l'appli fait aujourd'hui, « Bientôt disponible » sinon), écarté : import IPTV / M3U /
   Xtream, radio, replays. **Mac, iPhone et iPad** : listés même avant leur sortie, onglets
   d'installation « Bientôt disponible », sans bouton (demande du développeur, 21/11/2026) ; les
@@ -491,23 +482,20 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 ## Branches et déploiement
 
-- Ce dépôt contient l'API et le site de présentation. Deux workflows GitHub Actions ajoutés par
+- Ce dépôt contient uniquement l'API Laravel. Deux workflows GitHub Actions ajoutés par
   le développeur le 22/11/2026 : « Messaging tests » (`messaging-tests.yml`, les tests de la
   messagerie quand ses fichiers changent) et « Update Composer lock » (`update-composer-lock.yml` :
   met à jour `composer.lock` pour Reverb quand `composer.json` change et pousse sur `main`, ce qui
-  redéploie). Pas de CI complète : lancer Pint, Pest et `npm run build` localement avant chaque push.
+  redéploie). Pas de CI complète : lancer Pint et Pest avant chaque push.
 
 - Pour l'instant, le travail se fait **directement sur `main`** (demande du développeur).
-- `main` est déployée automatiquement par Laravel Forge (Push to deploy, un seul site pour
-  les deux domaines, daemon SSR) : voir [`docs/deploiement.md`](docs/deploiement.md).
+- `main` est déployée automatiquement par Laravel Forge (Push to deploy, domaine API uniquement) : voir [`docs/deploiement.md`](docs/deploiement.md).
 - Secrets de déploiement : dans les secrets GitHub / Forge, jamais dans le dépôt ni dans
   les variables de l'environnement Claude Code cloud.
 
 ## État actuel
 
-- Fait aussi : site de présentation sur `www.vixeo.app`, dans ce projet : une page d'accueil
-  (installation Android / Android TV / Windows, fonctionnalités, FAQ), mentions légales,
-  confidentialité, pages d'erreur, sitemap.
+- 
   À faire avant la mise en ligne : mentions légales dans le `.env` de production.
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profils
   (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
