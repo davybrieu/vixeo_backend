@@ -13,10 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * A viewer profile ("Qui regarde ?"). Favorites, history and resume
- * positions will be attached to a profile, not to the account.
- */
+/** The single social and viewing profile attached to an account. */
 #[Fillable([
     'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'cover', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
@@ -129,7 +126,7 @@ class Profile extends Model
         return $this->hasMany(DiaryEntry::class);
     }
 
-    /** An adult profile with a username, not suspended: it has a public page and social features. */
+    /** A profile with a username, not suspended: it has a public page and social features. */
     public function isSocial(): bool
     {
         return $this->username !== null && $this->suspended_at === null;
