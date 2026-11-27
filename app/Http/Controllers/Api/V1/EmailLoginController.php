@@ -125,7 +125,7 @@ class EmailLoginController extends Controller
             'token' => (string) $user->createToken($data['device_name'])->plainTextToken,
             'user' => new UserResource($user),
             'created' => false,
-            'needs_profile_setup' => false,
+            'needs_profile_setup' => $user->profiles()->first()?->registration_completed_at === null,
         ]);
     }
     /** Create the account and its one and only profile after e-mail verification. */
