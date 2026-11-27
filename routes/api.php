@@ -92,7 +92,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('logo');
     });
 
-    // Social profile discovery requires an authenticated account (child profiles are excluded by the controller).
+    // Social profile discovery requires an authenticated account.
     Route::prefix('social')->name('social.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('search', [SocialProfileController::class, 'search'])->name('search');
         Route::get('profiles/{username}', [SocialProfileController::class, 'show'])->name('profiles.show');
@@ -176,7 +176,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
-        // Messaging between adult profiles (docs/messagerie.md); real time: routes/channels.php.
+        // Messaging between account profiles (docs/messagerie.md); real time: routes/channels.php.
         Route::middleware([ResolveProfile::class, 'throttle:messages'])->prefix('messages')->name('messages.')->group(function () {
             Route::get('/', [DirectMessageController::class, 'index'])->name('index');
             Route::get('count', [DirectMessageController::class, 'count'])->name('count');
