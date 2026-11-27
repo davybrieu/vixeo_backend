@@ -284,10 +284,22 @@ it('signs in with Apple: a form posted back, a client secret signed with the key
             && $request['code'] === 'apple-code';
     });
 
-    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8'])
+    $response = $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8'])
         ->assertOk()
         ->assertJsonPath('created', true)
-        ->assertJsonPath('user.name', 'Tom Durand')
+        ->assertJsonPath('registration_required', true);
+
+    expect(User::where('email', 'x7k2@privaterelay.appleid.com')->exists())->toBeFalse();
+
+    $this->postJson('/api/v1/auth/register/profile', [
+        'registration_ticket' => $response->json('registration_ticket'),
+        'device_name' => 'Pixel 8',
+        'name' => 'Tom Durand',
+        'username' => 'tom_durand',
+        'avatar' => app(AvatarCatalog::class)->ids()[0],
+        'cover' => app(CoverCatalog::class)->ids()[0],
+        'social_links' => [],
+    ])->assertCreated()->assertJsonPath('user.name', 'Tom Durand')
         ->assertJsonPath('user.providers', ['apple']);
 });
 
