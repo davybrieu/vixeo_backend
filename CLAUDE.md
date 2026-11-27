@@ -403,11 +403,6 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   une couverture du catalogue au hasard**, comme l'avatar. `cover` / `cover_url` dans
   `ProfileResource`, la page d'un membre et l'export ; fichier supprimé avec le profil ou le compte ;
   `vixeo:moderate … cover` la retire.
-- **Contrôle parental** (doc : `docs/controle-parental.md`) : PIN parental du compte
-  (`App\Services\ParentalControl`, 5 essais / 5 min), exigé pour créer / supprimer un profil et
-  changer ses restrictions (`Profile::RESTRICTION_FIELDS`). Le catalogue filtre selon le profil de
-  l'en-tête `X-Profile-Id` (`ResolveProfile`, `AgeGate`) : toute nouvelle route du catalogue qui
-  renvoie des titres doit passer par `AgeGate`.
 - **TV en direct** (doc : `docs/tv-direct.md`) : **API neutre** sous `/tv/…` (`throttle:catalog`),
   l'appli ne sait jamais quel fournisseur sert les chaînes. `App\Services\Tv\LiveTv` choisit le
   fournisseur configuré, normalise sa réponse dans une forme unique et traduit ses erreurs en
@@ -479,17 +474,15 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 
 - 
   À faire avant la mise en ligne : mentions légales dans le `.env` de production.
-- Fait : authentification (inscription, connexion, déconnexion, `me`), profils
-  (« Qui regarde ? » : CRUD, 5 max par compte, PIN haché, profil enfant + âge maximum),
+- Fait : authentification (inscription, connexion, déconnexion, `me`), profil unique par compte
+  (résolution automatique, édition du profil social et des préférences),
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
   saison / personne, recherche groupée et par type, filtres et tri), mis en cache, synchro par profil
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
-  contrôle parental (PIN parental, âge maximum appliqué au catalogue, sources verrouillées),
   avatars de profil par licence, connexion TV
   par code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
   et export des données (RGPD), vérification des mises à jour des applis (releases GitHub).
-- Pas encore fait : complément en anglais quand le résumé français manque, déverrouillage
-  temporaire d'un titre avec le PIN parental.
+- Pas encore fait : complément en anglais quand le résumé français manque.
 - Fait aussi : réglages de lecture du profil et recherches récentes synchronisés, moments à passer
   (TheIntroDB) et sous-titres (OpenSubtitles) prêts pour le lecteur.
 - Fait aussi : avis par profil (notes des films, séries et épisodes, commentaires), gardés par
