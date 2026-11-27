@@ -5,10 +5,10 @@ les tâches planifiées et les services métier. L'application Flutter (Android,
 et Web) est dans [`davybrieu/vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
 
 **Deux domaines, deux dépôts / responsabilités** : `api.vixeo.app` sert l'API Laravel
-(`routes/api.php` sous `/api/v1`, `routes/api-host.php`) ; `app.vixeo.app` sert le build Flutter Web
+(`routes/api.php` sous `/api/v1`, `routes/api-host.php`) ; `vixeo.app` sert le build Flutter Web
 publié depuis la branche `web-dist` de `vixeo_frontend`. Aucun site, Inertia, SSR ou build web
 n'est servi par Laravel. `APP_URL` et `API_URL` pointent vers `https://api.vixeo.app` ;
-`VIXEO_APP_URL=https://app.vixeo.app` est uniquement la base des liens de profils publics.
+`VIXEO_APP_URL=https://vixeo.app` est uniquement la base des liens de profils publics.
 CORS doit autoriser l'origine du frontend Web. Les erreurs Laravel sont toujours JSON.
 
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
