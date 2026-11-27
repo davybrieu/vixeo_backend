@@ -377,6 +377,29 @@ class SocialProfileController extends Controller
         ]);
     }
 
+    /** A member's accepted followers or following, 20 at a time. */
+    private function connections(Request $request, string $username, string $relation): JsonResponse
+    {
+        $profile = $this->visibleProfile($request, $username);
+        $page = $profile->{$relation}()->orderByDesc('profile_follows.created_at')->paginate(self::PER_PAGE);
+
+        return response()->json([
+            'data' => $page->getCollection()->map(fn (Profile $member) => $this->identity($member))->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
+        ]);
+    }
+
+    /** A member whose page content the active account may see. */
+    private function visibleProfile(Request $request, string $username): Profile
+    {
+        $profile = $this->publicProfile($username);
+        $viewer = ResolveProfile::profile($request);
+        abort_if($viewer !== null && $this->audience->isBlocked($viewer, $profile), 404);
+        abort_unless($this->follows->canView($viewer, $profile), 403, __('This account is private.'));
+
+        return $profile;
+    }
+
     private function activeProfile(Request $request): Profile
     {
         $profile = ResolveProfile::profile($request);
