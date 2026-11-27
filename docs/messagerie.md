@@ -3,7 +3,7 @@
 Demande du développeur (22/11/2026) : des conversations privées entre membres, comme Instagram, avec
 des groupes, des photos et des vidéos, en temps réel. Réservée aux **profils adultes qui ont un
 pseudo** (`Conversations::allowed` ; sinon 403). Toutes les routes sont sous `/messages`, connectées,
-au nom du profil de l'en-tête `X-Profile-Id`, limitées par `throttle:messages` (180 / min ; envoi de
+au nom du profil unique du compte, limitées par `throttle:messages` (180 / min ; envoi de
 fichiers : `throttle:message-attachments`, 20 / min).
 
 Code : `App\Http\Controllers\Api\V1\DirectMessageController` (routes), `App\Services\Messaging\Conversations`
@@ -59,7 +59,7 @@ Code : `App\Http\Controllers\Api\V1\DirectMessageController` (routes), `App\Serv
 MP4, MOV, WebM (100 Mo au plus), une fois la demande acceptée ; un message à part, `body` vide. Les
 fichiers sont sur le disque privé `local` (`storage/app/private/message-attachments`), jamais
 publics : `GET /messages/attachments/{id}` les sert aux **membres** de la conversation seulement
-(jeton et `X-Profile-Id`, `Cache-Control: private`). Le serveur doit accepter des envois de 100 Mo
+(jeton Bearer, `Cache-Control: private`). Le serveur doit accepter des envois de 100 Mo
 (`client_max_body_size` de Nginx, `upload_max_filesize` et `post_max_size` de PHP, sur Forge).
 
 Supprimer un profil ou un compte efface aussi les fichiers de ses messages et de ses conversations
@@ -77,7 +77,7 @@ directes (`Conversations::forgetProfiles`, avant la suppression : les lignes par
   Reverb, `App\Events\ConversationChanged`) : `message.sent` (avec `body`), `message.deleted`,
   `message.read` (seulement quand des messages viennent d'être lus : relire n'annonce rien, pas de
   boucle entre deux applis), `message.updated` (demande acceptée, groupe modifié). Les applis relisent
-  alors la conversation. Autorisation : `POST /api/broadcasting/auth` (jeton, `X-Profile-Id`,
+  alors la conversation. Autorisation : `POST /api/broadcasting/auth` (jeton Bearer,
   `routes/channels.php` : membres actifs). Installation : `docs/reverb.md`. Sans Reverb configuré
   (clé vide), rien n'est annoncé et la messagerie marche quand même.
 - Push (FCM, canal Android `social`, réglage « Activité » de l'appareil) aux autres membres : le nom
