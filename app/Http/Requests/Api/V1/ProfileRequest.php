@@ -35,10 +35,12 @@ class ProfileRequest extends FormRequest
 
         return [
             'name' => [
+                Rule::requiredIf($this->boolean('registration_completed')),
                 $required, 'string', 'max:50',
                 Rule::unique('profiles', 'name')->where('user_id', $this->user()->id)->ignore($profile?->id),
             ],
             'username' => [
+                Rule::requiredIf($this->boolean('registration_completed')),
                 'sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
                 Rule::notIn(Usernames::RESERVED),
                 Rule::unique('profiles', 'username')->ignore($profile?->id),
@@ -54,8 +56,8 @@ class ProfileRequest extends FormRequest
                 }
             }],
             'bio' => ['sometimes', 'nullable', 'string', 'max:'.Profile::BIO_MAX_LENGTH],
-            'avatar' => ['sometimes', 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
-            'cover' => ['sometimes', 'string', Rule::in(app(CoverCatalog::class)->ids())],
+            'avatar' => [Rule::requiredIf($this->boolean('registration_completed')), 'sometimes', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
+            'cover' => [Rule::requiredIf($this->boolean('registration_completed')), 'sometimes', 'string', Rule::in(app(CoverCatalog::class)->ids())],
             'position' => ['sometimes', 'integer', 'min:0', 'max:255'],
             'audio_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::AUDIO)],
             'subtitle_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::SUBTITLES)],
