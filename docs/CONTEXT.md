@@ -31,7 +31,7 @@ Créer une application multiplateforme de type « media center », avec une seul
 
 **Version Web réintroduite** (27/11/2026) : le même frontend Flutter est compilé pour le Web dans
 `vixeo_frontend`. GitHub Actions publie les fichiers statiques dans la branche `web-dist` ; le
-frontend est hébergé séparément sur `app.vixeo.app`. Le backend reste une API Laravel uniquement.
+frontend est hébergé séparément sur `vixeo.app`. Le backend reste une API Laravel uniquement.
 Les TV continuent de se connecter avec un code tapé dans l'application du téléphone.
 
 Priorité absolue : l'esthétique et la fluidité. Interface sur mesure soignée, inspirée des plateformes de streaming, animations fluides, y compris sur les petites box TV.
@@ -197,7 +197,7 @@ Le backend est entièrement responsable de la logique métier et des traitements
 
 Pour le frontend, le fonctionnement interne du backend doit rester totalement transparent.
 
-Le Web est une cible Flutter à part entière, servie depuis `app.vixeo.app` ; l'API autorise cette origine via CORS. Les applis natives (Android, Windows, iOS) n'utilisent pas CORS.
+Le Web est une cible Flutter à part entière, servie depuis `vixeo.app` ; l'API autorise cette origine via CORS. Les applis natives (Android, Windows, iOS) n'utilisent pas CORS.
 
 Attention au coût en bande passante et aux ressources serveur si le backend relaie directement les vidéos.
 
@@ -206,7 +206,7 @@ Attention au coût en bande passante et aux ressources serveur si le backend rel
 - "vixeo_frontend" : application Flutter.
 - "vixeo_backend" : API Laravel uniquement, déployée sur Forge à `api.vixeo.app`.
   Le build Flutter Web est publié depuis `vixeo_frontend` (branche `web-dist`) et hébergé
-  séparément sur `app.vixeo.app`.
+  séparément sur `vixeo.app`.
 
 Chaque dépôt dispose de son propre "CLAUDE.md" contenant :
 
