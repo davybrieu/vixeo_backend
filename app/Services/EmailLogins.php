@@ -144,7 +144,12 @@ final class EmailLogins
         return $user;
     }
 
-    private static function registrationKey(string $ticket): string\n    {\n        return 'email-login:registration:'.hash('sha256', $ticket);\n    }\n\n    private static function linkKey(string $token): string
+    private static function registrationKey(string $ticket): string
+    {
+        return 'email-login:registration:'.hash('sha256', $ticket);
+    }
+
+    private static function linkKey(string $token): string
     {
         return 'email-login:link:'.hash('sha256', $token);
     }
