@@ -159,7 +159,7 @@ final class SocialLogins
      * The Vixeo account of [$identity]: the one already linked; else the one with its address,
      * linked now; else a new one.
      *
-     * @return array{User, bool, bool} the account, whether it was created, whether its password was removed
+     * @return array{User, bool, bool} the account, whether it was created, legacy password_removed flag (always false)
      *
      * @throws SocialLoginFailed
      */
@@ -190,16 +190,6 @@ final class SocialLogins
                     throw new SocialLoginFailed(SocialLoginFailed::UNVERIFIED);
                 }
                 if ($user->email_verified_at === null) {
-                    // Nobody ever proved this address was theirs: someone else may have signed up
-                    // with it, with a password of their own, before its owner came with Google or
-                    // Apple. The provider proves it now: the password and the open sessions go
-                    // (« Mot de passe oublié » or « Mon compte » sets a new one).
-                    if ($user->hasPassword()) {
-                        $user->forceFill(['password' => null]);
-                        $user->tokens()->delete();
-                        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
-                        $passwordRemoved = true;
-                    }
                     $user->forceFill(['email_verified_at' => now()])->save();
                 }
             } else {
