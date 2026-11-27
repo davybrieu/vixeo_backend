@@ -22,8 +22,10 @@ L'adresse devient vérifiée après consommation du lien.
 
 ## Changer d'adresse e-mail
 
-`POST /api/v1/me/email` avec `{email}` change l'adresse de connexion. Elle devient non vérifiée
-jusqu'à ce que le titulaire ouvre un lien de connexion envoyé à cette nouvelle adresse.
+`POST /api/v1/me/email` avec `{email, redirect_uri, code_challenge}` envoie un lien de confirmation
+à la nouvelle adresse. L'adresse actuelle reste active tant que le lien n'a pas été ouvert ; sa
+consommation valide la nouvelle adresse et renvoie un code PKCE que l'application échange comme
+pour une connexion normale.
 
 ## Appareils connectés
 
