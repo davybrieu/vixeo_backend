@@ -37,7 +37,10 @@ beforeEach(function () {
     $this->profile = Profile::factory()->for($this->user)->create();
     $this->other = Profile::factory()->for(User::factory())->create();
     Sanctum::actingAs($this->user);
-    $this->as = fn (Profile $profile) => $this;
+    $this->as = function (Profile $profile) {
+        Sanctum::actingAs($profile->user);
+        return $this;
+    };
 });
 
 it('lists the images of a title: French, English and without text, the best first, and TMDb’s choice', function () {
