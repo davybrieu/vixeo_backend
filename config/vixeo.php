@@ -1,7 +1,5 @@
 <?php
 
-<?php
-
 return [
 
     // Base URL used only to create links that open a public profile in the Flutter app.
