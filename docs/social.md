@@ -116,7 +116,7 @@ la page du membre (`follow`, `follow_accepted`) ou `/notifications`.
 
 **Prochains épisodes** : `GET /notifications/episodes` (demande du développeur : la page
 Notifications de l'appli les montre ; ce n'est pas l'ancienne route `episodes/upcoming`) : pour les
-séries de « À voir » du profil (`AgeGate` appliqué), `upcoming` = le prochain épisode connu de
+séries de « À voir » du compte, `upcoming` = le prochain épisode connu de
 chacune (TMDb `next_episode_to_air`), le plus proche d'abord, et `recent` = les épisodes sortis
 depuis moins de 7 jours. `available_at` est l'heure estimée de `UpcomingEpisodes::availableAt`
 (jamais trop tôt), comme les notifications des nouveaux épisodes (`docs/notifications.md`).
