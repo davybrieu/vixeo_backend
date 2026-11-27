@@ -338,8 +338,7 @@ describe('the real-time channel of Windows', function () {
     it('registers Windows without Firebase', function () {
         [, $profile, $bearer] = pushApp();
 
-        $id = $this->withToken($bearer)->withHeader('X-Profile-Id', (string) $profile->id)
-            ->putJson('/api/v1/push/device', ['platform' => 'windows', 'token' => 'ignored', 'new_episodes' => true, 'social' => true])
+        $id = $this->withToken($bearer)->putJson('/api/v1/push/device', ['platform' => 'windows', 'token' => 'ignored', 'new_episodes' => true, 'social' => true])
             ->assertCreated()
             ->assertJsonPath('data.target', 'realtime')
             ->assertJsonPath('data.platform', 'windows')
