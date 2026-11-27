@@ -15,7 +15,7 @@ beforeEach(function () {
 
 function photoMember(string $username, array $attributes = []): Profile
 {
-    return Profile::factory()->for(User::factory()->create(['password' => 'secret-password']))
+    return Profile::factory()->for(User::factory()->create([]))
         ->create(['username' => $username, 'avatar' => 'quest-knight', ...$attributes]);
 }
 
@@ -154,7 +154,7 @@ it('deletes the photo with the account', function () {
     sendPhoto($lea, UploadedFile::fake()->image('p.png', 300, 300));
     $path = ProfilePhotos::DIRECTORY.'/'.$lea->refresh()->photo_path;
 
-    asPhotoMember($lea)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
+    asPhotoMember($lea)->postJson('/api/v1/me/delete', [])->assertNoContent();
     Storage::disk(ProfilePhotos::DISK)->assertMissing($path);
 });
 

@@ -142,8 +142,7 @@ it('never gives a profile a username that is a page of the site or of the app', 
         ->assertJsonPath('data.username', 'accueil_2');
 
     $this->postJson('/api/v1/auth/register', [
-        'name' => 'Paul', 'username' => 'faq', 'email' => 'paul@example.com',
-        'password' => 'motdepasse-solide-42', 'device_name' => 'Pixel',
+        'name' => 'Paul', 'username' => 'faq', 'email' => 'paul@example.com', 'device_name' => 'Pixel',
     ])->assertUnprocessable()->assertJsonValidationErrors('username');
 
     // Every page of the site with a one-word address is reserved; every reserved word could be one.

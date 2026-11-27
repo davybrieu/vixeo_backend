@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AppUpdateController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\EmailLoginController;
 use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CatalogSearchController;
@@ -14,7 +15,6 @@ use App\Http\Controllers\Api\V1\DirectMessageController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\ListController;
 use App\Http\Controllers\Api\V1\NotificationController;
-use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PlaybackController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileCoverController;
@@ -43,12 +43,13 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->name('v1.')->group(function () {
     Route::prefix('auth')->name('auth.')->middleware('throttle:auth')->group(function () {
         Route::post('register', [AuthController::class, 'register'])->name('register');
-        Route::post('login', [AuthController::class, 'login'])->name('login');
+        Route::post('email/link', [EmailLoginController::class, 'request'])->name('email.request');
+        Route::get('email/waiting', [EmailLoginController::class, 'waiting'])->name('email.waiting');
+        Route::get('email/waiting', [EmailLoginController::class, 'waiting'])->name('email.waiting');
+        Route::get('email/consume', [EmailLoginController::class, 'consume'])->name('email.consume');
+        Route::post('email/token', [EmailLoginController::class, 'token'])->name('email.token');
         // TV sign-in with a code (docs/connexion-tv.md).
         Route::post('device', [DeviceLoginController::class, 'start'])->name('device.start');
-        // "Mot de passe oublié" (docs/compte.md).
-        Route::post('password/forgot', [PasswordResetController::class, 'forgot'])->name('password.forgot');
-        Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.reset');
         // « Continuer avec Google / Apple » (docs/connexion-sociale.md): the sign-in runs in a
         // browser, which comes back to the API (callback), then to the app with a code.
         Route::get('social', [SocialLoginController::class, 'index'])->name('social.index');
@@ -258,7 +259,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::prefix('me')->name('me.')->group(function () {
             Route::post('delete', [AccountController::class, 'destroy'])->middleware('throttle:account')->name('delete');
             Route::post('email', [AccountController::class, 'updateEmail'])->middleware('throttle:account')->name('email');
-            Route::post('password', [AccountController::class, 'updatePassword'])->middleware('throttle:account')->name('password');
             Route::post('export', [AccountController::class, 'export'])->middleware('throttle:account-export')->name('export');
             Route::get('devices', [AccountController::class, 'devices'])->name('devices');
             Route::delete('devices/{device}', [AccountController::class, 'revokeDevice'])->whereNumber('device')->name('devices.revoke');

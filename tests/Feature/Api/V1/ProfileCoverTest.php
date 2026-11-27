@@ -19,7 +19,7 @@ beforeEach(function () {
 
 function coverMember(string $username, array $attributes = []): Profile
 {
-    return Profile::factory()->for(User::factory()->create(['password' => 'secret-password']))
+    return Profile::factory()->for(User::factory()->create([]))
         ->create(['username' => $username, 'cover' => 'aurore', ...$attributes]);
 }
 
@@ -62,8 +62,8 @@ it('gives a cover of the catalog, at random, to the initial profile of a new acc
     $ids = app(CoverCatalog::class)->ids();
 
     $this->postJson('/api/v1/auth/register', [
-        'name' => 'Léa', 'email' => 'lea@example.com', 'password' => 'secret-password',
-        'password_confirmation' => 'secret-password', 'device_name' => 'test',
+        'name' => 'Léa', 'username' => 'lea', 'email' => 'lea@example.com',
+        'redirect_uri' => 'app.vixeo://auth', 'code_challenge' => str_repeat('a', 43),
     ])->assertCreated();
     $first = Profile::query()->firstOrFail();
     expect($first->cover)->toBeIn($ids);
@@ -146,7 +146,7 @@ it('deletes the cover image with the account', function () {
     sendCover($lea, UploadedFile::fake()->image('c.png', 1200, 400));
     $path = ProfileCovers::DIRECTORY.'/'.$lea->refresh()->cover_path;
 
-    asCoverMember($lea)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
+    asCoverMember($lea)->postJson('/api/v1/me/delete', [])->assertNoContent();
     Storage::disk(ProfileCovers::DISK)->assertMissing($path);
 });
 

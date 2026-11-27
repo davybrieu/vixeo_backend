@@ -3,16 +3,14 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Resources\V1\UserResource;
-use App\Models\User;
 use App\Services\Accounts;
+use App\Services\EmailLogins;
+use App\Services\SocialLogin\SocialLogins;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 /**
  * @tags Authentification
@@ -23,38 +21,25 @@ class AuthController extends Controller
      * Create an account.
      *
      * Also creates a first profile named after the user (with an avatar and a cover of the catalogs,
-     * at random) and returns an API token.
+     * at random) and sends a one-time email sign-in link.
      *
      * @unauthenticated
      */
-    public function register(RegisterRequest $request, Accounts $accounts): JsonResponse
+    public function register(RegisterRequest $request, Accounts $accounts, EmailLogins $logins): JsonResponse
     {
+        abort_unless(SocialLogins::validRedirect($request->validated('redirect_uri')), 422, 'Adresse de retour invalide.');
+
         $user = $accounts->create(
             $request->validated('name'),
             $request->validated('email'),
-            $request->validated('password'),
             $request->validated('username'),
         );
+        $logins->send($user, $request->validated('redirect_uri'), $request->validated('code_challenge'));
 
-        return $this->tokenResponse($user, $request->validated('device_name'), Response::HTTP_CREATED);
-    }
-
-    /**
-     * Log in and get an API token.
-     *
-     * @unauthenticated
-     */
-    public function login(LoginRequest $request): JsonResponse
-    {
-        $user = User::where('email', $request->validated('email'))->first();
-
-        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => [__('auth.failed')],
-            ]);
-        }
-
-        return $this->tokenResponse($user, $request->validated('device_name'));
+        return response()->json([
+            'message' => 'Votre compte a été créé. Consultez votre boîte e-mail pour vous connecter.',
+            'expires_in_minutes' => EmailLogins::LINK_TTL / 60,
+        ], Response::HTTP_CREATED);
     }
 
     /**
@@ -75,14 +60,4 @@ class AuthController extends Controller
         return new UserResource($request->user());
     }
 
-    private function tokenResponse(User $user, string $deviceName, int $status = Response::HTTP_OK): JsonResponse
-    {
-        $token = (string) $user->createToken($deviceName)->plainTextToken;
-
-        return response()->json([
-            /** Bearer token to send in the `Authorization` header. */
-            'token' => $token,
-            'user' => new UserResource($user),
-        ], $status);
-    }
 }

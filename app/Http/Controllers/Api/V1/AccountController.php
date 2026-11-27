@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\DeleteAccountRequest;
 use App\Http\Requests\Api\V1\UpdateEmailRequest;
-use App\Http\Requests\Api\V1\UpdatePasswordRequest;
 use App\Http\Resources\V1\DeviceResource;
 use App\Http\Resources\V1\UserResource;
 use App\Notifications\AccountDataExport;
 use App\Services\AccountExport;
+use App\Services\EmailLogins;
+use App\Services\SocialLogin\SocialLogins;
 use App\Services\Messaging\Conversations;
 use App\Services\ProfileCovers;
 use App\Services\ProfilePhotos;
@@ -18,12 +19,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * The account's address, password, data and devices (docs/compte.md).
+ * The account's address, data and devices (docs/compte.md).
  *
  * @tags Compte
  */
@@ -33,16 +31,12 @@ class AccountController extends Controller
      * Delete the account.
      *
      * Deletes the account, its profiles, their list, progress and history, and signs out every
-     * device. Cannot be undone. The password is sent in the body (POST, not DELETE: never a
-     * secret in a URL); an account without a password (Google, Apple) sends none.
+     * device. Cannot be undone; the active authenticated session is the confirmation.
      */
     public function destroy(DeleteAccountRequest $request): Response
     {
         $user = $request->user();
 
-        if ($user->hasPassword()) {
-            $this->checkPassword($user->password, (string) $request->validated('password'), 'password');
-        }
 
         // The files of the profiles' messages, their photos and covers (the rows go with the profiles).
         app(Conversations::class)->forgetProfiles($user->profiles()->pluck('id')->map(fn ($id) => (int) $id)->all());
@@ -51,7 +45,6 @@ class AccountController extends Controller
 
         DB::transaction(function () use ($user) {
             $user->tokens()->delete();
-            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
             // Profiles, their items and pending TV sign-ins go with it (foreign keys).
             $user->delete();
         });
@@ -62,54 +55,25 @@ class AccountController extends Controller
     /**
      * Change the e-mail address.
      *
-     * Confirmed with the account password. The address is used to sign in and to receive the
-     * password reset codes; a pending reset code for the old address is cancelled. 5 tries per
-     * minute (wrong password: 422). An account without a password (Google, Apple) creates one
-     * first (422 on `password`).
+     * The new address becomes the account's sign-in address and is verified through its next
+     * one-time email sign-in link.
      */
-    public function updateEmail(UpdateEmailRequest $request): UserResource
+    public function updateEmail(UpdateEmailRequest $request, EmailLogins $logins): JsonResponse
     {
+        $data = $request->validated();
+        abort_unless(SocialLogins::validRedirect($data['redirect_uri']), 422, 'Adresse de retour invalide.');
+
         $user = $request->user();
-        if (! $user->hasPassword()) {
-            throw ValidationException::withMessages(['password' => [__('Create a password first, in « Mon compte ».')]]);
-        }
-        $this->checkPassword($user->password, (string) $request->validated('password'), 'password');
-
-        $email = $request->validated('email');
-        if ($email !== $user->email) {
-            DB::transaction(function () use ($user, $email) {
-                DB::table('password_reset_tokens')->where('email', $user->email)->delete();
-                $user->forceFill(['email' => $email, 'email_verified_at' => null])->save();
-            });
+        if (mb_strtolower($data['email']) === mb_strtolower($user->email)) {
+            return response()->json(['message' => 'Cette adresse e-mail est déjà celle de votre compte.']);
         }
 
-        return new UserResource($user->fresh());
-    }
+        $logins->sendEmailChange($user, $data['email'], $data['redirect_uri'], $data['code_challenge']);
 
-    /**
-     * Change the password.
-     *
-     * Confirmed with the current password. Every other device is signed out; this one stays
-     * signed in. 5 tries per minute (wrong password: 422). An account without a password (created
-     * with Google or Apple, `has_password` false) creates its first one: no `current_password`.
-     */
-    public function updatePassword(UpdatePasswordRequest $request): Response
-    {
-        $user = $request->user();
-        if ($user->hasPassword()) {
-            $this->checkPassword($user->password, (string) $request->validated('current_password'), 'current_password');
-        }
-
-        DB::transaction(function () use ($user, $request) {
-            $user->forceFill(['password' => $request->validated('password')])->save();
-            $current = $user->currentAccessToken();
-            $user->tokens()
-                ->when($current instanceof PersonalAccessToken, fn ($q) => $q->whereKeyNot($current->getKey()))
-                ->delete();
-            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
-        });
-
-        return response()->noContent();
+        return response()->json([
+            'message' => 'Un lien de confirmation a été envoyé à votre nouvelle adresse e-mail.',
+            'expires_in_minutes' => EmailLogins::LINK_TTL / 60,
+        ]);
     }
 
     /**
@@ -157,11 +121,4 @@ class AccountController extends Controller
         return response()->noContent();
     }
 
-    /** 422 on [$field] when [$password] is not the account's. */
-    private function checkPassword(string $hash, string $password, string $field): void
-    {
-        if (! Hash::check($password, $hash)) {
-            throw ValidationException::withMessages([$field => [__('Incorrect password.')]]);
-        }
-    }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Requests\Api\V1;
 use App\Support\Usernames;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
@@ -25,9 +24,9 @@ class RegisterRequest extends FormRequest
                 Rule::notIn(Usernames::RESERVED), 'unique:profiles,username',
             ],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', Password::defaults()],
-            /** Free label identifying the device, e.g. "Pixel 8" or "Salon TV". */
-            'device_name' => ['required', 'string', 'max:100'],
+            /** App callback address and PKCE challenge for the emailed sign-in link. */
+            'redirect_uri' => ['required', 'string', 'max:255'],
+            'code_challenge' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{43}$/'],
         ];
     }
 }

@@ -20,14 +20,13 @@ final class Accounts
 
     /**
      * Creates the account and a first profile named after it, with an avatar and a cover of the
-     * catalogs at random. [$password] null: an account of Google or Apple, without a password.
+     * catalogs at random.
      */
-    public function create(string $name, string $email, ?string $password, ?string $username = null, bool $emailVerified = false): User
+    public function create(string $name, string $email, ?string $username = null, bool $emailVerified = false): User
     {
-        return DB::transaction(function () use ($name, $email, $password, $username, $emailVerified) {
+        return DB::transaction(function () use ($name, $email, $username, $emailVerified) {
             $user = new User(['name' => $name, 'email' => $email]);
             $user->forceFill([
-                'password' => $password,
                 'email_verified_at' => $emailVerified ? now() : null,
             ])->save();
 

@@ -10,7 +10,9 @@ it('generates an OpenAPI document covering the v1 routes', function () {
 
     expect($spec['paths'])->toHaveKeys([
         '/v1/auth/register',
-        '/v1/auth/login',
+        '/v1/auth/email/link',
+        '/v1/auth/email/consume',
+        '/v1/auth/email/token',
         '/v1/auth/logout',
         '/v1/me',
         '/v1/profiles',

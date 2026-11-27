@@ -11,8 +11,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable(['name', 'email'])]
+#[Hidden(['remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -22,7 +22,6 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
         ];
     }
 
@@ -36,11 +35,5 @@ class User extends Authenticatable
     public function profiles(): HasMany
     {
         return $this->hasMany(Profile::class)->orderBy('position')->orderBy('id');
-    }
-
-    /** False for an account created with Google or Apple that never chose a password. */
-    public function hasPassword(): bool
-    {
-        return $this->password !== null;
     }
 }

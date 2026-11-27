@@ -348,7 +348,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `GET /auth/social/{google|apple}` (ouvert par le navigateur, `redirect_uri` = `app.vixeo://auth`
   ou `http://127.0.0.1:{port}/auth` seulement, `code_challenge` PKCE S256), retour du fournisseur
   sur `…/callback` (Apple : POST `form_post`), puis l'appli échange `code` + `code_verifier` sur
-  `POST /auth/social/token` (réponse de `auth/login` + `created`, `password_removed`).
+  `POST /auth/social/token` (réponse de connexion + `created`).
   `App\Services\SocialLogin\SocialLogins` (états et codes dans le cache, 10 et 5 min, une fois),
   `GoogleSignIn`, `AppleSignIn` (client secret ES256 : `App\Support\Jwt`), table
   `social_accounts` (fournisseur + `subject`). Compte trouvé par le compte lié, sinon par
@@ -359,15 +359,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   oublié » prouve l'adresse (`email_verified_at`). **Pas de relation `socialAccounts()` sur
   `User`** : elle faisait perdre à Scramble les formes des profils (`SocialCards::identity`) ;
   passer par `SocialAccount::query()` / `SocialAccount::providersOf`.
-- **Compte** (doc : `docs/compte.md`) : « mot de passe oublié » par code à 6 chiffres envoyé par
-  e-mail (`App\Services\PasswordResets` : haché, 15 min, usage unique, 5 essais ; la réponse ne
-  révèle pas si l'adresse a un compte ; la réinitialisation déconnecte tous les appareils),
-  changement d'adresse e-mail (`POST /me/email`) et de mot de passe (`POST /me/password`,
-  déconnecte les autres appareils), tous deux confirmés par le mot de passe,
-  appareils connectés (jetons Sanctum de 180 jours, `SANCTUM_EXPIRATION`), suppression du compte
-  (`POST /me/delete` avec mot de passe) et export des données par e-mail
-  (`App\Services\AccountExport`). Toute nouvelle table liée à un compte doit être supprimée avec
-  lui (clé étrangère `cascadeOnDelete`) et ajoutée à l'export.
+- **Compte** (doc : `docs/compte.md`) : aucune colonne ni API de mot de passe ; connexion e-mail par lien à usage unique (15 min, usage unique, PKCE), inscription avec création du compte et envoi du lien, changement d'adresse e-mail sans mot de passe, suppression du compte par session authentifiée, export des données par e-mail.
+
 - **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : **seule source, les releases
   GitHub** `android-<build>` (APK) et `windows-<build>` (installateur `.exe`) publiées par la CI
   de `vixeo_frontend` (`App\Services\GitHubReleases::for(AppPlatform)`, cache 5 min par

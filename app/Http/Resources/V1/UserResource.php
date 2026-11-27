@@ -17,8 +17,6 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'email_verified' => $this->email_verified_at !== null,
-            /** False for an account created with Google or Apple that never chose a password: « Mon compte » offers to create one. */
-            'has_password' => $this->hasPassword(),
             /**
              * Google and Apple accounts linked to this one (« Continuer avec… »).
              *
