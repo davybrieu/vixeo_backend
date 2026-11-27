@@ -55,8 +55,7 @@ it('ships valid 12x12 pixel art with known colors and unique ids', function () {
 });
 
 it('exposes the read-only avatar catalog to first-time registrants', function () {
-    app('auth')->forgetGuards();
-    $this->withHeaders(['Authorization' => 'Bearer nope'])->getJson('/api/v1/avatars')->assertUnauthorized();
+    $this->getJson('/api/v1/avatars')->assertOk()->assertJsonStructure(['data']);
 });
 
 it('sets a profile avatar from the catalog', function () {
