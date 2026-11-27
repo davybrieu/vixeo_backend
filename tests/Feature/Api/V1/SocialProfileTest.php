@@ -56,7 +56,7 @@ it('shows a member\'s public page, with the avatar to draw it', function () {
         ->assertJsonPath('data.avatar', $this->member->avatar)
         ->assertJsonPath('data.bio', 'Fan de science-fiction.')
         // Its page on the site, shared from the app.
-        ->assertJsonPath('data.share_url', 'https://www.vixeo.test/lea');
+        ->assertJsonPath('data.share_url', 'https://app.vixeo.test/membre/lea');
 
     $this->getJson('/api/v1/social/search?query=le')
         ->assertOk()
