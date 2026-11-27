@@ -30,7 +30,6 @@ class CatalogController extends Controller
 {
     public function __construct(
         private TmdbCatalog $catalog,
-        private AgeGate $ageGate,
         private TitleSummaries $summaries,
     ) {}
 
@@ -46,15 +45,14 @@ class CatalogController extends Controller
      * `studio_marvel`, `language_fr`…). Their items carry no logo nor summary. Every row has its
      * "see all" page: `GET /catalog/{type}/lists/{list}`.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function home(CatalogHomeRequest $request): JsonResponse
     {
         $home = $this->catalog->home($request->enum('type', MediaType::class));
 
-        $filtered = $this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = [
             'featured' => $home['featured'],
             ...array_map(fn (array $section) => $section['items'], $home['sections']),
-        ]);
+        ];
 
         // Logo and summary for the carousel and the curated rows only (prepared in advance by
         // `catalog:warm`, CatalogWarmer).
@@ -83,7 +81,7 @@ class CatalogController extends Controller
     #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function titles(CatalogTitlesRequest $request): JsonResponse
     {
-        $titles = $this->ageGate->filter(ResolveProfile::profile($request), $this->summaries->titles($request->titles()));
+        $titles = $this->summaries->titles($request->titles());
 
         return response()->json(['data' => MediaItemResource::collection($titles)]);
     }
@@ -148,7 +146,7 @@ class CatalogController extends Controller
         }
 
         // Logo, summary and IMDb rating with each title, like the home rows (TitleSummaries).
-        $page['results'] = $this->summaries->add($this->ageGate->filter(ResolveProfile::profile($request), $page['results']));
+        $page['results'] = $this->summaries->add($page['results']);
 
         return response()->json([
             'data' => MediaItemResource::collection($page['results']),
