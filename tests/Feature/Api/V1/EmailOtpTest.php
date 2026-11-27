@@ -43,11 +43,18 @@ it('limits wrong OTP attempts to five per email and IP in ten minutes', function
     $email = 'brute-force@example.com';
 
     $this->postJson('/api/v1/auth/email/code', ['email' => $email])->assertOk();
+    $wrongCode = '000000';
+    $issuedCode = null;
+    Notification::assertSentOnDemand(EmailLoginCode::class, function (EmailLoginCode $notification) use (&$issuedCode) {
+        $issuedCode = $notification->code;
+        return true;
+    });
+    if ($wrongCode === $issuedCode) $wrongCode = '000001';
 
     for ($attempt = 0; $attempt < 5; $attempt++) {
         $this->postJson('/api/v1/auth/email/verify', [
             'email' => $email,
-            'code' => '000000',
+            'code' => $wrongCode,
             'device_name' => 'Pixel',
         ])->assertUnprocessable()->assertJsonValidationErrors('code');
     }
