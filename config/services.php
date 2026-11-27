@@ -98,15 +98,15 @@ return [
     ],
 
     /*
-    | Where installed apps send people to update (docs/mise-a-jour.md). No Play Store: Android
-    | updates come from the install page of the site (the app also downloads the APK itself).
+    | Where installed apps can find a release if an in-app download is unavailable. The API has no
+    | website; use the public GitHub releases page as the fallback.
     */
     'app_updates' => [
         'github_repository' => env('APP_UPDATES_GITHUB_REPOSITORY', 'davybrieu/vixeo_frontend'),
-        // An empty variable (as in .env.example) falls back to the site's page too.
-        'android_url' => env('ANDROID_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
-        'ios_url' => env('IOS_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
-        'windows_url' => env('WINDOWS_UPDATE_URL') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/#installer',
+        // An empty variable falls back to the GitHub releases page.
+        'android_url' => env('ANDROID_UPDATE_URL') ?: 'https://github.com/davybrieu/vixeo_frontend/releases',
+        'ios_url' => env('IOS_UPDATE_URL') ?: 'https://github.com/davybrieu/vixeo_frontend/releases',
+        'windows_url' => env('WINDOWS_UPDATE_URL') ?: 'https://github.com/davybrieu/vixeo_frontend/releases',
     ],
 
     /*
