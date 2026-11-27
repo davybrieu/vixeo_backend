@@ -54,9 +54,8 @@ it('ships valid 12x12 pixel art with known colors and unique ids', function () {
     expect($ids)->toBe(array_unique($ids));
 });
 
-it('requires authentication', function () {
-    app('auth')->forgetGuards();
-    $this->withHeaders(['Authorization' => 'Bearer nope'])->getJson('/api/v1/avatars')->assertUnauthorized();
+it('exposes the read-only avatar catalog to first-time registrants', function () {
+    $this->getJson('/api/v1/avatars')->assertOk()->assertJsonStructure(['data']);
 });
 
 it('sets a profile avatar from the catalog', function () {
@@ -90,17 +89,14 @@ it('updates the account profile avatar without a PIN', function () {
 it('does not allow a second profile to be created', function () {
     $this->postJson('/api/v1/profiles', ['name' => 'Second profile'])->assertForbidden();
 });
-it('gives the first profile of a new account an avatar of the catalog', function () {
-    app('auth')->forgetGuards();
-
+it('does not allow the legacy registration shortcut to create an account before profile completion', function () {
     $this->postJson('/api/v1/auth/register', [
-        'name' => 'Davy',
+        'name' => 'Nouveau',
         'email' => 'nouveau@exemple.fr',
-        'username' => 'davy',
+        'username' => 'nouveau',
         'redirect_uri' => 'app.vixeo://auth',
         'code_challenge' => str_repeat('a', 43),
-    ])->assertCreated();
+    ])->assertNotFound();
 
-    $profile = User::where('email', 'nouveau@exemple.fr')->first()->profiles()->first();
-    expect(app(AvatarCatalog::class)->ids())->toContain($profile->avatar);
+    expect(User::where('email', 'nouveau@exemple.fr')->exists())->toBeFalse();
 });

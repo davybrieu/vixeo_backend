@@ -22,20 +22,25 @@ final class Accounts
      * Creates the account and a first profile named after it, with an avatar and a cover of the
      * catalogs at random.
      */
-    public function create(string $name, string $email, ?string $username = null, bool $emailVerified = false): User
+    public function create(string $name, string $email, ?string $username = null, bool $emailVerified = false, array $profileData = []): User
     {
-        return DB::transaction(function () use ($name, $email, $username, $emailVerified) {
+        return DB::transaction(function () use ($name, $email, $username, $emailVerified, $profileData) {
             $user = new User(['name' => $name, 'email' => $email]);
             $user->forceFill([
                 'email_verified_at' => $emailVerified ? now() : null,
             ])->save();
 
-            $user->profiles()->create([
+            $user->profiles()->create(array_merge([
                 'name' => $user->name,
                 'username' => $username ?? self::uniqueUsername($user->name),
                 'avatar' => $this->avatars->randomId(),
                 'cover' => $this->covers->randomId(),
-            ]);
+                'registration_completed_at' => now(),
+                'onboarded_at' => now(),
+            ], $profileData, [
+                'registration_completed_at' => now(),
+                'onboarded_at' => now(),
+            ]));
 
             return $user;
         });

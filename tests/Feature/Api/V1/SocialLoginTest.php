@@ -3,6 +3,8 @@
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Services\SocialLogin\SocialLogins;
+use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
 use App\Support\Jwt;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Request as HttpRequest;
@@ -107,20 +109,31 @@ it('sends the app back an error when the server has no settings for the provider
         ->assertRedirect(SocialLogins::APP_REDIRECT.'?error=unavailable');
 });
 
-it('creates an account with Google, its first profile, then the token for the code and the secret', function () {
-    Mail::fake();
+it('keeps a new Google identity pending until the profile is completed', function () {
     [$verifier, $challenge] = pkce();
     $state = startSignIn($this, 'google', $challenge);
     googleAnswers(['sub' => '1098', 'email' => 'lea@gmail.com', 'email_verified' => true, 'name' => 'Léa Martin']);
 
     $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=google-code")->assertStatus(303));
-    Http::assertSent(fn (HttpRequest $request) => $request['code'] === 'google-code'
-        && $request['client_secret'] === 'google-secret'
-        && $request['redirect_uri'] === 'https://api.vixeo.test/api/v1/auth/social/google/callback');
-
     $response = $this->postJson('/api/v1/auth/social/token', [
         'code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8',
     ])->assertOk()
+        ->assertJsonPath('created', true)
+        ->assertJsonPath('registration_required', true)
+        ->assertJsonStructure(['registration_ticket']);
+
+    expect(User::where('email', 'lea@gmail.com')->exists())->toBeFalse();
+
+    $registration = $this->postJson('/api/v1/auth/register/profile', [
+        'registration_ticket' => $response->json('registration_ticket'),
+        'device_name' => 'Pixel 8',
+        'name' => 'Léa Martin',
+        'username' => 'lea_martin',
+        'bio' => 'Cinéma',
+        'avatar' => app(AvatarCatalog::class)->ids()[0],
+        'cover' => app(CoverCatalog::class)->ids()[0],
+        'social_links' => [],
+    ])->assertCreated()
         ->assertJsonPath('created', true)
         ->assertJsonPath('user.email', 'lea@gmail.com')
         ->assertJsonPath('user.email_verified', true)
@@ -129,18 +142,15 @@ it('creates an account with Google, its first profile, then the token for the co
     $user = User::where('email', 'lea@gmail.com')->firstOrFail();
     expect($user->name)->toBe('Léa Martin')
         ->and($user->profiles)->toHaveCount(1)
-        ->and($user->profiles->first()->avatar)->not->toBeNull()
-        ->and($user->profiles->first()->cover)->not->toBeNull()
-        ->and($user->profiles->first()->username)->toStartWith('lea_martin_')
+        ->and($user->profiles->first()->registration_completed_at)->not->toBeNull()
+        ->and($user->profiles->first()->username)->toBe('lea_martin')
         ->and($user->tokens()->first()->name)->toBe('Pixel 8');
-    $this->withToken($response->json('token'))->getJson('/api/v1/me')->assertOk();
+    $this->withToken($registration->json('token'))->getJson('/api/v1/me')->assertOk();
 
-    // The code works once.
     $this->postJson('/api/v1/auth/social/token', [
         'code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8',
     ])->assertUnprocessable()->assertJsonValidationErrors('code');
 
-    // Again: the same account, found by Google's identifier (its address may change).
     $state = startSignIn($this, 'google', $challenge);
     googleAnswers(['sub' => '1098', 'email' => 'lea.martin@gmail.com', 'email_verified' => true]);
     $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=again"));
@@ -276,14 +286,26 @@ it('signs in with Apple: a form posted back, a client secret signed with the key
             && $request['code'] === 'apple-code';
     });
 
-    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8'])
+    $response = $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8'])
         ->assertOk()
         ->assertJsonPath('created', true)
-        ->assertJsonPath('user.name', 'Tom Durand')
+        ->assertJsonPath('registration_required', true);
+
+    expect(User::where('email', 'x7k2@privaterelay.appleid.com')->exists())->toBeFalse();
+
+    $this->postJson('/api/v1/auth/register/profile', [
+        'registration_ticket' => $response->json('registration_ticket'),
+        'device_name' => 'Pixel 8',
+        'name' => 'Tom Durand',
+        'username' => 'tom_durand',
+        'avatar' => app(AvatarCatalog::class)->ids()[0],
+        'cover' => app(CoverCatalog::class)->ids()[0],
+        'social_links' => [],
+    ])->assertCreated()->assertJsonPath('user.name', 'Tom Durand')
         ->assertJsonPath('user.providers', ['apple']);
 });
 
-it('names an account of an Apple relay address without its name « Moi »', function () {
+it('keeps an Apple relay identity pending until the profile is completed', function () {
     $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
     openssl_pkey_export($key, $pem);
     config([
@@ -298,7 +320,10 @@ it('names an account of an Apple relay address without its name « Moi »', func
     ])])]);
 
     $query = backQuery($this->post('/api/v1/auth/social/apple/callback', ['state' => $state, 'code' => 'c']));
-    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
-        ->assertJsonPath('user.name', 'Moi');
+    $response = $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
+        ->assertOk()->assertJsonPath('registration_required', true);
+
+    expect($response->json('registration_ticket'))->toBeString()
+        ->and(User::where('email', 'q9@privaterelay.appleid.com')->exists())->toBeFalse();
 });
 

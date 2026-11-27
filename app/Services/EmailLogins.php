@@ -28,10 +28,10 @@ final class EmailLogins
     }
 
     /** Verify a code once; create an account only after the address has been proven. */
-    public function verifyCode(string $email, string $code, Accounts $accounts): ?array
+    public function verifyCode(string $email, string $code): ?array
     {
         return Cache::lock('email-login:otp-lock:'.hash('sha256', mb_strtolower($email)), 5)
-            ->block(2, function () use ($email, $code, $accounts): ?array {
+            ->block(2, function () use ($email, $code): ?array {
                 $key = self::otpKey($email);
                 $entry = Cache::get($key);
                 if (! is_array($entry) || ! is_string($entry['hash'] ?? null) || ! Hash::check($code, $entry['hash'])) {
@@ -40,18 +40,32 @@ final class EmailLogins
 
                 Cache::forget($key);
                 $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
-                $created = false;
                 if ($user === null) {
-                    $user = $accounts->create('Moi', $email, emailVerified: true);
-                    $created = true;
-                } elseif ($user->email_verified_at === null) {
+                    $ticket = Str::random(64);
+                    Cache::put(self::registrationKey($ticket), [
+                        'email' => mb_strtolower($email),
+                        'email_verified' => true,
+                    ], self::OTP_TTL);
+
+                    return ['registration_ticket' => $ticket, 'created' => true];
+                }
+
+                if ($user->email_verified_at === null) {
                     $user->forceFill(['email_verified_at' => now()])->save();
                 }
 
-                return ['user' => $user, 'created' => $created];
+                return ['user' => $user, 'created' => false];
             });
     }
 
+
+    /** Consume a short-lived ticket issued only after successful e-mail verification. */
+    public function consumeRegistrationTicket(string $ticket): ?array
+    {
+        $entry = Cache::pull(self::registrationKey($ticket));
+
+        return is_array($entry) ? $entry : null;
+    }
 
     public function send(User $user, string $redirect, string $challenge): void
     {
@@ -128,6 +142,11 @@ final class EmailLogins
         }
 
         return $user;
+    }
+
+    private static function registrationKey(string $ticket): string
+    {
+        return 'email-login:registration:'.hash('sha256', $ticket);
     }
 
     private static function linkKey(string $token): string

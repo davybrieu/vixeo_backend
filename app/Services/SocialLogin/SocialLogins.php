@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *    keeps (PKCE, `code_challenge`);
  * 2. the API sends the browser to Google or Apple, and they send it back to the API with a code
  *    (the API is the OAuth client: no secret in the apps);
- * 3. the API finds or creates the account, then sends the browser back to the app with a code of
+ * 3. the API signs in an existing account or keeps a new identity pending, then sends the browser back to the app with a code of
  *    its own, valid 5 minutes, once;
  * 4. the app trades this code and its secret for a token (`auth/social/token`).
  *
@@ -117,14 +117,20 @@ final class SocialLogins
 
         try {
             $identity = $provider->identity($input, $this->callbackUrl($provider));
-            [$user, $created] = $this->account($identity);
+            [$user, $created, $pendingIdentity] = $this->account($identity);
         } catch (SocialLoginFailed $e) {
             return self::back($redirect, ['error' => $e->reason]);
         }
 
         $code = Str::random(48);
         Cache::put(self::codeKey($code), [
-            'user' => $user->id,
+            'user' => $user?->id,
+            'identity' => isset($pendingIdentity) ? [
+                'provider' => $pendingIdentity->provider,
+                'subject' => $pendingIdentity->subject,
+                'email' => $pendingIdentity->email,
+                'email_verified' => $pendingIdentity->emailVerified,
+            ] : null,
             'challenge' => (string) $pending['challenge'],
             'created' => $created,
         ], self::CODE_TTL);
@@ -136,7 +142,7 @@ final class SocialLogins
      * The account of a code given back to the app: once, with the verifier of its challenge.
      * Null when the code is unknown, expired, already used or the verifier doesn't match.
      *
-     * @return array{user: User, created: bool}|null
+     * @return array{user?: User, created: bool, registration_ticket?: string}|null
      */
     public function redeem(string $code, string $verifier): ?array
     {
@@ -146,18 +152,34 @@ final class SocialLogins
         }
 
         $user = User::query()->find($entry['user'] ?? null);
+        if ($user !== null) {
+            return ['user' => $user, 'created' => false];
+        }
 
-        return $user === null ? null : [
-            'user' => $user,
-            'created' => (bool) ($entry['created'] ?? false),
-        ];
+        $identity = $entry['identity'] ?? null;
+        if (! is_array($identity) || ! is_string($identity['email'] ?? null)) {
+            return null;
+        }
+
+        $ticket = Str::random(64);
+        Cache::put(self::registrationKey($ticket), $identity, self::CODE_TTL);
+
+        return ['registration_ticket' => $ticket, 'created' => true];
+    }
+
+    /** Consume the social identity ticket only when the first profile is submitted. */
+    public function consumeRegistrationTicket(string $ticket): ?array
+    {
+        $identity = Cache::pull(self::registrationKey($ticket));
+
+        return is_array($identity) ? $identity : null;
     }
 
     /**
      * The Vixeo account of [$identity]: the one already linked; else the one with its address,
      * linked now; else a new one.
      *
-     * @return array{User, bool} the account and whether it was created
+     * @return array{User|null, bool, SocialIdentity|null} the account or pending identity
      *
      * @throws SocialLoginFailed
      */
@@ -173,7 +195,7 @@ final class SocialLogins
                     $linked->update(['email' => $identity->email]);
                 }
 
-                return [$linked->user, false, false];
+                return [$linked->user, false, null];
             }
 
             if ($identity->email === null) {
@@ -193,12 +215,10 @@ final class SocialLogins
                     $user->forceFill(['email_verified_at' => now()])->save();
                 }
             } else {
-                $user = $this->accounts->create(
-                    self::accountName($identity),
-                    $identity->email,
-                    emailVerified: $identity->emailVerified,
-                );
-                $created = true;
+                if (! $identity->emailVerified) {
+                    throw new SocialLoginFailed(SocialLoginFailed::UNVERIFIED);
+                }
+                return [null, true, $identity];
             }
 
             SocialAccount::query()->create([
@@ -208,7 +228,7 @@ final class SocialLogins
                 'email' => $identity->email,
             ]);
 
-            return [$user, $created];
+            return [$user, $created, null];
         });
     }
 
@@ -237,6 +257,11 @@ final class SocialLogins
     private static function stateKey(string $state): string
     {
         return 'social-login:state:'.hash('sha256', $state);
+    }
+
+    private static function registrationKey(string $ticket): string
+    {
+        return 'social-login:registration:'.hash('sha256', $ticket);
     }
 
     private static function codeKey(string $code): string

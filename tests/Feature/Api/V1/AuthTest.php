@@ -33,29 +33,18 @@ function consumeEmailLoginLink(User $user, string $verifier = 'a1234567890123456
 
 beforeEach(fn () => Notification::fake());
 
-it('registers a passwordless account and sends a one-time email link', function () {
-    $payload = emailLoginPayload();
-    $payload += ['name' => 'Davy', 'username' => 'davy'];
+it('does not expose the legacy registration endpoint', function () {
+    $payload = emailLoginPayload() + ['name' => 'Davy', 'username' => 'davy'];
 
-    $this->postJson('/api/v1/auth/register', $payload)
-        ->assertCreated()
-        ->assertJsonPath('message', 'Votre compte a été créé. Consultez votre boîte e-mail pour vous connecter.');
-
-    $user = User::where('email', 'davy@example.com')->firstOrFail();
-    expect($user->profiles)->toHaveCount(1)
-        ->and($user->profiles->first()->name)->toBe('Davy')
-        ->and($user->email_verified_at)->toBeNull();
-
-    Notification::assertSentTo($user, EmailLoginLink::class);
+    $this->postJson('/api/v1/auth/register', $payload)->assertNotFound();
+    expect(User::where('email', 'davy@example.com')->exists())->toBeFalse();
 });
 
-it('validates registration input without asking for a password', function () {
+it('does not validate or create accounts through the legacy registration endpoint', function () {
     $payload = emailLoginPayload('taken@example.com') + ['name' => '', 'username' => 'x'];
     User::factory()->create(['email' => 'taken@example.com']);
 
-    $this->postJson('/api/v1/auth/register', $payload)
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'email']);
+    $this->postJson('/api/v1/auth/register', $payload)->assertNotFound();
 });
 
 it('sends an email link to an existing account and signs in after it is consumed', function () {

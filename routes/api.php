@@ -42,10 +42,10 @@ use Illuminate\Support\Facades\Route;
 */
 Route::prefix('v1')->name('v1.')->group(function () {
     Route::prefix('auth')->name('auth.')->middleware('throttle:auth')->group(function () {
-        Route::post('register', [AuthController::class, 'register'])->name('register');
         Route::post('email/code', [EmailLoginController::class, 'sendCode'])->name('email.code');
         Route::post('email/link', [EmailLoginController::class, 'request'])->name('email.request'); // Legacy clients.
         Route::post('email/verify', [EmailLoginController::class, 'verifyCode'])->name('email.verify');
+        Route::post('register/profile', [EmailLoginController::class, 'completeRegistration'])->name('register.profile');
         Route::get('email/waiting', [EmailLoginController::class, 'waiting'])->name('email.waiting');
         Route::get('email/consume', [EmailLoginController::class, 'consume'])->name('email.consume');
         Route::post('email/token', [EmailLoginController::class, 'token'])->name('email.token');
@@ -93,6 +93,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->middleware('throttle:tv-logos')
             ->name('logo');
     });
+
+    // Public, read-only catalogs used by the profile-first registration form.
+    Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
+    Route::get('covers', [CoverController::class, 'index'])->name('covers');
 
     // Social profile discovery requires an authenticated account.
     Route::prefix('social')->name('social.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
@@ -273,8 +277,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('test', [PushDeviceController::class, 'test'])->name('test');
         });
 
-        Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
-        Route::get('covers', [CoverController::class, 'index'])->name('covers');
         Route::apiResource('profiles', ProfileController::class)->only(['index', 'store', 'show', 'update']);
         // Its own photo, instead of its avatar (docs/social.md).
         Route::post('profiles/{profile}/photo', [ProfilePhotoController::class, 'store'])

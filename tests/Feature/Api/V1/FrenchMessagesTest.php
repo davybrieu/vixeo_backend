@@ -5,21 +5,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 
-it('translates validation errors and field names', function () {
-    $this->postJson('/api/v1/auth/register', ['email' => 'not-an-email'])
-        ->assertUnprocessable()
-        ->assertJsonPath('errors.name.0', 'Le champ nom est obligatoire.')
-        ->assertJsonPath('errors.email.0', 'Le champ adresse e-mail doit être une adresse e-mail valide.')
-        ->assertJsonValidationErrors(['redirect_uri', 'code_challenge']);
+it('does not expose the legacy registration endpoint', function () {
+    $this->postJson('/api/v1/auth/register', ['email' => 'not-an-email'])->assertNotFound();
 });
 
-it('uses custom messages for duplicates', function () {
-    User::factory()->create(['email' => 'taken@example.com']);
-
-    $this->postJson('/api/v1/auth/register', [
-        'name' => 'Davy', 'username' => 'davy', 'email' => 'taken@example.com', 'redirect_uri' => 'app.vixeo://auth', 'code_challenge' => str_repeat('a', 43),
-    ])->assertJsonPath('errors.email.0', 'Un compte existe déjà avec cette adresse e-mail.');
-
+it('uses custom messages for duplicate profile names', function () {
     $user = User::factory()->create();
     Profile::factory()->for($user)->create(['name' => 'Léa']);
     Sanctum::actingAs($user);
