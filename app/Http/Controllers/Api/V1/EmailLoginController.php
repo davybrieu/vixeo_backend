@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\UserResource;
 use App\Services\Accounts;
 use App\Services\EmailLogins;
+use App\Services\SocialLogin\SocialLogins;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -33,6 +35,30 @@ class EmailLoginController extends Controller
         return response()->json([
             'message' => 'Si cette adresse peut être utilisée, un code de connexion vient de lui être envoyé.',
             'expires_in_seconds' => EmailLogins::OTP_TTL,
+        ]);
+    }
+
+    /** Legacy link endpoint retained for older installed app versions; new apps use OTP. */
+    public function request(Request $request, EmailLogins $logins): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'redirect_uri' => ['required', 'string', 'max:255'],
+            'code_challenge' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{43}$/'],
+        ]);
+        abort_unless(SocialLogins::validRedirect($data['redirect_uri']), 422, 'Adresse de retour invalide.');
+        $key = 'email-login-send:'.sha1(mb_strtolower($data['email']));
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            throw ValidationException::withMessages(['email' => ['Trop de demandes. Réessayez dans quelques minutes.']]);
+        }
+        RateLimiter::hit($key, EmailLogins::LINK_TTL);
+        $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($data['email'])])->first();
+        if ($user !== null) {
+            $logins->send($user, $data['redirect_uri'], $data['code_challenge']);
+        }
+        return response()->json([
+            'message' => 'Si un compte utilise cette adresse, un lien de connexion vient de lui être envoyé.',
+            'expires_in_minutes' => EmailLogins::LINK_TTL / 60,
         ]);
     }
 
