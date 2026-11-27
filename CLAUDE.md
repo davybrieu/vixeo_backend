@@ -181,8 +181,8 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
     (`crew` : réalisation ou création, sur la première page ; `cast` : 20 membres de la
     distribution par page, `CreditsResource::PAGE`) et
     `GET /catalog/person/{id}/credits?sort=popular|date&page=` (chaque titre une fois ; même
-    appel TMDb que la page, en cache ; note IMDb pour les 20 de la page seulement). Tous passent par
-    `AgeGate` (titre refusé → 403, titres filtrés : une page peut être plus courte).
+    appel TMDb que la page, en cache ; note IMDb pour les 20 de la page seulement). Les titres ne sont
+    jamais filtrés selon un profil.
   - **Pages de 20** (demande du développeur, 24/11/2026 : « éviter les trop grosses requêtes ») :
     toute liste longue se lit **20 éléments à la fois**, les applis demandant la page suivante en
     défilant : catalogue (listes, recherche, recommandations, distribution, titres d'une personne),
@@ -432,7 +432,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   ou `base64:…` ; vide = aucune notification). L'appli s'inscrit (`PUT /push/device` :
   **`fid`**, identifiant d'installation Firebase (firebase_messaging 17, le 23/11/2026 ; FCM
   envoie avec `message.fid`), ou `token` (jeton des applis d'avant, toujours accepté), plateforme,
-  `new_episodes`, `utc_offset`, profil de `X-Profile-Id` ; `GET`, `DELETE`,
+  `new_episodes`, `utc_offset` ; `GET`, `DELETE`,
   `POST /push/device/test`) ; table `push_devices` (**une ligne par jeton Sanctum**, supprimée à
   la déconnexion ; `target` = `fid`, `token` ou `realtime` ; identifiant **chiffré**, retrouvé par
   son SHA-256, jamais renvoyé ; oubliée quand FCM ne la connaît plus). **Windows (pas de FCM) :
@@ -453,7 +453,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Jamais de secret dans une URL** (PIN, mot de passe, jeton) : corps de requête ou en-tête.
   Pas de champ secret sur un DELETE (Scramble le documenterait en paramètre d'URL) ; un test
   de `tests/Feature/OpenApiTest.php` le vérifie.
-- Sécurité : jamais de mot de passe de service tiers stocké en clair, PIN et secrets hachés,
+- Sécurité : jamais de mot de passe de service tiers stocké en clair, secrets hachés,
   ne jamais désactiver la vérification TLS (voir `docs/CONTEXT.md` §6).
 
 ## Branches et déploiement
