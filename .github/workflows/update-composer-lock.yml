@@ -6,6 +6,11 @@ on:
     paths:
       - 'composer.json'
       - '.github/workflows/update-composer-lock.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'composer.json'
+      - '.github/workflows/update-composer-lock.yml'
 
 permissions:
   contents: write
@@ -16,13 +21,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: main
+          ref: ${{ github.event.pull_request.head.ref || 'main' }}
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           tools: composer:v2
       - name: Resolve dependencies
-        run: composer update laravel/reverb --with-all-dependencies --no-interaction --prefer-dist --no-scripts
+        run: composer update laravel/reverb resend/resend-php --with-all-dependencies --no-interaction --prefer-dist --no-scripts
       - name: Commit lock file
         run: |
           if git diff --quiet -- composer.lock; then
@@ -32,5 +37,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add composer.lock
-          git commit -m "chore: update Composer lock for Laravel Reverb"
-          git push origin HEAD:main
+          git commit -m "chore: update Composer lock for Resend"
+          git push origin HEAD:${{ github.event.pull_request.head.ref || 'main' }}
