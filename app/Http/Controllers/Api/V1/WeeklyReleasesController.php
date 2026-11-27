@@ -19,7 +19,6 @@ class WeeklyReleasesController extends Controller
 {
     public function __construct(
         private WeeklyReleases $releases,
-        private AgeGate $ageGate,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -39,10 +38,6 @@ class WeeklyReleasesController extends Controller
             $to->toDateString(),
             $validated['type'] ?? 'all',
         );
-
-        // Apply the same age restrictions as the rest of the catalogue. Episode items carry the
-        // parent series id and media_type=tv so the series certification is used.
-        $items = $this->ageGate->filter(ResolveProfile::profile($request), $items);
 
         return response()->json([
             'data' => $items,
