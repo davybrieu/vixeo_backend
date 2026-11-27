@@ -117,13 +117,9 @@ Fonctionnalités visées
   les sources de lecture, la TV en direct, les sous-titres et les moments à passer que l'API lui
   renvoie (voir §5.1).
 - **Aucune configuration nécessaire** pour l'utilisateur : il crée un compte et regarde.
-- **Plug-ins** (décisions du développeur des 17, 19 et 20/11/2026) : comme dans Nuvio, la
-  personne ajoute, en option, des dépôts de scrapers JavaScript, **uniquement pour les sources**
-  (flux de films et de séries du lecteur), **exécutés par l'appli elle-même** dans un bac à sable
-  (`vixeo_frontend/docs/scrapers.md`) ; le serveur n'en sait rien (plus de plug-ins Stremio côté
-  serveur depuis le 21/11/2026). **Le catalogue ne passe pas par les plug-ins** : il reste celui de
-  TMDb, avec la clé de Vixeo, et ne change pas (ni rangées, ni listes, ni plug-in « catalogue
-  Vixeo »).
+- **Plug-ins façon Nuvio supprimés le 27/11/2026** : plus de dépôts de scrapers JavaScript,
+  de moteur d'exécution ou de récupération de sources VOD par plug-ins. Le catalogue TMDb et
+  les chaînes TV intégrées restent indépendants.
 - **Pas de serveurs multimédias de l'utilisateur** (Jellyfin, Plex, Emby ou autre) : ni dans
   l'API, ni dans l'appli, ni sur le site de présentation. Ne pas les proposer ni les réintroduire.
 
@@ -178,8 +174,8 @@ Responsabilités du backend :
 - Synchronisation des favoris, historiques, réglages et progressions.
 - Gestion intégrale des serveurs et des fournisseurs de contenus.
 - Communication avec les services et API externes.
-- Récupération des flux par les plug-ins de sources (add-ons Stremio / Nuvio) ; plus de
-  fournisseurs, de scraper ni d'extracteurs sur le serveur (supprimés le 20/11/2026).
+- Aucune récupération de sources VOD via des plug-ins (système supprimé le 27/11/2026).
+  La télévision intégrée continue d'utiliser ses services backend dédiés.
 - Normalisation des résultats.
 - Gestion des erreurs et indisponibilités.
 - Cache des métadonnées TMDb.
