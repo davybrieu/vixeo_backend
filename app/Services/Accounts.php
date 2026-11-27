@@ -27,7 +27,6 @@ final class Accounts
         return DB::transaction(function () use ($name, $email, $password, $username, $emailVerified) {
             $user = new User(['name' => $name, 'email' => $email]);
             $user->forceFill([
-                'password' => $password,
                 'email_verified_at' => $emailVerified ? now() : null,
             ])->save();
 
