@@ -58,17 +58,35 @@ it('lists the covers by style, each with its pattern and its colors', function (
     }
 });
 
-it('gives a cover of the catalog, at random, to the initial profile of a new account', function () {
-    $ids = app(CoverCatalog::class)->ids();
+it('saves the chosen catalog cover when the first profile creates the account', function () {
+    Notification::fake();
+    $coverIds = app(CoverCatalog::class)->ids();
+    $avatarIds = app(AvatarCatalog::class)->ids();
 
-    $this->postJson('/api/v1/auth/register', [
-        'name' => 'Léa', 'username' => 'lea', 'email' => 'lea@example.com',
-        'redirect_uri' => 'app.vixeo://auth', 'code_challenge' => str_repeat('a', 43),
+    $this->postJson('/api/v1/auth/email/code', ['email' => 'lea@example.com'])->assertOk();
+    $code = null;
+    Notification::assertSentOnDemand(EmailLoginCode::class, function (EmailLoginCode $notification) use (&$code) {
+        $code = $notification->code;
+        return true;
+    });
+
+    $verification = $this->postJson('/api/v1/auth/email/verify', [
+        'email' => 'lea@example.com', 'code' => $code, 'device_name' => 'Pixel',
+    ])->assertOk()->assertJsonPath('registration_required', true);
+
+    $this->postJson('/api/v1/auth/register/profile', [
+        'registration_ticket' => $verification->json('registration_ticket'),
+        'device_name' => 'Pixel',
+        'name' => 'Léa',
+        'username' => 'lea',
+        'avatar' => $avatarIds[0],
+        'cover' => $coverIds[0],
+        'social_links' => [],
     ])->assertCreated();
-    $first = Profile::query()->firstOrFail();
-    expect($first->cover)->toBeIn($ids);
 
-
+    $profile = Profile::query()->firstOrFail();
+    expect($profile->cover)->toBe($coverIds[0])
+        ->and($profile->registration_completed_at)->not->toBeNull();
 });
 
 it('changes the cover for another of the catalog, never an unknown one', function () {
