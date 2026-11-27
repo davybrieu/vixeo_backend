@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\DeleteAccountRequest;
 use App\Http\Requests\Api\V1\UpdateEmailRequest;
-use App\Http\Requests\Api\V1\UpdatePasswordRequest;
 use App\Http\Resources\V1\DeviceResource;
 use App\Http\Resources\V1\UserResource;
 use App\Notifications\AccountDataExport;
@@ -18,9 +17,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * The account's address, password, data and devices (docs/compte.md).
@@ -40,9 +36,6 @@ class AccountController extends Controller
     {
         $user = $request->user();
 
-        if ($user->hasPassword()) {
-            $this->checkPassword($user->password, (string) $request->validated('password'), 'password');
-        }
 
         // The files of the profiles' messages, their photos and covers (the rows go with the profiles).
         app(Conversations::class)->forgetProfiles($user->profiles()->pluck('id')->map(fn ($id) => (int) $id)->all());
@@ -51,7 +44,6 @@ class AccountController extends Controller
 
         DB::transaction(function () use ($user) {
             $user->tokens()->delete();
-            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
             // Profiles, their items and pending TV sign-ins go with it (foreign keys).
             $user->delete();
         });
@@ -70,46 +62,15 @@ class AccountController extends Controller
     public function updateEmail(UpdateEmailRequest $request): UserResource
     {
         $user = $request->user();
-        if (! $user->hasPassword()) {
-            throw ValidationException::withMessages(['password' => [__('Create a password first, in « Mon compte ».')]]);
-        }
-        $this->checkPassword($user->password, (string) $request->validated('password'), 'password');
 
         $email = $request->validated('email');
         if ($email !== $user->email) {
             DB::transaction(function () use ($user, $email) {
-                DB::table('password_reset_tokens')->where('email', $user->email)->delete();
                 $user->forceFill(['email' => $email, 'email_verified_at' => null])->save();
             });
         }
 
         return new UserResource($user->fresh());
-    }
-
-    /**
-     * Change the password.
-     *
-     * Confirmed with the current password. Every other device is signed out; this one stays
-     * signed in. 5 tries per minute (wrong password: 422). An account without a password (created
-     * with Google or Apple, `has_password` false) creates its first one: no `current_password`.
-     */
-    public function updatePassword(UpdatePasswordRequest $request): Response
-    {
-        $user = $request->user();
-        if ($user->hasPassword()) {
-            $this->checkPassword($user->password, (string) $request->validated('current_password'), 'current_password');
-        }
-
-        DB::transaction(function () use ($user, $request) {
-            $user->forceFill(['password' => $request->validated('password')])->save();
-            $current = $user->currentAccessToken();
-            $user->tokens()
-                ->when($current instanceof PersonalAccessToken, fn ($q) => $q->whereKeyNot($current->getKey()))
-                ->delete();
-            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
-        });
-
-        return response()->noContent();
     }
 
     /**
@@ -157,11 +118,4 @@ class AccountController extends Controller
         return response()->noContent();
     }
 
-    /** 422 on [$field] when [$password] is not the account's. */
-    private function checkPassword(string $hash, string $password, string $field): void
-    {
-        if (! Hash::check($password, $hash)) {
-            throw ValidationException::withMessages([$field => [__('Incorrect password.')]]);
-        }
-    }
 }
