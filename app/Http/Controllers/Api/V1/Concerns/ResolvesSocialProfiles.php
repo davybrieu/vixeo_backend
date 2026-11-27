@@ -14,11 +14,10 @@ use Illuminate\Http\Request;
  */
 trait ResolvesSocialProfiles
 {
-    /** The active profile, maybe none (public pages); never a kid profile. */
+    /** The active profile, maybe none (public pages). */
     protected function viewer(Request $request): ?Profile
     {
         $viewer = ResolveProfile::profile($request);
-        abort_if($viewer?->is_kid, 403, __('Kid profiles cannot use the social features.'));
 
         return $viewer;
     }
@@ -28,18 +27,17 @@ trait ResolvesSocialProfiles
     {
         $profile = ResolveProfile::profile($request);
         abort_unless($profile instanceof Profile, 422, __('Choose a profile.'));
-        abort_if($profile->is_kid, 403, __('Kid profiles cannot use the social features.'));
         abort_if($profile->suspended_at !== null, 403, __('This profile is suspended.'));
         abort_if($profile->username === null, 403, __('Choose a username to use the social features.'));
 
         return $profile;
     }
 
-    /** A member, by its username (404 for a kid or suspended profile). */
+    /** A member, by its username (404 for a suspended or missing profile). */
     protected function member(string $username): Profile
     {
         return Profile::query()->where('username', mb_strtolower(ltrim($username, '@')))
-            ->where('is_kid', false)->whereNull('suspended_at')->firstOrFail();
+            ->whereNull('suspended_at')->firstOrFail();
     }
 
     /** A member whose content the active profile sees (403: private, 404: blocked). */
