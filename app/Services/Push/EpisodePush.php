@@ -8,7 +8,6 @@ use App\Models\Profile;
 use App\Models\ProfileItem;
 use App\Models\PushDevice;
 use App\Models\User;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\TmdbFormat;
 use App\Services\Tmdb\UpcomingEpisodes;
 use Carbon\CarbonImmutable;
