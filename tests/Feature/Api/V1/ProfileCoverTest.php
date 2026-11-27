@@ -62,8 +62,8 @@ it('gives a cover of the catalog, at random, to the initial profile of a new acc
     $ids = app(CoverCatalog::class)->ids();
 
     $this->postJson('/api/v1/auth/register', [
-        'name' => 'Léa', 'email' => 'lea@example.com', 'password' => 'secret-password',
-        'password_confirmation' => 'secret-password', 'device_name' => 'test',
+        'name' => 'Léa', 'username' => 'lea', 'email' => 'lea@example.com',
+        'redirect_uri' => 'app.vixeo://auth', 'code_challenge' => str_repeat('a', 43),
     ])->assertCreated();
     $first = Profile::query()->firstOrFail();
     expect($first->cover)->toBeIn($ids);
