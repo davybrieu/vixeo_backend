@@ -19,7 +19,7 @@ use Illuminate\Http\JsonResponse;
  */
 class CatalogSearchController extends Controller
 {
-    public function __construct(private TmdbCatalog $catalog, private AgeGate $ageGate, private TitleSummaries $summaries) {}
+    public function __construct(private TmdbCatalog $catalog, private TitleSummaries $summaries) {}
 
     /**
      * Search (all types).
@@ -69,10 +69,10 @@ class CatalogSearchController extends Controller
     public function discover(DiscoverRequest $request): JsonResponse
     {
         $results = $this->catalog->discoverAll($request->titleFilters(), $request->sort());
-        $filtered = $this->summaries->addMany($this->ageGate->filterMany(ResolveProfile::profile($request), [
+        $filtered = $this->summaries->addMany([
             'movies' => $results['movies']['results'],
             'shows' => $results['shows']['results'],
-        ]));
+        ]);
 
         return response()->json([
             'movies' => [
