@@ -2,9 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Controllers\SiteController;
-use App\Services\LatestReleases;
-use App\Support\Platform;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -14,16 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        // Once per request: the site's layout and page both ask for the latest release.
-        $this->app->scoped(LatestReleases::class);
-    }
-
     public function boot(): void
     {
         Password::defaults(fn () => Password::min(8));
@@ -62,8 +52,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('profile-photos', fn (Request $request) => Limit::perMinute(600)->by($request->ip()));
         RateLimiter::for('profile-photo-upload', fn (Request $request) => Limit::perHour(30)->by($request->user()?->id ?: $request->ip()));
 
-        // Public profile pages of the site (www.vixeo.app/pseudo): no listing by brute force.
-        RateLimiter::for('members', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
         RateLimiter::for('catalog', fn (Request $request) => Limit::perMinute(240)->by($request->user()?->id ?: $request->ip()));
 
         // Messaging (docs/messagerie.md): reading, writing, answering; files are rarer and heavier.
@@ -85,8 +73,6 @@ class AppServiceProvider extends ServiceProvider
         // Players save progress regularly; pulls are paginated.
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 
-        $this->shareSiteProps();
-
         Scramble::configure()
             ->routes(fn ($route) => str_starts_with($route->uri, 'api/v1'))
             ->withDocumentTransformers(function (OpenApi $openApi) {
@@ -94,35 +80,4 @@ class AppServiceProvider extends ServiceProvider
             });
     }
 
-    /** Presentation site (routes/site.php): props shared with every page, error pages included. */
-    private function shareSiteProps(): void
-    {
-        Inertia::share([
-            'site' => function () {
-                // No store: the APK and the Windows installer of the latest GitHub releases (the APK
-                // may also come from the .env). No web app any more (developer's request).
-                $releases = app(LatestReleases::class);
-                $apk = $releases->apk();
-                $installer = $releases->windowsInstaller();
-
-                return [
-                    'url' => SiteController::siteUrl(),
-                    'android' => [
-                        'apkUrl' => $apk['url'] ?? null,
-                        'apkSha256' => $apk['sha256'] ?? null,
-                        'minimum' => config('vixeo.android.minimum'),
-                    ],
-                    'windows' => [
-                        'installerUrl' => $installer['url'] ?? null,
-                        'installerSha256' => $installer['sha256'] ?? null,
-                        'minimum' => config('vixeo.windows.minimum'),
-                    ],
-                    'contactEmail' => config('vixeo.publisher.email') ?: null,
-                    'publisher' => config('vixeo.publisher.name') ?: null,
-                ];
-            },
-            'platform' => fn () => Platform::fromUserAgent(request()->userAgent())->value,
-            'path' => fn () => '/'.ltrim(request()->path(), '/'),
-        ]);
-    }
 }
