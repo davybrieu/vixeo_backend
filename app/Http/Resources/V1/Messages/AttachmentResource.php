@@ -22,7 +22,7 @@ class AttachmentResource extends JsonResource
             'mime_type' => (string) $this->mime_type,
             /** Size, in bytes. */
             'size' => (int) $this->size,
-            /** Where to download it, under /api/v1, with the bearer token and the X-Profile-Id header. */
+            /** Where to download it, under /api/v1, with the bearer token. */
             'url' => '/messages/attachments/'.$this->id,
         ];
     }
