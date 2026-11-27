@@ -40,8 +40,8 @@ it('does not create an account until the verified e-mail completes profile regis
         'name' => 'Camille Martin',
         'username' => 'camille_martin',
         'bio' => 'Cinéma et séries',
-        'avatar' => app(\\App\\Services\\AvatarCatalog::class)->ids()[0],
-        'cover' => app(\\App\\Services\\CoverCatalog::class)->ids()[0],
+        'avatar' => app(AvatarCatalog::class)->ids()[0],
+        'cover' => app(CoverCatalog::class)->ids()[0],
         'social_links' => [],
     ])->assertCreated()
         ->assertJsonPath('created', true)
