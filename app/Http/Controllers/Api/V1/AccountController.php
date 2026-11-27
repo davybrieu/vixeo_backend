@@ -29,8 +29,7 @@ class AccountController extends Controller
      * Delete the account.
      *
      * Deletes the account, its profiles, their list, progress and history, and signs out every
-     * device. Cannot be undone. The password is sent in the body (POST, not DELETE: never a
-     * secret in a URL); an account without a password (Google, Apple) sends none.
+     * device. Cannot be undone; the active authenticated session is the confirmation.
      */
     public function destroy(DeleteAccountRequest $request): Response
     {
@@ -54,10 +53,8 @@ class AccountController extends Controller
     /**
      * Change the e-mail address.
      *
-     * Confirmed with the account password. The address is used to sign in and to receive the
-     * password reset codes; a pending reset code for the old address is cancelled. 5 tries per
-     * minute (wrong password: 422). An account without a password (Google, Apple) creates one
-     * first (422 on `password`).
+     * The new address becomes the account's sign-in address and is verified through its next
+     * one-time email sign-in link.
      */
     public function updateEmail(UpdateEmailRequest $request): UserResource
     {
