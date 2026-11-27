@@ -19,12 +19,12 @@ function photoMember(string $username, array $attributes = []): Profile
         ->create(['username' => $username, 'avatar' => 'quest-knight', ...$attributes]);
 }
 
-/** Acts as [profile]: its account signed in, its id in X-Profile-Id. */
+/** Acts as the account that owns [profile]. */
 function asPhotoMember(Profile $profile): mixed
 {
     Sanctum::actingAs($profile->user);
 
-    return test()->withHeader('X-Profile-Id', (string) $profile->id);
+    return test();
 }
 
 function sendPhoto(Profile $profile, UploadedFile $photo): mixed
@@ -149,20 +149,13 @@ it('shows the photo wherever the profile appears', function () {
     asPhotoMember($max)->getJson('/api/v1/notifications')->assertJsonPath('data.0.actor.photo_url', $url);
 });
 
-it('deletes the photo with its profile and with the account', function () {
+it('deletes the photo with the account', function () {
     $lea = photoMember('lea');
     sendPhoto($lea, UploadedFile::fake()->image('p.png', 300, 300));
     $path = ProfilePhotos::DIRECTORY.'/'.$lea->refresh()->photo_path;
-    $other = Profile::factory()->for($lea->user)->create(['username' => 'lea_bis']);
-    sendPhoto($other, UploadedFile::fake()->image('p.png', 300, 300));
-    $otherPath = ProfilePhotos::DIRECTORY.'/'.$other->refresh()->photo_path;
 
-    asPhotoMember($lea)->deleteJson("/api/v1/profiles/{$lea->id}")->assertNoContent();
+    asPhotoMember($lea)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
     Storage::disk(ProfilePhotos::DISK)->assertMissing($path);
-    Storage::disk(ProfilePhotos::DISK)->assertExists($otherPath);
-
-    asPhotoMember($other)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
-    Storage::disk(ProfilePhotos::DISK)->assertMissing($otherPath);
 });
 
 it('lets the moderation remove a reported photo', function () {
