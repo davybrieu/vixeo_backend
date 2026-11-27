@@ -24,17 +24,10 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
-        RateLimiter::for('pin', fn (Request $request) => Limit::perMinute(5)->by(
-            $request->user()?->id.'|'.$request->route()?->originalParameter('profile'),
-        ));
-
         // TV polls every 5 s; a little slack for clock drift.
         RateLimiter::for('device-poll', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
         // Guessing a 6-character code from a signed-in account.
         RateLimiter::for('device-approve', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
-
-        // Also slows down account password guesses ("code parental oublié").
-        RateLimiter::for('parental', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
 
         // Apps check at launch and when they come back to the foreground.
         RateLimiter::for('app-update', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
