@@ -34,7 +34,7 @@ Vérifier : `php artisan vixeo:push "Test" --user=<votre adresse> --force`.
 
 ## L'appli s'inscrit : `/api/v1/push/device`
 
-Connecté (bearer), avec l'en-tête `X-Profile-Id` du profil en cours :
+Connecté (bearer), le serveur résout automatiquement le profil unique du compte :
 
 - `PUT /push/device` : `platform` (`android`, `ios`, `windows`), puis sur Android et iOS
   **`fid`**, l'identifiant d'installation Firebase de l'appli (firebase_messaging 17 :
