@@ -80,7 +80,7 @@ class Taste
             ->orderByDesc('total')->limit(50)->pluck('total', 'id')->map(intval(...));
 
         $ids = $friendsOf->keys()->merge($raters->keys())->merge($popular->keys())->unique()->values()->all();
-        $profiles = Profile::query()->whereIn('id', $ids)->where('is_kid', false)->whereNotNull('username')
+        $profiles = Profile::query()->whereIn('id', $ids)->whereNotNull('username')
             ->whereNull('suspended_at')->withCount('followers')->get();
         $theirs = $this->ratings($profiles->modelKeys());
 
