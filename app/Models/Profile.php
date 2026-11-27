@@ -30,7 +30,7 @@ class Profile extends Model
     use HasFactory;
 
     /** Maximum number of profiles per account. */
-    public const MAX_PER_USER = 5;
+    public const MAX_PER_USER = 1;
 
     /** Longest biography of a public profile, in characters (developer's request, 21/11/2026). */
     public const BIO_MAX_LENGTH = 160;
