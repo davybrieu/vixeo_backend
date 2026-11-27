@@ -15,7 +15,6 @@ l'API les donne ensuite **à ce profil** à la place de ceux de TMDb, partout o�
     aucun appel TMDb de plus), les mieux notées d'abord, **60 au plus** par sorte. Ordre des
     langues : affiches et logos français, anglais, sans texte ; arrière-plans sans texte d'abord.
     Vignettes : affiche w342, arrière-plan w780, logo w300. Pas de SVG.
-  - 403 si le profil n'a pas le droit de voir le titre (`AgeGate`).
 - `PUT /api/v1/profiles/{profile}/artwork/{movie|tv}/{id}` avec `poster`, `backdrop`, `logo` (un
   `path` de la liste, ou null pour celui de TMDb ; une clé absente ne change pas) → le choix.
   Une image qui n'est pas une de celles du titre : 422 « Cette image n’est pas une image de ce
