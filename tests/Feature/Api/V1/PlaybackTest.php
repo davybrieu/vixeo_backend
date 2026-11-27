@@ -111,7 +111,7 @@ it('finds subtitles of a movie in the profile language, preferred language first
         && $request->hasHeader('Api-Key', 'os-key') && $request->hasHeader('User-Agent', 'Vixeo v1.0'));
 
     // Without languages: the profile's.
-    $this->getJson('/api/v1/catalog/movie/551/subtitles', [ResolveProfile::HEADER => $profile->id])->assertOk();
+    $this->getJson('/api/v1/catalog/movie/551/subtitles')->assertOk();
     Http::assertSent(fn (Request $request) => $request['tmdb_id'] == 551 && $request['languages'] === 'pt-br');
 });
 
