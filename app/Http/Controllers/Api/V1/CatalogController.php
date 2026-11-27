@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\CatalogList;
 use App\Enums\MediaType;
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\ResolveProfile;
 use App\Http\Requests\Api\V1\CatalogHomeRequest;
 use App\Http\Requests\Api\V1\CatalogPageRequest;
 use App\Http\Requests\Api\V1\CatalogTitlesRequest;
@@ -14,11 +13,9 @@ use App\Http\Resources\V1\Catalog\MediaItemResource;
 use App\Http\Resources\V1\Catalog\SectionResource;
 use App\Http\Resources\V1\Catalog\TitleRatingsResource;
 use App\Services\Ratings\MdbListRatings;
-use App\Services\Tmdb\AgeGate;
 use App\Services\Tmdb\CatalogRows;
 use App\Services\Tmdb\TitleSummaries;
 use App\Services\Tmdb\TmdbCatalog;
-use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -76,9 +73,8 @@ class CatalogController extends Controller
      *
      * Movies and TV shows by id (« À voir », Continuer à regarder), with their logo, length, genres
      * and age rating, in the order asked: one request instead of one per title. Respects the
-     * active profile's age limit; titles TMDb doesn't know are left out.
+     * titles TMDb doesn't know are left out.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function titles(CatalogTitlesRequest $request): JsonResponse
     {
         $titles = $this->summaries->titles($request->titles());
@@ -131,7 +127,6 @@ class CatalogController extends Controller
      * `now_playing` and `upcoming` exist for movies only, `on_the_air` and `airing_today`
      * for TV shows only; 404 for a list that does not exist for the type.
      */
-    #[HeaderParameter('X-Profile-Id', 'Active profile id: its age limit is applied.', type: 'integer')]
     public function list(CatalogPageRequest $request, MediaType $type, string $list): JsonResponse
     {
         $curated = CatalogList::tryFrom($list);
