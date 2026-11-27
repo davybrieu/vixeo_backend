@@ -114,4 +114,22 @@ class EmailLoginController extends Controller
             'needs_profile_setup' => $user->profiles()->first()?->registration_completed_at === null,
         ]);
     }
+    /** Legacy PKCE exchange retained for email-change links and older installed apps. */
+    public function token(Request $request, EmailLogins $logins): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:100'],
+            'code_verifier' => ['required', 'string', 'min:43', 'max:128'],
+            'device_name' => ['required', 'string', 'max:100'],
+        ]);
+        $user = $logins->redeem($data['code'], $data['code_verifier']);
+        if ($user === null) {
+            throw ValidationException::withMessages(['code' => ['Ce lien de connexion a expiré. Demandez-en un nouveau.']]);
+        }
+        return response()->json([
+            'token' => (string) $user->createToken($data['device_name'])->plainTextToken,
+            'user' => new UserResource($user),
+        ]);
+    }
+
 }
