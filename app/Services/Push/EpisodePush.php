@@ -34,7 +34,6 @@ class EpisodePush
     public function __construct(
         private PushDevices $devices,
         private UpcomingEpisodes $episodes,
-        private AgeGate $ageGate,
     ) {}
 
     /**
@@ -100,7 +99,7 @@ class EpisodePush
             $pending = [];
             foreach ($favorites[$profileId] ?? [] as $showId => $favoritedAt) {
                 $entry = $released[$showId] ?? null;
-                if ($entry === null || ! $this->ageGate->allows($profile, $entry['show'])) {
+                if ($entry === null) {
                     continue;
                 }
                 $start = max($from, $since, $favoritedAt === null ? $from : CarbonImmutable::instance($favoritedAt));
