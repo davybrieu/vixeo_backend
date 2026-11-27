@@ -37,7 +37,7 @@ class AppUpdates
         ];
     }
 
-    /** Where people get the new version: the site's install page (no store). */
+    /** Fallback destination when the app cannot download and install the release itself. */
     public function updateUrl(AppPlatform $platform): ?string
     {
         $url = config("services.app_updates.{$platform->value}_url");
