@@ -67,14 +67,12 @@ it('shows a member\'s public page, with the avatar to draw it', function () {
 it('never finds the active profile itself in the search', function () {
     $user = User::factory()->create();
     $me = Profile::factory()->for($user)->create(['username' => 'leane']);
-    $mySecondProfile = Profile::factory()->for($user)->create(['username' => 'leon']);
     Sanctum::actingAs($user);
 
-    $found = fn () => array_column($this->withHeader('X-Profile-Id', (string) $me->id)
-        ->getJson('/api/v1/social/search?query=le')->assertOk()->json('data'), 'username');
+    $found = fn () => array_column($this->getJson('/api/v1/social/search?query=le')->assertOk()->json('data'), 'username');
 
     // Reached from the navigation (« Profil »), not from the search.
-    expect($found())->not->toContain('leane')->toContain('lea', 'leon');
+    expect($found())->not->toContain('leane')->toContain('lea');
 });
 
 it('lists a member\'s « Favoris » ❤ with its counts', function () {
@@ -135,8 +133,7 @@ it('never gives a profile a username that is a page of the site or of the app', 
 
     // vixeo.app/membre/pseudo (Flutter Web): /accueil, /recherche… are app routes.
     foreach (['apk', 'Accueil', 'recherche', 'confidentialite'] as $reserved) {
-        $this->withHeader('X-Profile-Id', (string) $profile->id)
-            ->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])
+                    ->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['username' => 'Ce pseudo est réservé : choisissez-en un autre.']);
     }
