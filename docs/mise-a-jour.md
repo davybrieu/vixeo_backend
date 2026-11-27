@@ -13,9 +13,9 @@ Une mise à jour passe par deux niveaux :
 
 | Plateforme | Comment la nouvelle version arrive | Lien envoyé par l'API |
 |---|---|---|
-| Android, Android TV | **Pas de Play Store** (décision du développeur) : l'appli télécharge elle-même le nouvel APK (`latest.download_url`), vérifie son empreinte SHA-256, puis lance l'installateur d'Android, qui demande une confirmation. L'APK doit être signé avec la même clé de release. | `ANDROID_UPDATE_URL` (`<APP_URL>/#installer` par défaut, la section d'installation de l'accueil), en secours |
-| Windows (10 et 11, 64 bits) | L'appli télécharge l'installateur (`latest.download_url`, `vixeo-setup-<build>.exe`), vérifie son empreinte SHA-256, le lance en mode silencieux (`/SILENT`) et se ferme ; l'installateur remplace la version installée (dossier de l'utilisateur, sans droits d'administrateur) puis relance Vixeo. Installateur **non signé** pour l'instant : Windows SmartScreen peut avertir à la première installation depuis le site. | `WINDOWS_UPDATE_URL` (`<APP_URL>/#installer` par défaut), en secours |
-| iOS | **Pas d'appli iOS pour l'instant** : l'API répond toujours `up_to_date` pour iOS. Plus tard (distribution web UE) : chaque version notarisée par Apple, paquet hébergé sur le site, que l'iPhone interroge au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`). | `IOS_UPDATE_URL` (`<APP_URL>/#installer` par défaut) |
+| Android, Android TV | **Pas de Play Store** (décision du développeur) : l'appli télécharge elle-même le nouvel APK (`latest.download_url`), vérifie son empreinte SHA-256, puis lance l'installateur d'Android, qui demande une confirmation. L'APK doit être signé avec la même clé de release. | `ANDROID_UPDATE_URL` (page des releases GitHub par défaut), en secours |
+| Windows (10 et 11, 64 bits) | L'appli télécharge l'installateur (`latest.download_url`, `vixeo-setup-<build>.exe`), vérifie son empreinte SHA-256, le lance en mode silencieux (`/SILENT`) et se ferme ; l'installateur remplace la version installée (dossier de l'utilisateur, sans droits d'administrateur) puis relance Vixeo. Installateur **non signé** pour l'instant : Windows SmartScreen peut avertir à la première installation depuis le site. | `WINDOWS_UPDATE_URL` (page des releases GitHub par défaut), en secours |
+| iOS | **Pas d'appli iOS pour l'instant** : l'API répond toujours `up_to_date` pour iOS. Plus tard (distribution web UE) : chaque version notarisée par Apple, paquet hébergé sur le site, que l'iPhone interroge au plus une fois par 24 h (adresse `updates` du fichier `/.well-known/marketplace-kit`). | `IOS_UPDATE_URL` (page des releases GitHub par défaut) |
 
 Côté iOS (plus tard), le serveur de distribution **reste à construire**. Il n'est possible qu'une fois la
 distribution web acceptée par Apple (voir `APPLE_NOTARIZATION.md` dans `vixeo_frontend`, point
@@ -47,7 +47,7 @@ renvoie :
     "sha256": "3f5a…"
   },
   "minimum_build": 10,
-  "update_url": "https://www.vixeo.app/#installer"
+  "update_url": "https://github.com/davybrieu/vixeo_frontend/releases"
 }
 ```
 
@@ -55,7 +55,7 @@ renvoie :
   que la dernière publiée (version de test), quand GitHub ne répond pas, et toujours sur iOS.
 - `update_available` : l'appli affiche en haut de ses pages la barre « Une nouvelle mise à jour est
   disponible », avec un bouton « Télécharger » (APK ou installateur Windows téléchargé et vérifié
-  dans l'appli, puis installé ; sans fichier, page d'installation du site).
+  dans l'appli, puis installé ; sans fichier, page des releases GitHub).
 - `update_required` : la version installée est plus ancienne qu'une release marquée
   **« [obligatoire] »** (`minimum_build`). L'appli affiche « Mise à jour nécessaire » et reste
   bloquée tant que la mise à jour n'est pas installée.
