@@ -190,9 +190,7 @@ class Lists
     {
         if ($list->items_count > 0 && $list->published_at === null) {
             $list->forceFill(['published_at' => now()])->save();
-            if (! $list->profile->is_kid) {
-                $this->activities->list($list);
-            }
+            $this->activities->list($list);
         }
     }
 }
