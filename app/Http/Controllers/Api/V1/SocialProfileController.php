@@ -91,6 +91,7 @@ class SocialProfileController extends Controller
              */
             'social_links' => SocialLinks::present($profile->social_links),
             'is_following' => $status === Follows::FOLLOWING,
+            'follows_you' => $viewer instanceof Profile && ! $self && $this->follows->status($profile, $viewer) === Follows::FOLLOWING,
             /** `none`, `requested` (a private account has not accepted yet) or `following`. */
             'follow_status' => $status,
             /** The active profile sees the lists and reviews (public account, itself, or an accepted follower). */
