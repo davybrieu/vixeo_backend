@@ -13,11 +13,11 @@ CORS doit autoriser l'origine du frontend Web. Les erreurs Laravel sont toujours
 
 **Lecture : uniquement les serveurs de Vixeo** (décision du développeur, ne plus poser la
 question). Les applis lisent ce que l'API leur renvoie (sources de lecture, TV en direct, sous-titres,
-moments à passer) : l'utilisateur n'a **aucun serveur à configurer**. Les flux des films et
-séries viennent **uniquement des plug-ins exécutés par l'appli** (dépôts de scrapers JavaScript
-façon Nuvio, `vixeo_frontend/docs/scrapers.md`) : le serveur n'a plus de scraper, de
-fournisseurs, d'extracteurs (supprimés le 20/11/2026), ni de plug-ins Stremio, de sources, de
-flux favoris ou morts (supprimés le 21/11/2026) ; demande du développeur, ne pas les réintroduire. Pas de serveurs multimédias
+moments à passer) : l'utilisateur n'a **aucun serveur à configurer**. Le système de plug-ins de sources façon Nuvio a été supprimé le 27/11/2026 dans l'application ;
+il n'existe plus de dépôts de scrapers JavaScript ni de moteur d'exécution. Le serveur ne fournit
+actuellement pas de sources VOD pour les films et séries. La TV intégrée reste gérée par ses
+services backend dédiés. Les anciens plug-ins Stremio, sources et flux favoris / morts avaient déjà
+été supprimés (21/11/2026) ; ne pas les réintroduire. Pas de serveurs multimédias
 de l'utilisateur (Jellyfin / Plex / Emby) : ni dans l'API, ni dans l'appli.
 
 **Lire d'abord [`docs/CONTEXT.md`](docs/CONTEXT.md)** : décisions produit et techniques,
@@ -501,8 +501,10 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait aussi : messagerie (conversations directes et demandes, groupes, photos et vidéos,
   accusés de lecture, blocage), en temps réel avec Laravel Reverb (`docs/messagerie.md`,
   `docs/reverb.md`).
-- Supprimé le 21/11/2026 (inutilisé par l'appli) : plug-ins Stremio côté serveur et sources
-  (tables `addons`, `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
+- Supprimé le 21/11/2026 : plug-ins Stremio côté serveur et sources (tables `addons`,
+  `profile_streams`, `dead_streams` supprimées), routes de compatibilité.
+- Supprimé le 27/11/2026 côté application : système de dépôts de scrapers JavaScript façon Nuvio ;
+  aucune API ni exécution backend ne lui est associée. La TV intégrée reste indépendante.
 - Fait aussi (23/11/2026) : réseau social des films et séries : fil, listes et top 10, commentaires
   et spoilers, bilan de l'année, fiche sociale d'un titre, goûts en commun et comptes à
   suivre, blocage partout et masquage, signalements et modération, partage dans les messages,
