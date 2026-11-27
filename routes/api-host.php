@@ -2,14 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-| Root of the API host (api.vixeo.app), outside /api/v1. Only registered when API_URL and APP_URL
-| have different hosts: otherwise the site answers on / (config/vixeo.php).
-*/
+/* Root of the API host, outside /api/v1. */
 Route::get('/', fn () => response()->json([
     'name' => config('app.name'),
     'api' => url('/api/v1'),
 ]));
 
-// The API is not meant for search engines (the site has its own robots.txt).
+// The API is not meant for search engines.
 Route::get('/robots.txt', fn () => response("User-agent: *\nDisallow: /\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']));
