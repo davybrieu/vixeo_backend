@@ -70,7 +70,6 @@ class SocialProfileController extends Controller
      */
     public function show(Request $request, string $username, Taste $taste): JsonResponse
     {
-        $this->assertAdultViewer($request);
         $profile = $this->publicProfile($username, withCounts: true);
         $viewer = ResolveProfile::profile($request);
         $self = $viewer instanceof Profile && $viewer->id === $profile->id;
