@@ -52,7 +52,7 @@ class ProfileRequest extends FormRequest
                 }
             }],
             'bio' => ['sometimes', 'nullable', 'string', 'max:'.Profile::BIO_MAX_LENGTH],
-            'avatar' => [Rule::requiredIf($this->boolean('registration_completed')), 'string', Rule::in(app(AvatarCatalog::class)->ids())],
+            'avatar' => [Rule::requiredIf($this->boolean('registration_completed')), 'nullable', 'string', Rule::in(app(AvatarCatalog::class)->ids())],
             'cover' => [Rule::requiredIf($this->boolean('registration_completed')), 'string', Rule::in(app(CoverCatalog::class)->ids())],
             'position' => ['sometimes', 'integer', 'min:0', 'max:255'],
             'audio_language' => ['sometimes', 'nullable', 'string', Rule::in(Languages::AUDIO)],
