@@ -51,7 +51,7 @@ class AppUpdateController extends Controller
             ],
             /** Installs older than this build must update: a GitHub release marked « [obligatoire] » (null: none). */
             'minimum_build' => $result['minimum_build'] === null ? null : (int) $result['minimum_build'],
-            /** Page where the update is installed: the site's install page (no Play Store). */
+            /** Fallback destination when the in-app installer cannot be used. */
             'update_url' => $result['update_url'],
         ]);
     }
