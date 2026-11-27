@@ -10,7 +10,7 @@ class EmailChangeLink extends Notification
 {
     use Queueable;
 
-    public function __construct(public readonly string $url, public readonly int $minutes) {}
+    public function __construct(public readonly string $url, public readonly int $minutes, public readonly string $name) {}
 
     public function via(object $notifiable): array
     {
@@ -21,7 +21,7 @@ class EmailChangeLink extends Notification
     {
         return (new MailMessage)
             ->subject('Confirmez votre adresse e-mail Vixeo')
-            ->greeting('Bonjour '.$notifiable->name.',')
+            ->greeting('Bonjour '.$this->name.',')
             ->line('Cliquez ci-dessous pour confirmer cette nouvelle adresse e-mail et vous connecter à Vixeo.')
             ->action('Confirmer mon adresse e-mail', $this->url)
             ->line('Ce lien est valable '.$this->minutes.' minutes et ne peut être utilisé qu’une seule fois.')
