@@ -34,7 +34,6 @@ notification et de la page de profil Flutter (`VIXEO_APP_URL/membre/{username}`)
   profil ; nom aléatoire de 40 caractères, changé à chaque photo : gardée un an par les applis
   (`Cache-Control: immutable`). Fichiers sur le disque privé (`App\Services\ProfilePhotos`),
   supprimés avec le profil ou le compte (`photo_url` dans l'export).
-- Un profil enfant peut avoir une photo : elle n'apparaît que dans « Qui regarde ? » de son compte.
 - Modération : un profil signalé pour sa photo → `vixeo:moderate … photo` la retire sans suspendre
   le profil (`docs/moderation.md`).
 
@@ -105,7 +104,7 @@ par un autre profil, la dernière gardée (aimer de nouveau = la même notificat
 | `moderation` | une décision de la modération (`text`, `docs/moderation.md`) | « Modération » |
 
 Une action annulée (désabonnement, demande retirée ou refusée, J'aime retiré) retire sa
-notification. Routes (profil actif `X-Profile-Id`, pas de profil enfant) : `GET /notifications`
+notification. Routes (profil unique du compte, résolu automatiquement) : `GET /notifications`
 (20 par page, `unread_count`), `GET /notifications/count` (la pastille de la navigation),
 `POST /notifications/read` (tout lu, à l'ouverture de la page).
 
