@@ -51,31 +51,18 @@ autre personne) ne peut rien en faire sans le secret, resté dans l'appli qui a 
 ## Quel compte ?
 
 Un compte Google ou Apple lié = une ligne de `social_accounts` (fournisseur + `subject`, l'identifiant
-du fournisseur, qui ne change jamais ; l'adresse change, elle).
+stable du fournisseur).
 
 1. Déjà lié : ce compte.
-2. Sinon, un compte Vixeo a la même adresse (sans tenir compte des majuscules) : il est lié,
-   **si le fournisseur a vérifié l'adresse** (sinon `unverified`). Si personne n'avait jamais
-   prouvé que cette adresse était la sienne (`email_verified_at` vide : inscription par e-mail,
-   jamais de code « mot de passe oublié »), quelqu'un d'autre a pu s'inscrire avant avec cette
-   adresse et son propre mot de passe : **le mot de passe et les autres appareils du compte sont
-   retirés** (`password_removed: true`, comme Firebase), l'adresse devient vérifiée. Un nouveau mot
-   de passe se crée dans « Mon compte » ou par « Mot de passe oublié ». Le code de « Mot de passe
-   oublié » prouve aussi l'adresse (`PasswordResets`).
-3. Sinon, un nouveau compte (`App\Services\Accounts`, comme l'inscription) : nom donné par le
-   fournisseur (Apple ne le donne qu'à la première connexion), sinon le début de l'adresse, sinon
-   « Moi » (adresse relais d'Apple) ; **sans mot de passe** ; premier profil avec un avatar et une
-   couverture au hasard.
+2. Sinon, un compte Vixeo a la même adresse (sans tenir compte des majuscules) : il est lié
+   uniquement si le fournisseur a vérifié l'adresse. Si l'adresse Vixeo n'avait jamais été
+   vérifiée, les anciennes sessions sont révoquées avant de valider l'adresse.
+3. Sinon, un nouveau compte est créé sans mot de passe, avec le nom du fournisseur (ou le début
+   de l'adresse, ou « Moi » pour une adresse relais Apple) et son premier profil.
 
-## Compte sans mot de passe
-
-`user.has_password` est faux et `user.providers` liste les fournisseurs liés (`["google"]`).
-
-- `POST /me/password` sans `current_password` crée le premier mot de passe.
-- `POST /me/delete` sans `password` supprime le compte (l'appli demande une confirmation).
-- `POST /me/email` : 422 « Créez d’abord un mot de passe dans « Mon compte ». » sur `password`.
-- `auth/login` avec cette adresse : identifiants incorrects (rien ne dit que le compte existe).
-
+Les comptes e-mail utilisent eux aussi exclusivement les liens de connexion à usage unique
+(`docs/compte.md`). Aucun compte Vixeo ne possède de mot de passe.
+ 
 ## Réglages (`.env`, jamais dans le dépôt)
 
 - **Google** (console Google Cloud, « API et services » → « Identifiants ») : un client OAuth
