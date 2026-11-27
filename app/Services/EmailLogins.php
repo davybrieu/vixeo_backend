@@ -3,16 +3,55 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Services\Accounts;
+use App\Notifications\EmailLoginCode;
 use App\Services\SocialLogin\SocialLogins;
 use App\Notifications\EmailLoginLink;
 use App\Notifications\EmailChangeLink;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 final class EmailLogins
 {
     public const LINK_TTL = 900;
     public const CODE_TTL = 300;
+    public const OTP_TTL = 600;
+
+    /** Send a six-digit, one-time code. Unknown addresses are handled identically. */
+    public function sendCode(string $email): void
+    {
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        Cache::put(self::otpKey($email), ['hash' => Hash::make($code)], self::OTP_TTL);
+        Notification::route('mail', $email)->notify(new EmailLoginCode($code, self::OTP_TTL / 60));
+    }
+
+    /** Verify a code once; create an account only after the address has been proven. */
+    public function verifyCode(string $email, string $code, Accounts $accounts): ?array
+    {
+        return Cache::lock('email-login:otp-lock:'.hash('sha256', mb_strtolower($email)), 5)
+            ->block(2, function () use ($email, $code, $accounts): ?array {
+                $key = self::otpKey($email);
+                $entry = Cache::get($key);
+                if (! is_array($entry) || ! is_string($entry['hash'] ?? null) || ! Hash::check($code, $entry['hash'])) {
+                    return null;
+                }
+
+                Cache::forget($key);
+                $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
+                $created = false;
+                if ($user === null) {
+                    $user = $accounts->create('Moi', $email, emailVerified: true);
+                    $created = true;
+                } elseif ($user->email_verified_at === null) {
+                    $user->forceFill(['email_verified_at' => now()])->save();
+                }
+
+                return ['user' => $user, 'created' => $created];
+            });
+    }
+
 
     public function send(User $user, string $redirect, string $challenge): void
     {
@@ -94,6 +133,11 @@ final class EmailLogins
     private static function linkKey(string $token): string
     {
         return 'email-login:link:'.hash('sha256', $token);
+    }
+
+    private static function otpKey(string $email): string
+    {
+        return 'email-login:otp:'.hash('sha256', mb_strtolower($email));
     }
 
     private static function codeKey(string $code): string

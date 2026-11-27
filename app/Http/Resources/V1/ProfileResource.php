@@ -34,6 +34,8 @@ class ProfileResource extends JsonResource
             /** Its own cover (POST /profiles/{id}/cover), shown instead of `cover`; null = `cover`. */
             'cover_url' => $this->coverUrl(),
             'position' => $this->position,
+            'onboarded' => $this->onboarded_at !== null,
+            'registration_completed' => $this->registration_completed_at !== null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

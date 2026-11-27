@@ -82,6 +82,29 @@ it('keeps a biography to 160 characters', function () {
         ->assertJsonPath('errors.bio.0', 'Le champ biographie ne doit pas contenir plus de 160 caractères.');
 });
 
+
+it('requires a name, username, avatar and banner before first-time registration can be completed', function () {
+    $profile = Profile::factory()->for($this->user)->create([
+        'name' => 'Moi',
+        'username' => 'moi',
+        'avatar' => app(\App\Services\AvatarCatalog::class)->randomId(),
+        'cover' => app(\App\Services\CoverCatalog::class)->randomId(),
+    ]);
+
+    $this->patchJson("/api/v1/profiles/{$profile->id}", ['registration_completed' => true])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['name', 'username', 'avatar', 'cover']);
+
+    $this->patchJson("/api/v1/profiles/{$profile->id}", [
+        'name' => 'Davy',
+        'username' => 'davy',
+        'avatar' => app(\App\Services\AvatarCatalog::class)->randomId(),
+        'cover' => app(\App\Services\CoverCatalog::class)->randomId(),
+        'registration_completed' => true,
+    ])->assertOk()
+        ->assertJsonPath('data.registration_completed', true);
+});
+
 it('forbids access to another account profile and exposes no delete or PIN routes', function () {
     $other = Profile::factory()->create();
 

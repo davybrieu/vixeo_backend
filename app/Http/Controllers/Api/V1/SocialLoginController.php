@@ -105,6 +105,7 @@ class SocialLoginController extends Controller
             'user' => new UserResource($user),
             /** A new account (and its first profile). */
             'created' => (bool) $result['created'],
+            'needs_profile_setup' => $user->profiles()->first()?->registration_completed_at === null,
         ]);
     }
 }
