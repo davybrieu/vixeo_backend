@@ -7,7 +7,6 @@ use App\Support\Jwt;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -123,15 +122,12 @@ it('creates an account with Google, its first profile, then the token for the co
         'code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'Pixel 8',
     ])->assertOk()
         ->assertJsonPath('created', true)
-        ->assertJsonPath('password_removed', false)
         ->assertJsonPath('user.email', 'lea@gmail.com')
         ->assertJsonPath('user.email_verified', true)
-        ->assertJsonPath('user.has_password', false)
         ->assertJsonPath('user.providers', ['google']);
 
     $user = User::where('email', 'lea@gmail.com')->firstOrFail();
     expect($user->name)->toBe('Léa Martin')
-        ->and($user->password)->toBeNull()
         ->and($user->profiles)->toHaveCount(1)
         ->and($user->profiles->first()->avatar)->not->toBeNull()
         ->and($user->profiles->first()->cover)->not->toBeNull()
@@ -166,9 +162,8 @@ it('gives no token without the secret that started the sign-in', function () {
         ->assertJsonPath('errors.code.0', 'Cette connexion a expiré. Recommencez.');
 });
 
-it('links Google to the account of its address, and keeps its password when the address was proved', function () {
-    $user = User::factory()->create(['email' => 'davy@gmail.com', 'password' => 'secret-password']);
-    Sanctum::actingAs($user);
+it('links Google to a verified account with the same address', function () {
+    $user = User::factory()->create(['email' => 'davy@gmail.com']);
     $user->createToken('TV');
     [$verifier, $challenge] = pkce();
     $state = startSignIn($this, 'google', $challenge);
@@ -176,36 +171,25 @@ it('links Google to the account of its address, and keeps its password when the 
 
     $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c"));
     $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
-        ->assertOk()
-        ->assertJsonPath('created', false)
-        ->assertJsonPath('password_removed', false)
-        ->assertJsonPath('user.id', $user->id)
-        ->assertJsonPath('user.has_password', true);
+        ->assertOk()->assertJsonPath('created', false)->assertJsonPath('user.id', $user->id);
 
     expect($user->fresh()->tokens()->where('name', 'TV')->exists())->toBeTrue()
         ->and(SocialAccount::where('user_id', $user->id)->sole()->subject)->toBe('77');
 });
 
-it('removes the password and the sessions of an account whose address nobody had proved', function () {
-    // Someone may have signed up with this address before its owner came with Google.
-    $user = User::factory()->unverified()->create(['email' => 'lea@gmail.com', 'password' => 'their-password']);
-    $user->createToken('Their phone');
+it('revokes sessions when a verified provider proves a previously unverified address', function () {
+    $user = User::factory()->unverified()->create(['email' => 'lea@gmail.com']);
+    $user->createToken('Old phone');
     [$verifier, $challenge] = pkce();
     $state = startSignIn($this, 'google', $challenge);
     googleAnswers(['sub' => '5', 'email' => 'lea@gmail.com', 'email_verified' => true]);
 
     $query = backQuery($this->get("/api/v1/auth/social/google/callback?state={$state}&code=c"));
     $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
-        ->assertOk()
-        ->assertJsonPath('password_removed', true)
-        ->assertJsonPath('user.has_password', false)
-        ->assertJsonPath('user.email_verified', true);
+        ->assertOk()->assertJsonPath('user.email_verified', true);
 
-    $user->refresh();
-    expect($user->password)->toBeNull()
-        ->and($user->tokens()->where('name', 'Their phone')->exists())->toBeFalse();
-    $this->postJson('/api/v1/auth/login', ['email' => 'lea@gmail.com', 'password' => 'their-password', 'device_name' => 'X'])
-        ->assertUnprocessable();
+    expect($user->fresh()->email_verified_at)->not->toBeNull()
+        ->and($user->tokens()->where('name', 'Old phone')->exists())->toBeFalse();
 });
 
 it('refuses an address Google did not check, when it belongs to an account', function () {
@@ -318,40 +302,3 @@ it('names an account of an Apple relay address without its name « Moi »', func
         ->assertJsonPath('user.name', 'Moi');
 });
 
-it('lets an account without a password create one, and be deleted without one', function () {
-    $user = User::factory()->create(['password' => null]);
-    SocialAccount::create(['user_id' => $user->id, 'provider' => 'google', 'subject' => '1', 'email' => $user->email]);
-    Sanctum::actingAs($user);
-
-    // The address changes once there is a password.
-    $this->postJson('/api/v1/me/email', ['email' => 'new@example.com'])
-        ->assertUnprocessable()
-        ->assertJsonPath('errors.password.0', 'Créez d’abord un mot de passe dans « Mon compte ».');
-
-    $this->postJson('/api/v1/me/password', ['password' => 'a-new-password'])->assertNoContent();
-    expect($user->fresh()->hasPassword())->toBeTrue();
-    // Now the current one is asked.
-    $this->postJson('/api/v1/me/password', ['password' => 'another-password'])
-        ->assertJsonValidationErrors('current_password');
-
-    $other = User::factory()->create(['password' => null]);
-    SocialAccount::create(['user_id' => $other->id, 'provider' => 'apple', 'subject' => '2']);
-    Sanctum::actingAs($other);
-    $this->postJson('/api/v1/me/delete')->assertNoContent();
-    expect(User::find($other->id))->toBeNull()
-        ->and(SocialAccount::where('subject', '2')->exists())->toBeFalse();
-});
-
-it('proves the address with the code of « Mot de passe oublié »', function () {
-    Mail::fake();
-    $user = User::factory()->unverified()->create(['email' => 'davy@example.com']);
-    DB::table('password_reset_tokens')->insert([
-        'email' => 'davy@example.com', 'token' => Hash::make('123456'), 'created_at' => now(),
-    ]);
-
-    $this->postJson('/api/v1/auth/password/reset', [
-        'email' => 'davy@example.com', 'code' => '123456', 'password' => 'a-new-password', 'device_name' => 'Pixel 8',
-    ])->assertSuccessful();
-
-    expect($user->fresh()->email_verified_at)->not->toBeNull();
-});
