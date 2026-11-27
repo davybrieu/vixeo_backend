@@ -23,8 +23,9 @@ function consumeEmailLoginLink(User $user, string $verifier = 'a1234567890123456
         return true;
     });
 
-    parse_str((string) parse_url((string) $url, PHP_URL_QUERY), $query);
-    $response = test()->get($url);
+    $path = (string) parse_url((string) $url, PHP_URL_PATH);
+    $query = (string) parse_url((string) $url, PHP_URL_QUERY);
+    $response = test()->get($path.'?'.$query);
     expect($response->status())->toBe(303);
     parse_str((string) parse_url((string) $response->headers->get('Location'), PHP_URL_QUERY), $callback);
     return (string) ($callback['code'] ?? '');
