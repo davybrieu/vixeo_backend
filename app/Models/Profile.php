@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'cover', 'position',
     'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
-    'rate_after_watching', 'onboarded_at',
+    'rate_after_watching', 'onboarded_at', 'registration_completed_at',
 ])]
 #[Hidden(['sync_revision'])]
 class Profile extends Model
@@ -57,6 +57,7 @@ class Profile extends Model
             'skip_preview' => 'boolean',
             'rate_after_watching' => 'boolean',
             'onboarded_at' => 'datetime',
+            'registration_completed_at' => 'datetime',
             'suspended_at' => 'datetime',
         ];
     }
