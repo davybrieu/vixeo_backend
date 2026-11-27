@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration
 {
@@ -29,9 +29,22 @@ return new class extends Migration
             }
         });
 
+        // MySQL requires an index on the foreign-key column at all times. The old composite
+        // unique index (user_id, name) currently supports profiles.user_id -> users.id, so
+        // create the replacement index before dropping it.
+        if (! Schema::hasIndex('profiles', 'profiles_user_id_unique')) {
+            Schema::table('profiles', function (Blueprint $table): void {
+                $table->unique('user_id', 'profiles_user_id_unique');
+            });
+        }
+
+        if (Schema::hasIndex('profiles', 'profiles_user_id_name_unique')) {
+            Schema::table('profiles', function (Blueprint $table): void {
+                $table->dropUnique('profiles_user_id_name_unique');
+            });
+        }
+
         Schema::table('profiles', function (Blueprint $table): void {
-            $table->dropUnique('profiles_user_id_name_unique');
-            $table->unique('user_id');
             $table->dropColumn([
                 'is_kid',
                 'max_age_rating',
