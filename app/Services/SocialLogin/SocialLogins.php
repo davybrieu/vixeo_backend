@@ -117,7 +117,7 @@ final class SocialLogins
 
         try {
             $identity = $provider->identity($input, $this->callbackUrl($provider));
-            [$user, $created, $passwordRemoved] = $this->account($identity);
+            [$user, $created] = $this->account($identity);
         } catch (SocialLoginFailed $e) {
             return self::back($redirect, ['error' => $e->reason]);
         }
@@ -127,7 +127,6 @@ final class SocialLogins
             'user' => $user->id,
             'challenge' => (string) $pending['challenge'],
             'created' => $created,
-            'password_removed' => $passwordRemoved,
         ], self::CODE_TTL);
 
         return self::back($redirect, ['code' => $code]);
@@ -137,7 +136,7 @@ final class SocialLogins
      * The account of a code given back to the app: once, with the verifier of its challenge.
      * Null when the code is unknown, expired, already used or the verifier doesn't match.
      *
-     * @return array{user: User, created: bool, password_removed: bool}|null
+     * @return array{user: User, created: bool}|null
      */
     public function redeem(string $code, string $verifier): ?array
     {
@@ -151,7 +150,6 @@ final class SocialLogins
         return $user === null ? null : [
             'user' => $user,
             'created' => (bool) ($entry['created'] ?? false),
-            'password_removed' => (bool) ($entry['password_removed'] ?? false),
         ];
     }
 
@@ -159,7 +157,7 @@ final class SocialLogins
      * The Vixeo account of [$identity]: the one already linked; else the one with its address,
      * linked now; else a new one.
      *
-     * @return array{User, bool, bool} the account, whether it was created, legacy password_removed flag (always false)
+     * @return array{User, bool} the account and whether it was created
      *
      * @throws SocialLoginFailed
      */
@@ -184,12 +182,14 @@ final class SocialLogins
 
             $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($identity->email)])->first();
             $created = false;
-            $passwordRemoved = false;
             if ($user !== null) {
                 if (! $identity->emailVerified) {
                     throw new SocialLoginFailed(SocialLoginFailed::UNVERIFIED);
                 }
                 if ($user->email_verified_at === null) {
+                    // A previously unverified address may have been registered by someone else.
+                    // The verified provider proves ownership now, so revoke any old sessions.
+                    $user->tokens()->delete();
                     $user->forceFill(['email_verified_at' => now()])->save();
                 }
             } else {
@@ -208,7 +208,7 @@ final class SocialLogins
                 'email' => $identity->email,
             ]);
 
-            return [$user, $created, $passwordRemoved];
+            return [$user, $created];
         });
     }
 
