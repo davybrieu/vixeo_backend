@@ -24,7 +24,7 @@ final class Accounts
      */
     public function create(string $name, string $email, ?string $username = null, bool $emailVerified = false): User
     {
-        return DB::transaction(function () use ($name, $email, $password, $username, $emailVerified) {
+        return DB::transaction(function () use ($name, $email, $username, $emailVerified) {
             $user = new User(['name' => $name, 'email' => $email]);
             $user->forceFill([
                 'email_verified_at' => $emailVerified ? now() : null,
