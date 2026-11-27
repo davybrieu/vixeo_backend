@@ -179,8 +179,7 @@ class NotificationController extends Controller
     private function profile(Request $request): Profile
     {
         $profile = ResolveProfile::profile($request);
-        abort_unless($profile instanceof Profile, 422, 'Sélectionnez un profil.');
-        abort_if($profile->is_kid, 403, 'Les profils enfants ne peuvent pas utiliser les fonctions sociales.');
+        abort_unless($profile instanceof Profile, 422, 'Profil de compte introuvable.');
 
         return $profile;
     }
