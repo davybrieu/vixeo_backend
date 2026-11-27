@@ -30,22 +30,26 @@ final class EmailLogins
     /** Verify a code once; create an account only after the address has been proven. */
     public function verifyCode(string $email, string $code, Accounts $accounts): ?array
     {
-        $entry = Cache::get(self::otpKey($email));
-        if (! is_array($entry) || ! is_string($entry['hash'] ?? null) || ! Hash::check($code, $entry['hash'])) {
-            return null;
-        }
+        return Cache::lock('email-login:otp-lock:'.hash('sha256', mb_strtolower($email)), 5)
+            ->block(2, function () use ($email, $code, $accounts): ?array {
+                $key = self::otpKey($email);
+                $entry = Cache::get($key);
+                if (! is_array($entry) || ! is_string($entry['hash'] ?? null) || ! Hash::check($code, $entry['hash'])) {
+                    return null;
+                }
 
-        Cache::forget(self::otpKey($email));
-        $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
-        $created = false;
-        if ($user === null) {
-            $user = $accounts->create('Moi', $email, emailVerified: true);
-            $created = true;
-        } elseif ($user->email_verified_at === null) {
-            $user->forceFill(['email_verified_at' => now()])->save();
-        }
+                Cache::forget($key);
+                $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
+                $created = false;
+                if ($user === null) {
+                    $user = $accounts->create('Moi', $email, emailVerified: true);
+                    $created = true;
+                } elseif ($user->email_verified_at === null) {
+                    $user->forceFill(['email_verified_at' => now()])->save();
+                }
 
-        return ['user' => $user, 'created' => $created];
+                return ['user' => $user, 'created' => $created];
+            });
     }
 
 
