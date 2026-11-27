@@ -56,7 +56,7 @@ it('shows a member\'s public page, with the avatar to draw it', function () {
         ->assertJsonPath('data.avatar', $this->member->avatar)
         ->assertJsonPath('data.bio', 'Fan de science-fiction.')
         // Its page on the site, shared from the app.
-        ->assertJsonPath('data.share_url', 'https://www.vixeo.test/lea');
+        ->assertJsonPath('data.share_url', 'https://app.vixeo.test/membre/lea');
 
     $this->getJson('/api/v1/social/search?query=le')
         ->assertOk()
@@ -133,7 +133,7 @@ it('never gives a profile a username that is a page of the site or of the app', 
     $profile = Profile::factory()->for($user)->create(['username' => 'maxime']);
     Sanctum::actingAs($user);
 
-    // www.vixeo.app/pseudo (like Twitter): /apk, /confidentialite, /accueil… stay pages.
+    // vixeo.app/membre/pseudo (Flutter Web): /accueil, /recherche… are app routes.
     foreach (['apk', 'Accueil', 'recherche', 'confidentialite'] as $reserved) {
         $this->withHeader('X-Profile-Id', (string) $profile->id)
             ->putJson("/api/v1/profiles/{$profile->id}", ['username' => $reserved])

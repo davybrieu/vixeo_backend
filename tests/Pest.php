@@ -10,5 +10,5 @@ pest()->extend(TestCase::class)
 /** URL of a channel logo on our API (App\Services\Tv\ChannelLogos), for the provider's [$url]. */
 function proxiedLogo(string $url): string
 {
-    return config('vixeo.urls.api').'/api/v1/tv/logo/'.substr(hash('sha256', $url), 0, 32);
+    return config('app.url').'/api/v1/tv/logo/'.substr(hash('sha256', $url), 0, 32);
 }

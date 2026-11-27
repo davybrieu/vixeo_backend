@@ -1,27 +1,24 @@
-# Vixeo — API et site
+## Vixeo — API Laravel
 
-Un seul projet Laravel, deux domaines (voir [`docs/deploiement.md`](docs/deploiement.md)) :
-
-- **`api.vixeo.app`** : API REST de Vixeo (comptes, profils, synchronisation, catalogue…), sous
-  `/api/v1` ;
-- **`www.vixeo.app`** : site de présentation et d'installation (Vue 3 + Inertia, rendu côté
-  serveur), voir [`docs/site.md`](docs/site.md). `vixeo.app` redirige vers `www.vixeo.app`.
-
-L'appli Flutter est dans [`vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend).
+Ce dépôt contient exclusivement l'API REST de Vixeo (Laravel, PHP 8.3+), exposée sous `/api/v1`.
+L'application Flutter (Android, Android TV, Windows et Web) est maintenue séparément dans
+[`vixeo_frontend`](https://github.com/davybrieu/vixeo_frontend). Le frontend Web est publié depuis
+la branche `web-dist` de ce dépôt frontend ; il n'est pas servi par Laravel.
 
 ## Démarrage
 
 ```bash
-composer install && npm ci
+composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-npm run build                     # ou `npm run dev` pendant le développement du site
-php artisan serve                 # site sur http://localhost:8000, API sur /api/v1
+php artisan serve                 # API sur http://localhost:8000/api/v1
 ```
 
-En local, `API_URL` est vide : un seul hôte (`APP_URL`) sert le site (`/`) et l'API (`/api/v1`).
-En production : `APP_URL=https://www.vixeo.app`, `API_URL=https://api.vixeo.app`.
+En local, `APP_URL` et `API_URL` pointent vers l'API locale. En production, les deux pointent vers
+`https://api.vixeo.app`. `VIXEO_APP_URL=https://vixeo.app` sert uniquement à construire les
+liens publics de profils qui ouvrent l'application Flutter.
+
 
 - Tests : `./vendor/bin/pest`
 - Formatage : `./vendor/bin/pint`

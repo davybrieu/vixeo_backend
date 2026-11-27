@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\ProfilePhotos;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -148,11 +147,6 @@ it('shows the photo wherever the profile appears', function () {
 
     asPhotoMember($lea)->postJson('/api/v1/social/profiles/max/follow')->assertSuccessful();
     asPhotoMember($max)->getJson('/api/v1/notifications')->assertJsonPath('data.0.actor.photo_url', $url);
-
-    // The site's page of the profile (www.vixeo.app/lea).
-    $this->get('https://www.vixeo.test/lea')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('Member')->where('member.photoUrl', $url));
 });
 
 it('deletes the photo with its profile and with the account', function () {

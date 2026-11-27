@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\SiteController;
 use App\Http\Middleware\ResolveProfile;
 use App\Http\Resources\V1\Tmdb\RatedItemResource;
 use App\Models\DiaryEntry;
@@ -435,7 +434,7 @@ class SocialProfileController extends Controller
         return [
             ...$this->identity($profile),
             /** The page of the profile on the site, shared from the app (« Partager »). */
-            'share_url' => SiteController::memberUrl((string) $profile->username),
+            'share_url' => config('vixeo.app_url').'/membre/'.rawurlencode((string) $profile->username),
             /** Cover id (GET /covers): the banner of its page. */
             'cover' => $profile->cover,
             /** Its own cover, shown instead of `cover`; null = `cover`. */

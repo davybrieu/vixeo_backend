@@ -2,7 +2,7 @@
 
 Demande du développeur, 21/11/2026, sur le modèle de Twitter. Le reste des pages de profil (pseudo,
 biographie, abonnés, listes publiques, « Partager ») est décrit dans `CLAUDE.md` (« Recherche de
-membres ») et `docs/site.md` (`www.vixeo.app/pseudo`).
+membres »). Les liens publics ouvrent le frontend Flutter à `VIXEO_APP_URL/membre/{username}`.
 
 ## Réseaux sociaux du profil
 
@@ -22,7 +22,7 @@ n'est chargé depuis ces réseaux : aucun service tiers).
 (demande du développeur), montrée à la place de l'avatar partout où le profil apparaît :
 `photo_url` du profil (`GET /profiles`), des cartes du réseau social (`SocialCards::identity` :
 recherche, abonnés, fil, avis, commentaires, page d'un membre), de la messagerie, de l'auteur d'une
-notification et de la page du site (`www.vixeo.app/pseudo`). `null` : l'avatar.
+notification et de la page de profil Flutter (`VIXEO_APP_URL/membre/{username}`). `null` : l'avatar.
 
 - `POST /profiles/{id}/photo` (multipart, champ `photo` : JPEG, PNG ou WebP, 128 à 4 096 pixels de
   côté, 8 Mo au plus ; 30 par heure) : l'appli envoie le carré qu'on a cadré ; l'API en garde le
