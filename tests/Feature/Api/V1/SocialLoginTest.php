@@ -3,6 +3,8 @@
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Services\SocialLogin\SocialLogins;
+use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
 use App\Support\Jwt;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Request as HttpRequest;
@@ -128,8 +130,8 @@ it('keeps a new Google identity pending until the profile is completed', functio
         'name' => 'Léa Martin',
         'username' => 'lea_martin',
         'bio' => 'Cinéma',
-        'avatar' => app(\\App\\Services\\AvatarCatalog::class)->ids()[0],
-        'cover' => app(\\App\\Services\\CoverCatalog::class)->ids()[0],
+        'avatar' => app(AvatarCatalog::class)->ids()[0],
+        'cover' => app(CoverCatalog::class)->ids()[0],
         'social_links' => [],
     ])->assertCreated()
         ->assertJsonPath('created', true)
