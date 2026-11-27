@@ -256,7 +256,12 @@ final class SocialLogins
         return 'social-login:state:'.hash('sha256', $state);
     }
 
-    private static function registrationKey(string $ticket): string\n    {\n        return 'social-login:registration:'.hash('sha256', $ticket);\n    }\n\n    private static function codeKey(string $code): string
+    private static function registrationKey(string $ticket): string
+    {
+        return 'social-login:registration:'.hash('sha256', $ticket);
+    }
+
+    private static function codeKey(string $code): string
     {
         return 'social-login:code:'.hash('sha256', $code);
     }
