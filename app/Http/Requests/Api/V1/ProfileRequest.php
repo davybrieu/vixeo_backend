@@ -1,15 +1,15 @@
 <?php
 
-namespace App\\Http\\Requests\\Api\\V1;
+namespace App\Http\Requests\Api\V1;
 
-use App\\Models\\Profile;
-use App\\Services\\AvatarCatalog;
-use App\\Services\\CoverCatalog;
-use App\\Support\\Languages;
-use App\\Support\\SocialLinks;
-use App\\Support\\Usernames;
-use Illuminate\\Foundation\\Http\\FormRequest;
-use Illuminate\\Validation\\Rule;
+use App\Models\Profile;
+use App\Services\AvatarCatalog;
+use App\Services\CoverCatalog;
+use App\Support\Languages;
+use App\Support\SocialLinks;
+use App\Support\Usernames;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProfileRequest extends FormRequest
 {
@@ -45,7 +45,7 @@ class ProfileRequest extends FormRequest
             ],
             'is_private' => ['sometimes', 'boolean'],
             'social_links' => ['sometimes', 'nullable', 'array:'.implode(',', array_keys(SocialLinks::NETWORKS))],
-            'social_links.*' => ['nullable', 'string', 'max:200', function (string $attribute, mixed $value, \\Closure $fail) {
+            'social_links.*' => ['nullable', 'string', 'max:200', function (string $attribute, mixed $value, \Closure $fail) {
                 $network = substr($attribute, strlen('social_links.'));
                 if (is_string($value) && ! SocialLinks::valid($network, $value)) {
                     $fail($network === 'website' ? __('This address is not valid.') : __('This :network account is not valid.', [
