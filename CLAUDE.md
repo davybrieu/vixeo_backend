@@ -400,7 +400,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `App\Services\ProfileCovers` : partie centrale 3:1, 1 500 × 500, même traitement que les photos,
   `ProfileImages` ; `GET /profile-covers/{nom}`). **Un nouveau profil (inscription comprise) reçoit
   une couverture du catalogue au hasard**, comme l'avatar. `cover` / `cover_url` dans
-  `ProfileResource`, la page d'un membre et l'export ; fichier supprimé avec le profil ou le compte ;
+  `ProfileResource`, la page d'un membre et l'export ; fichier supprimé avec le compte ;
   `vixeo:moderate … cover` la retire.
 - **TV en direct** (doc : `docs/tv-direct.md`) : **API neutre** sous `/tv/…` (`throttle:catalog`),
   l'appli ne sait jamais quel fournisseur sert les chaînes. `App\Services\Tv\LiveTv` choisit le
@@ -476,7 +476,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - Fait : authentification (inscription, connexion, déconnexion, `me`), profil unique par compte
   (résolution automatique, édition du profil social et des préférences),
   messages d'erreur en français, catalogue TMDb (accueil, listes, genres, fiches film / série /
-  saison / personne, recherche groupée et par type, filtres et tri), mis en cache, synchro par profil
+  saison / personne, recherche groupée et par type, filtres et tri), mis en cache, synchro du profil unique du compte
   (favoris, progression / « Continuer à regarder », vus ; push / pull avec curseur),
   avatars de profil par licence, connexion TV
   par code, mot de passe oublié (code par e-mail), appareils connectés, suppression du compte
