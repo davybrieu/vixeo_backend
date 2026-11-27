@@ -58,7 +58,7 @@ class EmailLoginController extends Controller
                 ->header('Content-Type', 'text/html; charset=UTF-8');
         }
 
-        return redirect()->away($redirect);
+        return redirect()->away($redirect, Response::HTTP_SEE_OTHER);
     }
 
     public function token(Request $request, EmailLogins $logins): JsonResponse
