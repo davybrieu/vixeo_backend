@@ -196,7 +196,6 @@ final class SocialLogins
                 $user = $this->accounts->create(
                     self::accountName($identity),
                     $identity->email,
-                    password: null,
                     emailVerified: $identity->emailVerified,
                 );
                 $created = true;
