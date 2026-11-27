@@ -5,7 +5,6 @@ namespace App\Http\Requests\Api\V1;
 use App\Support\Usernames;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
