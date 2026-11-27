@@ -305,7 +305,7 @@ it('signs in with Apple: a form posted back, a client secret signed with the key
         ->assertJsonPath('user.providers', ['apple']);
 });
 
-it('names an account of an Apple relay address without its name « Moi »', function () {
+it('keeps an Apple relay identity pending until the profile is completed', function () {
     $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
     openssl_pkey_export($key, $pem);
     config([
@@ -320,7 +320,10 @@ it('names an account of an Apple relay address without its name « Moi »', func
     ])])]);
 
     $query = backQuery($this->post('/api/v1/auth/social/apple/callback', ['state' => $state, 'code' => 'c']));
-    $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
-        ->assertJsonPath('user.name', 'Moi');
+    $response = $this->postJson('/api/v1/auth/social/token', ['code' => $query['code'], 'code_verifier' => $verifier, 'device_name' => 'X'])
+        ->assertOk()->assertJsonPath('registration_required', true);
+
+    expect($response->json('registration_ticket'))->toBeString()
+        ->and(User::where('email', 'q9@privaterelay.appleid.com')->exists())->toBeFalse();
 });
 
