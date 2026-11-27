@@ -38,22 +38,18 @@ it('translates 401', function () {
     $this->getJson('/api/v1/me')->assertUnauthorized()->assertExactJson(['message' => 'Non authentifié.']);
 });
 
-it('translates 403, including policy messages', function () {
+it('translates 403, including the single-profile policy message', function () {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
     $this->getJson('/api/v1/profiles/'.Profile::factory()->create()->id)
         ->assertForbidden()->assertExactJson(['message' => 'Action non autorisée.']);
 
-    $last = Profile::factory()->for($user)->create();
-    $this->deleteJson("/api/v1/profiles/{$last->id}")
-        ->assertForbidden()->assertExactJson(['message' => "Le dernier profil d'un compte ne peut pas être supprimé."]);
-
-    Profile::factory()->for($user)->count(Profile::MAX_PER_USER - 1)->create();
-    $this->postJson('/api/v1/profiles', ['name' => 'Trop'])
-        ->assertForbidden()->assertExactJson(['message' => 'Un compte ne peut pas avoir plus de 5 profils.']);
+    Profile::factory()->for($user)->create();
+    $this->postJson('/api/v1/profiles', ['name' => 'Second'])
+        ->assertForbidden()
+        ->assertExactJson(['message' => 'Un compte ne peut avoir qu’un seul profil.']);
 });
-
 it('translates 404 without leaking model names', function () {
     Sanctum::actingAs(User::factory()->create());
 
@@ -75,15 +71,6 @@ it('translates 429 with the waiting time', function () {
 
     expect($response->json('message'))->toMatch('/^Trop de tentatives\. Réessayez dans \d+ secondes\.$/');
     $response->assertHeader('Retry-After');
-});
-
-it('translates the PIN error', function () {
-    $user = User::factory()->create();
-    $profile = Profile::factory()->for($user)->withPin('1234')->create();
-    Sanctum::actingAs($user);
-
-    $this->postJson("/api/v1/profiles/{$profile->id}/verify-pin", ['pin' => '0000'])
-        ->assertJsonPath('errors.pin.0', 'Code PIN incorrect.');
 });
 
 it('hides unexpected errors behind a French message outside debug mode', function () {
