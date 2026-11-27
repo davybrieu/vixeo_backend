@@ -94,6 +94,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
             ->name('logo');
     });
 
+    // Public, read-only catalogs used by the profile-first registration form.
+    Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
+    Route::get('covers', [CoverController::class, 'index'])->name('covers');
+
     // Social profile discovery requires an authenticated account.
     Route::prefix('social')->name('social.')->middleware(['auth:sanctum', 'throttle:catalog', ResolveProfile::class])->group(function () {
         Route::get('search', [SocialProfileController::class, 'search'])->name('search');
@@ -273,8 +277,6 @@ Route::prefix('v1')->name('v1.')->group(function () {
             Route::post('test', [PushDeviceController::class, 'test'])->name('test');
         });
 
-        Route::get('avatars', [AvatarController::class, 'index'])->name('avatars');
-        Route::get('covers', [CoverController::class, 'index'])->name('covers');
         Route::apiResource('profiles', ProfileController::class)->only(['index', 'store', 'show', 'update']);
         // Its own photo, instead of its avatar (docs/social.md).
         Route::post('profiles/{profile}/photo', [ProfilePhotoController::class, 'store'])
