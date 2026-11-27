@@ -372,7 +372,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
 - **Mises à jour des applis** (doc : `docs/mise-a-jour.md`) : **seule source, les releases
   GitHub** `android-<build>` (APK) et `windows-<build>` (installateur `.exe`) publiées par la CI
   de `vixeo_frontend` (`App\Services\GitHubReleases::for(AppPlatform)`, cache 5 min par
-  plateforme : fichier, SHA-256, notes ; `App\Services\LatestReleases` pour le site). Un titre
+  plateforme : fichier, SHA-256, notes ; liens de secours vers les releases GitHub). Un titre
   contenant `[obligatoire]` force les versions plus anciennes de sa plateforme à se mettre à jour
   (pas de build minimum dans le `.env` : demande du développeur, 20/11/2026). Pas de table ni de commande (`vixeo:release` et `app_releases`
   supprimées, demande du développeur). `GET /app/update` (sans connexion) compare les **builds**
