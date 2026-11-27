@@ -137,8 +137,7 @@ it('never gives a profile a username that is a page of the site or of the app', 
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['username' => 'Ce pseudo est réservé : choisissez-en un autre.']);
     }
-    $this->withHeader('X-Profile-Id', (string) $profile->id)
-        ->putJson("/api/v1/profiles/{$profile->id}", ['username' => 'accueil_2'])
+    $this->putJson("/api/v1/profiles/{$profile->id}", ['username' => 'accueil_2'])
         ->assertOk()
         ->assertJsonPath('data.username', 'accueil_2');
 
