@@ -12,11 +12,9 @@ final class Hosts
         return self::domain('api');
     }
 
-    /** API request: JSON errors, never the site's error pages. */
+    /** Every request is handled as an API request. */
     public static function isApi(Request $request): bool
     {
-        $api = self::apiDomain();
-
         return true;
     }
 
