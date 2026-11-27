@@ -46,7 +46,7 @@ it('changes the email address only after its one-time confirmation link is used'
 
     expect($this->user->fresh()->email)->toBe('davy@example.com');
     $url = null;
-    Notification::assertSentOnDemand(EmailChangeLink::class, function (EmailChangeLink $mail) use (&$url) {
+    Notification::assertSentTo($this->user, EmailChangeLink::class, function (EmailChangeLink $mail) use (&$url) {
         $url = $mail->url;
         return true;
     });
