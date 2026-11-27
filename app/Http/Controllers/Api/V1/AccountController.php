@@ -9,6 +9,8 @@ use App\Http\Resources\V1\DeviceResource;
 use App\Http\Resources\V1\UserResource;
 use App\Notifications\AccountDataExport;
 use App\Services\AccountExport;
+use App\Services\EmailLogins;
+use App\Services\SocialLogin\SocialLogins;
 use App\Services\Messaging\Conversations;
 use App\Services\ProfileCovers;
 use App\Services\ProfilePhotos;
@@ -56,18 +58,22 @@ class AccountController extends Controller
      * The new address becomes the account's sign-in address and is verified through its next
      * one-time email sign-in link.
      */
-    public function updateEmail(UpdateEmailRequest $request): UserResource
+    public function updateEmail(UpdateEmailRequest $request, EmailLogins $logins): JsonResponse
     {
-        $user = $request->user();
+        $data = $request->validated();
+        abort_unless(SocialLogins::validRedirect($data['redirect_uri']), 422, 'Adresse de retour invalide.');
 
-        $email = $request->validated('email');
-        if ($email !== $user->email) {
-            DB::transaction(function () use ($user, $email) {
-                $user->forceFill(['email' => $email, 'email_verified_at' => null])->save();
-            });
+        $user = $request->user();
+        if (mb_strtolower($data['email']) === mb_strtolower($user->email)) {
+            return response()->json(['message' => 'Cette adresse e-mail est déjà celle de votre compte.']);
         }
 
-        return new UserResource($user->fresh());
+        $logins->sendEmailChange($user, $data['email'], $data['redirect_uri'], $data['code_challenge']);
+
+        return response()->json([
+            'message' => 'Un lien de confirmation a été envoyé à votre nouvelle adresse e-mail.',
+            'expires_in_minutes' => EmailLogins::LINK_TTL / 60,
+        ]);
     }
 
     /**
