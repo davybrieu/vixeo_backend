@@ -112,7 +112,7 @@ class SocialLoginController extends Controller
             'token' => (string) $user->createToken($request->validated('device_name'))->plainTextToken,
             'user' => new UserResource($user),
             'created' => false,
-            'needs_profile_setup' => false,
+            'needs_profile_setup' => $user->profiles()->first()?->registration_completed_at === null,
         ]);
     }
 }
