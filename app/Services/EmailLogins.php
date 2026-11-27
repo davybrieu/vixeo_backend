@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Services\SocialLogin\SocialLogins;
 use App\Notifications\EmailLoginLink;
+use App\Notifications\EmailChangeLink;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,21 @@ final class EmailLogins
         $user->notify(new EmailLoginLink($url, self::LINK_TTL / 60));
     }
 
+    public function sendEmailChange(User $user, string $email, string $redirect, string $challenge): void
+    {
+        $token = Str::random(64);
+        Cache::put(self::linkKey($token), [
+            'user' => $user->id,
+            'email' => $email,
+            'type' => 'email_change',
+            'redirect' => $redirect,
+            'challenge' => $challenge,
+        ], self::LINK_TTL);
+
+        $url = route('v1.auth.email.consume', ['token' => $token]);
+        $user->notify(new EmailChangeLink($url, self::LINK_TTL / 60));
+    }
+
     /** Consume the emailed link once and return the app redirect with a short-lived PKCE code. */
     public function consume(string $token): ?string
     {
@@ -37,6 +53,15 @@ final class EmailLogins
         $user = User::query()->find($entry['user'] ?? null);
         if ($user === null) {
             return null;
+        }
+
+        if (($entry['type'] ?? null) === 'email_change') {
+            $email = (string) ($entry['email'] ?? '');
+            if ($email === '' || User::query()->where('email', $email)->whereKeyNot($user->id)->exists()) {
+                return null;
+            }
+
+            $user->forceFill(['email' => $email, 'email_verified_at' => now()])->save();
         }
 
         $code = Str::random(48);
