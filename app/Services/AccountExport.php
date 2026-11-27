@@ -26,8 +26,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Everything Vixeo stores about an account, as one JSON document (GDPR right of access and
- * portability). Password hashes are left out: they are secrets, not personal data
- * the user can use.
+ * portability). Authentication secrets are never included.
  */
 class AccountExport
 {
@@ -40,7 +39,6 @@ class AccountExport
                 'name' => $user->name,
                 'email' => $user->email,
                 'created_at' => $user->created_at?->toIso8601String(),
-                'has_password' => $user->hasPassword(),
                 // « Continuer avec Google / Apple ».
                 'linked_accounts' => SocialAccount::query()->where('user_id', $user->id)->orderBy('id')->get()->map(fn (SocialAccount $account) => [
                     'provider' => $account->provider,
