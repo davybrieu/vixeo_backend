@@ -86,9 +86,7 @@ class SocialLoginController extends Controller
      * Get a token with the code.
      *
      * The code the browser brought back and the secret of the `code_challenge`. Same answer as
-     * `auth/login`, plus `created` (a new account, with its first profile) and `password_removed`
-     * (the account had this address but nobody had ever proved it was theirs: its password and
-     * its other devices were removed).
+     * `auth/login`, plus `created` (a new account, with its first profile).
      *
      * @unauthenticated
      */
@@ -107,8 +105,6 @@ class SocialLoginController extends Controller
             'user' => new UserResource($user),
             /** A new account (and its first profile). */
             'created' => (bool) $result['created'],
-            /** The account's password and other devices were removed (an address nobody had proved). */
-            'password_removed' => (bool) $result['password_removed'],
         ]);
     }
 }
