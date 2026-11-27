@@ -215,7 +215,10 @@ final class SocialLogins
                     $user->forceFill(['email_verified_at' => now()])->save();
                 }
             } else {
-                if (! $identity->emailVerified) {\n                    throw new SocialLoginFailed(SocialLoginFailed::UNVERIFIED);\n                }\n                return [null, true, $identity];
+                if (! $identity->emailVerified) {
+                    throw new SocialLoginFailed(SocialLoginFailed::UNVERIFIED);
+                }
+                return [null, true, $identity];
             }
 
             SocialAccount::query()->create([
