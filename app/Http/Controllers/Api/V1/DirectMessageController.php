@@ -24,9 +24,8 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * The messaging between adult profiles with a username (docs/messagerie.md): direct conversations
- * (a request first), groups, photos and videos, read receipts and blocks. Every route acts as the
- * profile of the `X-Profile-Id` header.
+ * The messaging for account profiles with a username (docs/messagerie.md): direct conversations
+ * (a request first), groups, photos and videos, read receipts and blocks. Every route acts as the account's automatically resolved profile.
  */
 class DirectMessageController extends Controller
 {
