@@ -20,18 +20,16 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_LOCALE" value="fr"/>
-        <!-- Two hosts, as in production (config/vixeo.php): relative test URLs hit the API host (tests/TestCase.php). -->
+        <!-- The API is bound to the API host in tests, like production. -->
         <env name="APP_URL" value="https://www.vixeo.test"/>
         <env name="API_URL" value="https://api.vixeo.test"/>
         <env name="ANDROID_UPDATE_URL" value=""/>
         <env name="IOS_UPDATE_URL" value=""/>
         <env name="TV_EPG_URLS" value=""/>
         <env name="TV_LOGOS_REPOSITORY" value=""/>
-        <env name="INERTIA_SSR_ENABLED" value="false"/>
+        <env name="VIXEO_APP_URL" value="https://app.vixeo.test"/>
         <env name="VIXEO_ANDROID_APK_URL" value=""/>
         <env name="VIXEO_ANDROID_APK_SHA256" value=""/>
-        <env name="VIXEO_CONTACT_EMAIL" value=""/>
-        <env name="VIXEO_PUBLISHER_NAME" value=""/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
