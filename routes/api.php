@@ -44,6 +44,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
     Route::prefix('auth')->name('auth.')->middleware('throttle:auth')->group(function () {
         Route::post('register', [AuthController::class, 'register'])->name('register');
         Route::post('email/code', [EmailLoginController::class, 'sendCode'])->name('email.code');
+        Route::post('email/link', [EmailLoginController::class, 'request'])->name('email.request'); // Legacy clients.
         Route::post('email/verify', [EmailLoginController::class, 'verifyCode'])->name('email.verify');
         Route::get('email/waiting', [EmailLoginController::class, 'waiting'])->name('email.waiting');
         Route::get('email/waiting', [EmailLoginController::class, 'waiting'])->name('email.waiting');
