@@ -32,7 +32,6 @@ class AuthController extends Controller
         $user = $accounts->create(
             $request->validated('name'),
             $request->validated('email'),
-            null,
             $request->validated('username'),
         );
         $logins->send($user, $request->validated('redirect_uri'), $request->validated('code_challenge'));
