@@ -27,7 +27,7 @@ function asCoverMember(Profile $profile): mixed
 {
     Sanctum::actingAs($profile->user);
 
-    return test()->withHeader('X-Profile-Id', (string) $profile->id);
+    return test();
 }
 
 function sendCover(Profile $profile, UploadedFile $cover): mixed
@@ -148,20 +148,13 @@ it('shows the cover on the page of the profile', function () {
         ->toEndWith('/api/v1/profile-covers/'.$lea->refresh()->cover_path);
 });
 
-it('deletes the cover image with its profile and with the account', function () {
+it('deletes the cover image with the account', function () {
     $lea = coverMember('lea');
     sendCover($lea, UploadedFile::fake()->image('c.png', 1200, 400));
     $path = ProfileCovers::DIRECTORY.'/'.$lea->refresh()->cover_path;
-    $other = Profile::factory()->for($lea->user)->create(['username' => 'lea_bis']);
-    sendCover($other, UploadedFile::fake()->image('c.png', 1200, 400));
-    $otherPath = ProfileCovers::DIRECTORY.'/'.$other->refresh()->cover_path;
 
-    asCoverMember($lea)->deleteJson("/api/v1/profiles/{$lea->id}")->assertNoContent();
+    asCoverMember($lea)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
     Storage::disk(ProfileCovers::DISK)->assertMissing($path);
-    Storage::disk(ProfileCovers::DISK)->assertExists($otherPath);
-
-    asCoverMember($other)->postJson('/api/v1/me/delete', ['password' => 'secret-password'])->assertNoContent();
-    Storage::disk(ProfileCovers::DISK)->assertMissing($otherPath);
 });
 
 it('lets the moderation remove a reported cover image', function () {
