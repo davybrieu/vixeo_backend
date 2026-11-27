@@ -1,6 +1,6 @@
 <?php
 
-namespace App\\Services\\Tmdb;
+namespace App\Services\Tmdb;
 
 /**
  * Compatibility shim for existing catalog services. Vixeo no longer filters or blocks content
@@ -9,18 +9,18 @@ namespace App\\Services\\Tmdb;
 class AgeGate
 {
     /** @param array<string, mixed> $title */
-    public function authorizeTitle(?\\App\\Models\\Profile $profile, array $title): void
+    public function authorizeTitle(?\App\Models\Profile $profile, array $title): void
     {
         // No age restrictions.
     }
 
     /** @param array<string, mixed> $title */
-    public function allows(?\\App\\Models\\Profile $profile, array $title): bool
+    public function allows(?\App\Models\Profile $profile, array $title): bool
     {
         return true;
     }
 
-    public function authorizeShow(?\\App\\Models\\Profile $profile, int $showId): void
+    public function authorizeShow(?\App\Models\Profile $profile, int $showId): void
     {
         // No age restrictions.
     }
@@ -28,7 +28,7 @@ class AgeGate
     /** @param list<array<string, mixed>> $items
      *  @return list<array<string, mixed>>
      */
-    public function filter(?\\App\\Models\\Profile $profile, array $items): array
+    public function filter(?\App\Models\Profile $profile, array $items): array
     {
         return $items;
     }
@@ -36,7 +36,7 @@ class AgeGate
     /** @param array<array-key, list<array<string, mixed>>> $lists
      *  @return array<array-key, list<array<string, mixed>>>
      */
-    public function filterMany(?\\App\\Models\\Profile $profile, array $lists): array
+    public function filterMany(?\App\Models\Profile $profile, array $lists): array
     {
         return $lists;
     }
