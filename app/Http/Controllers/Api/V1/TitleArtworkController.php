@@ -25,7 +25,6 @@ class TitleArtworkController extends Controller
 {
     public function __construct(
         private readonly TmdbCatalog $catalog,
-        private readonly AgeGate $ageGate,
         private readonly TitleArtworks $artworks,
     ) {}
 
@@ -41,7 +40,6 @@ class TitleArtworkController extends Controller
     {
         $profile = ResolveProfile::profile($request);
         $title = $this->title($type, $id);
-        $this->ageGate->authorizeTitle($profile, $title);
         $offered = $this->artworks->images($title);
         $logo = F::logo($title);
 
