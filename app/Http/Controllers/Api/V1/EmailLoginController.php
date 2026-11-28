@@ -135,7 +135,7 @@ class EmailLoginController extends Controller
             'registration_ticket' => ['required', 'string', 'min:40', 'max:100'],
             'device_name' => ['required', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:50'],
-            'username' => ['required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/', Rule::notIn(Usernames::RESERVED), 'unique:profiles,username'],
+            'username' => ['required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/', Rule::notIn(Usernames::RESERVED), 'unique:users,username'],
             'bio' => ['nullable', 'string', 'max:160'],
             'avatar' => ['required', 'string', Rule::in($avatars->ids())],
             'cover' => ['required', 'string', Rule::in($covers->ids())],
