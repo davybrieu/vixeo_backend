@@ -36,7 +36,8 @@ class ProfileController extends Controller
         $data['username'] ??= Accounts::uniqueUsername($data['name']);
         $data['avatar'] ??= $avatars->randomId();
         $data['cover'] ??= $covers->randomId();
-        $profile = $request->user()->profiles()->create($data);
+        $profile = $request->user();
+        $profile->fill($data)->save();
 
         return (new ProfileResource($profile))->response()->setStatusCode(Response::HTTP_CREATED);
     }
