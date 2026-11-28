@@ -30,7 +30,7 @@ final class Accounts
                 'email_verified_at' => $emailVerified ? now() : null,
             ])->save();
 
-            $user->profiles()->create(array_merge([
+            $user->forceFill(array_merge([
                 'name' => $user->name,
                 'username' => $username ?? self::uniqueUsername($user->name),
                 'avatar' => $this->avatars->randomId(),
@@ -40,7 +40,7 @@ final class Accounts
             ], $profileData, [
                 'registration_completed_at' => now(),
                 'onboarded_at' => now(),
-            ]));
+            ]))->save();
 
             return $user;
         });
