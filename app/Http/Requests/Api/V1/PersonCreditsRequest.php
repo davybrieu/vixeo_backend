@@ -11,7 +11,7 @@ class PersonCreditsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /** `popular` (most voted first, « Connu pour ») or `date` (newest first, « Filmographie »). */
+            /** Media type: movie or tv. */
             'sort' => ['sometimes', Rule::enum(PersonCreditsSort::class)],
             /** Page number: 20 titles a page. */
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000'],
@@ -25,6 +25,6 @@ class PersonCreditsRequest extends FormRequest
 
     public function sort(): PersonCreditsSort
     {
-        return $this->enum('sort', PersonCreditsSort::class) ?? PersonCreditsSort::Popular;
+        return $this->enum('sort', PersonCreditsSort::class) ?? PersonCreditsSort::Movie;
     }
 }
