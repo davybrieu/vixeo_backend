@@ -4,7 +4,7 @@ namespace App\Services\Tmdb;
 
 use App\Enums\CatalogList;
 use App\Enums\MediaType;
-use App\Enums\PersonCreditsSort;
+use App\Enums\PersonCreditsType;
 use App\Enums\SearchSort;
 use App\Enums\SearchType;
 
@@ -226,18 +226,18 @@ class TmdbCatalog
         unset($person['combined_credits']);
 
         return $person + [
-            'known_for' => array_slice($credits[PersonCreditsSort::Popular->value], 0, self::PERSON_PAGE),
-            'filmography' => array_slice($credits[PersonCreditsSort::Date->value], 0, self::PERSON_PAGE),
+            'movies' => array_slice($credits[MediaType::Movie->value], 0, self::PERSON_PAGE),
+            'shows' => array_slice($credits[MediaType::Tv->value], 0, self::PERSON_PAGE),
         ];
     }
 
     /**
-     * Every title of a person (as cast), each once, in the given order: the whole « Connu pour »
-     * or « Filmographie » (the person page only shows their start). Same TMDb call as person().
+     * Every movie or TV show of a person (as cast), each once, ordered by vote count.
+     * Same TMDb call as person().
      *
      * @return list<array<string, mixed>>
      */
-    public function personCredits(int $id, PersonCreditsSort $sort): array
+    public function personCredits(int $id, PersonCreditsType $sort): array
     {
         $person = $this->tmdb->get("person/{$id}", ['append_to_response' => 'combined_credits']);
 
@@ -265,8 +265,7 @@ class TmdbCatalog
     }
 
     /**
-     * A person's credits, each title once (an actor can play several roles in the same title),
-     * by votes and by date.
+     * A person's credits, separated by media type and ordered by vote count.
      *
      * @param  array<string, mixed>  $person
      * @return array<string, list<array<string, mixed>>>
@@ -279,13 +278,17 @@ class TmdbCatalog
         }
         $credits = array_values($credits);
 
-        $byVotes = $credits;
-        usort($byVotes, fn (array $a, array $b) => ($b['vote_count'] ?? 0) <=> ($a['vote_count'] ?? 0));
+        $byType = [
+            MediaType::Movie->value => array_values(array_filter($credits, fn (array $item) => $item['media_type'] === MediaType::Movie->value)),
+            MediaType::Tv->value => array_values(array_filter($credits, fn (array $item) => $item['media_type'] === MediaType::Tv->value)),
+        ];
 
-        $byDate = $credits;
-        usort($byDate, fn (array $a, array $b) => self::date($b) <=> self::date($a));
+        foreach ($byType as &$items) {
+            usort($items, fn (array $a, array $b) => ($b['vote_count'] ?? 0) <=> ($a['vote_count'] ?? 0));
+        }
+        unset($items);
 
-        return [PersonCreditsSort::Popular->value => $byVotes, PersonCreditsSort::Date->value => $byDate];
+        return $byType;
     }
 
     /**

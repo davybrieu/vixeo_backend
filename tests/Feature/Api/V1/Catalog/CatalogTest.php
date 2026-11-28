@@ -175,7 +175,7 @@ it('returns a season with its episodes', function () {
         ->assertJsonPath('data.episodes.0.still_url', 'https://image.tmdb.org/t/p/w300/e1.jpg');
 });
 
-it('returns a person with a deduplicated filmography, most recent first', function () {
+it('returns a person with separate deduplicated movie and TV lists', function () {
     Http::fake(['api.themoviedb.org/3/person/287*' => Http::response([
         'id' => 287, 'name' => 'Brad Pitt', 'biography' => '', 'birthday' => '1963-12-18', 'deathday' => null,
         'place_of_birth' => 'Shawnee, Oklahoma, USA', 'known_for_department' => 'Acting', 'profile_path' => '/pitt.jpg',
@@ -192,8 +192,8 @@ it('returns a person with a deduplicated filmography, most recent first', functi
     expect($person['name'])->toBe('Brad Pitt')
         ->and($person['biography'])->toBeNull()
         ->and($person['profile_url'])->toBe('https://image.tmdb.org/t/p/h632/pitt.jpg')
-        ->and(array_column($person['filmography'], 'title'))->toBe(['F1', 'Fight Club', 'Friends'])
-        ->and(array_column($person['known_for'], 'title'))->toBe(['Fight Club', 'Friends', 'F1']);
+        ->and(array_column($person['movies'], 'title'))->toBe(['Fight Club', 'F1'])
+        ->and(array_column($person['shows'], 'title'))->toBe(['Friends']);
 });
 
 it('lists every person of a title for « Voir tout »: crew first, then the whole cast', function () {
@@ -297,7 +297,7 @@ it('pages the recommendations of a title, or its similar titles without any', fu
     $this->getJson('/api/v1/catalog/movie/550/recommendations?page=0')->assertUnprocessable();
 });
 
-it('lists every title of a person, most voted or newest first', function () {
+it('lists a person\'s movies and TV shows separately', function () {
     Http::fake(['api.themoviedb.org/3/person/287*' => Http::response([
         'id' => 287, 'name' => 'Brad Pitt', 'profile_path' => null,
         'combined_credits' => ['cast' => [
@@ -309,25 +309,28 @@ it('lists every title of a person, most voted or newest first', function () {
         ]],
     ])]);
 
-    // The person page shows the 20 best known and the 20 latest; the credits give them all, each
-    // once, 20 a page.
-    $person = $this->getJson('/api/v1/catalog/person/287')->json('data');
-    expect($person['known_for'])->toHaveCount(20)
-        ->and($person['filmography'])->toHaveCount(20);
-    $popular = $this->getJson('/api/v1/catalog/person/287/credits')
+    $person = $this->getJson('/api/v1/catalog/person/287')->assertOk()->json('data');
+    expect($person['movies'])->toHaveCount(20)
+        ->and($person['shows'])->toHaveCount(1)
+        ->and(array_column(array_slice($person['movies'], 0, 2), 'title'))->toBe(['Fight Club', 'F1'])
+        ->and($person['shows'][0]['title'])->toBe('Friends');
+
+    $movies = $this->getJson('/api/v1/catalog/person/287/credits?type=movie')
         ->assertOk()
-        ->assertJsonPath('meta', ['page' => 1, 'total_pages' => 2, 'total_results' => 25])
+        ->assertJsonPath('meta', ['page' => 1, 'total_pages' => 2, 'total_results' => 24])
         ->json('data');
-    expect($popular)->toHaveCount(20)
-        ->and(array_column(array_slice($popular, 0, 3), 'title'))->toBe(['Fight Club', 'Friends', 'F1']);
-    expect($this->getJson('/api/v1/catalog/person/287/credits?page=2')->assertOk()->json('data'))->toHaveCount(5);
-    expect($this->getJson('/api/v1/catalog/person/287/credits?page=3')->assertOk()->json('data'))->toBe([]);
+    expect($movies)->toHaveCount(20)
+        ->and(array_column(array_slice($movies, 0, 2), 'title'))->toBe(['Fight Club', 'F1']);
+    expect($this->getJson('/api/v1/catalog/person/287/credits?type=movie&page=2')->assertOk()->json('data'))->toHaveCount(4);
 
-    $byDate = $this->getJson('/api/v1/catalog/person/287/credits?sort=date')->assertOk()->json('data');
-    expect(array_column(array_slice($byDate, 0, 3), 'title'))->toBe(['F1', 'Fight Club', 'Friends']);
+    $shows = $this->getJson('/api/v1/catalog/person/287/credits?type=tv')
+        ->assertOk()
+        ->assertJsonPath('meta.total_results', 1)
+        ->json('data');
+    expect($shows[0]['title'])->toBe('Friends');
+
     $this->getJson('/api/v1/catalog/person/287/credits?page=0')->assertUnprocessable()->assertJsonValidationErrors('page');
-
-    $this->getJson('/api/v1/catalog/person/287/credits?sort=rating')->assertUnprocessable()->assertJsonValidationErrors('sort');
+    $this->getJson('/api/v1/catalog/person/287/credits?type=rating')->assertUnprocessable()->assertJsonValidationErrors('type');
 });
 
 it('lists a catalog page and caps TMDb page counts', function () {
