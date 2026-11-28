@@ -47,7 +47,7 @@ class User extends Authenticatable
     /** Apps of the account that can receive push notifications. @return HasMany<PushDevice, $this> */
     public function pushDevices(): HasMany
     {
-        return $this->hasMany(PushDevice::class);
+        return $this->hasMany(PushDevice::class, 'profile_id');
     }
 
     /**
