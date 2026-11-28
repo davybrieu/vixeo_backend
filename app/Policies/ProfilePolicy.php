@@ -10,12 +10,12 @@ class ProfilePolicy
 {
     public function view(User $user, Profile $profile): bool
     {
-        return $profile->user_id === $user->id;
+        return $profile->id === $user->id;
     }
 
     public function create(User $user): Response
     {
-        return $user->profiles()->doesntExist()
+        return $user->registration_completed_at === null
             ? Response::allow()
             : Response::deny(__('An account can have only one profile.'));
     }
