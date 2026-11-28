@@ -4,7 +4,7 @@ namespace App\Services\Tmdb;
 
 use App\Enums\CatalogList;
 use App\Enums\MediaType;
-use App\Enums\PersonCreditsSort;
+use App\Enums\PersonCreditsType;
 use App\Enums\SearchSort;
 use App\Enums\SearchType;
 
@@ -237,7 +237,7 @@ class TmdbCatalog
      *
      * @return list<array<string, mixed>>
      */
-    public function personCredits(int $id, PersonCreditsSort $sort): array
+    public function personCredits(int $id, PersonCreditsType $sort): array
     {
         $person = $this->tmdb->get("person/{$id}", ['append_to_response' => 'combined_credits']);
 
