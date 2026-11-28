@@ -26,6 +26,12 @@ class Profile extends User
 
     protected $table = 'users';
 
+    /** Legacy attribute retained for code that still reads profile.user_id. */
+    public function getUserIdAttribute(): int
+    {
+        return (int) $this->id;
+    }
+
     /** A profile is the account row itself. */
     public function user(): BelongsTo
     {
