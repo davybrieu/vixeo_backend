@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Enums\PersonCreditsSort;
+use App\Enums\PersonCreditsType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +12,7 @@ class PersonCreditsRequest extends FormRequest
     {
         return [
             /** Media type: movie or tv. */
-            'sort' => ['sometimes', Rule::enum(PersonCreditsSort::class)],
+            'type' => ['sometimes', Rule::enum(PersonCreditsType::class)],
             /** Page number: 20 titles a page. */
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000'],
         ];
@@ -23,8 +23,8 @@ class PersonCreditsRequest extends FormRequest
         return (int) $this->validated('page', 1);
     }
 
-    public function sort(): PersonCreditsSort
+    public function mediaType(): PersonCreditsType
     {
-        return $this->enum('sort', PersonCreditsSort::class) ?? PersonCreditsSort::Movie;
+        return $this->enum('type', PersonCreditsType::class) ?? PersonCreditsType::Movie;
     }
 }
