@@ -59,7 +59,7 @@ return new class extends Migration
             DB::table('users')->where('id', $profile->user_id)->update($attributes);
         });
 
-        // Remap every FK targeting profiles to the corresponding account ID, then target users.
+        // Polymorphic profile reports have no FK, so remap their subject IDs separately.\n        if (Schema::hasTable('reports') && Schema::hasColumn('reports', 'subject_type')) {\n            DB::table('reports')->where('subject_type', 'profile')->update([\n                'subject_id' => DB::raw('(SELECT user_id FROM profiles WHERE profiles.id = reports.subject_id)'),\n            ]);\n        }\n\n        // Remap every FK targeting profiles to the corresponding account ID, then target users.
         foreach (Schema::getTables() as $tableInfo) {
             $table = is_array($tableInfo) ? ($tableInfo['name'] ?? null) : ($tableInfo->name ?? null);
             if (! is_string($table) || $table === 'profiles' || $table === 'users') {
