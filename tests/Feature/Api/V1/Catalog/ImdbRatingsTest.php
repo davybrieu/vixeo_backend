@@ -355,7 +355,8 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     $server->details = 0;
     expect($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=movie')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null])
         ->and($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=tv')->assertOk()->json('data')))->toBe([1399 => 9.2])
-        ->and($server->details + $server->external)->toBe(0);
+        // The TV title's details were not loaded by the movie-only summary; its external id is fetched once.
+        ->and($server->details + $server->external)->toBe(1);
 });
 
 it('never runs two imports at once', function () {
