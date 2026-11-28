@@ -326,7 +326,8 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     // Not kept: their External IDs only (a few hundred bytes), never the details with images and
     // certifications; then kept.
     Cache::flush();
-    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=movie')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null])
+        ->and($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=tv')->assertOk()->json('data')))->toBe([1399 => 9.2])
         ->and($server->details)->toBe(0)
         ->and($server->external)->toBe(3)
         ->and(Cache::get('imdb-id:tv/1399'))->toBe('tt0944947')
@@ -339,11 +340,11 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
         ->and($list[1]['ratings']['tmdb'])->toBe(['rating' => 8.4, 'votes' => 30000])
         ->and($imdb($this->getJson('/api/v1/catalog/movie/550/recommendations')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null]);
 
-    // A person's page: the filmography's titles also summarized in « Connu pour » need nothing more.
+    // A person's page: movies and shows are already summarized, so nothing more is requested.
     $server->external = 0;
     $person = $this->getJson('/api/v1/catalog/person/287')->assertOk()->json('data');
-    expect($imdb($person['known_for']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
-        ->and($imdb($person['filmography']))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+    expect($imdb($person['movies']))->toBe([550 => 8.8, 551 => null])
+        ->and($imdb($person['shows']))->toBe([1399 => 9.2])
         ->and($server->external)->toBe(0);
 
     // Details already read for a summary (cached a day) give the IMDb id: no request.
@@ -351,7 +352,8 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     Cache::forget('imdb-id:movie/551');
     Cache::forget('imdb-id:tv/1399');
     $server->details = 0;
-    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=movie')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null])
+        ->and($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=tv')->assertOk()->json('data')))->toBe([1399 => 9.2])
         ->and($server->details + $server->external)->toBe(0);
 });
 
