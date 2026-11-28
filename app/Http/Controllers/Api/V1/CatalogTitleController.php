@@ -109,9 +109,9 @@ class CatalogTitleController extends Controller
     public function person(int $id): PersonResource
     {
         $person = $this->catalog->person($id);
-        [$person['known_for'], $person['filmography']] = $this->summaries->addAndRate(
-            $person['known_for'],
-            $person['filmography'],
+        [$person['movies'], $person['shows']] = $this->summaries->addAndRate(
+            $person['movies'],
+            $person['shows'],
         );
 
         return new PersonResource($person);
