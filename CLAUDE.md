@@ -269,7 +269,7 @@ Dans un conteneur Claude Code cloud, PostgreSQL et Redis ne tournent pas par dé
   `favorite`, progression, vu, « J'aime » ❤ = `liked` (films, séries ; rétablis le 20/11/2026,
   demande du développeur ; un J'aime, pas des favoris), personnes suivies = `followed` (items `person:<id>`, type `person`)),
   le plus récent gagne ; listes publiques d'un membre : `/social/profiles/{username}/liked` et
-  `/people` ; chaque écriture prend `++profiles.sync_revision` sous verrou.
+  `/people` ; chaque écriture prend `++users.sync_revision` sous verrou.
 - **Recherche de membres** (`GET /social/search`, `SocialProfileController`) : profils adultes
   avec un pseudo, **jamais le profil actif lui-même** (demande du développeur, 20/11/2026 : on
   ouvre son propre profil par la navigation, « Profil »). Les listes de comptes (recherche,

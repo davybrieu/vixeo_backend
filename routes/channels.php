@@ -11,7 +11,7 @@ Broadcast::channel('messages.{conversation}', function ($user, int $conversation
     $profile = ResolveProfile::profile(request());
 
     return Conversations::allowed($profile)
-        && (int) $profile->user_id === (int) $user->getAuthIdentifier()
+        && (int) $profile->id === (int) $user->getAuthIdentifier()
         && app(Conversations::class)->isMember($profile, $conversation);
 });
 

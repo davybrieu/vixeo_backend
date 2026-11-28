@@ -9,13 +9,14 @@ it('does not expose the legacy registration endpoint', function () {
     $this->postJson('/api/v1/auth/register', ['email' => 'not-an-email'])->assertNotFound();
 });
 
-it('uses custom messages for duplicate profile names', function () {
+it('rejects a second profile because the account already owns its only profile', function () {
     $user = User::factory()->create();
     Profile::factory()->for($user)->create(['name' => 'Léa']);
     Sanctum::actingAs($user);
 
     $this->postJson('/api/v1/profiles', ['name' => 'Léa'])
-        ->assertJsonPath('errors.name.0', 'Un profil porte déjà ce nom.');
+        ->assertForbidden()
+        ->assertExactJson(['message' => 'Un compte ne peut avoir qu’un seul profil.']);
 });
 
 it('translates 401', function () {

@@ -21,7 +21,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:50'],
             'username' => [
                 'sometimes', 'required', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
-                Rule::notIn(Usernames::RESERVED), 'unique:profiles,username',
+                Rule::notIn(Usernames::RESERVED), 'unique:users,username',
             ],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             /** App callback address and PKCE challenge for the emailed sign-in link. */

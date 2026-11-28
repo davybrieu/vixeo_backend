@@ -34,12 +34,12 @@ class ProfileRequest extends FormRequest
         return [
             'name' => [
                 Rule::requiredIf($this->isMethod('post') || $this->boolean('registration_completed')), 'string', 'max:50',
-                Rule::unique('profiles', 'name')->where('user_id', $this->user()->id)->ignore($profile?->id),
+                
             ],
             'username' => [
                 Rule::requiredIf($this->boolean('registration_completed')), 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',
                 Rule::notIn(Usernames::RESERVED),
-                Rule::unique('profiles', 'username')->ignore($profile?->id),
+                Rule::unique('users', 'username')->ignore($profile?->id),
             ],
             'is_private' => ['sometimes', 'boolean'],
             'social_links' => ['sometimes', 'nullable', 'array:'.implode(',', array_keys(SocialLinks::NETWORKS))],

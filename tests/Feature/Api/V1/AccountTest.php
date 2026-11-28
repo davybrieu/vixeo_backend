@@ -21,7 +21,6 @@ it('deletes the account and all its data without a password', function () {
     $this->withToken($this->token)->postJson('/api/v1/me/delete')->assertNoContent();
 
     expect(User::count())->toBe(0);
-    $this->assertDatabaseCount('profiles', 0);
     $this->assertDatabaseCount('profile_items', 0);
     $this->assertDatabaseCount('personal_access_tokens', 0);
 });

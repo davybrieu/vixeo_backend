@@ -114,10 +114,12 @@ it('keeps searches to their profile and account', function () {
     $this->getJson("/api/v1/profiles/{$other->id}/searches")->assertForbidden();
     $this->postJson("/api/v1/profiles/{$other->id}/searches", ['query' => 'Dune'])->assertForbidden();
 
-    // A search of another profile of the account can't be removed through this one.
+    // A second profile factory resolves to the same account row: there is no sibling profile.
     $sibling = Profile::factory()->for($this->user)->create();
-    $id = $this->postJson("/api/v1/profiles/{$sibling->id}/searches", ['query' => 'Dune'])->json('data.id');
-    $this->deleteJson("/api/v1/profiles/{$this->profile->id}/searches/{$id}")->assertNotFound();
+    expect($sibling->id)->toBe($this->profile->id);
+
+    $id = $this->postJson("/api/v1/profiles/{$this->profile->id}/searches", ['query' => 'Dune'])->json('data.id');
+    $this->deleteJson("/api/v1/profiles/{$this->profile->id}/searches/{$id}")->assertNoContent();
 });
 
 it('validates searches in French', function () {

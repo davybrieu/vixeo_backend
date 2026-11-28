@@ -4,6 +4,26 @@ use App\Models\Profile;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
+it('stores the only profile directly on the users row', function () {
+    expect(Schema::hasTable('profiles'))->toBeFalse()
+        ->and(Schema::hasColumn('users', 'username'))->toBeTrue()
+        ->and(Schema::hasColumn('users', 'avatar'))->toBeTrue()
+        ->and(Schema::hasColumn('users', 'cover'))->toBeTrue();
+
+    $this->user->forceFill([
+        'username' => 'davy',
+        'bio' => 'Cinéma',
+        'avatar' => 'quest-knight',
+        'cover' => 'aurore',
+        'registration_completed_at' => now(),
+    ])->save();
+
+    $profile = Profile::query()->findOrFail($this->user->id);
+    expect($profile->id)->toBe($this->user->id)
+        ->and($profile->username)->toBe('davy')
+        ->and($this->user->profiles()->count())->toBe(1);
+});
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     Sanctum::actingAs($this->user);
@@ -51,7 +71,7 @@ it('rejects duplicate profile names within an account', function () {
     Profile::factory()->for($this->user)->create(['name' => 'Davy']);
 
     $this->postJson('/api/v1/profiles', ['name' => 'Davy'])
-        ->assertUnprocessable()->assertJsonValidationErrors('name');
+        ->assertForbidden();
 });
 
 it('updates the one profile without PIN or age restriction fields', function () {

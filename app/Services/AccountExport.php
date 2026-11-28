@@ -213,9 +213,9 @@ class AccountExport
      */
     private function follows(string $from, string $other, Profile $profile): array
     {
-        return DB::table('profile_follows')->join('profiles', 'profiles.id', '=', "profile_follows.{$other}")
+        return DB::table('profile_follows')->join('users', 'users.id', '=', "profile_follows.{$other}")
             ->where("profile_follows.{$from}", $profile->id)->orderBy('profile_follows.created_at')
-            ->get(['profiles.username', 'profile_follows.accepted_at', 'profile_follows.created_at'])
+            ->get(['users.username', 'profile_follows.accepted_at', 'profile_follows.created_at'])
             ->map(fn (object $row) => [
                 'username' => (string) $row->username,
                 'accepted' => $row->accepted_at !== null,
