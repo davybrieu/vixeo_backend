@@ -316,9 +316,10 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     // IMDb rating by TMDb id.
     $imdb = fn (array $items) => collect($items)->mapWithKeys(fn (array $item) => [$item['id'] => $item['ratings']['imdb']['rating'] ?? null])->sortKeys()->all();
 
-    // All of a person's titles, the IMDb ids already known (kept 90 days): TMDb is not asked for them.
+    // Each media type is paginated independently; the IMDb ids already known are reused.
     Cache::putMany(['imdb-id:movie/550' => 'tt0137523', 'imdb-id:movie/551' => '', 'imdb-id:tv/1399' => 'tt0944947'], 3600);
-    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null, 1399 => 9.2])
+    expect($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=movie')->assertOk()->json('data')))->toBe([550 => 8.8, 551 => null])
+        ->and($imdb($this->getJson('/api/v1/catalog/person/287/credits?type=tv')->assertOk()->json('data')))->toBe([1399 => 9.2])
         ->and($server->details)->toBe(0)
         ->and($server->external)->toBe(0);
 
