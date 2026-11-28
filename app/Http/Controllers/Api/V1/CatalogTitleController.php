@@ -120,7 +120,7 @@ class CatalogTitleController extends Controller
     /** A page of a person's known-for titles or filmography. */
     public function personCredits(PersonCreditsRequest $request, int $id): JsonResponse
     {
-        $all = $this->catalog->personCredits($id, $request->sort());
+        $all = $this->catalog->personCredits($id, $request->mediaType());
         $size = TmdbCatalog::PERSON_PAGE;
         $page = $request->page();
         $titles = $this->summaries->ratings(array_slice($all, ($page - 1) * $size, $size));
