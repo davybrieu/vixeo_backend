@@ -28,9 +28,9 @@ class PersonResource extends JsonResource
             'known_for_department' => F::string($r, 'known_for_department'),
             'profile_path' => $profile,
             'profile_url' => F::image($profile, 'h632'),
-            /** First 20 movies (the rest: `GET /catalog/person/{id}/credits?sort=movie&page=`). */
+            /** First 20 movies (the rest: `GET /catalog/person/{id}/credits?type=movie&page=`). */
             'movies' => MediaItemResource::collection(F::array($r, 'movies')),
-            /** First 20 TV shows (the rest: `GET /catalog/person/{id}/credits?sort=tv&page=`). */
+            /** First 20 TV shows (the rest: `GET /catalog/person/{id}/credits?type=tv&page=`). */
             'shows' => MediaItemResource::collection(F::array($r, 'shows')),
         ];
     }
