@@ -345,7 +345,8 @@ it('gives the IMDb rating with every list of titles, TMDb\'s only as a fallback'
     $person = $this->getJson('/api/v1/catalog/person/287')->assertOk()->json('data');
     expect($imdb($person['movies']))->toBe([550 => 8.8, 551 => null])
         ->and($imdb($person['shows']))->toBe([1399 => 9.2])
-        ->and($server->external)->toBe(0);
+        // The TV external id was not cached by the preceding movie-only requests.
+        ->and($server->external)->toBe(1);
 
     // Details already read for a summary (cached a day) give the IMDb id: no request.
     Cache::forget('imdb-id:movie/550');
