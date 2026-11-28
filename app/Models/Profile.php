@@ -1,148 +1,70 @@
 <?php
 
-namespace App\Models;
+namespace App\\Models;
 
-use App\Services\ProfileCovers;
-use App\Services\ProfilePhotos;
-use Database\Factories\ProfileFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\\Services\\ProfileCovers;
+use App\\Services\\ProfilePhotos;
+use Illuminate\\Database\\Eloquent\\Attributes\\Fillable;
+use Illuminate\\Database\\Eloquent\\Attributes\\Hidden;
+use Illuminate\\Database\\Eloquent\\Relations\\BelongsTo;
+use Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany;
+use Illuminate\\Database\\Eloquent\\Relations\\HasMany;
 
-/** The single social and viewing profile attached to an account. */
+/** Compatibility model for the account's social identity. It uses the users table directly. */
 #[Fillable([
-    'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'cover', 'position',
-    'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro', 'skip_recap', 'skip_credits', 'skip_preview',
-    'rate_after_watching', 'onboarded_at', 'registration_completed_at',
+    'name', 'username', 'bio', 'is_private', 'social_links', 'avatar', 'photo_path', 'cover',
+    'cover_path', 'position', 'audio_language', 'subtitle_language', 'no_spoiler', 'skip_intro',
+    'skip_recap', 'skip_credits', 'skip_preview', 'rate_after_watching', 'rating_source',
+    'onboarded_at', 'registration_completed_at', 'suspended_at',
 ])]
 #[Hidden(['sync_revision'])]
-class Profile extends Model
+class Profile extends User
 {
-    /** @use HasFactory<ProfileFactory> */
-    use HasFactory;
-
-    /** One profile is allowed per account. */
     public const MAX_PER_USER = 1;
-
-    /** Longest biography of a public profile, in characters (developer's request, 21/11/2026). */
     public const BIO_MAX_LENGTH = 160;
-
-    /** Playback settings: segments the player skips by itself (else it shows "Passer"). */
     public const SKIP_FIELDS = ['skip_intro', 'skip_recap', 'skip_credits', 'skip_preview'];
 
-    protected $attributes = [
-        'no_spoiler' => false,
-        'skip_intro' => false,
-        'skip_recap' => false,
-        'skip_credits' => false,
-        'skip_preview' => false,
-        'rate_after_watching' => true,
-    ];
+    protected $table = 'users';
 
-    protected function casts(): array
-    {
-        return [
-            'is_private' => 'boolean',
-            'social_links' => 'array',
-            'position' => 'integer',
-            'sync_revision' => 'integer',
-            'no_spoiler' => 'boolean',
-            'skip_intro' => 'boolean',
-            'skip_recap' => 'boolean',
-            'skip_credits' => 'boolean',
-            'skip_preview' => 'boolean',
-            'rate_after_watching' => 'boolean',
-            'onboarded_at' => 'datetime',
-            'registration_completed_at' => 'datetime',
-            'suspended_at' => 'datetime',
-        ];
-    }
-
-    /** @return BelongsTo<User, $this> */
+    /** A profile is the account row itself. */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id', 'id');
     }
 
-    /** Profiles this profile follows. */
-    /** @return BelongsToMany<Profile, $this> */
+    /** Accounts this account follows. */
     public function following(): BelongsToMany
     {
-        // Accepted follows only: a request to a private account waits (App\Services\Social\Follows).
         return $this->belongsToMany(self::class, 'profile_follows', 'follower_profile_id', 'followed_profile_id')
             ->withTimestamps()->wherePivotNotNull('accepted_at');
     }
 
-    /** Profiles following this profile. */
-    /** @return BelongsToMany<Profile, $this> */
+    /** Accounts following this account. */
     public function followers(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'profile_follows', 'followed_profile_id', 'follower_profile_id')
             ->withTimestamps()->wherePivotNotNull('accepted_at');
     }
 
-    /** @return HasMany<ProfileItem, $this> */
-    public function items(): HasMany
-    {
-        return $this->hasMany(ProfileItem::class);
-    }
+    public function items(): HasMany { return $this->hasMany(ProfileItem::class); }
+    public function searches(): HasMany { return $this->hasMany(ProfileSearch::class); }
+    public function episodeNotifications(): HasMany { return $this->hasMany(EpisodeNotification::class); }
+    public function tmdbRatings(): HasMany { return $this->hasMany(TmdbRating::class); }
+    public function lists(): HasMany { return $this->hasMany(ProfileList::class); }
+    public function diaryEntries(): HasMany { return $this->hasMany(DiaryEntry::class); }
 
-    /** @return HasMany<ProfileSearch, $this> */
-    public function searches(): HasMany
-    {
-        return $this->hasMany(ProfileSearch::class);
-    }
-
-    /** Apps where this profile is in use, for push notifications. @return HasMany<PushDevice, $this> */
-    public function pushDevices(): HasMany
-    {
-        return $this->hasMany(PushDevice::class);
-    }
-
-    /** Episodes already announced to this profile. @return HasMany<EpisodeNotification, $this> */
-    public function episodeNotifications(): HasMany
-    {
-        return $this->hasMany(EpisodeNotification::class);
-    }
-
-    /** The profile's reviews (« Mes avis »): rating and comment. @return HasMany<TmdbRating, $this> */
-    public function tmdbRatings(): HasMany
-    {
-        return $this->hasMany(TmdbRating::class);
-    }
-
-    /** The profile's lists. @return HasMany<ProfileList, $this> */
-    public function lists(): HasMany
-    {
-        return $this->hasMany(ProfileList::class);
-    }
-
-    /** What the profile watched, day by day (« Journal »). @return HasMany<DiaryEntry, $this> */
-    public function diaryEntries(): HasMany
-    {
-        return $this->hasMany(DiaryEntry::class);
-    }
-
-    /** A profile with a username, not suspended: it has a public page and social features. */
     public function isSocial(): bool
     {
         return $this->username !== null && $this->suspended_at === null;
     }
 
-    /** Address of its own photo (App\Services\ProfilePhotos), null = its avatar is shown. */
     public function photoUrl(): ?string
     {
         return ProfilePhotos::url($this->photo_path);
     }
 
-    /** Address of its own cover (App\Services\ProfileCovers), null = its cover of the catalog is shown. */
     public function coverUrl(): ?string
     {
         return ProfileCovers::url($this->cover_path);
     }
-
 }
