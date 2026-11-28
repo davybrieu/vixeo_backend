@@ -31,7 +31,7 @@ php artisan vixeo:moderate 12 cover --reason="Image inappropriée"
 - `hide` : un avis, une liste ou un commentaire est **masqué** (`hidden_at` : plus montré à
   personne, ni dans le fil, ni sur les fiches, ni sur les pages) ; un message est vidé comme s'il
   avait été supprimé (texte, carte partagée, fichiers) ; un profil est **suspendu**
-  (`profiles.suspended_at` : plus de page, de recherche, de contenu montré, et il ne peut plus rien
+  (`users.suspended_at` : plus de page, de recherche, de contenu montré, et il ne peut plus rien
   publier). Tous les signalements ouverts du même contenu sont fermés.
 - `dismiss` : le signalement est rejeté, le contenu reste.
 - `restore` : ce qui avait été masqué (ou suspendu) revient (recours de l'auteur).
