@@ -75,7 +75,7 @@ return new class extends Migration
                 $foreignColumns = $foreign['foreign_columns'];
                 $constraintName = $foreign['name'];
 
-                Schema::table($table, function (Blueprint $blueprint) use ($constraintName): void {
+                Schema::table($table, function (Blueprint $blueprint) use ($constraintName, $columns): void {
                     $blueprint->dropForeign(DB::getDriverName() === 'sqlite' ? $columns : $constraintName);
                 });
 
