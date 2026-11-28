@@ -26,6 +26,27 @@ class Profile extends User
 
     protected $table = 'users';
 
+    /**
+     * Factories and legacy callers may still attach a Profile to an existing User. Since both are
+     * now the same row, treat that insert as an update of the already-existing account.
+     */
+    protected function performInsert(Builder $query): bool
+    {
+        if ($this->getKey() !== null && static::query()->whereKey($this->getKey())->exists()) {
+            $attributes = $this->getAttributes();
+            unset($attributes['id'], $attributes['email'], $attributes['email_verified_at'], $attributes['remember_token']);
+
+            $existing = static::query()->findOrFail($this->getKey());
+            $this->setRawAttributes($existing->getAttributes(), true);
+            $this->forceFill($attributes);
+            $this->exists = true;
+
+            return $this->performUpdate($query);
+        }
+
+        return parent::performInsert($query);
+    }
+
     /** Legacy attribute retained for code that still reads profile.user_id. */
     public function getUserIdAttribute(): int
     {
