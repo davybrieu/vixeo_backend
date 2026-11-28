@@ -61,7 +61,7 @@ return new class extends Migration
 
         // Remap every FK targeting profiles to the corresponding account ID, then target users.
         foreach (Schema::getTables() as $tableInfo) {
-            $table = $tableInfo['name'] ?? $tableInfo->name ?? null;
+            $table = is_array($tableInfo) ? ($tableInfo['name'] ?? null) : ($tableInfo->name ?? null);
             if (! is_string($table) || $table === 'profiles' || $table === 'users') {
                 continue;
             }
