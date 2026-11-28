@@ -430,7 +430,7 @@ class SocialProfileController extends Controller
                 // Time watched: the movies and episodes of its diary whose length TMDb knows (a
                 // whole TV show marked watched has no length), as in the year in review.
                 'watch_minutes' => DiaryEntry::query()->selectRaw('coalesce(sum(runtime), 0)')
-                    ->whereColumn('diary_entries.profile_id', 'profiles.id')
+                    ->whereColumn('diary_entries.profile_id', 'users.id')
                     ->where(fn ($query) => $query->where('media_type', 'movie')->orWhereNotNull('episode_number')),
             ]))
             ->firstOrFail();
