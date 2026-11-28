@@ -175,7 +175,7 @@ it('returns a season with its episodes', function () {
         ->assertJsonPath('data.episodes.0.still_url', 'https://image.tmdb.org/t/p/w300/e1.jpg');
 });
 
-it('returns a person with a deduplicated filmography, most recent first', function () {
+it('returns a person with separate deduplicated movie and TV lists', function () {
     Http::fake(['api.themoviedb.org/3/person/287*' => Http::response([
         'id' => 287, 'name' => 'Brad Pitt', 'biography' => '', 'birthday' => '1963-12-18', 'deathday' => null,
         'place_of_birth' => 'Shawnee, Oklahoma, USA', 'known_for_department' => 'Acting', 'profile_path' => '/pitt.jpg',
@@ -192,8 +192,8 @@ it('returns a person with a deduplicated filmography, most recent first', functi
     expect($person['name'])->toBe('Brad Pitt')
         ->and($person['biography'])->toBeNull()
         ->and($person['profile_url'])->toBe('https://image.tmdb.org/t/p/h632/pitt.jpg')
-        ->and(array_column($person['filmography'], 'title'))->toBe(['F1', 'Fight Club', 'Friends'])
-        ->and(array_column($person['known_for'], 'title'))->toBe(['Fight Club', 'Friends', 'F1']);
+        ->and(array_column($person['movies'], 'title'))->toBe(['Fight Club', 'F1'])
+        ->and(array_column($person['shows'], 'title'))->toBe(['Friends']);
 });
 
 it('lists every person of a title for « Voir tout »: crew first, then the whole cast', function () {
