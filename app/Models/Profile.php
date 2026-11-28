@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Models;
+namespace App\Models;
 
-use App\\Services\\ProfileCovers;
-use App\\Services\\ProfilePhotos;
-use Illuminate\\Database\\Eloquent\\Attributes\\Fillable;
-use Illuminate\\Database\\Eloquent\\Attributes\\Hidden;
-use Illuminate\\Database\\Eloquent\\Relations\\BelongsTo;
-use Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany;
-use Illuminate\\Database\\Eloquent\\Relations\\HasMany;
+use App\Services\ProfileCovers;
+use App\Services\ProfilePhotos;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Compatibility model for the account's social identity. It uses the users table directly. */
 #[Fillable([
