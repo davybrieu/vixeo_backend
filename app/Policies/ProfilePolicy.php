@@ -15,7 +15,7 @@ class ProfilePolicy
 
     public function create(User $user): Response
     {
-        return $user->registration_completed_at === null
+        return $user->username === null
             ? Response::allow()
             : Response::deny(__('An account can have only one profile.'));
     }
