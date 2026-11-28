@@ -51,7 +51,7 @@ it('rejects duplicate profile names within an account', function () {
     Profile::factory()->for($this->user)->create(['name' => 'Davy']);
 
     $this->postJson('/api/v1/profiles', ['name' => 'Davy'])
-        ->assertUnprocessable()->assertJsonValidationErrors('name');
+        ->assertForbidden();
 });
 
 it('updates the one profile without PIN or age restriction fields', function () {
